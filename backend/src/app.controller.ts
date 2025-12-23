@@ -6,7 +6,7 @@ import { PrismaService } from './prisma.service';
 export class AppController {
   constructor(
     private readonly appService: AppService,
-    private readonly prisma: PrismaService
+    private readonly prisma: PrismaService,
   ) {}
 
   @Get()
@@ -23,13 +23,13 @@ export class AppController {
         status: 'ok',
         database: 'connected',
         timestamp: new Date().toISOString(),
-        environment: process.env.NODE_ENV || 'development'
+        environment: process.env.NODE_ENV || 'development',
       };
     } catch (error) {
       return {
         status: 'error',
         database: 'disconnected',
-        error: error.message
+        error: error.message,
       };
     }
   }
