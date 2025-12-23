@@ -34,7 +34,7 @@ jobs:
         host: ${{ secrets.EC2_HOST }}
         username: ${{ secrets.EC2_USER }}
         key: ${{ secrets.EC2_SSH_KEY }}
-        source: "docker-compose.yml"
+        source: "docker-compose.yml,Caddyfile"
         target: "/home/${{ secrets.EC2_USER }}/app"
 
     - name: Deploy Backend to EC2
