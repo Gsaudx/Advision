@@ -58,7 +58,7 @@ O projeto possui pipeline automatizada de deploy para AWS EC2.
 
 **Secrets Necessárias no GitHub:**
 - DOCKERHUB_USERNAME / DOCKERHUB_TOKEN: Credenciais Docker Hub.
-- EC2_HOST: IP Público da inst�ncia.
+- EC2_HOST: IP Público da instância.
 - EC2_USER: Usuário SSH (ex: ec2-user).
 - EC2_SSH_KEY: Conteúdo da chave privada .pem.
 - DATABASE_URL: Connection string do RDS (Prod).
