@@ -30,7 +30,7 @@ docker-compose up --build -d
 - Backend: http://localhost:3000 
 - Banco: localhost:5432 
 
-### Op��o 2: Desenvolvimento Local (Hot Reload)
+### Opção 2: Desenvolvimento Local (Hot Reload)
 
 1. **Suba apenas o Banco de Dados:**
    `bash
@@ -56,16 +56,16 @@ docker-compose up --build -d
 
 O projeto possui pipeline automatizada de deploy para AWS EC2.
 
-**Secrets Necess�rias no GitHub:**
+**Secrets Necessárias no GitHub:**
 - DOCKERHUB_USERNAME / DOCKERHUB_TOKEN: Credenciais Docker Hub.
 - EC2_HOST: IP Público da inst�ncia.
 - EC2_USER: Usuário SSH (ex: ec2-user).
-- EC2_SSH_KEY: Conte�do da chave privada .pem.
+- EC2_SSH_KEY: Conteúdo da chave privada .pem.
 - DATABASE_URL: Connection string do RDS (Prod).
 
 ##  Estrutura do Projeto
 
-- /backend: API NestJS, Regras de Neg�cio, Prisma ORM.
+- /backend: API NestJS, Regras de Negócio, Prisma ORM.
 - /frontend: Interface React, Tailwind CSS, Dashboards.
-- docker-compose.yml: Orquestra��o de containers (Full Stack).
+- docker-compose.yml: Orquestração de containers (Full Stack).
 
