@@ -23,29 +23,29 @@ Usamos **Colocation**: O código vive perto de onde é usado.
 ##  Estrutura de Pastas
 
 ### Backend (/backend/src)
-`	ext
- common/          # Decorators, Guards, Filters globais
- config/          # Validação de variáveis de ambiente (Zod)
- modules/         # <--- SEU CÓDIGO VIVE AQUI
-    optimization/
-       dto/     # Contratos de entrada/saída
-       entities/# Regras de negócio puras
+```
+common/              # Decorators, Guards, Filters globais
+config/              # Validação de variáveis de ambiente (Zod)
+modules/             # <--- SEU CÓDIGO VIVE AQUI
+   optimization/
+       dto/          # Contratos de entrada/saída
+       entities/     # Regras de negócio puras
        ...controller/service
     wallet/
  app.module.ts
-`
+```
 
 ### Frontend (/frontend/src)
-`	ext
- components/ui/   # ShadcnUI e Design System
- features/        # <--- SEU CÓDIGO VIVE AQUI
+```
+ components/ui/       # ShadcnUI e Design System
+ features/            # <--- SEU CÓDIGO VIVE AQUI
     optimization/
-       api/     # React Query hooks (useOtimizacao)
-       components/ # Tabelas/Gráficos específicos
-       routes/  # Rotas internas da feature
- lib/             # Configurações (Axios, QueryClient)
- pages/           # Montagem das páginas (Roteamento)
-`
+       api/           # React Query hooks (useOtimizacao)
+       components/    # Tabelas/Gráficos específicos
+       routes/        # Rotas internas da feature
+ lib/                 # Configurações (Axios, QueryClient)
+ pages/               # Montagem das páginas (Roteamento)
+```
 
 ##  Guia de Desenvolvimento
 
