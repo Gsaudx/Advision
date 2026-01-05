@@ -14,33 +14,210 @@ datasource db {
   url      = env("DATABASE_URL")
 }
 
+// ============================================================================
+// ENUMS
+// ============================================================================
+
+enum RiskProfile {
+  CONSERVATIVE
+  MODERATE
+  AGGRESSIVE
+}
+
+enum AssetType {
+  STOCK
+  OPTION
+}
+
+enum OptionType {
+  CALL
+  PUT
+}
+
+enum ExerciseType {
+  AMERICAN
+  EUROPEAN
+}
+
+enum TransactionType {
+  BUY
+  SELL
+  DIVIDEND
+  SPLIT
+  SUBSCRIPTION
+  DEPOSIT
+  WITHDRAWAL
+}
+
+enum OptimizationAlgorithm {
+  KNAPSACK
+}
+
+enum OptimizationStatus {
+  GENERATED
+  ACCEPTED
+  REJECTED
+}
+
+// ============================================================================
+// MODELS
+// ============================================================================
+
+model Advisor {
+  id           String   @id @default(uuid())
+  email        String   @unique
+  passwordHash String
+  name         String
+  cpfCnpj      String?
+  phone        String?
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+
+  clients Client[]
+
+  @@map("advisors")
+}
+
+model Client {
+  id          String      @id @default(uuid())
+  advisorId   String
+  name        String
+  email       String?
+  cpf         String
+  phone       String?
+  riskProfile RiskProfile @default(MODERATE)
+  createdAt   DateTime    @default(now())
+  updatedAt   DateTime    @updatedAt
+
+  advisor Advisor  @relation(fields: [advisorId], references: [id], onDelete: Cascade)
+  wallets Wallet[]
+
+  @@index([advisorId])
+  @@map("clients")
+}
+
 model Wallet {
-  id        String     @id @default(uuid())
-  name      String
-  createdAt DateTime   @default(now())
-  updatedAt DateTime   @updatedAt
-  positions Position[]
+  id          String   @id @default(uuid())
+  clientId    String
+  name        String
+  description String?
+  cashBalance Decimal  @default(0) @db.Decimal(18, 2)
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  client           Client            @relation(fields: [clientId], references: [id], onDelete: Cascade)
+  positions        Position[]
+  transactions     Transaction[]
+  optimizationRuns OptimizationRun[]
+  rebalanceLogs    RebalanceLog[]
+
+  @@index([clientId])
+  @@map("wallets")
 }
 
 model Asset {
-  id        String     @id @default(uuid())
-  ticker    String     @unique
-  type      String     // STOCK, OPTION
-  price     Decimal
-  createdAt DateTime   @default(now())
-  updatedAt DateTime   @updatedAt
-  positions Position[]
+  id        String    @id @default(uuid())
+  ticker    String    @unique
+  name      String
+  type      AssetType
+  sector    String?
+  createdAt DateTime  @default(now())
+  updatedAt DateTime  @updatedAt
+
+  optionDetail       OptionDetail?  @relation("AssetOption")
+  underlyingOptions  OptionDetail[] @relation("UnderlyingAsset")
+  positions          Position[]
+  transactions       Transaction[]
+
+  @@map("assets")
+}
+
+model OptionDetail {
+  id                String       @id @default(uuid())
+  assetId           String       @unique
+  underlyingAssetId String
+  optionType        OptionType
+  exerciseType      ExerciseType
+  strikePrice       Decimal      @db.Decimal(18, 2)
+  expirationDate    DateTime     @db.Date
+
+  asset           Asset @relation("AssetOption", fields: [assetId], references: [id], onDelete: Cascade)
+  underlyingAsset Asset @relation("UnderlyingAsset", fields: [underlyingAssetId], references: [id])
+
+  @@index([underlyingAssetId])
+  @@index([expirationDate])
+  @@map("option_details")
 }
 
 model Position {
-  id        String   @id @default(uuid())
-  walletId  String
-  assetId   String
-  quantity  Int
-  wallet    Wallet   @relation(fields: [walletId], references: [id])
-  asset     Asset    @relation(fields: [assetId], references: [id])
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
+  id           String   @id @default(uuid())
+  walletId     String
+  assetId      String
+  quantity     Decimal  @db.Decimal(18, 8)
+  averagePrice Decimal  @db.Decimal(18, 2)
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+
+  wallet Wallet @relation(fields: [walletId], references: [id], onDelete: Cascade)
+  asset  Asset  @relation(fields: [assetId], references: [id])
 
   @@unique([walletId, assetId])
+  @@index([walletId])
+  @@index([assetId])
+  @@map("positions")
 }
+
+model Transaction {
+  id         String          @id @default(uuid())
+  walletId   String
+  assetId    String?
+  type       TransactionType
+  quantity   Decimal?        @db.Decimal(18, 8)
+  price      Decimal?        @db.Decimal(18, 2)
+  totalValue Decimal         @db.Decimal(18, 2)
+  executedAt DateTime
+  notes      String?
+  createdAt  DateTime        @default(now())
+
+  wallet Wallet @relation(fields: [walletId], references: [id], onDelete: Cascade)
+  asset  Asset? @relation(fields: [assetId], references: [id])
+
+  @@index([walletId])
+  @@index([assetId])
+  @@index([executedAt])
+  @@map("transactions")
+}
+
+model OptimizationRun {
+  id              String                @id @default(uuid())
+  walletId        String
+  algorithm       OptimizationAlgorithm
+  inputParameters Json
+  outputResult    Json
+  status          OptimizationStatus    @default(GENERATED)
+  acceptedAt      DateTime?
+  createdAt       DateTime              @default(now())
+
+  wallet        Wallet         @relation(fields: [walletId], references: [id], onDelete: Cascade)
+  rebalanceLogs RebalanceLog[]
+
+  @@index([walletId])
+  @@index([status])
+  @@map("optimization_runs")
+}
+
+model RebalanceLog {
+  id                String   @id @default(uuid())
+  walletId          String
+  optimizationRunId String
+  snapshotBefore    Json
+  snapshotAfter     Json
+  executedAt        DateTime @default(now())
+
+  wallet          Wallet          @relation(fields: [walletId], references: [id], onDelete: Cascade)
+  optimizationRun OptimizationRun @relation(fields: [optimizationRunId], references: [id])
+
+  @@index([walletId])
+  @@map("rebalance_logs")
+}
+
