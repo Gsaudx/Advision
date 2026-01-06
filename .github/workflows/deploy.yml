@@ -33,6 +33,7 @@ jobs:
   # ------------------------------------------------------------------
   deploy-backend:
     needs: build-backend
+    if: vars.DEPLOY_EC2_ENABLED == 'true'
     runs-on: ubuntu-latest
     steps:
     - uses: actions/checkout@v4
