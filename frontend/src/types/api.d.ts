@@ -4,143 +4,143 @@
  */
 
 export interface paths {
-    "/health": {
-        parameters: {
-            query?: never;
-            header?: never;
-            path?: never;
-            cookie?: never;
-        };
-        /**
-         * Verifica status da API
-         * @description Retorna o status da aplicação e a conexão com o banco de dados. Use este endpoint para monitoramento e health checks de infraestrutura.
-         */
-        get: operations["HealthController_check"];
-        put?: never;
-        post?: never;
-        delete?: never;
-        options?: never;
-        head?: never;
-        patch?: never;
-        trace?: never;
+  '/health': {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
     };
+    /**
+     * Verifica status da API
+     * @description Retorna o status da aplicação e a conexão com o banco de dados. Use este endpoint para monitoramento e health checks de infraestrutura.
+     */
+    get: operations['HealthController_check'];
+    put?: never;
+    post?: never;
+    delete?: never;
+    options?: never;
+    head?: never;
+    patch?: never;
+    trace?: never;
+  };
 }
 export type webhooks = Record<string, never>;
 export interface components {
-    schemas: {
-        HealthResponseDto: {
-            /**
-             * @description Status geral da aplicação
-             * @example ok
-             * @enum {string}
-             */
-            status: "ok" | "error";
-            /**
-             * @description Status da conexão com o banco de dados
-             * @example connected
-             * @enum {string}
-             */
-            database: "connected" | "disconnected";
-            /**
-             * @description Data/hora da verificação (ISO 8601)
-             * @example 2026-01-06T15:30:00.000Z
-             */
-            timestamp?: string;
-            /**
-             * @description Ambiente de execução
-             * @example development
-             */
-            environment?: string;
-            /**
-             * @description Mensagem de erro (apenas quando status = error)
-             * @example Connection refused
-             */
-            error?: string;
-        };
-        HealthApiResponseDto: {
-            /**
-             * @description Indica se a requisição foi bem-sucedida
-             * @example true
-             */
-            success: boolean;
-            /** @description Dados de saúde da aplicação */
-            data: components["schemas"]["HealthResponseDto"];
-            /**
-             * @description Mensagem descritiva (opcional)
-             * @example Operação realizada com sucesso
-             */
-            message?: string;
-        };
-        ApiErrorResponseDto: {
-            /**
-             * @description Indica que houve erro
-             * @example false
-             */
-            success: boolean;
-            /**
-             * @description Código HTTP do erro
-             * @example 400
-             */
-            statusCode: number;
-            /**
-             * @description Mensagem de erro
-             * @example Dados inválidos
-             */
-            message: string;
-            /**
-             * @description Detalhes do erro (validação, etc.)
-             * @example [
-             *       "email deve ser um email válido"
-             *     ]
-             */
-            errors?: string[];
-            /**
-             * @description Timestamp do erro
-             * @example 2026-01-06T15:30:00.000Z
-             */
-            timestamp: string;
-            /**
-             * @description Caminho da requisição
-             * @example /api/clients
-             */
-            path?: string;
-        };
+  schemas: {
+    HealthResponseDto: {
+      /**
+       * @description Status geral da aplicação
+       * @example ok
+       * @enum {string}
+       */
+      status: 'ok' | 'error';
+      /**
+       * @description Status da conexão com o banco de dados
+       * @example connected
+       * @enum {string}
+       */
+      database: 'connected' | 'disconnected';
+      /**
+       * @description Data/hora da verificação (ISO 8601)
+       * @example 2026-01-06T15:30:00.000Z
+       */
+      timestamp?: string;
+      /**
+       * @description Ambiente de execução
+       * @example development
+       */
+      environment?: string;
+      /**
+       * @description Mensagem de erro (apenas quando status = error)
+       * @example Connection refused
+       */
+      error?: string;
     };
-    responses: never;
-    parameters: never;
-    requestBodies: never;
-    headers: never;
-    pathItems: never;
+    HealthApiResponseDto: {
+      /**
+       * @description Indica se a requisição foi bem-sucedida
+       * @example true
+       */
+      success: boolean;
+      /** @description Dados de saúde da aplicação */
+      data: components['schemas']['HealthResponseDto'];
+      /**
+       * @description Mensagem descritiva (opcional)
+       * @example Operação realizada com sucesso
+       */
+      message?: string;
+    };
+    ApiErrorResponseDto: {
+      /**
+       * @description Indica que houve erro
+       * @example false
+       */
+      success: boolean;
+      /**
+       * @description Código HTTP do erro
+       * @example 400
+       */
+      statusCode: number;
+      /**
+       * @description Mensagem de erro
+       * @example Dados inválidos
+       */
+      message: string;
+      /**
+       * @description Detalhes do erro (validação, etc.)
+       * @example [
+       *       "email deve ser um email válido"
+       *     ]
+       */
+      errors?: string[];
+      /**
+       * @description Timestamp do erro
+       * @example 2026-01-06T15:30:00.000Z
+       */
+      timestamp: string;
+      /**
+       * @description Caminho da requisição
+       * @example /api/clients
+       */
+      path?: string;
+    };
+  };
+  responses: never;
+  parameters: never;
+  requestBodies: never;
+  headers: never;
+  pathItems: never;
 }
 export type $defs = Record<string, never>;
 export interface operations {
-    HealthController_check: {
-        parameters: {
-            query?: never;
-            header?: never;
-            path?: never;
-            cookie?: never;
-        };
-        requestBody?: never;
-        responses: {
-            /** @description Sistema operacional */
-            200: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": components["schemas"]["HealthApiResponseDto"];
-                };
-            };
-            /** @description Sistema com falha (banco desconectado) */
-            503: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": components["schemas"]["ApiErrorResponseDto"];
-                };
-            };
-        };
+  HealthController_check: {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
     };
+    requestBody?: never;
+    responses: {
+      /** @description Sistema operacional */
+      200: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/json': components['schemas']['HealthApiResponseDto'];
+        };
+      };
+      /** @description Sistema com falha (banco desconectado) */
+      503: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/json': components['schemas']['ApiErrorResponseDto'];
+        };
+      };
+    };
+  };
 }

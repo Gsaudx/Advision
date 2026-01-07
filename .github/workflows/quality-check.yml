@@ -28,9 +28,11 @@ jobs:
     - name: Install Dependencies
       run: npm ci
 
+    - name: Generate Prisma Client
+      run: npx prisma generate
+
     - name: 🔍 Lint Check (ESLint)
       run: npm run lint
-      # Certifique-se que no package.json o script "lint" roda o eslint
 
     - name: 💅 Prettier Check
       # Flag --check fail the job if there are formatting issues

@@ -17,12 +17,11 @@ export function useHealthCheck() {
 
   const status: HealthStatus = {
     api: query.isLoading ? 'loading' : query.isError ? 'error' : 'success',
-    database:
-      query.isLoading
-        ? 'loading'
-        : query.data?.data?.database === 'connected'
-          ? 'success'
-          : 'error',
+    database: query.isLoading
+      ? 'loading'
+      : query.data?.data?.database === 'connected'
+        ? 'success'
+        : 'error',
   };
 
   return {
