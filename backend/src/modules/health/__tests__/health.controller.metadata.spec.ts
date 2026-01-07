@@ -14,8 +14,11 @@ describe('HealthController - Decorator Metadata', () => {
 
   it('should have @Get metadata on check method', () => {
     const path = Reflect.getMetadata('path', HealthController.prototype.check);
-    const method = Reflect.getMetadata('method', HealthController.prototype.check);
-    
+    const method = Reflect.getMetadata(
+      'method',
+      HealthController.prototype.check,
+    );
+
     expect(path).toBe('/');
     expect(method).toBe(0); // GET = 0
   });
@@ -25,7 +28,7 @@ describe('HealthController - Decorator Metadata', () => {
       'swagger/apiOperation',
       HealthController.prototype.check,
     );
-    
+
     expect(operation).toMatchObject({
       summary: 'Verifica status da API',
       description: expect.stringContaining('Retorna o status da aplicação'),
@@ -37,10 +40,12 @@ describe('HealthController - Decorator Metadata', () => {
       'swagger/apiResponse',
       HealthController.prototype.check,
     );
-    
+
     expect(responses).toHaveProperty('200');
     expect(responses).toHaveProperty('503');
     expect(responses['200'].description).toBe('Sistema operacional');
-    expect(responses['503'].description).toBe('Sistema com falha (banco desconectado)');
+    expect(responses['503'].description).toBe(
+      'Sistema com falha (banco desconectado)',
+    );
   });
 });
