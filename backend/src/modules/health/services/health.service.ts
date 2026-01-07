@@ -8,9 +8,9 @@ export class HealthService {
   constructor(private readonly prisma: PrismaService) {}
 
   /**
-   * Verifica a saúde da aplicação.
-   * @returns Dados de saúde se tudo OK
-   * @throws Error se o banco estiver desconectado
+   * Verifies the health of the application by checking database connectivity.
+   * @returns Health data if everything is OK
+   * @throws Error if the database is disconnected
    */
   async check(): Promise<HealthResponseDto> {
     await this.prisma.$queryRaw`SELECT 1`;
