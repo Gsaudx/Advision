@@ -821,3 +821,6 @@ O pipeline está em `.github/workflows/deploy.yml`:
 1. **Zero Over-engineering**
 2. **Tipagem Estrita:** Sem `any`. Interfaces do Front espelham DTOs do Back.
 3. **Commits:** Siga Conventional Commits (`feat`, `fix`, `chore`).
+
+## Regras de Pull Requests
+1. **Prettier**: Ao finalizar suas alterações, rode o comando: `npx prettier --write "**/*.{js,jsx,ts,tsx,json,css,md}"` para o prettier ajustar a formatação dos arquivos
