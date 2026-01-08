@@ -1,11 +1,11 @@
 import { QueryClientProvider } from '@tanstack/react-query';
 import { queryClient } from './lib/react-query';
-import { HealthCheckPage } from './features/health-check';
+import { AppRoutes } from './routes'; // Import the routes
 
 export default function App() {
   return (
     <QueryClientProvider client={queryClient}>
-      <HealthCheckPage />
+      <AppRoutes />
     </QueryClientProvider>
   );
 }
