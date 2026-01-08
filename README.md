@@ -317,6 +317,8 @@ src/
 │   └── layout/                    #   Estruturas (Sidebar, Header)
 ├── features/
 │   └── {feature}/                 # Cada funcionalidade do sistema
+│       ├── pages/                 #   Páginas/orquestradores da feature
+│       │   └── {Feature}Page.tsx
 │       ├── api/                   #   Hooks de data fetching (TanStack Query)
 │       │   └── use{Feature}.ts
 │       ├── components/            #   Componentes da feature
@@ -324,28 +326,35 @@ src/
 │       ├── hooks/                 #   Hooks de lógica de UI
 │       ├── types/                 #   Tipagens da feature
 │       │   └── index.ts
-│       └── index.tsx              #   Página principal (export)
+│       └── index.ts               #   Barrel exports
 ├── hooks/                         # Hooks globais (useDebounce, useLocalStorage)
 ├── lib/                           # axios, react-query, utils
-└── pages/                         # Rotas
+└── routes/                        # Definição de rotas (React Router)
+    └── index.tsx
 ```
 
 ##### Features Simples vs Features com Sub-funcionalidades
 
-**Feature simples** (ex: `health-check`): Estrutura plana com api/, components/, types/.
+**Feature simples** (ex: `health-check`): Estrutura plana com pages/, api/, components/, types/.
 
 **Feature complexa** (ex: `wallet`): Agrupa sub-funcionalidades em pastas internas.
-
 ```
 features/wallet/
 ├── core/                          # CRUD da carteira
+│   ├── pages/
+│   │   └── WalletPage.tsx
 │   ├── api/
-│   │   └── useWallet.ts           # useGetWallet, useCreateWallet, etc.
+│   │   └── useWallet.ts           # useGetWallet, useCreateWallet, etc (TanStack Query)
+│   ├── hooks/
+│   │   └── useWalletFilters.ts    # ← useState + lógica de filtro
+│   │   └──useWalletModal.ts       # ← Controle de abertura/fechamento de modal
 │   ├── components/
-│   │   └── WalletCard.tsx
+│   │   └── WalletList.tsx         # ← Usa AMBOS os hooks
 │   └── types/
 │       └── index.ts
 ├── positions/                     # Sub-funcionalidade: posições
+│   ├── pages/
+│   │   └── PositionsPage.tsx
 │   ├── api/
 │   │   └── usePositions.ts
 │   ├── components/
@@ -353,6 +362,8 @@ features/wallet/
 │   └── types/
 │       └── index.ts
 ├── transactions/                  # Sub-funcionalidade: transações
+│   ├── pages/
+│   │   └── TransactionsPage.tsx
 │   ├── api/
 │   │   └── useTransactions.ts
 │   ├── components/
@@ -361,28 +372,42 @@ features/wallet/
 │       └── index.ts
 ├── hooks/                         # Hooks compartilhados da feature
 ├── types/                         # Types compartilhados da feature
-└── index.tsx                      # Página principal (exporta tudo)
+└── index.ts                       # Barrel exports
 ```
 
 **Diferença do Backend:** No React não precisa "registrar" nada. Basta criar as pastas e importar onde usar:
-
 ```tsx
-// pages/WalletPage.tsx
-import { useWallet } from '@/features/wallet/core/api/useWallet';
-import { usePositions } from '@/features/wallet/positions/api/usePositions';
-import { PositionsList } from '@/features/wallet/positions/components/PositionsList';
+// routes/index.tsx
+import { WalletPage } from '@/features/wallet/core';
+import { PositionsPage } from '@/features/wallet/positions';
 
-export function WalletPage() {
-  const { data: wallet } = useWallet(walletId);
-  const { data: positions } = usePositions(walletId);
-  
-  return <PositionsList positions={positions} />;
+export function AppRoutes() {
+  return (
+    <BrowserRouter>
+      <Routes>
+        <Route path="/" element={<Navigate to="/healthcheck" replace />} />
+        {/* Simple route example */}
+        <Route path="/healthcheck" element={<HealthCheckPage />} />
+        
+        {/* Nested routes example */}
+        <Route path="/dashboard">
+          <Route index element={<DashboardPage />} />
+          <Route path="analytics" element={<AnalyticsPage />} />
+          <Route path="reports" element={<ReportsPage />} />
+        </Route>
+
+      </Routes>
+    </BrowserRouter>
+  );
 }
+
 ```
 
 **Exemplo: Feature Health-Check (simples)**
 ```
 features/health-check/
+├── pages/
+│   └── HealthCheckPage.tsx    # Página principal da feature
 ├── api/
 │   └── useHealthCheck.ts      # Hook de data fetching
 ├── components/
@@ -391,7 +416,7 @@ features/health-check/
 │   └── TechStackSection.tsx
 ├── types/
 │   └── index.ts               # HealthResponse interface
-└── index.tsx                  # Página exportada
+└── index.ts                   # export { HealthCheckPage } from './pages/HealthCheckPage'
 ```
 
 ### Hooks no React: `api/` vs `hooks/`
@@ -401,11 +426,11 @@ features/health-check/
 | Pasta | Propósito | Quando usar | Exemplo |
 |-------|-----------|-------------|---------|
 | **api/** | Data fetching | Comunicação com backend (GET, POST, etc.) | `useGetWallets()`, `useCreateClient()` |
-| **hooks/** | Lógica de UI | Estado local, filtros, modais, debounce | `useTableFilters()`, `useDebounce()` |
+| **hooks/** | Lógica de UI | Estado local, filtros, modais, debounce (não vai ao servidor) | `useTableFilters()`, `useDebounce()` |
 
 **Onde colocar?**
 - `features/{feature}/api/` → Hook específico da feature
-- `features/{feature}/hooks/` → Hook específico da feature  
+- `features/{feature}/hooks/` → Hook específico da feature
 - `src/hooks/` → Hook reutilizado em múltiplas features
 
 **Exemplo:**
