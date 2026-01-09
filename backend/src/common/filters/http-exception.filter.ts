@@ -8,7 +8,7 @@ import {
 import { Request, Response } from 'express';
 import { ZodValidationException } from 'nestjs-zod';
 import { ZodError } from 'zod';
-import type { ApiErrorResponse } from '../dto';
+import type { ApiErrorResponse } from '../schemas';
 
 interface ExceptionResponse {
   message?: string | string[];

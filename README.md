@@ -25,7 +25,7 @@ Não usamos arquitetura de camadas tradicional (Controller/Service/Repo) na raiz
 Agrupamos por **Domínio de Negócio**.
 
 - **Módulos:** Cada pasta em `modules/` é um domínio isolado (ex: optimization, wallet, assets).
-- **Estrutura Interna:** Módulos maiores usam subpastas (`controllers/`, `services/`, `dto/`, `__tests__/`).
+- **Estrutura Interna:** Módulos maiores usam subpastas (`controllers/`, `services/`, `schemas/`, `__tests__/`).
 - **Shared:** Serviços compartilhados (Prisma, etc.) ficam em `shared/` com `@Global()`.
 - **Path Alias:** Usamos `@/` para imports absolutos (ex: `@/shared/prisma`).
 - **Comunicação:** Módulos podem importar uns aos outros via `imports: []` no Module.
@@ -46,14 +46,13 @@ Usamos **Colocation**: No caso do nosso projeto, o código vive perto de onde é
 
 #### Módulo Simples
 
-**Módulo simples** (ex: `health`): Estrutura plana com controllers/, services/, dto/
+**Módulo simples** (ex: `health`): Estrutura plana com controllers/, services/, schemas/
 
 ```
 src/
 ├── common/                               # Código reutilizável em toda aplicação
 │   ├── decorators/                       #   Decorators customizados
 │   ├── schemas/                          #   Schemas Zod base (ApiResponse, ApiError)
-│   ├── dto/                              #   Re-exporta de schemas/ (compatibilidade)
 │   ├── filters/                          #   Tratamento de exceções
 │   ├── guards/                           #   Controle de acesso
 │   └── utils/                            #   Funções utilitárias
@@ -63,8 +62,7 @@ src/
 │   └── {feature}/                        # Cada domínio de negócio
 │       ├── controllers/                  #   Endpoints da API
 │       ├── services/                     #   Lógica de negócio
-│       ├── schemas/                      #   Schemas Zod (validação + tipos)
-│       ├── dto/                          #   Re-exporta de schemas/ (compatibilidade)
+│       ├── schemas/                      #   Schemas Zod (validação + tipos + DTOs)
 │       ├── enums/                        #   Enums do domínio
 │       ├── __tests__/                    #   Testes unitários
 │       ├── {feature}.module.ts
@@ -87,22 +85,22 @@ modules/wallet/
 │   │   └── wallet.controller.ts    # /wallets
 │   ├── services/
 │   │   └── wallet.service.ts
-│   └── dto/
-│       └── wallet.dto.ts
+│   └── schemas/
+│       └── wallet.schema.ts
 ├── positions/                      # Sub-funcionalidade: posições
 │   ├── controllers/
 │   │   └── positions.controller.ts # /wallets/:id/positions
 │   ├── services/
 │   │   └── positions.service.ts
-│   └── dto/
-│       └── position.dto.ts
+│   └── schemas/
+│       └── position.schema.ts
 ├── transactions/                   # Sub-funcionalidade: transações
 │   ├── controllers/
 │   │   └── transactions.controller.ts
 │   ├── services/
 │   │   └── transactions.service.ts
-│   └── dto/
-│       └── transaction.dto.ts
+│   └── schemas/
+│       └── transaction.schema.ts
 ├── enums/                          # Enums compartilhados do módulo
 ├── __tests__/
 ├── wallet.module.ts                # Registra TODOS os controllers/services
@@ -126,14 +124,13 @@ export class WalletModule {}
 
 Cada pasta representa uma **funcionalidade isolada** do sistema. Um módulo contém tudo que precisa para funcionar.
 
-| Subpasta         | Responsabilidade                                                                              | Quando usar                                                         |
-| ---------------- | --------------------------------------------------------------------------------------------- | ------------------------------------------------------------------- |
-| **controllers/** | Recebe requisições HTTP, valida entrada, chama o service e retorna resposta.                  | Sempre que expor um endpoint (`GET /wallets`, `POST /clients`).     |
-| **services/**    | Contém a lógica de negócio. Não sabe nada de HTTP.                                            | Cálculos, validações de regra de negócio, orquestração de dados.    |
-| **schemas/**     | Define schemas Zod para validação e tipagem. Gera DTOs e tipos automaticamente.               | Validação de entrada, definição de contratos, documentação Swagger. |
-| **dto/**         | Re-exporta de `schemas/` para compatibilidade de imports.                                     | Imports existentes continuam funcionando.                           |
-| **enums/**       | Enums TypeScript específicos do domínio. Garante type-safety entre Schema, Service e Swagger. | Sempre que tiver valores fixos (`status`, `tipo`, etc.).            |
-| ****tests**/**   | Testes unitários do módulo. Ficam próximos do código que testam.                              | Testar services isoladamente com mocks.                             |
+| Subpasta           | Responsabilidade                                                                                 | Quando usar                                                         |
+| ------------------ | ------------------------------------------------------------------------------------------------ | ------------------------------------------------------------------- |
+| **controllers/**   | Recebe requisições HTTP, valida entrada, chama o service e retorna resposta.                     | Sempre que expor um endpoint (`GET /wallets`, `POST /clients`).     |
+| **services/**      | Contém a lógica de negócio. Não sabe nada de HTTP.                                               | Cálculos, validações de regra de negócio, orquestração de dados.    |
+| **schemas/**       | Define schemas Zod para validação e tipagem. Gera DTOs (via `createZodDto`) e tipos (`z.infer`). | Validação de entrada, definição de contratos, documentação Swagger. |
+| **enums/**         | Enums TypeScript específicos do domínio. Garante type-safety entre Schema, Service e Swagger.    | Sempre que tiver valores fixos (`status`, `tipo`, etc.).            |
+| **\_\_tests\_\_/** | Testes unitários do módulo. Ficam próximos do código que testam.                                 | Testar services isoladamente com mocks.                             |
 
 #### Detalhamento das Pastas
 
@@ -144,8 +141,7 @@ Contém funcionalidades que **são compartilhadas** entre múltiplos módulos. D
 | Subpasta        | O que é                                                                                               | Exemplo                                                                                                                        |
 | --------------- | ----------------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------ |
 | **decorators/** | Anotações customizadas para métodos/classes. Extraem dados ou adicionam metadados.                    | `@CurrentUser()` — extrai o usuário logado do token JWT e injeta no controller. Evita repetir `req.user` em todo lugar.        |
-| **schemas/**    | Schemas Zod base reutilizáveis. Definem validação e tipos para respostas padronizadas.                | `ApiResponseSchema`: wrapper de sucesso. `ApiErrorResponseSchema`: formato padrão de erros.                                    |
-| **dto/**        | Re-exporta de `schemas/`. Mantém compatibilidade de imports.                                          | `export * from '../schemas'`                                                                                                   |
+| **schemas/**    | Schemas Zod base reutilizáveis. Definem validação, DTOs e tipos para respostas padronizadas.          | `ApiResponseSchema`: wrapper de sucesso. `ApiErrorResponseSchema`: formato padrão de erros.                                    |
 | **filters/**    | Interceptam exceções e formatam a resposta de erro. Garantem que todos os erros sigam o mesmo padrão. | `HttpExceptionFilter` — captura erros (incluindo `ZodValidationException`) e retorna resposta padronizada.                     |
 | **guards/**     | Bloqueiam ou liberam acesso a rotas. Executam **antes** do controller.                                | `JwtAuthGuard` — verifica se o token é válido. `RolesGuard` — verifica se o usuário tem permissão (ex: só admin pode deletar). |
 | **utils/**      | Funções puras auxiliares, sem dependência do NestJS.                                                  | `formatCpf()`, `calculateAveragePrice()`, `slugify()`                                                                          |
@@ -219,12 +215,10 @@ modules/health/
 ├── services/
 │   ├── health.service.ts      # Lógica de verificação
 │   └── index.ts
-├── schemas/                   # Schemas Zod (fonte da verdade)
+├── schemas/                   # Schemas Zod + DTOs + tipos
 │   ├── health-response.schema.ts
 │   ├── health-api-response.schema.ts
 │   └── index.ts
-├── dto/
-│   └── index.ts               # Re-exporta de ../schemas
 ├── enums/
 │   ├── health-status.enum.ts  # HealthStatus, DatabaseStatus
 │   └── index.ts
@@ -766,20 +760,22 @@ cd frontend
 npm run generate:types  # Requer backend rodando em localhost:3000
 ```
 
-Isso cria `src/types/api.d.ts` com todos os DTOs do backend.
+Isso cria `src/types/api.d.ts` com os schemas do backend.
 
 **Fluxo de trabalho:**
 
-1. Alterar DTO no backend (ex: adicionar campo)
+1. Alterar schema no backend (ex: adicionar campo)
 2. Rodar `npm run generate:types` no frontend
 3. Commitar `api.d.ts` junto com as mudanças do backend
 4. CI/CD usa o arquivo commitado (não precisa regenerar)
 
 ```typescript
-// Uso no frontend
+// Uso no frontend (features/{feature}/types/index.ts)
 import type { components } from "@/types/api";
 
-type HealthResponseDto = components["schemas"]["HealthResponseDto"];
+// Mapear tipos removendo o sufixo Dto (convenção do frontend)
+export type HealthApiResponse = components["schemas"]["HealthApiResponseDto"];
+export type HealthResponse = HealthApiResponse["data"];
 // status: "ok" | "error"  ← Gerado automaticamente do enum do backend
 ```
 

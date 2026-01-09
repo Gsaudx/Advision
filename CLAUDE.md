@@ -47,7 +47,7 @@ npx prettier --write "**/*.{js,jsx,ts,tsx,json,css,md}"
 
 **Module Structure:**
 
-- Simple modules: flat structure with `controllers/`, `services/`, `schemas/`, `dto/`, `__tests__/`
+- Simple modules: flat structure with `controllers/`, `services/`, `schemas/`, `__tests__/`
 - Complex modules (like `wallet`): sub-functionality folders (e.g., `core/`, `positions/`, `transactions/`)
 
 **Key Folders:**
@@ -60,7 +60,6 @@ npx prettier --write "**/*.{js,jsx,ts,tsx,json,css,md}"
 **Validation with Zod:**
 
 - Schemas defined in `schemas/` folders using Zod 4
-- `dto/` folders re-export from `schemas/` for backward compatibility
 - Use `createZodDto()` from `nestjs-zod` to create DTO classes for Swagger
 - Types inferred with `z.infer<typeof Schema>`
 - Enums: use `z.nativeEnum(MyEnum)`

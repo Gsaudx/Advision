@@ -3,7 +3,7 @@ import { ServiceUnavailableException } from '@nestjs/common';
 import { HealthController } from '../controllers/health.controller';
 import { HealthService } from '../services/health.service';
 import { HealthStatus, DatabaseStatus } from '../enums';
-import { HealthResponseDto } from '../dto';
+import { HealthResponseDto } from '../schemas';
 
 describe('HealthController', () => {
   let controller: HealthController;

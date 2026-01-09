@@ -1,6 +1,6 @@
 import { Injectable } from '@nestjs/common';
 import { PrismaService } from '@/shared/prisma/prisma.service';
-import type { HealthResponse } from '../dto';
+import type { HealthResponse } from '../schemas';
 import { HealthStatus, DatabaseStatus } from '../enums';
 
 @Injectable()

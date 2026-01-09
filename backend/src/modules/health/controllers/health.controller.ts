@@ -1,10 +1,10 @@
 import { Controller, Get, ServiceUnavailableException } from '@nestjs/common';
 import { ApiOperation, ApiResponse, ApiTags } from '@nestjs/swagger';
-import { ApiResponseDto, ApiErrorResponseDto } from '@/common/dto';
-import type { ApiResponse as ApiResponseType } from '@/common/dto';
+import { ApiResponseDto, ApiErrorResponseDto } from '@/common/schemas';
+import type { ApiResponse as ApiResponseType } from '@/common/schemas';
 import { HealthService } from '../services/health.service';
-import { HealthApiResponseDto } from '../dto';
-import type { HealthResponse } from '../dto';
+import { HealthApiResponseDto } from '../schemas';
+import type { HealthResponse } from '../schemas';
 
 @ApiTags('Health')
 @Controller('health')
