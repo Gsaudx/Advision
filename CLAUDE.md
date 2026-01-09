@@ -122,6 +122,6 @@ Quality checks run on PRs to main/master:
 2. **Strict Typing**: No `any`. Frontend interfaces mirror backend DTOs.
 3. **Conventional Commits**: `feat`, `fix`, `chore`, etc.
 4. **Human Language and comments**: Code is in english. Comments only when strictly necessary, and also in english. Every text in U.I in brazilian portuguese.
-5. **Commits**: Always semantic commits in english. Example - feat(backend): Add wallet/ endpoint to list wallets
+5. **Commits**: Always semantic commits in english. Example - feat(backend): Add wallet/ endpoint to list wallets. Do not add other people/claude as co-authors. Let only myself as the author of the changes.
 6. **Documentation**: After we commit a change, read the whole README.md file and update the respective sections, if needed with the new information (if we change some architecture decision, include folders, etc). After that, do the same thing in the CLAUDE.md file.
 7. **Extra Instructions**: Always follow the standard used in the files already written, if we have a bad implementation, security issue or related, relate it to me so we can discuss a change in the implementation.
