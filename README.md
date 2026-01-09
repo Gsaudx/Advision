@@ -317,6 +317,46 @@ return { status: HealthStatus.OK, ... };
 expect(result.status).toBe(HealthStatus.OK);
 ```
 
+##### Schema vs DTO vs Type
+
+No projeto usamos três conceitos relacionados mas distintos:
+
+| Conceito   | O que é                         | Propósito                                  | Comportamento em Runtime |
+| ---------- | ------------------------------- | ------------------------------------------ | ------------------------ |
+| **Schema** | Regras de validação Zod         | Definir estrutura + validar dados          | Valida dados de verdade  |
+| **DTO**    | Classe NestJS                   | Documentação Swagger + tipagem controllers | Apenas container de tipo |
+| **Type**   | Tipo TypeScript (via `z.infer`) | Type-safety no código                      | Removido na compilação   |
+
+**Fluxo de definição:**
+
+```typescript
+// 1. SCHEMA - Fonte da verdade (valida dados em runtime)
+export const HealthResponseSchema = z.object({
+  status: z.nativeEnum(HealthStatus).describe("Status da aplicacao"),
+  database: z.nativeEnum(DatabaseStatus).describe("Status do banco"),
+});
+
+// 2. DTO - Para Swagger/NestJS (envolve o schema em uma classe)
+//    Usado apenas em controllers para documentação da API
+export class HealthResponseDto extends createZodDto(HealthResponseSchema) {}
+
+// 3. TYPE - Para TypeScript (inferido do schema)
+//    Usado em services e lógica de negócio
+export type HealthResponse = z.infer<typeof HealthResponseSchema>;
+```
+
+**Quando usar cada um:**
+
+| Situação                           | Usar        |
+| ---------------------------------- | ----------- |
+| Validar input de requisição        | Schema      |
+| Documentar endpoint no Swagger     | DTO (class) |
+| Tipar retorno de service           | Type        |
+| Tipar variáveis internas           | Type        |
+| Decorator `@ApiResponse({ type })` | DTO (class) |
+
+**No Frontend:** Usamos apenas Types (sem sufixo Dto), mapeados do `api.d.ts` gerado.
+
 ### Frontend (`/frontend/src`)
 
 ```
