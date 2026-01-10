@@ -4,12 +4,13 @@ interface BasePageProps {
     children: React.ReactNode;
 }
 
-// A base page layout that includes the Header component and renders child content. 
 export function BasePage({ children }: BasePageProps) {
     return (
-        <div>
+        // h-screen locks height to screen, flex-col stacks Header and Content
+        <div className="h-screen flex flex-col overflow-hidden">
             <Header />
-            <div className='bg-black'>
+            {/* flex-1 makes this div take up all remaining space below the header */}
+            <div className='bg-black flex-1 overflow-auto'>
                 {children}
             </div>
         </div>
