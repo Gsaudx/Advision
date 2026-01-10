@@ -1,7 +1,8 @@
 import { Header } from "./Header";
+import type { ReactNode } from 'react';
 
 interface BasePageProps {
-    children: React.ReactNode;
+    children: ReactNode;
 }
 
 export function BasePage({ children }: BasePageProps) {
