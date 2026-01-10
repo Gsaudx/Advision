@@ -10,7 +10,7 @@ export function BasePage({ children }: BasePageProps) {
         <div className="h-screen flex flex-col overflow-hidden">
             <Header />
             {/* flex-1 makes this div take up all remaining space below the header */}
-            <div className='bg-black flex-1 overflow-auto'>
+            <div className='bg-slate-950 flex-1 overflow-auto'>
                 {children}
             </div>
         </div>
