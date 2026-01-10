@@ -1,8 +1,10 @@
 import { Controller, Get, ServiceUnavailableException } from '@nestjs/common';
 import { ApiOperation, ApiResponse, ApiTags } from '@nestjs/swagger';
-import { ApiResponseDto, ApiErrorResponseDto } from '@/common/dto';
+import { ApiResponseDto, ApiErrorResponseDto } from '@/common/schemas';
+import type { ApiResponse as ApiResponseType } from '@/common/schemas';
 import { HealthService } from '../services/health.service';
-import { HealthResponseDto, HealthApiResponseDto } from '../dto';
+import { HealthApiResponseDto } from '../schemas';
+import type { HealthResponse } from '../schemas';
 
 @ApiTags('Health')
 @Controller('health')
@@ -26,7 +28,7 @@ export class HealthController {
     description: 'Sistema com falha (banco desconectado)',
     type: ApiErrorResponseDto,
   })
-  async check(): Promise<ApiResponseDto<HealthResponseDto>> {
+  async check(): Promise<ApiResponseType<HealthResponse>> {
     try {
       const data = await this.healthService.check();
       return ApiResponseDto.success(data);

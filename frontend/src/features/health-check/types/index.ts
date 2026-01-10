@@ -1,12 +1,12 @@
 import type { components } from '@/types/api';
 
-// Tipos gerados automaticamente do backend via OpenAPI
-export type HealthResponseDto = components['schemas']['HealthResponseDto'];
-export type HealthApiResponseDto =
-  components['schemas']['HealthApiResponseDto'];
-export type ApiErrorResponseDto = components['schemas']['ApiErrorResponseDto'];
+// Types mapped from backend schemas (removing Dto suffix for cleaner frontend code)
+export type HealthApiResponse = components['schemas']['HealthApiResponseDto'];
+export type ApiErrorResponse = components['schemas']['ApiErrorResponseDto'];
 
-// Tipos de UI (específicos do frontend)
+// Derived type: health data extracted from the API response wrapper
+export type HealthResponse = HealthApiResponse['data'];
+
 export type ConnectionStatus = 'loading' | 'success' | 'error';
 
 export interface HealthStatus {

@@ -2,7 +2,8 @@ import 'dotenv/config';
 import { NestFactory } from '@nestjs/core';
 import { AppModule } from './app.module';
 import { DocumentBuilder, SwaggerModule } from '@nestjs/swagger';
-import { Logger, ValidationPipe } from '@nestjs/common';
+import { Logger } from '@nestjs/common';
+import { ZodValidationPipe } from 'nestjs-zod';
 import { HttpExceptionFilter } from '@/common/filters';
 
 async function bootstrap() {
@@ -20,14 +21,8 @@ async function bootstrap() {
   // 2. Filtro de Exceções Global (Padroniza respostas de erro)
   app.useGlobalFilters(new HttpExceptionFilter());
 
-  // 3. Validação Global (Pipes)
-  app.useGlobalPipes(
-    new ValidationPipe({
-      whitelist: true, // Remove propriedades não decoradas no DTO
-      forbidNonWhitelisted: true, // Erro se enviar propriedade extra
-      transform: true, // Transforma payload no tipo do DTO
-    }),
-  );
+  // 3. Validacao Global com Zod
+  app.useGlobalPipes(new ZodValidationPipe());
 
   // 4. Swagger (Documentação Viva) - Apenas em Desenvolvimento
   if (process.env.NODE_ENV !== 'production') {

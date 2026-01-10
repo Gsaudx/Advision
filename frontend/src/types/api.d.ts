@@ -28,81 +28,49 @@ export interface paths {
 export type webhooks = Record<string, never>;
 export interface components {
   schemas: {
-    HealthResponseDto: {
-      /**
-       * @description Status geral da aplicação
-       * @example ok
-       * @enum {string}
-       */
-      status: 'ok' | 'error';
-      /**
-       * @description Status da conexão com o banco de dados
-       * @example connected
-       * @enum {string}
-       */
-      database: 'connected' | 'disconnected';
-      /**
-       * @description Data/hora da verificação (ISO 8601)
-       * @example 2026-01-06T15:30:00.000Z
-       */
-      timestamp?: string;
-      /**
-       * @description Ambiente de execução
-       * @example development
-       */
-      environment?: string;
-      /**
-       * @description Mensagem de erro (apenas quando status = error)
-       * @example Connection refused
-       */
-      error?: string;
-    };
     HealthApiResponseDto: {
       /**
-       * @description Indica se a requisição foi bem-sucedida
-       * @example true
+       * @description Indica se a requisicao foi bem-sucedida
+       * @constant
        */
-      success: boolean;
-      /** @description Dados de saúde da aplicação */
-      data: components['schemas']['HealthResponseDto'];
-      /**
-       * @description Mensagem descritiva (opcional)
-       * @example Operação realizada com sucesso
-       */
+      success: true;
+      /** @description Dados de saude da aplicacao */
+      data: {
+        /**
+         * @description Status geral da aplicacao
+         * @enum {string}
+         */
+        status: 'ok' | 'error';
+        /**
+         * @description Status da conexao com o banco de dados
+         * @enum {string}
+         */
+        database: 'connected' | 'disconnected';
+        /** @description Data/hora da verificacao (ISO 8601) */
+        timestamp?: string;
+        /** @description Ambiente de execucao */
+        environment?: string;
+        /** @description Mensagem de erro (apenas quando status = error) */
+        error?: string;
+      };
+      /** @description Mensagem descritiva (opcional) */
       message?: string;
     };
     ApiErrorResponseDto: {
       /**
        * @description Indica que houve erro
-       * @example false
+       * @constant
        */
-      success: boolean;
-      /**
-       * @description Código HTTP do erro
-       * @example 400
-       */
+      success: false;
+      /** @description Codigo HTTP do erro */
       statusCode: number;
-      /**
-       * @description Mensagem de erro
-       * @example Dados inválidos
-       */
+      /** @description Mensagem de erro */
       message: string;
-      /**
-       * @description Detalhes do erro (validação, etc.)
-       * @example [
-       *       "email deve ser um email válido"
-       *     ]
-       */
+      /** @description Detalhes do erro (validacao, etc.) */
       errors?: string[];
-      /**
-       * @description Timestamp do erro
-       * @example 2026-01-06T15:30:00.000Z
-       */
+      /** @description Timestamp do erro */
       timestamp: string;
-      /**
-       * @description Caminho da requisição
-       * @example /api/clients
-       */
+      /** @description Caminho da requisicao */
       path?: string;
     };
   };

@@ -1,6 +1,6 @@
 import { Injectable } from '@nestjs/common';
 import { PrismaService } from '@/shared/prisma/prisma.service';
-import { HealthResponseDto } from '../dto';
+import type { HealthResponse } from '../schemas';
 import { HealthStatus, DatabaseStatus } from '../enums';
 
 @Injectable()
@@ -12,7 +12,7 @@ export class HealthService {
    * @returns Health data if everything is OK
    * @throws Error if the database is disconnected
    */
-  async check(): Promise<HealthResponseDto> {
+  async check(): Promise<HealthResponse> {
     await this.prisma.$queryRaw`SELECT 1`;
 
     return {
