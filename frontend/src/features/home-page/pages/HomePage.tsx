@@ -1,9 +1,9 @@
 import { BasePage } from "@/components/layout/BasePage";
 import HomeCard from "../components/HomeCard";
-import { Hourglass, UsersRound, Wallet } from "lucide-react";
+import { ChartSpline, Hourglass, UsersRound } from "lucide-react";
 import ClientsCardContent from "../components/ClientsCardContent";
-import WalletsCardContent from "../components/WalletsCardContent";
 import DueDatesCardContent from "../components/DueDatesCardContent";
+import OperationsCardContent from "../components/OperationsCardContent";
 
 export function HomePage() {
     return (
@@ -19,7 +19,7 @@ export function HomePage() {
                 </div>
                 <div className=' grid md:grid-cols-3'>
                     <HomeCard title="Clientes" icon={<UsersRound size={38} />} content={<ClientsCardContent />} />
-                    <HomeCard title="Carteiras" icon={<Wallet size={38} />} content={<WalletsCardContent />} />
+                    <HomeCard title="Operações" icon={<ChartSpline size={38} />} content={<OperationsCardContent />} />
                     <HomeCard title="Vencimentos" icon={<Hourglass size={38} />}content={<DueDatesCardContent />} />
                 </div>
                 <div className='grid md:grid-cols-3'>
