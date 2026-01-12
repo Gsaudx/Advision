@@ -36,15 +36,14 @@ export default function RegisterPage() {
       await signUp({ name, email, password });
       navigate('/home');
     } catch {
-      setError('Erro ao criar conta. Tente novamente.');
-    } finally {
+      setError('Erro ao criar conta. Este email pode ja estar em uso.');
       setIsLoading(false);
     }
   };
 
   return (
     <div className="min-h-screen flex items-center justify-center bg-slate-950 p-4 sm:p-6">
-      <div className="bg-slate-900 border-2 border-blue-400 shadow-lg shadow-blue-900 rounded-2xl sm:rounded-3xl w-full max-w-sm sm:max-w-md lg:max-w-4xl overflow-hidden">
+      <div className="bg-slate-900 border-2 border-blue-400 shadow-lg shadow-blue-900 rounded-2xl sm:rounded-3xl w-full max-w-sm sm:max-w-md lg:max-w-4xl overflow-hidden animate-fade-in">
         <div className="flex flex-col lg:flex-row">
           {/* Branding Section - Hidden on mobile, shown on lg+ */}
           <div className="hidden lg:flex lg:w-72 xl:w-80 bg-slate-950 rounded-l-3xl p-8 flex-col justify-center items-center">
@@ -68,38 +67,42 @@ export default function RegisterPage() {
             </div>
             <form onSubmit={handleSubmit} className="flex flex-col">
               {error && (
-                <div className="mb-4 p-3 bg-rose-500/20 border border-rose-500 rounded-lg text-rose-400 text-sm">
+                <div className="mb-4 p-3 bg-rose-500/20 border border-rose-500 rounded-lg text-rose-400 text-sm animate-shake">
                   {error}
                 </div>
               )}
-              <InputName
-                value={name}
-                onChange={(e) => setName(e.target.value)}
-                required
-              />
-              <InputEmail
-                value={email}
-                onChange={(e) => setEmail(e.target.value)}
-                required
-              />
-              <InputPassword
-                value={password}
-                onChange={(e) => setPassword(e.target.value)}
-                required
-              />
-              <InputPassword
-                label="Confirmar senha"
-                value={confirmPassword}
-                onChange={(e) => setConfirmPassword(e.target.value)}
-                required
-              />
-              <ButtonSubmit full={true} disabled={isLoading}>
-                {isLoading ? 'Registrando...' : 'Registrar'}
-              </ButtonSubmit>
+              <fieldset disabled={isLoading} className="flex flex-col">
+                <InputName
+                  value={name}
+                  onChange={(e) => setName(e.target.value)}
+                  required
+                />
+                <InputEmail
+                  value={email}
+                  onChange={(e) => setEmail(e.target.value)}
+                  required
+                />
+                <InputPassword
+                  value={password}
+                  onChange={(e) => setPassword(e.target.value)}
+                  required
+                />
+                <InputPassword
+                  label="Confirmar senha"
+                  value={confirmPassword}
+                  onChange={(e) => setConfirmPassword(e.target.value)}
+                  required
+                />
+                <ButtonSubmit full={true} loading={isLoading}>
+                  {isLoading ? 'Criando conta...' : 'Registrar'}
+                </ButtonSubmit>
+              </fieldset>
 
               <Link
                 to="/login"
-                className="text-blue-400 hover:text-blue-300 mt-4 text-center text-sm sm:text-base transition-colors"
+                className={`text-blue-400 hover:text-blue-300 mt-4 text-center text-sm sm:text-base transition-colors ${
+                  isLoading ? 'pointer-events-none opacity-50' : ''
+                }`}
               >
                 Ja tem uma conta? Faca login aqui.
               </Link>
