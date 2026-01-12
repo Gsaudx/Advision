@@ -1,5 +1,6 @@
 import { BasePage } from '@/components/layout/BasePage';
 import { Users, Wallet, Clock, AlertTriangle } from 'lucide-react';
+import { useAuth } from '@/features/auth';
 import { StatCard } from '../components/StatCard';
 import { QuickActions } from '../components/QuickActions';
 import { WelcomeSection } from '../components/WelcomeSection';
@@ -37,8 +38,8 @@ const mockDueDates: DueDate[] = [
 ];
 
 export function HomePage() {
-  // TODO: Replace with real user data from auth context
-  const userName = 'Assessor';
+  const { user } = useAuth();
+  const userName = user?.name ?? 'Assessor';
 
   return (
     <BasePage>

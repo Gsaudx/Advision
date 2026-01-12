@@ -8,6 +8,7 @@ import {
   ChevronLeft,
   ChevronRight,
 } from 'lucide-react';
+import { useAuth } from '@/features/auth';
 
 interface NavItem {
   name: string;
@@ -30,6 +31,10 @@ interface SidebarProps {
 
 export function Sidebar({ isOpen, onToggle }: SidebarProps) {
   const location = useLocation();
+  const { user } = useAuth();
+
+  const userInitial = user?.name?.charAt(0).toUpperCase() ?? 'A';
+  const userName = user?.name ?? 'Assessor';
 
   return (
     <aside
@@ -86,13 +91,13 @@ export function Sidebar({ isOpen, onToggle }: SidebarProps) {
           className={`flex items-center gap-3 ${isOpen ? '' : 'justify-center'}`}
         >
           <div className="w-10 h-10 rounded-full bg-gradient-to-br from-blue-400 to-emerald-400 flex items-center justify-center text-slate-900 font-bold">
-            A
+            {userInitial}
           </div>
           <div
             className={`transition-all duration-300 ${isOpen ? 'opacity-100' : 'opacity-0 w-0 overflow-hidden'}`}
           >
             <p className="text-sm font-medium text-white whitespace-nowrap">
-              Assessor
+              {userName}
             </p>
             <p className="text-xs text-slate-400 whitespace-nowrap">
               Premium Plan
