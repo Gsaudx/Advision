@@ -1,7 +1,6 @@
 import ButtonSubmit from '@/components/ui/ButtonSubmit';
 import InputEmail from '@/components/ui/InputEmail';
-import InputNome from '@/components/ui/InputNome';
-import InputSenha from '@/components/ui/InputSenha';
+import InputPassword from '@/components/ui/InputPassword';
 
 export default function LoginPage() {
   return (
@@ -13,13 +12,12 @@ export default function LoginPage() {
               Bem vindo de volta!
             </h1>
             <h1 className="text-md font-regular text-slate-400 ">
-              Insira suas informações de login abaixo!
+              Insira suas informações de login abaixo
             </h1>
           </div>
           <div className="flex flex-col">
-            <InputNome />
             <InputEmail />
-            <InputSenha />
+            <InputPassword />
             <ButtonSubmit full={true} children="Entrar" />
 
             <a
@@ -35,9 +33,7 @@ export default function LoginPage() {
             <h1 className="text-4xl font-bold text-white">TCC INVESTIMENTO</h1>
           </div>
           <div className="mt-8 mb-2 align-center justify-center">
-            <h1 className="text-md font-regular text-white">
-              da pra colocar uma imagem sla so pra ficar estetico
-            </h1>
+            {/* TODO: Add branding image or illustration */}
           </div>
         </div>
       </div>

@@ -7,10 +7,10 @@ type InputEmailProps = React.InputHTMLAttributes<HTMLInputElement> & {
 export default function InputEmail({ inputId, ...props }: InputEmailProps) {
   return (
     <Input
-      nomeLabel="Email"
-      tipoInput="email"
-      placeholderInput="ex: email@exemplo.com"
-      tamMax={40}
+      label="Email"
+      type="email"
+      placeholder="ex: email@exemplo.com"
+      maxLength={40}
       inputId={inputId}
       {...props}
     />

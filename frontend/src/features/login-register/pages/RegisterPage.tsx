@@ -1,7 +1,7 @@
 import ButtonSubmit from '@/components/ui/ButtonSubmit';
 import InputEmail from '@/components/ui/InputEmail';
-import InputNome from '@/components/ui/InputNome';
-import InputSenha from '@/components/ui/InputSenha';
+import InputName from '@/components/ui/InputName';
+import InputPassword from '@/components/ui/InputPassword';
 
 export default function RegisterPage() {
   return (
@@ -12,9 +12,7 @@ export default function RegisterPage() {
             <h1 className="text-4xl font-bold text-white">TCC INVESTIMENTO</h1>
           </div>
           <div className="mt-8 mb-2 align-center justify-center">
-            <h1 className="text-md font-regular text-white">
-              da pra colocar uma imagem sla so pra ficar estetico
-            </h1>
+            {/* TODO: Add branding image or illustration */}
           </div>
         </div>
         <div>
@@ -25,10 +23,10 @@ export default function RegisterPage() {
             </h1>
           </div>
           <div className="flex flex-col">
-            <InputNome />
+            <InputName />
             <InputEmail />
-            <InputSenha />
-            <InputSenha nomeLabel="Confirmar senha" />
+            <InputPassword />
+            <InputPassword label="Confirmar senha" />
             <ButtonSubmit full={true} children="Registrar" />
 
             <a
