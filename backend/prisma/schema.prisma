@@ -18,6 +18,12 @@ datasource db {
 // ENUMS
 // ============================================================================
 
+enum UserRole {
+  ADVISOR
+  CLIENT
+  ADMIN
+}
+
 enum RiskProfile {
   CONSERVATIVE
   MODERATE
@@ -63,19 +69,20 @@ enum OptimizationStatus {
 // MODELS
 // ============================================================================
 
-model Advisor {
+model User {
   id           String   @id @default(uuid())
   email        String   @unique
   passwordHash String
   name         String
   cpfCnpj      String?
   phone        String?
+  role         UserRole @default(ADVISOR)
   createdAt    DateTime @default(now())
   updatedAt    DateTime @updatedAt
 
   clients Client[]
 
-  @@map("advisors")
+  @@map("users")
 }
 
 model Client {
@@ -89,7 +96,7 @@ model Client {
   createdAt   DateTime    @default(now())
   updatedAt   DateTime    @updatedAt
 
-  advisor Advisor  @relation(fields: [advisorId], references: [id], onDelete: Cascade)
+  advisor User     @relation(fields: [advisorId], references: [id], onDelete: Cascade)
   wallets Wallet[]
 
   @@index([advisorId])
@@ -220,4 +227,3 @@ model RebalanceLog {
   @@index([walletId])
   @@map("rebalance_logs")
 }
-
