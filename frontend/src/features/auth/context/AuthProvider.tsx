@@ -1,4 +1,5 @@
 import { useState, useEffect, useCallback, type ReactNode } from 'react';
+import { LoadingScreen } from '@/components/ui/LoadingScreen';
 import { authApi } from '../api';
 import { AuthContext, type User, type AuthState } from './auth-context';
 import type { LoginCredentials, RegisterCredentials } from '../types';
@@ -69,6 +70,11 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
     initAuth();
   }, []);
+
+  // Show loading screen during initial auth check
+  if (state.isLoading) {
+    return <LoadingScreen message="Iniciando..." />;
+  }
 
   return (
     <AuthContext.Provider

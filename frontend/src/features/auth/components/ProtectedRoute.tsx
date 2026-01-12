@@ -1,4 +1,5 @@
 import { Navigate, useLocation } from 'react-router-dom';
+import { LoadingScreen } from '@/components/ui/LoadingScreen';
 import { useAuth } from '../hooks';
 
 interface ProtectedRouteProps {
@@ -14,11 +15,7 @@ export function ProtectedRoute({
   const location = useLocation();
 
   if (isLoading) {
-    return (
-      <div className="min-h-screen flex items-center justify-center bg-slate-950">
-        <div className="text-white">Carregando...</div>
-      </div>
-    );
+    return <LoadingScreen message="Verificando sessao..." />;
   }
 
   if (!isAuthenticated) {
