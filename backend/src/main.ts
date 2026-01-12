@@ -5,15 +5,20 @@ import { DocumentBuilder, SwaggerModule } from '@nestjs/swagger';
 import { Logger } from '@nestjs/common';
 import { ZodValidationPipe } from 'nestjs-zod';
 import { HttpExceptionFilter } from '@/common/filters';
+import cookieParser from 'cookie-parser';
 
 async function bootstrap() {
   const logger = new Logger('Bootstrap');
   const app = await NestFactory.create(AppModule);
 
-  // 1. CORS Configuration (Security)
+  // 1. Cookie Parser (for HttpOnly JWT cookies)
+  app.use(cookieParser());
+
+  // 2. CORS Configuration (Security)
   // In production, replace '*' with CloudFront URL
+  const corsOrigin = process.env.CORS_ORIGIN || 'http://localhost:5173';
   app.enableCors({
-    origin: process.env.CORS_ORIGIN || '*',
+    origin: corsOrigin,
     methods: 'GET,HEAD,PUT,PATCH,POST,DELETE',
     credentials: true,
   });
