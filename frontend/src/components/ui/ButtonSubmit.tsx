@@ -13,8 +13,8 @@ export default function ButtonSubmit({
     <button
       className={`${
         full
-          ? 'mt-4 bg-blue-500 hover:bg-blue-600 text-white font-bold py-2 px-4 rounded-lg transition-colors'
-          : 'mt-4 w-1/2 bg-blue-500 hover:bg-blue-600 text-white font-bold py-2 px-4 rounded-lg transition-colors'
+          ? 'mt-4 w-full bg-blue-500 hover:bg-blue-600 text-white font-bold py-2.5 sm:py-2 px-4 rounded-lg transition-colors'
+          : 'mt-4 w-full sm:w-1/2 bg-blue-500 hover:bg-blue-600 text-white font-bold py-2.5 sm:py-2 px-4 rounded-lg transition-colors'
       } ${className}`}
       {...props}
     >

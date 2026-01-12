@@ -8,8 +8,8 @@ interface HomeCardProps {
 
 export default function HomeCard({ title, icon, content }: HomeCardProps) {
   return (
-    <div className="ml-6 rounded-3xl bg-slate-900/50  shadow-lg shadow-blue-950 p-6 max-w-xl min-h-64 border-2 border-blue-400 mt-12">
-      <h2 className="text-4xl font-bold mb-4 text-blue-400 flex gap-2">
+    <div className="rounded-2xl sm:rounded-3xl bg-slate-900/50 shadow-lg shadow-blue-950 p-4 sm:p-6 min-h-40 sm:min-h-52 lg:min-h-64 border-2 border-blue-400">
+      <h2 className="text-xl sm:text-2xl lg:text-3xl font-bold mb-2 sm:mb-4 text-blue-400 flex items-center gap-2">
         {icon}
         {title}
       </h2>
