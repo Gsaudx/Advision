@@ -3,6 +3,7 @@ import { HealthCheckPage } from '@/features/health-check';
 import { HomePage } from '@/features/home-page/pages/HomePage';
 import LoginPage from '@/features/login-register/pages/LoginPage';
 import RegisterPage from '@/features/login-register/pages/RegisterPage';
+import ClientsPage from '@/features/clients-page/pages/ClientsPage';
 
 //! EXAMPLE
 // import {
@@ -21,6 +22,7 @@ export function AppRoutes() {
         <Route path="/home" element={<HomePage />} />
         <Route path="/login" element={<LoginPage />} />
         <Route path="/register" element={<RegisterPage />} />
+        <Route path="/clients" element={<ClientsPage />} />
 
         {/* Nested routes example */}
         {/* <Route path="/dashboard">
