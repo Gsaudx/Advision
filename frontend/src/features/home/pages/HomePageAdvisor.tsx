@@ -4,8 +4,14 @@ import { useAuth } from '@/features/auth';
 import { StatCard } from '../components/advisor/StatCard';
 import { QuickActions } from '../components/advisor/QuickActions';
 import { WelcomeSection } from '../components/advisor/WelcomeSection';
-import { RecentActivity, type Activity } from '../components/advisor/RecentActivity';
-import { UpcomingDueDates, type DueDate } from '../components/advisor/UpcomingDueDates';
+import {
+  RecentActivity,
+  type Activity,
+} from '../components/advisor/RecentActivity';
+import {
+  UpcomingDueDates,
+  type DueDate,
+} from '../components/advisor/UpcomingDueDates';
 
 // TODO: Replace with real data from API
 const mockActivities: Activity[] = [

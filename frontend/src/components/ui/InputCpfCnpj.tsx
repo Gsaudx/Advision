@@ -37,10 +37,7 @@ export default function InputCpfCnpj({
         CPF/CNPJ
       </label>
       <IMaskInput
-        mask={[
-          { mask: CPF_MASK },
-          { mask: CNPJ_MASK }
-        ]}
+        mask={[{ mask: CPF_MASK }, { mask: CNPJ_MASK }]}
         unmask={true}
         value={value}
         onAccept={handleAccept}
