@@ -23,7 +23,7 @@ export function BasePage({ children, title }: BasePageProps) {
         <div className="flex-1 flex flex-col overflow-hidden">
           {title && <PageTitle title={title} />}
           <main className="flex-1 overflow-auto p-4 sm:p-6 lg:p-8">
-            {children}
+            <div className="animate-fade-in">{children}</div>
           </main>
         </div>
       </div>
