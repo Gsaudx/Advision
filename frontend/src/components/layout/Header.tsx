@@ -1,6 +1,6 @@
 import { useState } from 'react';
-import { Link, useLocation } from 'react-router-dom';
-import { Menu, X, Bell, Search } from 'lucide-react';
+import { Link, useLocation, useNavigate } from 'react-router-dom';
+import { Menu, X, Bell, Search, LogOut } from 'lucide-react';
 import {
   LayoutDashboard,
   Users,
@@ -8,6 +8,7 @@ import {
   TrendingUp,
   Settings,
 } from 'lucide-react';
+import { useAuth } from '@/features/auth';
 
 interface NavItem {
   name: string;
@@ -26,6 +27,16 @@ const navItems: NavItem[] = [
 export function Header() {
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
   const location = useLocation();
+  const navigate = useNavigate();
+  const { user, signOut } = useAuth();
+
+  const userInitial = user?.name?.charAt(0).toUpperCase() ?? 'A';
+  const userName = user?.name ?? 'Assessor';
+
+  const handleSignOut = async () => {
+    await signOut();
+    navigate('/login');
+  };
 
   return (
     <header className="bg-slate-900 border-b border-slate-800">
@@ -69,12 +80,19 @@ export function Header() {
             {/* User Profile - Desktop */}
             <div className="hidden sm:flex items-center gap-3 pl-3 border-l border-slate-700">
               <div className="text-right">
-                <p className="text-sm font-medium text-white">Assessor</p>
+                <p className="text-sm font-medium text-white">{userName}</p>
                 <p className="text-xs text-slate-400">Premium</p>
               </div>
               <div className="w-9 h-9 rounded-full bg-gradient-to-br from-blue-400 to-emerald-400 flex items-center justify-center text-slate-900 font-bold text-sm">
-                A
+                {userInitial}
               </div>
+              <button
+                onClick={handleSignOut}
+                className="p-2 text-slate-400 hover:text-rose-400 hover:bg-slate-800 rounded-lg transition-colors"
+                title="Sair"
+              >
+                <LogOut size={18} />
+              </button>
             </div>
 
             {/* Mobile Menu Button */}
@@ -145,14 +163,23 @@ export function Header() {
 
         {/* Mobile User Profile */}
         <div className="px-4 py-4 border-t border-slate-800">
-          <div className="flex items-center gap-3">
-            <div className="w-10 h-10 rounded-full bg-gradient-to-br from-blue-400 to-emerald-400 flex items-center justify-center text-slate-900 font-bold">
-              A
+          <div className="flex items-center justify-between">
+            <div className="flex items-center gap-3">
+              <div className="w-10 h-10 rounded-full bg-gradient-to-br from-blue-400 to-emerald-400 flex items-center justify-center text-slate-900 font-bold">
+                {userInitial}
+              </div>
+              <div>
+                <p className="text-sm font-medium text-white">{userName}</p>
+                <p className="text-xs text-slate-400">Premium Plan</p>
+              </div>
             </div>
-            <div>
-              <p className="text-sm font-medium text-white">Assessor</p>
-              <p className="text-xs text-slate-400">Premium Plan</p>
-            </div>
+            <button
+              onClick={handleSignOut}
+              className="p-2 text-slate-400 hover:text-rose-400 hover:bg-slate-800 rounded-lg transition-colors"
+              title="Sair"
+            >
+              <LogOut size={20} />
+            </button>
           </div>
         </div>
       </nav>

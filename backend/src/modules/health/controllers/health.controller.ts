@@ -1,12 +1,25 @@
-import { Controller, Get, ServiceUnavailableException } from '@nestjs/common';
-import { ApiOperation, ApiResponse, ApiTags } from '@nestjs/swagger';
+import {
+  Controller,
+  Get,
+  ServiceUnavailableException,
+  UseGuards,
+} from '@nestjs/common';
+import {
+  ApiOperation,
+  ApiResponse,
+  ApiTags,
+  ApiBearerAuth,
+} from '@nestjs/swagger';
 import { ApiResponseDto, ApiErrorResponseDto } from '@/common/schemas';
 import type { ApiResponse as ApiResponseType } from '@/common/schemas';
+import { JwtAuthGuard } from '@/common/guards/jwt-auth.guard';
 import { HealthService } from '../services/health.service';
 import { HealthApiResponseDto } from '../schemas';
 import type { HealthResponse } from '../schemas';
 
 @ApiTags('Health')
+@ApiBearerAuth()
+@UseGuards(JwtAuthGuard)
 @Controller('health')
 export class HealthController {
   constructor(private readonly healthService: HealthService) {}
@@ -22,6 +35,11 @@ export class HealthController {
     status: 200,
     description: 'Sistema operacional',
     type: HealthApiResponseDto,
+  })
+  @ApiResponse({
+    status: 401,
+    description: 'Token JWT inválido ou ausente',
+    type: ApiErrorResponseDto,
   })
   @ApiResponse({
     status: 503,

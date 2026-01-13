@@ -517,11 +517,94 @@ export function useDebounce<T>(value: T, delay: number): T {
 }
 ```
 
+### Componentes de UX
+
+O projeto utiliza componentes e utilitários para melhorar a experiência do usuário.
+
+#### Loading Components (`components/ui/`)
+
+| Componente       | Propósito                                           | Props                    |
+| ---------------- | --------------------------------------------------- | ------------------------ |
+| `LoadingSpinner` | Spinner animado para indicar carregamento           | `size?: 'sm' \| 'md' \| 'lg'` |
+| `LoadingScreen`  | Tela cheia de loading com logo e mensagem           | `message?: string`       |
+
+```tsx
+// Uso do LoadingSpinner
+<LoadingSpinner size="sm" />  // Em botões
+<LoadingSpinner size="lg" />  // Standalone
+
+// Uso do LoadingScreen
+<LoadingScreen message="Verificando sessao..." />
+```
+
+#### ButtonSubmit com Loading
+
+O componente `ButtonSubmit` suporta estado de loading:
+
+```tsx
+<ButtonSubmit loading={isLoading} full={true}>
+  {isLoading ? 'Enviando...' : 'Enviar'}
+</ButtonSubmit>
+```
+
+#### Animações Tailwind
+
+Animações customizadas disponíveis via classes Tailwind:
+
+| Classe            | Efeito                                      | Uso                          |
+| ----------------- | ------------------------------------------- | ---------------------------- |
+| `animate-fade-in` | Fade in com slide up sutil (0.3s)           | Cards, páginas               |
+| `animate-shake`   | Tremida horizontal (0.5s)                   | Mensagens de erro            |
+| `animate-slide-up`| Slide up mais pronunciado (0.3s)            | Modais, toasts               |
+
+```tsx
+// Exemplo: Card com fade-in
+<div className="animate-fade-in">...</div>
+
+// Exemplo: Erro com shake
+{error && <div className="animate-shake text-rose-400">{error}</div>}
+```
+
+#### Padrão de Loading em Formulários
+
+Para formulários com submissão assíncrona:
+
+```tsx
+const [isLoading, setIsLoading] = useState(false);
+
+const handleSubmit = async (e: React.FormEvent) => {
+  e.preventDefault();
+  setIsLoading(true);
+  try {
+    await submitData();
+  } catch {
+    setError('Erro ao enviar');
+  } finally {
+    setIsLoading(false);
+  }
+};
+
+return (
+  <form onSubmit={handleSubmit}>
+    <fieldset disabled={isLoading}>  {/* Desabilita todos os inputs */}
+      <Input ... />
+      <ButtonSubmit loading={isLoading}>Enviar</ButtonSubmit>
+    </fieldset>
+  </form>
+);
+```
+
 ## Modelo de Dados (Prisma Schema)
 
 ### Enums
 
 ```prisma
+enum UserRole {
+  ADVISOR         // Assessor de investimentos (acesso total aos seus clientes)
+  CLIENT          // Cliente (acesso apenas à própria carteira)
+  ADMIN           // Administrador do sistema
+}
+
 enum RiskProfile {
   CONSERVATIVE    // Perfil conservador
   MODERATE        // Perfil moderado
@@ -569,21 +652,24 @@ enum OptimizationStatus {
 #### Núcleo do Negócio
 
 ```prisma
-model Advisor {
+model User {
   id           String   @id @default(uuid())
   email        String   @unique
   passwordHash String
   name         String
   cpfCnpj      String?
   phone        String?
+  role         UserRole @default(ADVISOR)  // ADVISOR, CLIENT, ADMIN
   createdAt    DateTime @default(now())
   updatedAt    DateTime @updatedAt
   clients      Client[]
+
+  @@map("users")  // Tabela no banco: "users"
 }
 
 model Client {
   id          String      @id @default(uuid())
-  advisorId   String
+  userId      String      // FK para User (assessor responsável)
   name        String
   email       String?
   cpf         String
@@ -686,11 +772,11 @@ model RebalanceLog {
 
 #### Núcleo do Negócio
 
-| Tabela      | Propósito                                                                                                                                                                              |
-| ----------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| **Advisor** | Assessor de investimentos (usuário do sistema). É o **tenant principal** do modelo multi-tenant — cada assessor só vê seus próprios clientes.                                          |
-| **Client**  | Cliente do assessor. Contém CPF, perfil de risco e dados de contato. Um assessor pode ter N clientes.                                                                                  |
-| **Wallet**  | Carteira de investimentos. Cada cliente pode ter múltiplas carteiras (ex: "Aposentadoria", "Curto Prazo"). O campo `cashBalance` representa o saldo em caixa disponível para investir. |
+| Tabela     | Propósito                                                                                                                                                                              |
+| ---------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| **User**   | Usuário do sistema com autenticação JWT. O campo `role` define o tipo: ADVISOR (assessor), CLIENT, ou ADMIN. Assessores são o **tenant principal** do modelo multi-tenant — cada assessor só vê seus próprios clientes. |
+| **Client** | Cliente do assessor. Contém CPF, perfil de risco e dados de contato. Um assessor pode ter N clientes.                                                                                  |
+| **Wallet** | Carteira de investimentos. Cada cliente pode ter múltiplas carteiras (ex: "Aposentadoria", "Curto Prazo"). O campo `cashBalance` representa o saldo em caixa disponível para investir. |
 
 #### Ativos e Derivativos
 
@@ -732,7 +818,7 @@ model RebalanceLog {
 
 ```
 ┌─────────────┐       ┌─────────────┐       ┌─────────────┐
-│   Advisor   │──1:N──│   Client    │──1:N──│   Wallet    │
+│    User     │──1:N──│   Client    │──1:N──│   Wallet    │
 └─────────────┘       └─────────────┘       └─────────────┘
                                                    │
                       ┌────────────────────────────┼────────────────────────────┐
@@ -821,11 +907,157 @@ export type HealthResponse = HealthApiResponse["data"];
 
 ### Endpoints Disponíveis
 
-| Endpoint     | URL                          | Descrição               |
-| ------------ | ---------------------------- | ----------------------- |
-| Backend API  | http://localhost:3000        | API REST principal      |
-| Swagger      | http://localhost:3000/api    | Documentação interativa |
-| Health Check | http://localhost:3000/health | Status da API e banco   |
+| Endpoint     | URL                          | Descrição                    |
+| ------------ | ---------------------------- | ---------------------------- |
+| Backend API  | http://localhost:3000        | API REST principal           |
+| Swagger      | http://localhost:3000/api    | Documentação interativa      |
+| Health Check | http://localhost:3000/health | Status da API e banco        |
+| Auth         | http://localhost:3000/auth   | Autenticação (login, registro, perfil) |
+
+## Autenticação
+
+O sistema utiliza autenticação **JWT (JSON Web Token) stateless** com cookies **HttpOnly**, uma abordagem mais segura que armazenamento em localStorage.
+
+### Por que HttpOnly Cookies?
+
+| Abordagem           | Vulnerável a XSS? | Vulnerável a CSRF? | Recomendação          |
+| ------------------- | ----------------- | ------------------ | --------------------- |
+| localStorage        | ✅ Sim            | ❌ Não             | ❌ Evitar             |
+| Cookie normal       | ✅ Sim            | ✅ Sim             | ❌ Evitar             |
+| **HttpOnly Cookie** | ❌ Não            | ⚠️ Mitigado\*      | ✅ **Recomendado**    |
+
+\*Mitigado com `SameSite=Strict` e validação de origem (CORS).
+
+**HttpOnly** significa que o cookie não pode ser acessado via JavaScript (`document.cookie`), protegendo contra ataques XSS.
+
+### Fluxo de Autenticação
+
+```
+┌──────────────────────────────────────────────────────────────────────────────┐
+│                            FLUXO DE LOGIN                                    │
+├──────────────────────────────────────────────────────────────────────────────┤
+│                                                                              │
+│  1. Frontend envia POST /auth/login { email, password }                      │
+│                          │                                                   │
+│                          ▼                                                   │
+│  2. LocalStrategy valida credenciais (bcrypt.compare)                        │
+│                          │                                                   │
+│                          ▼                                                   │
+│  3. AuthService gera JWT: { sub: id, email, role }                           │
+│                          │                                                   │
+│                          ▼                                                   │
+│  4. Backend define cookie HttpOnly na resposta:                              │
+│     Set-Cookie: tcc_auth=<jwt>; HttpOnly; Secure; SameSite=Strict           │
+│                          │                                                   │
+│                          ▼                                                   │
+│  5. Browser armazena cookie automaticamente (inacessível ao JS)              │
+│                                                                              │
+└──────────────────────────────────────────────────────────────────────────────┘
+
+┌──────────────────────────────────────────────────────────────────────────────┐
+│                        FLUXO DE REQUISIÇÃO AUTENTICADA                       │
+├──────────────────────────────────────────────────────────────────────────────┤
+│                                                                              │
+│  1. Frontend faz GET /health (axios com withCredentials: true)               │
+│                          │                                                   │
+│                          ▼                                                   │
+│  2. Browser anexa cookie automaticamente no header                           │
+│     Cookie: tcc_auth=<jwt>                                                   │
+│                          │                                                   │
+│                          ▼                                                   │
+│  3. JwtStrategy extrai token do cookie e valida:                             │
+│     - Verifica assinatura com JWT_SECRET                                     │
+│     - Verifica se não expirou (12h)                                          │
+│     - Decodifica payload: { sub, email, role }                               │
+│                          │                                                   │
+│                          ▼                                                   │
+│  4. Se válido: req.user = { id, email, role } → Controller processa          │
+│     Se inválido: retorna 401 Unauthorized                                    │
+│                                                                              │
+└──────────────────────────────────────────────────────────────────────────────┘
+```
+
+### Estrutura do JWT
+
+Um JWT tem 3 partes separadas por pontos: `header.payload.signature`
+
+```
+eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiJ1dWlkIiwiZW1haWwiOiJ0ZXN0QGV4YW1wbGUuY29tIiwicm9sZSI6IkFEVklTT1IifQ.SflKxwRJSMeKKF2QT4fwpMeJf36POk6yJV_adQssw5c
+```
+
+| Parte         | Conteúdo                                        | Função                                |
+| ------------- | ----------------------------------------------- | ------------------------------------- |
+| **Header**    | `{ "alg": "HS256", "typ": "JWT" }`              | Algoritmo de assinatura               |
+| **Payload**   | `{ "sub": "id", "email": "...", "role": "..." }` | Dados do usuário (Base64, não criptografado) |
+| **Signature** | HMAC-SHA256(header + payload, JWT_SECRET)       | Garante integridade (não foi alterado)|
+
+> **Importante:** O payload é apenas codificado (Base64), não criptografado. Qualquer um pode decodificar e ler. A assinatura apenas garante que não foi adulterado.
+
+### Endpoints de Autenticação
+
+| Método | Endpoint         | Descrição                  | Autenticado? |
+| ------ | ---------------- | -------------------------- | ------------ |
+| POST   | `/auth/register` | Criar nova conta           | Não          |
+| POST   | `/auth/login`    | Autenticar e receber cookie| Não          |
+| POST   | `/auth/logout`   | Remover cookie             | Não          |
+| GET    | `/auth/me`       | Obter perfil do usuário    | Sim          |
+
+### Protegendo Rotas (Backend)
+
+```typescript
+// Proteger rota com autenticação JWT
+@UseGuards(JwtAuthGuard)
+@Get('protected')
+getProtected() { ... }
+
+// Proteger rota com autenticação + verificação de role
+@UseGuards(JwtAuthGuard, RolesGuard)
+@Roles('ADMIN')
+@Delete(':id')
+deleteUser() { ... }
+
+// Acessar dados do usuário autenticado
+@Get('me')
+getProfile(@CurrentUser() user: RequestUser) {
+  return user; // { id, email, role }
+}
+```
+
+### Configuração de Cookies
+
+```typescript
+// auth.controller.ts
+res.cookie('tcc_auth', token, {
+  httpOnly: true,        // Inacessível via JavaScript (protege contra XSS)
+  secure: true,          // Apenas HTTPS em produção
+  sameSite: 'strict',    // Não envia em requisições cross-site (protege CSRF)
+  maxAge: 12 * 60 * 60 * 1000,  // 12 horas
+  path: '/',             // Disponível em todas as rotas
+});
+```
+
+### Frontend: Context de Autenticação
+
+```typescript
+// Uso em qualquer componente
+const { user, isAuthenticated, signIn, signOut } = useAuth();
+
+// Login
+await signIn({ email: 'user@example.com', password: '123456' });
+
+// Logout (remove cookie via API)
+await signOut();
+```
+
+### Variáveis de Ambiente (Auth)
+
+| Variável         | Descrição                                      | Exemplo           |
+| ---------------- | ---------------------------------------------- | ----------------- |
+| `JWT_SECRET`     | Chave secreta para assinar tokens (min 32 chars)| `sua-chave-secreta-aqui-min-32-caracteres` |
+| `JWT_EXPIRES_IN` | Tempo de expiração do token                    | `12h`             |
+| `COOKIE_SECURE`  | Usar HTTPS para cookies                        | `true` (produção) |
+| `COOKIE_DOMAIN`  | Domínio do cookie (opcional)                   | `.example.com`    |
+| `CORS_ORIGIN`    | Origem permitida para CORS                     | `https://app.example.com` |
 
 ## CI/CD (GitHub Actions)
 
@@ -851,6 +1083,8 @@ O pipeline está em `.github/workflows/deploy.yml`:
 | `AWS_SECRET_ACCESS_KEY`      | Credencial AWS                                                                                               |
 | `CLOUDFRONT_DISTRIBUTION_ID` | ID da distribuição CloudFront                                                                                |
 | `DEPLOY_ENABLED`             | Indica se o CI/CD precisa fazer a etapa de deploy na EC2 ou não (não fazer se a AWS não estiver configurada) |
+| `JWT_SECRET`                 | Chave secreta para assinar tokens JWT (mínimo 32 caracteres)                                                 |
+| `JWT_EXPIRES_IN`             | Tempo de expiração do token JWT (padrão: "12h")                                                              |
 
 ## Arquitetura de Produção
 

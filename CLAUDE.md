@@ -105,8 +105,33 @@ Run `npm run generate:types` in frontend after backend schema changes.
 
 - PostgreSQL 16 with Prisma ORM 7.x (Driver Adapters)
 - Schema in `backend/prisma/schema.prisma`
-- Multi-tenant model: Advisor → Clients → Wallets → Positions/Transactions
+- Multi-tenant model: User (Advisor role) → Clients → Wallets → Positions/Transactions
 - `Position.averagePrice` = acquisition price (not market price)
+- User roles: `UserRole` enum with ADVISOR, CLIENT, ADMIN
+
+## Authentication
+
+- JWT-based stateless authentication via `@nestjs/passport`
+- **HttpOnly cookies** for token storage (more secure than localStorage - protects against XSS)
+- Cookie settings: `httpOnly: true`, `sameSite: 'strict'`, `secure: true` (production)
+- Token expiration: 12 hours (configurable via `JWT_EXPIRES_IN`)
+- Backend auth module: `modules/auth/` with strategies (local, jwt), service, controller
+- Endpoints: `POST /auth/register`, `POST /auth/login`, `POST /auth/logout`, `GET /auth/me`
+- Guards: `JwtAuthGuard` (protects routes), `RolesGuard` (RBAC)
+- Decorators: `@Roles()` (set required roles), `@CurrentUser()` (inject authenticated user)
+- Frontend auth feature: `features/auth/` with AuthProvider, useAuth hook, ProtectedRoute
+- Frontend axios config: `withCredentials: true` to send cookies with requests
+- Environment: `JWT_SECRET` (required), `JWT_EXPIRES_IN` (default: "12h"), `COOKIE_SECURE`, `COOKIE_DOMAIN`
+
+## UX Components
+
+- `LoadingSpinner`: Animated spinner with size variants (sm, md, lg)
+- `LoadingScreen`: Full-page loading with logo and message
+- `ButtonSubmit`: Supports `loading` prop for async submissions
+- Custom Tailwind animations: `animate-fade-in`, `animate-shake`, `animate-slide-up`
+- Form loading pattern: use `<fieldset disabled={isLoading}>` to disable all inputs during submission
+- AuthProvider shows LoadingScreen during initial auth check (prevents flicker)
+- BasePage content uses `animate-fade-in` for smooth page transitions
 
 ## CI/CD
 

@@ -19,7 +19,7 @@ export function BasePage({ children }: BasePageProps) {
           onToggle={() => setIsSidebarOpen(!isSidebarOpen)}
         />
         <main className="flex-1 overflow-auto p-4 sm:p-6 lg:p-8">
-          {children}
+          <div className="animate-fade-in">{children}</div>
         </main>
       </div>
     </div>
