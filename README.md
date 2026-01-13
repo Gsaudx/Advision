@@ -523,10 +523,10 @@ O projeto utiliza componentes e utilitários para melhorar a experiência do usu
 
 #### Loading Components (`components/ui/`)
 
-| Componente       | Propósito                                           | Props                    |
-| ---------------- | --------------------------------------------------- | ------------------------ |
-| `LoadingSpinner` | Spinner animado para indicar carregamento           | `size?: 'sm' \| 'md' \| 'lg'` |
-| `LoadingScreen`  | Tela cheia de loading com logo e mensagem           | `message?: string`       |
+| Componente       | Propósito                                 | Props                         |
+| ---------------- | ----------------------------------------- | ----------------------------- |
+| `LoadingSpinner` | Spinner animado para indicar carregamento | `size?: 'sm' \| 'md' \| 'lg'` |
+| `LoadingScreen`  | Tela cheia de loading com logo e mensagem | `message?: string`            |
 
 ```tsx
 // Uso do LoadingSpinner
@@ -543,7 +543,7 @@ O componente `ButtonSubmit` suporta estado de loading:
 
 ```tsx
 <ButtonSubmit loading={isLoading} full={true}>
-  {isLoading ? 'Enviando...' : 'Enviar'}
+  {isLoading ? "Enviando..." : "Enviar"}
 </ButtonSubmit>
 ```
 
@@ -551,18 +551,20 @@ O componente `ButtonSubmit` suporta estado de loading:
 
 Animações customizadas disponíveis via classes Tailwind:
 
-| Classe            | Efeito                                      | Uso                          |
-| ----------------- | ------------------------------------------- | ---------------------------- |
-| `animate-fade-in` | Fade in com slide up sutil (0.3s)           | Cards, páginas               |
-| `animate-shake`   | Tremida horizontal (0.5s)                   | Mensagens de erro            |
-| `animate-slide-up`| Slide up mais pronunciado (0.3s)            | Modais, toasts               |
+| Classe             | Efeito                            | Uso               |
+| ------------------ | --------------------------------- | ----------------- |
+| `animate-fade-in`  | Fade in com slide up sutil (0.3s) | Cards, páginas    |
+| `animate-shake`    | Tremida horizontal (0.5s)         | Mensagens de erro |
+| `animate-slide-up` | Slide up mais pronunciado (0.3s)  | Modais, toasts    |
 
 ```tsx
 // Exemplo: Card com fade-in
-<div className="animate-fade-in">...</div>
+<div className="animate-fade-in">...</div>;
 
 // Exemplo: Erro com shake
-{error && <div className="animate-shake text-rose-400">{error}</div>}
+{
+  error && <div className="animate-shake text-rose-400">{error}</div>;
+}
 ```
 
 #### Padrão de Loading em Formulários
@@ -645,6 +647,13 @@ enum OptimizationStatus {
   ACCEPTED        // Aceita pelo assessor (executada)
   REJECTED        // Rejeitada pelo assessor
 }
+
+enum InviteStatus {
+  PENDING         // Cliente criado, nenhum convite gerado
+  SENT            // Token gerado e disponível para uso
+  ACCEPTED        // Cliente aceitou, conta vinculada
+  REJECTED        // Convite foi revogado pelo assessor
+}
 ```
 
 ### Estrutura das Tabelas
@@ -653,31 +662,36 @@ enum OptimizationStatus {
 
 ```prisma
 model User {
-  id           String   @id @default(uuid())
-  email        String   @unique
-  passwordHash String
-  name         String
-  cpfCnpj      String?
-  phone        String?
-  role         UserRole @default(ADVISOR)  // ADVISOR, CLIENT, ADMIN
-  createdAt    DateTime @default(now())
-  updatedAt    DateTime @updatedAt
-  clients      Client[]
+  id            String   @id @default(uuid())
+  email         String   @unique
+  passwordHash  String
+  name          String
+  cpfCnpj       String?
+  phone         String?
+  role          UserRole @default(ADVISOR)  // ADVISOR, CLIENT, ADMIN
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
+  clients       Client[] @relation("AdvisorClients")  // Clientes do assessor
+  clientProfile Client?  @relation("LinkedUser")      // Perfil vinculado (se CLIENT)
 
   @@map("users")  // Tabela no banco: "users"
 }
 
 model Client {
-  id          String      @id @default(uuid())
-  userId      String      // FK para User (assessor responsável)
-  name        String
-  email       String?
-  cpf         String
-  phone       String?
-  riskProfile RiskProfile @default(MODERATE)
-  createdAt   DateTime    @default(now())
-  updatedAt   DateTime    @updatedAt
-  wallets     Wallet[]
+  id              String       @id @default(uuid())
+  advisorId       String       // FK para User (assessor responsavel)
+  userId          String?      @unique  // FK para User (conta vinculada)
+  name            String
+  email           String?
+  cpf             String
+  phone           String?
+  riskProfile     RiskProfile  @default(MODERATE)
+  inviteToken     String?      @unique  // Token de convite (INV-XXXXXXXX)
+  inviteStatus    InviteStatus @default(PENDING)  // Status do convite
+  inviteExpiresAt DateTime?    // Expiracao do token
+  createdAt       DateTime     @default(now())
+  updatedAt       DateTime     @updatedAt
+  wallets         Wallet[]
 }
 
 model Wallet {
@@ -772,11 +786,11 @@ model RebalanceLog {
 
 #### Núcleo do Negócio
 
-| Tabela     | Propósito                                                                                                                                                                              |
-| ---------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Tabela     | Propósito                                                                                                                                                                                                               |
+| ---------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
 | **User**   | Usuário do sistema com autenticação JWT. O campo `role` define o tipo: ADVISOR (assessor), CLIENT, ou ADMIN. Assessores são o **tenant principal** do modelo multi-tenant — cada assessor só vê seus próprios clientes. |
-| **Client** | Cliente do assessor. Contém CPF, perfil de risco e dados de contato. Um assessor pode ter N clientes.                                                                                  |
-| **Wallet** | Carteira de investimentos. Cada cliente pode ter múltiplas carteiras (ex: "Aposentadoria", "Curto Prazo"). O campo `cashBalance` representa o saldo em caixa disponível para investir. |
+| **Client** | Cliente do assessor. Contém CPF, perfil de risco e dados de contato. Um assessor pode ter N clientes.                                                                                                                   |
+| **Wallet** | Carteira de investimentos. Cada cliente pode ter múltiplas carteiras (ex: "Aposentadoria", "Curto Prazo"). O campo `cashBalance` representa o saldo em caixa disponível para investir.                                  |
 
 #### Ativos e Derivativos
 
@@ -907,12 +921,13 @@ export type HealthResponse = HealthApiResponse["data"];
 
 ### Endpoints Disponíveis
 
-| Endpoint     | URL                          | Descrição                    |
-| ------------ | ---------------------------- | ---------------------------- |
-| Backend API  | http://localhost:3000        | API REST principal           |
-| Swagger      | http://localhost:3000/api    | Documentação interativa      |
-| Health Check | http://localhost:3000/health | Status da API e banco        |
-| Auth         | http://localhost:3000/auth   | Autenticação (login, registro, perfil) |
+| Endpoint     | URL                           | Descrição                              |
+| ------------ | ----------------------------- | -------------------------------------- |
+| Backend API  | http://localhost:3000         | API REST principal                     |
+| Swagger      | http://localhost:3000/api     | Documentação interativa                |
+| Health Check | http://localhost:3000/health  | Status da API e banco                  |
+| Auth         | http://localhost:3000/auth    | Autenticacao (login, registro, perfil) |
+| Clients      | http://localhost:3000/clients | Gestao de clientes e convites          |
 
 ## Autenticação
 
@@ -920,11 +935,11 @@ O sistema utiliza autenticação **JWT (JSON Web Token) stateless** com cookies 
 
 ### Por que HttpOnly Cookies?
 
-| Abordagem           | Vulnerável a XSS? | Vulnerável a CSRF? | Recomendação          |
-| ------------------- | ----------------- | ------------------ | --------------------- |
-| localStorage        | ✅ Sim            | ❌ Não             | ❌ Evitar             |
-| Cookie normal       | ✅ Sim            | ✅ Sim             | ❌ Evitar             |
-| **HttpOnly Cookie** | ❌ Não            | ⚠️ Mitigado\*      | ✅ **Recomendado**    |
+| Abordagem           | Vulnerável a XSS? | Vulnerável a CSRF? | Recomendação       |
+| ------------------- | ----------------- | ------------------ | ------------------ |
+| localStorage        | ✅ Sim            | ❌ Não             | ❌ Evitar          |
+| Cookie normal       | ✅ Sim            | ✅ Sim             | ❌ Evitar          |
+| **HttpOnly Cookie** | ❌ Não            | ⚠️ Mitigado\*      | ✅ **Recomendado** |
 
 \*Mitigado com `SameSite=Strict` e validação de origem (CORS).
 
@@ -985,22 +1000,22 @@ Um JWT tem 3 partes separadas por pontos: `header.payload.signature`
 eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiJ1dWlkIiwiZW1haWwiOiJ0ZXN0QGV4YW1wbGUuY29tIiwicm9sZSI6IkFEVklTT1IifQ.SflKxwRJSMeKKF2QT4fwpMeJf36POk6yJV_adQssw5c
 ```
 
-| Parte         | Conteúdo                                        | Função                                |
-| ------------- | ----------------------------------------------- | ------------------------------------- |
-| **Header**    | `{ "alg": "HS256", "typ": "JWT" }`              | Algoritmo de assinatura               |
+| Parte         | Conteúdo                                         | Função                                       |
+| ------------- | ------------------------------------------------ | -------------------------------------------- |
+| **Header**    | `{ "alg": "HS256", "typ": "JWT" }`               | Algoritmo de assinatura                      |
 | **Payload**   | `{ "sub": "id", "email": "...", "role": "..." }` | Dados do usuário (Base64, não criptografado) |
-| **Signature** | HMAC-SHA256(header + payload, JWT_SECRET)       | Garante integridade (não foi alterado)|
+| **Signature** | HMAC-SHA256(header + payload, JWT_SECRET)        | Garante integridade (não foi alterado)       |
 
 > **Importante:** O payload é apenas codificado (Base64), não criptografado. Qualquer um pode decodificar e ler. A assinatura apenas garante que não foi adulterado.
 
 ### Endpoints de Autenticação
 
-| Método | Endpoint         | Descrição                  | Autenticado? |
-| ------ | ---------------- | -------------------------- | ------------ |
-| POST   | `/auth/register` | Criar nova conta           | Não          |
-| POST   | `/auth/login`    | Autenticar e receber cookie| Não          |
-| POST   | `/auth/logout`   | Remover cookie             | Não          |
-| GET    | `/auth/me`       | Obter perfil do usuário    | Sim          |
+| Método | Endpoint         | Descrição                   | Autenticado? |
+| ------ | ---------------- | --------------------------- | ------------ |
+| POST   | `/auth/register` | Criar nova conta            | Não          |
+| POST   | `/auth/login`    | Autenticar e receber cookie | Não          |
+| POST   | `/auth/logout`   | Remover cookie              | Não          |
+| GET    | `/auth/me`       | Obter perfil do usuário     | Sim          |
 
 ### Protegendo Rotas (Backend)
 
@@ -1027,12 +1042,12 @@ getProfile(@CurrentUser() user: RequestUser) {
 
 ```typescript
 // auth.controller.ts
-res.cookie('tcc_auth', token, {
-  httpOnly: true,        // Inacessível via JavaScript (protege contra XSS)
-  secure: true,          // Apenas HTTPS em produção
-  sameSite: 'strict',    // Não envia em requisições cross-site (protege CSRF)
-  maxAge: 12 * 60 * 60 * 1000,  // 12 horas
-  path: '/',             // Disponível em todas as rotas
+res.cookie("tcc_auth", token, {
+  httpOnly: true, // Inacessível via JavaScript (protege contra XSS)
+  secure: true, // Apenas HTTPS em produção
+  sameSite: "strict", // Não envia em requisições cross-site (protege CSRF)
+  maxAge: 12 * 60 * 60 * 1000, // 12 horas
+  path: "/", // Disponível em todas as rotas
 });
 ```
 
@@ -1043,7 +1058,7 @@ res.cookie('tcc_auth', token, {
 const { user, isAuthenticated, signIn, signOut } = useAuth();
 
 // Login
-await signIn({ email: 'user@example.com', password: '123456' });
+await signIn({ email: "user@example.com", password: "123456" });
 
 // Logout (remove cookie via API)
 await signOut();
@@ -1051,13 +1066,76 @@ await signOut();
 
 ### Variáveis de Ambiente (Auth)
 
-| Variável         | Descrição                                      | Exemplo           |
-| ---------------- | ---------------------------------------------- | ----------------- |
-| `JWT_SECRET`     | Chave secreta para assinar tokens (min 32 chars)| `sua-chave-secreta-aqui-min-32-caracteres` |
-| `JWT_EXPIRES_IN` | Tempo de expiração do token                    | `12h`             |
-| `COOKIE_SECURE`  | Usar HTTPS para cookies                        | `true` (produção) |
-| `COOKIE_DOMAIN`  | Domínio do cookie (opcional)                   | `.example.com`    |
-| `CORS_ORIGIN`    | Origem permitida para CORS                     | `https://app.example.com` |
+| Variável         | Descrição                                        | Exemplo                                    |
+| ---------------- | ------------------------------------------------ | ------------------------------------------ |
+| `JWT_SECRET`     | Chave secreta para assinar tokens (min 32 chars) | `sua-chave-secreta-aqui-min-32-caracteres` |
+| `JWT_EXPIRES_IN` | Tempo de expiração do token                      | `12h`                                      |
+| `COOKIE_SECURE`  | Usar HTTPS para cookies                          | `true` (produção)                          |
+| `COOKIE_DOMAIN`  | Domínio do cookie (opcional)                     | `.example.com`                             |
+| `CORS_ORIGIN`    | Origem permitida para CORS                       | `https://app.example.com`                  |
+
+## Sistema de Convite de Clientes (Hybrid Client)
+
+O sistema suporta um modelo "Hybrid Client" onde clientes podem vincular suas contas de usuário a um perfil de cliente existente através de um sistema de convite seguro.
+
+### Fluxo do Convite
+
+```
+┌──────────────────────────────────────────────────────────────────────────────┐
+│                         FLUXO DE CONVITE DE CLIENTE                          │
+├──────────────────────────────────────────────────────────────────────────────┤
+│                                                                              │
+│  1. Assessor cria um cliente no sistema (dados básicos)                      │
+│                          │                                                   │
+│                          ▼                                                   │
+│  2. Assessor gera convite: POST /clients/:id/invite                          │
+│     → Retorna token no formato INV-XXXXXXXX (válido por 7 dias)              │
+│                          │                                                   │
+│                          ▼                                                   │
+│  3. Assessor compartilha o token com o cliente (email, WhatsApp, etc.)       │
+│                          │                                                   │
+│                          ▼                                                   │
+│  4. Cliente cria conta no sistema: POST /auth/register                       │
+│                          │                                                   │
+│                          ▼                                                   │
+│  5. Cliente aceita convite: POST /clients/invite/accept { token }            │
+│     → Conta vinculada ao perfil de cliente do assessor                       │
+│                                                                              │
+└──────────────────────────────────────────────────────────────────────────────┘
+```
+
+### Endpoints de Convite
+
+| Método | Endpoint                 | Role    | Descrição                         |
+| ------ | ------------------------ | ------- | --------------------------------- |
+| POST   | `/clients/:id/invite`    | ADVISOR | Gerar token de convite            |
+| GET    | `/clients/:id/invite`    | ADVISOR | Consultar status/token do convite |
+| DELETE | `/clients/:id/invite`    | ADVISOR | Revogar convite pendente          |
+| POST   | `/clients/invite/accept` | ANY     | Aceitar convite e vincular conta  |
+
+### Estados do Convite (InviteStatus)
+
+| Estado     | Descrição                                   |
+| ---------- | ------------------------------------------- |
+| `PENDING`  | Cliente criado, nenhum convite gerado ainda |
+| `SENT`     | Token gerado e disponível para uso          |
+| `ACCEPTED` | Cliente aceitou, conta vinculada            |
+| `REJECTED` | Convite foi revogado pelo assessor          |
+
+### Formato do Token
+
+- **Padrão:** `INV-XXXXXXXX` (8 caracteres alfanuméricos)
+- **Caracteres:** `ABCDEFGHJKLMNPQRSTUVWXYZ23456789` (sem caracteres ambíguos como 0/O, 1/I/L)
+- **Expiração:** 7 dias após geração
+- **Uso único:** Token é invalidado após aceitação
+
+### Segurança
+
+- Tokens gerados com `crypto.randomBytes()` (criptograficamente seguros)
+- Cada token é único (constraint `@unique` no banco)
+- Expiração automática após 7 dias
+- Token removido após uso bem-sucedido
+- Assessor pode revogar convites pendentes a qualquer momento
 
 ## CI/CD (GitHub Actions)
 

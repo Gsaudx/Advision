@@ -65,6 +65,13 @@ enum OptimizationStatus {
   REJECTED
 }
 
+enum InviteStatus {
+  PENDING
+  SENT
+  ACCEPTED
+  REJECTED
+}
+
 // ============================================================================
 // MODELS
 // ============================================================================
@@ -80,23 +87,29 @@ model User {
   createdAt    DateTime @default(now())
   updatedAt    DateTime @updatedAt
 
-  clients Client[]
+  clients       Client[] @relation("AdvisorClients")
+  clientProfile Client?  @relation("LinkedUser")
 
   @@map("users")
 }
 
 model Client {
-  id          String      @id @default(uuid())
-  advisorId   String
-  name        String
-  email       String?
-  cpf         String
-  phone       String?
-  riskProfile RiskProfile @default(MODERATE)
-  createdAt   DateTime    @default(now())
-  updatedAt   DateTime    @updatedAt
+  id           String       @id @default(uuid())
+  advisorId    String
+  userId       String?      @unique
+  name         String
+  email        String?
+  cpf          String
+  phone        String?
+  riskProfile  RiskProfile  @default(MODERATE)
+  inviteToken     String?      @unique
+  inviteStatus    InviteStatus @default(PENDING)
+  inviteExpiresAt DateTime?
+  createdAt    DateTime     @default(now())
+  updatedAt    DateTime     @updatedAt
 
-  advisor User     @relation(fields: [advisorId], references: [id], onDelete: Cascade)
+  advisor User     @relation("AdvisorClients", fields: [advisorId], references: [id], onDelete: Cascade)
+  user    User?    @relation("LinkedUser", fields: [userId], references: [id], onDelete: SetNull)
   wallets Wallet[]
 
   @@index([advisorId])
