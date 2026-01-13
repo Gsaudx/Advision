@@ -4,6 +4,7 @@ import { HomePage } from '@/features/home-page/pages/HomePage';
 import { ProtectedRoute } from '@/features/auth';
 import LoginPage from '@/features/login-register/pages/LoginPage';
 import RegisterPage from '@/features/login-register/pages/RegisterPage';
+import ClientsPage from '@/features/clients-page/pages/ClientsPage';
 
 //! EXAMPLE
 // import {

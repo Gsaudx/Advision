@@ -1,5 +1,7 @@
 import ModalBase from "@/components/layout/ModalBase";
 import type { Client } from "../types/client";
+import { Briefcase, Flag, Mail, MapPin, MoreVertical, Pencil, Phone, Trash2, X } from "lucide-react";
+import { useState, useRef, useEffect } from "react";
 
 interface ModalClientProps {
     isOpen: boolean;
@@ -10,63 +12,131 @@ interface ModalClientProps {
 }
 
 export default function ModalClient({ isOpen, onClose, title, selectedClient, size }: ModalClientProps) {
+    const [isDropdownOpen, setIsDropdownOpen] = useState(false);
+    const dropdownRef = useRef<HTMLDivElement>(null);
+
+    const getInitial = (name: string | undefined) => {
+        return name?.charAt(0).toUpperCase() || "?";
+    };
+
+    // Fecha o dropdown ao clicar fora
+    useEffect(() => {
+        const handleClickOutside = (event: MouseEvent) => {
+            if (dropdownRef.current && !dropdownRef.current.contains(event.target as Node)) {
+                setIsDropdownOpen(false);
+            }
+        };
+
+        document.addEventListener("mousedown", handleClickOutside);
+        return () => document.removeEventListener("mousedown", handleClickOutside);
+    }, []);
+
+    // Fecha o dropdown quando o modal fecha
+    useEffect(() => {
+        if (!isOpen) {
+            setIsDropdownOpen(false);
+        }
+    }, [isOpen]);
+
     return (
-        <ModalBase isOpen={isOpen} onClose={onClose} title={title} size={size}>
-            <div className="flex gap-20 items-start">
-                <div className="flex flex-col items-center">
-                    <div className="w-60 h-60 rounded-full bg-gray-200 flex items-center justify-center overflow-hidden">
-                        {selectedClient?.profilePhoto ? (
-                            <img 
-                                src={selectedClient.profilePhoto} 
-                                alt={selectedClient.name} 
-                                className="w-full h-full object-cover"
-                            />
-                        ) : (
-                            <span className="text-4xl text-gray-500">
-                                {selectedClient?.name?.charAt(0).toUpperCase()}
-                            </span>
-                        )}
-                    </div>
-                    <p className="mt-3 font-semibold text-center">{selectedClient?.name}</p>
+        <ModalBase isOpen={isOpen} onClose={onClose} title={title} size={size} backgroundColor="bg-white">
+            <div className="absolute top-4 right-4 z-20" ref={dropdownRef}>
+                <div className="flex items-center gap-2">
+                    <button 
+                        className="text-white hover:text-gray-200 bg-black/20 rounded-full p-2 backdrop-blur-sm"
+                        onClick={() => setIsDropdownOpen(!isDropdownOpen)}
+                    >
+                        <MoreVertical size={20} />
+                    </button>
+                    <button 
+                        className="text-white hover:text-gray-200 bg-black/20 rounded-full p-2 backdrop-blur-sm"
+                        onClick={onClose}
+                    >
+                        <X size={20} />
+                    </button>
                 </div>
-                <div className="flex-1 space-y-5 pt-2">
-                    <p><strong>Email:</strong> {selectedClient?.email}</p>
-                    <p><strong>Telefone:</strong> {selectedClient?.phone}</p>
-                    <p><strong>Investimento Total:</strong> R$ {selectedClient?.investmentTotal.toLocaleString("pt-BR")}</p>
-                    <p><strong>Perfil de Risco:</strong> {selectedClient?.riskProfile}</p>
-                    <p><strong>Status:</strong> {selectedClient?.status}</p>
-                    <p><strong>Criado em:</strong> {selectedClient?.createdAt}</p>
+
+                {isDropdownOpen && (
+                    <div className="absolute right-0 mt-2 w-40 bg-white rounded-xl shadow-lg border border-gray-200 py-2 z-30">
+                        <button 
+                            className="w-full px-4 py-2 text-sm text-blue-600 hover:bg-blue-50 flex items-center gap-2 transition-all"
+                            
+                        >
+                            <Pencil size={16} />
+                            <span>Editar</span>
+                        </button>
+                        <button 
+                            className="w-full px-4 py-2 text-sm text-red-600 hover:bg-red-50 flex items-center gap-2 transition-all"
+                            
+                        >
+                            <Trash2 size={16} />
+                            <span>Excluir</span>
+                        </button>
+                        <button 
+                            className="w-full px-4 py-2 text-sm text-amber-600 hover:bg-amber-50 flex items-center gap-2 transition-all"
+                            
+                        >
+                            <Flag size={16} />
+                            <span>Inativar</span>
+                        </button>
+                    </div>
+                )}
+            </div>
+
+            {/* Banner Superior - 75% da altura */}
+            <div className="bg-gray-600 h-60 relative border-l border-r border-t border-gray-700 rounded-t-xl">
+            </div>
+
+            {/* Foto de perfil sobreposta */}
+            <div className="flex flex-col items-center -mt-[190px] relative z-10 px-6 ">
+                {selectedClient?.profilePhoto ? (
+                    <img
+                        src={selectedClient.profilePhoto}
+                        alt={selectedClient?.name || "Cliente"}
+                        className="w-64 h-64 rounded-xl object-cover shadow-2xl ring-8 ring-white"
+                    />
+                ) : (
+                    <div className="w-64 h-64 rounded-xl bg-blue-500 flex items-center justify-center shadow-2xl ring-2 ring-white">
+                        <span className="text-6xl font-bold text-white">
+                            {getInitial(selectedClient?.name)}
+                        </span>
+                    </div>
+                )}
+
+                <div className="p-6 w-full flex flex-col items-start">
+                    <h2 className="text-4xl font-bold text-black mt-4">{selectedClient?.name}</h2>
+                    <p className="text-md text-black mt-1 mb-6">{selectedClient?.riskProfile}</p>
                 </div>
             </div>
-            <div>
-                <div className="flex justify-end gap-3 mt-6">
-                    <button 
-                        className="flex items-center gap-2 px-4 py-2 bg-yellow-500 text-white rounded hover:bg-yellow-600"
-                        onClick={() => {/* inativar */}}
-                    >
-                        <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" viewBox="0 0 20 20" fill="currentColor">
-                            <path fillRule="evenodd" d="M3 6a3 3 0 013-3h10a1 1 0 01.8 1.6L14.25 8l2.55 3.4A1 1 0 0116 13H6a1 1 0 00-1 1v3a1 1 0 11-2 0V6z" clipRule="evenodd" />
-                        </svg>
-                        Inativar
-                    </button>
-                    <button 
-                        className="flex items-center gap-2 px-4 py-2 bg-blue-500 text-white rounded hover:bg-blue-600"
-                        onClick={() => {/* alterar */}}
-                    >
-                        <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" viewBox="0 0 20 20" fill="currentColor">
-                            <path d="M13.586 3.586a2 2 0 112.828 2.828l-.793.793-2.828-2.828.793-.793zM11.379 5.793L3 14.172V17h2.828l8.38-8.379-2.83-2.828z" />
-                        </svg>
-                        Alterar
-                    </button>
-                    <button 
-                        className="flex items-center gap-2 px-4 py-2 bg-red-500 text-white rounded hover:bg-red-600"
-                        onClick={() => {/* excluir */}}
-                    >
-                        <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" viewBox="0 0 20 20" fill="currentColor">
-                            <path fillRule="evenodd" d="M9 2a1 1 0 00-.894.553L7.382 4H4a1 1 0 000 2v10a2 2 0 002 2h8a2 2 0 002-2V6a1 1 0 100-2h-3.382l-.724-1.447A1 1 0 0011 2H9zM7 8a1 1 0 012 0v6a1 1 0 11-2 0V8zm5-1a1 1 0 00-1 1v6a1 1 0 102 0V8a1 1 0 00-1-1z" clipRule="evenodd" />
-                        </svg>
-                        Excluir
-                    </button>
+
+            {/* Área de conteúdo - 25% */}
+            <div className="px-6 pb-6">
+                {/* Informações de contato */}
+                <div className="space-y-4 pl-6">
+                    <div className="flex items-center gap-3 text-sm text-black">
+                        <div className="w-9 h-9 rounded-lg bg-blue-100 flex items-center justify-center flex-shrink-0">
+                            <Mail size={18} className="text-blue-600" />
+                        </div>
+                        <span className="font-medium">{selectedClient?.email}</span>
+                    </div>
+                    <div className="flex items-center gap-3 text-sm text-black">
+                        <div className="w-9 h-9 rounded-lg bg-green-100 flex items-center justify-center flex-shrink-0">
+                            <Phone size={18} className="text-green-600" />
+                        </div>
+                        <span className="font-medium">{selectedClient?.phone}</span>
+                    </div>
+                    <div className="flex items-center gap-3 text-sm text-black">
+                        <div className="w-9 h-9 rounded-lg bg-red-100 flex items-center justify-center flex-shrink-0">
+                            <MapPin size={18} className="text-red-600" />
+                        </div>
+                        <span className="font-medium">teste</span>
+                    </div>
+                    <div className="flex items-center gap-3 text-sm text-black">
+                        <div className="w-9 h-9 rounded-lg bg-purple-100 flex items-center justify-center flex-shrink-0">
+                            <Briefcase size={18} className="text-purple-600" />
+                        </div>
+                        <span className="font-medium">teste</span>
+                    </div>
                 </div>
             </div>
         </ModalBase>

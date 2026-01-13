@@ -1,11 +1,11 @@
-import { X } from "lucide-react";
-
 interface ModalBaseProps {
     isOpen: boolean;
     onClose: () => void;
     title?: string;
     children: React.ReactNode;
     size?: "sm" | "md" | "lg" | "xl" | "xxl";
+    height?: number;
+    backgroundColor?: string;
 }
 
 export default function ModalBase({
@@ -13,7 +13,9 @@ export default function ModalBase({
     onClose,
     title,
     children,
-    size = "md"
+    size = "md",
+    height = 600,
+    backgroundColor = "bg-slate-800",
 }: ModalBaseProps) {
     if (!isOpen) return null;
 
@@ -26,7 +28,7 @@ export default function ModalBase({
     };
 
     return (
-        <div className="fixed inset-0 z-50 flex items-center justify-center">
+        <div className="fixed inset-0 z-50 flex items-center justify-center ">
             {/* Backdrop */}
             <div
                 className="fixed inset-0 bg-black bg-opacity-40 backdrop-blur-sm animate-fade-in"
@@ -34,18 +36,13 @@ export default function ModalBase({
             />
 
             {/* Modal Content */}
-            <div className={`relative z-1000000 bg-slate-800 border border-slate-700 rounded-xl shadow-2xl p-6 ${sizeClasses[size]} w-full mx-4 animate-scale-in`}>
+            <div className={`relative z-1000000 ${backgroundColor} border border-slate-700 rounded-xl shadow-2xl ${sizeClasses[size]} w-full mx-4 animate-scale-in min-h-[${height}px]`}>
                 {/* Header */}
-                <div className="flex items-center justify-between mb-4">
+                <div className="flex items-center justify-between">
                     {title && (
                         <h2 className="text-xl font-semibold text-white">{title}</h2>
                     )}
-                    <button
-                        onClick={onClose}
-                        className="ml-auto p-1 rounded-lg text-gray-400 hover:text-white hover:bg-slate-800 transition-colors"
-                    >
-                        <X className="w-5 h-5" />
-                    </button>
+                    
                 </div>
 
                 {/* Body */}

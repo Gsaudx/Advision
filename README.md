@@ -130,7 +130,7 @@ Cada pasta representa uma **funcionalidade isolada** do sistema. Um módulo cont
 | **services/**      | Contém a lógica de negócio. Não sabe nada de HTTP.                                               | Cálculos, validações de regra de negócio, orquestração de dados.    |
 | **schemas/**       | Define schemas Zod para validação e tipagem. Gera DTOs (via `createZodDto`) e tipos (`z.infer`). | Validação de entrada, definição de contratos, documentação Swagger. |
 | **enums/**         | Enums TypeScript específicos do domínio. Garante type-safety entre Schema, Service e Swagger.    | Sempre que tiver valores fixos (`status`, `tipo`, etc.).            |
-| **\_\_tests\_\_/** | Testes unitários do módulo. Ficam próximos do código que testam.                                 | Testar services isoladamente com mocks.                             |
+| **\_\_tests\_\_/** | s unitários do módulo. Ficam próximos do código que testam.                                 | Testar services isoladamente com mocks.                             |
 
 #### Detalhamento das Pastas
 
