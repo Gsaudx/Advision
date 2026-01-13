@@ -20,3 +20,10 @@ export const statusColors = {
     Ativo: "bg-green-500/20 text-green-400",
     Inativo: "bg-red-500/20 text-red-400",
 };
+
+export interface ClientFormData {
+    name: string;
+    email: string;
+    phone: string;
+    cpf: string;
+}

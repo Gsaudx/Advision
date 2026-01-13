@@ -10,7 +10,7 @@ export default function InputPhone({ inputId, ...props }: InputPhoneProps) {
       label="Telefone"
       type="tel"
       placeholder="(00) 00000-0000"
-      maxLength={15}
+      maxLength={19}
       inputId={inputId}
       {...props}
     />
