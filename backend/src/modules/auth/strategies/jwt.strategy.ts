@@ -18,7 +18,7 @@ export interface RequestUser {
   role: 'ADVISOR' | 'CLIENT' | 'ADMIN';
 }
 
-function extractJwtFromCookie(req: Request): string | null {
+export function extractJwtFromCookie(req: Request): string | null {
   const cookies = req.cookies as Record<string, string> | undefined;
   if (cookies && AUTH_COOKIE_NAME in cookies) {
     return cookies[AUTH_COOKIE_NAME];
