@@ -123,6 +123,21 @@ Run `npm run generate:types` in frontend after backend schema changes.
 - Frontend axios config: `withCredentials: true` to send cookies with requests
 - Environment: `JWT_SECRET` (required), `JWT_EXPIRES_IN` (default: "12h"), `COOKIE_SECURE`, `COOKIE_DOMAIN`
 
+## Client Invite System (Hybrid Client)
+
+Allows clients to link their user accounts to existing client profiles via secure invite tokens.
+
+- Backend module: `modules/clients/` with invite service and controller
+- Token format: `INV-XXXXXXXX` (8 alphanumeric chars, cryptographically secure)
+- Token expiration: 7 days (configurable in service)
+- Endpoints:
+  - `POST /clients/:id/invite` - Generate invite (ADVISOR only)
+  - `GET /clients/:id/invite` - Get invite status (ADVISOR only)
+  - `DELETE /clients/:id/invite` - Revoke invite (ADVISOR only)
+  - `POST /clients/invite/accept` - Accept invite (any authenticated user)
+- InviteStatus enum: `PENDING`, `SENT`, `ACCEPTED`, `REJECTED`
+- Database fields on Client: `userId`, `inviteToken`, `inviteStatus`, `inviteExpiresAt`
+
 ## UX Components
 
 - `LoadingSpinner`: Animated spinner with size variants (sm, md, lg)
