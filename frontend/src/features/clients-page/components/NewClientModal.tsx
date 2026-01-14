@@ -14,7 +14,7 @@ interface ModalClientProps {
 }
 
 export default function NewClientModal({ isOpen, onClose, title, size }: ModalClientProps) {
-    const { formData, handleChange, handlePhoneChange, handleSubmit } = useNewClientModal();
+    const { formData, errors, handleChange, handlePhoneChange, handleSubmit } = useNewClientModal();
 
     const handleClose = () => {
         onClose();
@@ -40,41 +40,50 @@ export default function NewClientModal({ isOpen, onClose, title, size }: ModalCl
 
             {/* Form */}
             <form onSubmit={handleSubmit} className="flex flex-col gap-2 p-6">
-                <InputName
-                    name="name"
-                    value={formData.name}
-                    onChange={handleChange}
-                    className="bg-slate-800 border border-slate-600 rounded-lg px-4 py-3 text-white placeholder-gray-500 
-                                focus:outline-none focus:border-slate-500 focus:ring-1 focus:ring-slate-500 transition-colors"
-                    placeholder="Digite o nome completo do cliente"
-                />
-                <InputEmail
-                    name="email"
-                    value={formData.email}
-                    onChange={handleChange}
-                    className="bg-slate-800 border border-slate-600 rounded-lg px-4 py-3 text-white placeholder-gray-500 
-                                       focus:outline-none focus:border-slate-500 focus:ring-1 focus:ring-slate-500 transition-colors"
-                    placeholder="Digite o e-mail do cliente"
-                />
+                <div className="flex flex-col">
+                    <InputName
+                        name="name"
+                        value={formData.name}
+                        onChange={handleChange}
+                        className={`bg-slate-800 border rounded-lg px-4 py-3 text-white placeholder-gray-500 focus:outline-none focus:border-slate-500 focus:ring-1 focus:ring-slate-500 transition-colors ${errors.name ? 'border-red-500' : 'border-slate-600'}`}
+                        placeholder="Digite o nome completo do cliente"
+                    />
+                    {errors.name && <span className="text-red-500 text-sm">{errors.name}</span>}
+                </div>
+                <div className="flex flex-col">
+                    <InputEmail
+                        name="email"
+                        value={formData.email}
+                        onChange={handleChange}
+                        className={`bg-slate-800 border rounded-lg px-4 py-3 text-white placeholder-gray-500 focus:outline-none focus:border-slate-500 focus:ring-1 focus:ring-slate-500 transition-colors ${errors.email ? 'border-red-500' : 'border-slate-600'}`}
+                        placeholder="Digite o e-mail do cliente"
+                    />
+                    {errors.email && <span className="text-red-500 text-sm">{errors.email}</span>}
+                </div>
 
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                    <InputPhone
-                        inputId="phone"
-                        value={formData.phone}
-                        onChange={handlePhoneChange}
-                        containerClassName="flex flex-col gap-1.5 sm:gap-2"
-                        inputClassName="bg-slate-800 border-slate-600 focus:border-slate-500"
-                        size="lg"
-                    />
-
-                    <InputCpf
-                        name="cpf"
-                        value={formData.cpf}
-                        onChange={handleChange}
-                        className="bg-slate-800 border border-slate-600 rounded-lg px-4 py-3 text-white placeholder-gray-500 
-                                       focus:outline-none focus:border-slate-500 focus:ring-1 focus:ring-slate-500 transition-colors"
-                        placeholder="000.000.000-00"
-                    />
+                    <div className="flex flex-col">
+                        <InputPhone
+                            inputId="phone"
+                            value={formData.phone}
+                            onChange={handlePhoneChange}
+                            containerClassName="flex flex-col gap-1.5 sm:gap-2"
+                            inputClassName={`bg-slate-800 border rounded-lg px-4 py-3 text-white placeholder-gray-500 focus:outline-none focus:border-slate-500 focus:ring-1 focus:ring-slate-500 transition-colors ${errors.phone ? 'border-red-500' : 'border-slate-600'}`}
+                            size="lg"
+                            error={!!errors.phone}
+                            errorMessage={errors.phone}
+                        />
+                    </div>
+                    <div className="flex flex-col">
+                        <InputCpf
+                            name="cpf"
+                            value={formData.cpf}
+                            onChange={handleChange}
+                            className={`bg-slate-800 border rounded-lg px-4 py-3 text-white placeholder-gray-500 focus:outline-none focus:border-slate-500 focus:ring-1 focus:ring-slate-500 transition-colors ${errors.cpf ? 'border-red-500' : 'border-slate-600'}`}
+                            placeholder="000.000.000-00"
+                        />
+                        {errors.cpf && <span className="text-red-500 text-sm">{errors.cpf}</span>}
+                    </div>
                 </div>
 
                 {/* Footer com botões */}

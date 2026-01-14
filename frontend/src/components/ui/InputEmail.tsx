@@ -8,7 +8,7 @@ export default function InputEmail({ inputId, ...props }: InputEmailProps) {
   return (
     <Input
       label="Email"
-      type="email"
+      type="text"
       placeholder="ex: email@exemplo.com"
       maxLength={40}
       autoComplete="email"

@@ -14,6 +14,8 @@ type InputPhoneProps = {
   labelClassName?: string;
   inputClassName?: string;
   size?: 'default' | 'lg';
+  error?: boolean;
+  errorMessage?: string;
 };
 
 export default function InputPhone({
@@ -28,6 +30,8 @@ export default function InputPhone({
   labelClassName = 'text-white text-sm sm:text-sm font-medium',
   inputClassName,
   size = 'default',
+  error = false,
+  errorMessage,
 }: InputPhoneProps) {
   const handleChange = (newValue: Value) => {
     onChange?.(newValue);
@@ -56,7 +60,7 @@ export default function InputPhone({
   return (
     <div className={containerClassName}>
       {!hideLabel && (
-        <label htmlFor={inputId} className={labelClassName}>
+        <label htmlFor={inputId} className={error ? `${labelClassName} text-red-500` : labelClassName}>
           {label}
         </label>
       )}
@@ -71,6 +75,9 @@ export default function InputPhone({
         className={uniqueClass}
         limitMaxLength={true}
       />
+      {error && errorMessage && (
+        <span className="text-red-500 text-sm mt-1">{errorMessage}</span>
+      )}
       <style>{`
         .${uniqueClass} {
           display: flex;
@@ -78,7 +85,7 @@ export default function InputPhone({
         }
         .${uniqueClass} .PhoneInputCountry {
           background-color: ${bgColor};
-          border: 1px solid ${borderColor};
+          border: 1px solid ${error ? '#ef4444' : borderColor};
           border-radius: 0.5rem;
           padding: ${countryPadding};
           display: flex;
@@ -107,7 +114,7 @@ export default function InputPhone({
         .${uniqueClass} input {
           flex: 1;
           background-color: ${bgColor};
-          border: 1px solid ${borderColor};
+          border: 1px solid ${error ? '#ef4444' : borderColor};
           border-radius: 0.5rem;
           padding: ${padding};
           color: white;
@@ -119,8 +126,8 @@ export default function InputPhone({
           color: rgb(148 163 184);
         }
         .${uniqueClass} input:focus {
-          border-color: ${focusBorderColor};
-          box-shadow: 0 0 0 1px ${focusBorderColor};
+          border-color: ${error ? '#ef4444' : focusBorderColor};
+          box-shadow: 0 0 0 1px ${error ? '#ef4444' : focusBorderColor};
         }
         .${uniqueClass} input:disabled {
           opacity: 0.5;
