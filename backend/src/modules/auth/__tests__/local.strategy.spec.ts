@@ -8,6 +8,9 @@ const mockUserProfile = {
   email: 'test@example.com',
   name: 'Test User',
   role: 'ADVISOR' as const,
+  cpfCnpj: null,
+  phone: null,
+  clientProfileId: null,
   createdAt: '2024-01-01T00:00:00.000Z',
 };
 

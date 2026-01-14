@@ -8,6 +8,7 @@ type InputPasswordProps = React.InputHTMLAttributes<HTMLInputElement> & {
 export default function InputPassword({
   label,
   inputId,
+  autoComplete,
   ...props
 }: InputPasswordProps) {
   return (
@@ -17,6 +18,7 @@ export default function InputPassword({
       placeholder="*************"
       maxLength={20}
       inputId={inputId}
+      autoComplete={autoComplete ?? 'current-password'}
       {...props}
     />
   );

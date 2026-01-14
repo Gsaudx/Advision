@@ -3,6 +3,9 @@ export interface User {
   email: string;
   name: string;
   role: 'ADVISOR' | 'CLIENT' | 'ADMIN';
+  cpfCnpj: string | null;
+  phone: string | null;
+  clientProfileId: string | null;
   createdAt: string;
 }
 
@@ -15,6 +18,9 @@ export interface RegisterCredentials {
   name: string;
   email: string;
   password: string;
+  role?: 'ADVISOR' | 'CLIENT';
+  cpfCnpj?: string;
+  phone?: string;
 }
 
 export interface AuthState {

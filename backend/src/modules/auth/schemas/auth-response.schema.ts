@@ -7,6 +7,9 @@ export const UserProfileSchema = z.object({
   email: z.string(),
   name: z.string(),
   role: z.enum(['ADVISOR', 'CLIENT', 'ADMIN']),
+  cpfCnpj: z.string().nullable(),
+  phone: z.string().nullable(),
+  clientProfileId: z.string().uuid().nullable(),
   createdAt: z.string(),
 });
 

@@ -1074,6 +1074,74 @@ await signOut();
 | `COOKIE_DOMAIN`  | Domínio do cookie (opcional)                     | `.example.com`                             |
 | `CORS_ORIGIN`    | Origem permitida para CORS                       | `https://app.example.com`                  |
 
+## Cadastro Multi-Role e Rotas por Papel
+
+O sistema suporta dois tipos de usuários com experiências distintas:
+
+### Tipos de Conta
+
+| Papel       | Descrição                                      | Dashboard            |
+| ----------- | ---------------------------------------------- | -------------------- |
+| **ADVISOR** | Assessor de investimentos (gestão de clientes) | `/advisor/home`      |
+| **CLIENT**  | Cliente (visualização de carteiras)            | `/client/home`       |
+
+### Fluxo de Cadastro
+
+```
+┌──────────────────────────────────────────────────────────────────────────────┐
+│                            REGISTRO DE USUÁRIO                               │
+├──────────────────────────────────────────────────────────────────────────────┤
+│                                                                              │
+│  1. Usuário acessa /register                                                 │
+│                          │                                                   │
+│                          ▼                                                   │
+│  2. Seleciona tipo de conta: Assessor ou Cliente (toggle)                    │
+│                          │                                                   │
+│                          ▼                                                   │
+│  3. Preenche dados: nome, email, CPF/CNPJ, telefone, senha                   │
+│     → CPF/CNPJ com máscara automática (11 ou 14 dígitos)                     │
+│     → Telefone com seletor de país (DDI) e formatação                        │
+│                          │                                                   │
+│                          ▼                                                   │
+│  4. POST /auth/register → Backend valida e cria usuário                      │
+│                          │                                                   │
+│                          ▼                                                   │
+│  5. Redirecionamento baseado no role:                                        │
+│     → ADVISOR: /advisor/home                                                 │
+│     → CLIENT: /client/home      (exibe prompt de convite se não vinculado)   │
+│                                                                              │
+└──────────────────────────────────────────────────────────────────────────────┘
+```
+
+### Campos de Cadastro
+
+| Campo      | Tipo   | Obrigatório | Validação                             |
+| ---------- | ------ | ----------- | ------------------------------------- |
+| `name`     | string | Sim         | 2-100 caracteres                      |
+| `email`    | string | Sim         | Email válido                          |
+| `password` | string | Sim         | 8-100 caracteres                      |
+| `role`     | enum   | Não         | ADVISOR (padrão) ou CLIENT            |
+| `cpfCnpj`  | string | Não         | 11 dígitos (CPF) ou 14 dígitos (CNPJ) |
+| `phone`    | string | Não         | Formato internacional (+DDI + número) |
+
+### Rotas por Papel
+
+| Rota                 | Acesso         | Descrição                   |
+| -------------------- | -------------- | --------------------------- |
+| `/`                  | Autenticado    | Redireciona baseado no role |
+| `/login`             | Público        | Página de login             |
+| `/register`          | Público        | Página de cadastro          |
+| `/advisor/home`      | ADVISOR, ADMIN | Home do assessor            |
+| `/client/home`       | CLIENT         | Home do cliente             |
+
+### Componentes de UI para Cadastro
+
+- **RoleToggle**: Toggle entre Assessor/Cliente
+- **InputCpfCnpj**: Input com máscara automática CPF/CNPJ (react-imask)
+- **InputPhone**: Input com seletor de país DDI (react-phone-number-input)
+
+---
+
 ## Sistema de Convite de Clientes (Hybrid Client)
 
 O sistema suporta um modelo "Hybrid Client" onde clientes podem vincular suas contas de usuário a um perfil de cliente existente através de um sistema de convite seguro.

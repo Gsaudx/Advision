@@ -7,8 +7,8 @@ import type {
 } from '../types';
 
 export interface AuthContextType extends AuthState {
-  signIn: (credentials: LoginCredentials) => Promise<void>;
-  signUp: (credentials: RegisterCredentials) => Promise<void>;
+  signIn: (credentials: LoginCredentials) => Promise<User>;
+  signUp: (credentials: RegisterCredentials) => Promise<User>;
   signOut: () => Promise<void>;
 }
 

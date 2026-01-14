@@ -28,17 +28,19 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   }, []);
 
   const signIn = useCallback(
-    async (credentials: LoginCredentials) => {
+    async (credentials: LoginCredentials): Promise<User> => {
       const user = await authApi.login(credentials);
       setAuth(user);
+      return user;
     },
     [setAuth],
   );
 
   const signUp = useCallback(
-    async (credentials: RegisterCredentials) => {
+    async (credentials: RegisterCredentials): Promise<User> => {
       const user = await authApi.register(credentials);
       setAuth(user);
+      return user;
     },
     [setAuth],
   );

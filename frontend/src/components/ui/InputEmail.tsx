@@ -11,6 +11,7 @@ export default function InputEmail({ inputId, ...props }: InputEmailProps) {
       type="email"
       placeholder="ex: email@exemplo.com"
       maxLength={40}
+      autoComplete="email"
       inputId={inputId}
       {...props}
     />

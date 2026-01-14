@@ -13,10 +13,24 @@ const mockUser = {
   name: 'Test User',
   passwordHash: 'hashed-password',
   role: 'ADVISOR' as const,
-  createdAt: new Date('2024-01-01'),
-  updatedAt: new Date('2024-01-01'),
   cpfCnpj: null,
   phone: null,
+  clientProfile: null,
+  createdAt: new Date('2024-01-01'),
+  updatedAt: new Date('2024-01-01'),
+};
+
+const mockUserWithCpfPhone = {
+  ...mockUser,
+  cpfCnpj: '12345678901',
+  phone: '+5511999999999',
+};
+
+const mockClientUser = {
+  ...mockUser,
+  id: 'client-user-123',
+  role: 'CLIENT' as const,
+  clientProfile: { id: 'client-profile-456' },
 };
 
 const mockUserProfile = {
@@ -24,7 +38,23 @@ const mockUserProfile = {
   email: 'guilherme@example.com',
   name: 'Test User',
   role: 'ADVISOR' as const,
+  cpfCnpj: null,
+  phone: null,
+  clientProfileId: null,
   createdAt: '2024-01-01T00:00:00.000Z',
+};
+
+const mockUserProfileWithCpfPhone = {
+  ...mockUserProfile,
+  cpfCnpj: '12345678901',
+  phone: '+5511999999999',
+};
+
+const mockClientUserProfile = {
+  ...mockUserProfile,
+  id: 'client-user-123',
+  role: 'CLIENT' as const,
+  clientProfileId: 'client-profile-456',
 };
 
 describe('AuthService', () => {
@@ -72,11 +102,24 @@ describe('AuthService', () => {
       expect(result).toEqual(mockUserProfile);
       expect(prismaService.user.findUnique).toHaveBeenCalledWith({
         where: { email: 'guilherme@example.com' },
+        include: { clientProfile: true },
       });
       expect(bcrypt.compare).toHaveBeenCalledWith(
         'password123',
         'hashed-password',
       );
+    });
+
+    it('should return user profile with clientProfileId when user has linked client', async () => {
+      prismaService.user.findUnique.mockResolvedValue(mockClientUser);
+      (bcrypt.compare as jest.Mock).mockResolvedValue(true);
+
+      const result = await authService.validateUser(
+        'guilherme@example.com',
+        'password123',
+      );
+
+      expect(result).toEqual(mockClientUserProfile);
     });
 
     it('should return null when user is not found', async () => {
@@ -129,7 +172,7 @@ describe('AuthService', () => {
   });
 
   describe('register', () => {
-    it('should create a new user and return auth token', async () => {
+    it('should create a new user with default role ADVISOR', async () => {
       prismaService.user.findUnique.mockResolvedValue(null);
       prismaService.user.create.mockResolvedValue(mockUser);
       (bcrypt.hash as jest.Mock).mockResolvedValue('hashed-password');
@@ -138,6 +181,9 @@ describe('AuthService', () => {
         email: 'guilherme@example.com',
         password: 'password123',
         name: 'Test User',
+        role: 'ADVISOR' as const,
+        cpfCnpj: undefined,
+        phone: undefined,
       });
 
       expect(result).toEqual({
@@ -150,7 +196,60 @@ describe('AuthService', () => {
           email: 'guilherme@example.com',
           name: 'Test User',
           passwordHash: 'hashed-password',
+          role: 'ADVISOR',
+          cpfCnpj: null,
+          phone: null,
         },
+        include: { clientProfile: true },
+      });
+    });
+
+    it('should create a new user with role CLIENT', async () => {
+      const clientUserCreated = { ...mockUser, role: 'CLIENT' as const };
+      prismaService.user.findUnique.mockResolvedValue(null);
+      prismaService.user.create.mockResolvedValue(clientUserCreated);
+      (bcrypt.hash as jest.Mock).mockResolvedValue('hashed-password');
+
+      const result = await authService.register({
+        email: 'guilherme@example.com',
+        password: 'password123',
+        name: 'Test User',
+        role: 'CLIENT',
+        cpfCnpj: undefined,
+        phone: undefined,
+      });
+
+      expect(result.user.role).toBe('CLIENT');
+      expect(prismaService.user.create).toHaveBeenCalledWith({
+        data: expect.objectContaining({
+          role: 'CLIENT',
+        }),
+        include: { clientProfile: true },
+      });
+    });
+
+    it('should create a new user with cpfCnpj and phone', async () => {
+      prismaService.user.findUnique.mockResolvedValue(null);
+      prismaService.user.create.mockResolvedValue(mockUserWithCpfPhone);
+      (bcrypt.hash as jest.Mock).mockResolvedValue('hashed-password');
+
+      const result = await authService.register({
+        email: 'guilherme@example.com',
+        password: 'password123',
+        name: 'Test User',
+        role: 'ADVISOR',
+        cpfCnpj: '12345678901',
+        phone: '+5511999999999',
+      });
+
+      expect(result.user.cpfCnpj).toBe('12345678901');
+      expect(result.user.phone).toBe('+5511999999999');
+      expect(prismaService.user.create).toHaveBeenCalledWith({
+        data: expect.objectContaining({
+          cpfCnpj: '12345678901',
+          phone: '+5511999999999',
+        }),
+        include: { clientProfile: true },
       });
     });
 
@@ -162,6 +261,9 @@ describe('AuthService', () => {
           email: 'guilherme@example.com',
           password: 'password123',
           name: 'Test User',
+          role: 'ADVISOR' as const,
+          cpfCnpj: undefined,
+          phone: undefined,
         }),
       ).rejects.toThrow(ConflictException);
 
@@ -178,7 +280,27 @@ describe('AuthService', () => {
       expect(result).toEqual(mockUserProfile);
       expect(prismaService.user.findUnique).toHaveBeenCalledWith({
         where: { id: 'user-123' },
+        include: { clientProfile: true },
       });
+    });
+
+    it('should return user profile with clientProfileId when linked to client', async () => {
+      prismaService.user.findUnique.mockResolvedValue(mockClientUser);
+
+      const result = await authService.getProfile('client-user-123');
+
+      expect(result).toEqual(mockClientUserProfile);
+      expect(result.clientProfileId).toBe('client-profile-456');
+    });
+
+    it('should return user profile with cpfCnpj and phone when present', async () => {
+      prismaService.user.findUnique.mockResolvedValue(mockUserWithCpfPhone);
+
+      const result = await authService.getProfile('user-123');
+
+      expect(result).toEqual(mockUserProfileWithCpfPhone);
+      expect(result.cpfCnpj).toBe('12345678901');
+      expect(result.phone).toBe('+5511999999999');
     });
 
     it('should throw UnauthorizedException when user is not found', async () => {

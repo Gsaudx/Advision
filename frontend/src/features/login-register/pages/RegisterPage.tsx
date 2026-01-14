@@ -4,13 +4,19 @@ import ButtonSubmit from '@/components/ui/ButtonSubmit';
 import InputEmail from '@/components/ui/InputEmail';
 import InputName from '@/components/ui/InputName';
 import InputPassword from '@/components/ui/InputPassword';
+import InputCpfCnpj from '@/components/ui/InputCpfCnpj';
+import InputPhone from '@/components/ui/InputPhone';
+import RoleToggle from '@/components/ui/RoleToggle';
 import { useAuth } from '@/features/auth';
 
 export default function RegisterPage() {
   const navigate = useNavigate();
   const { signUp } = useAuth();
+  const [role, setRole] = useState<'ADVISOR' | 'CLIENT'>('ADVISOR');
   const [name, setName] = useState('');
   const [email, setEmail] = useState('');
+  const [cpfCnpj, setCpfCnpj] = useState('');
+  const [phone, setPhone] = useState('');
   const [password, setPassword] = useState('');
   const [confirmPassword, setConfirmPassword] = useState('');
   const [error, setError] = useState('');
@@ -33,8 +39,17 @@ export default function RegisterPage() {
     setIsLoading(true);
 
     try {
-      await signUp({ name, email, password });
-      navigate('/home');
+      const user = await signUp({
+        name,
+        email,
+        password,
+        role,
+        cpfCnpj: cpfCnpj || undefined,
+        phone: phone || undefined,
+      });
+      const redirectPath =
+        user.role === 'CLIENT' ? '/client/home' : '/advisor/home';
+      navigate(redirectPath);
     } catch {
       setError('Erro ao criar conta. Este email pode ja estar em uso.');
       setIsLoading(false);
@@ -72,6 +87,11 @@ export default function RegisterPage() {
                 </div>
               )}
               <fieldset disabled={isLoading} className="flex flex-col">
+                <RoleToggle
+                  value={role}
+                  onChange={setRole}
+                  disabled={isLoading}
+                />
                 <InputName
                   value={name}
                   onChange={(e) => setName(e.target.value)}
@@ -82,9 +102,20 @@ export default function RegisterPage() {
                   onChange={(e) => setEmail(e.target.value)}
                   required
                 />
+                <InputCpfCnpj
+                  value={cpfCnpj}
+                  onChange={setCpfCnpj}
+                  disabled={isLoading}
+                />
+                <InputPhone
+                  value={phone}
+                  onChange={(value) => setPhone(value || '')}
+                  disabled={isLoading}
+                />
                 <InputPassword
                   value={password}
                   onChange={(e) => setPassword(e.target.value)}
+                  autoComplete="new-password"
                   required
                 />
                 <InputPassword

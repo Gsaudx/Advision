@@ -1,11 +1,17 @@
 import { BasePage } from '@/components/layout/BasePage';
 import { Users, Wallet, Clock, AlertTriangle } from 'lucide-react';
 import { useAuth } from '@/features/auth';
-import { StatCard } from '../components/StatCard';
-import { QuickActions } from '../components/QuickActions';
-import { WelcomeSection } from '../components/WelcomeSection';
-import { RecentActivity, type Activity } from '../components/RecentActivity';
-import { UpcomingDueDates, type DueDate } from '../components/UpcomingDueDates';
+import { StatCard } from '../components/advisor/StatCard';
+import { QuickActions } from '../components/advisor/QuickActions';
+import { WelcomeSection } from '../components/advisor/WelcomeSection';
+import {
+  RecentActivity,
+  type Activity,
+} from '../components/advisor/RecentActivity';
+import {
+  UpcomingDueDates,
+  type DueDate,
+} from '../components/advisor/UpcomingDueDates';
 
 // TODO: Replace with real data from API
 const mockActivities: Activity[] = [
@@ -37,7 +43,7 @@ const mockDueDates: DueDate[] = [
   },
 ];
 
-export function HomePage() {
+export function HomePageAdvisor() {
   const { user } = useAuth();
   const userName = user?.name ?? 'Assessor';
 

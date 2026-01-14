@@ -19,6 +19,9 @@ const mockUserProfile = {
   email: 'test@example.com',
   name: 'Test User',
   role: 'ADVISOR' as const,
+  cpfCnpj: null,
+  phone: null,
+  clientProfileId: null,
   createdAt: '2024-01-01T00:00:00.000Z',
 };
 
@@ -64,6 +67,9 @@ describe('AuthController', () => {
         email: 'test@example.com',
         password: 'password123',
         name: 'Test User',
+        role: 'ADVISOR' as const,
+        cpfCnpj: undefined,
+        phone: undefined,
       };
 
       const result = await authController.register(
@@ -147,7 +153,13 @@ describe('AuthController', () => {
       const mockRequest = {
         user: { id: 'user-123', email: 'test@example.com', role: 'ADVISOR' },
       } as unknown as Request & {
-        user: { id: string; email: string; role: string };
+        user: {
+          id: string;
+          email: string;
+          role: string;
+          cpfCnpj?: string | null;
+          phone?: string | null;
+        };
       };
 
       const result = await authController.getProfile(mockRequest as any);

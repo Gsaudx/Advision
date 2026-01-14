@@ -24,6 +24,7 @@ export class AuthService {
   ): Promise<UserProfile | null> {
     const user = await this.prisma.user.findUnique({
       where: { email },
+      include: { clientProfile: true },
     });
 
     if (!user) {
@@ -67,7 +68,11 @@ export class AuthService {
         email: data.email,
         name: data.name,
         passwordHash,
+        role: data.role ?? 'ADVISOR',
+        cpfCnpj: data.cpfCnpj ?? null,
+        phone: data.phone ?? null,
       },
+      include: { clientProfile: true },
     });
 
     const userProfile = this.toUserProfile(user);
@@ -77,6 +82,7 @@ export class AuthService {
   async getProfile(userId: string): Promise<UserProfile> {
     const user = await this.prisma.user.findUnique({
       where: { id: userId },
+      include: { clientProfile: true },
     });
 
     if (!user) {
@@ -91,6 +97,9 @@ export class AuthService {
     email: string;
     name: string;
     role: 'ADVISOR' | 'CLIENT' | 'ADMIN';
+    cpfCnpj: string | null;
+    phone: string | null;
+    clientProfile?: { id: string } | null;
     createdAt: Date;
   }): UserProfile {
     return {
@@ -98,6 +107,9 @@ export class AuthService {
       email: user.email,
       name: user.name,
       role: user.role,
+      cpfCnpj: user.cpfCnpj,
+      phone: user.phone,
+      clientProfileId: user.clientProfile?.id ?? null,
       createdAt: user.createdAt.toISOString(),
     };
   }

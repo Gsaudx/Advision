@@ -123,6 +123,28 @@ Run `npm run generate:types` in frontend after backend schema changes.
 - Frontend axios config: `withCredentials: true` to send cookies with requests
 - Environment: `JWT_SECRET` (required), `JWT_EXPIRES_IN` (default: "12h"), `COOKIE_SECURE`, `COOKIE_DOMAIN`
 
+## Multi-Role Registration
+
+Registration supports role selection and additional fields:
+
+- Backend register schema: `modules/auth/schemas/register.schema.ts`
+- Fields: `role` (ADVISOR/CLIENT), `cpfCnpj` (11/14 digits), `phone` (E.164 format)
+- UserProfile includes: `cpfCnpj`, `phone`, `clientProfileId` (null if not linked)
+- Role-based redirects after login/register
+
+## Role-Based Routing (Frontend)
+
+Two separate areas based on user role:
+
+- **Advisor area** (`features/advisor/`): Access for investment advisors
+  - Route: `/advisor/home`
+  - Access: ADVISOR, ADMIN roles
+- **Client area** (`features/client/`): Client experience
+  - Route: `/client/home`
+  - Access: CLIENT role
+  - Shows invite prompt if `clientProfileId` is null
+- `ProtectedRoute` component handles role checking and redirects
+
 ## Client Invite System (Hybrid Client)
 
 Allows clients to link their user accounts to existing client profiles via secure invite tokens.
@@ -137,12 +159,16 @@ Allows clients to link their user accounts to existing client profiles via secur
   - `POST /clients/invite/accept` - Accept invite (any authenticated user)
 - InviteStatus enum: `PENDING`, `SENT`, `ACCEPTED`, `REJECTED`
 - Database fields on Client: `userId`, `inviteToken`, `inviteStatus`, `inviteExpiresAt`
+- Frontend: `InviteTokenPrompt` component in `features/client/components/`
 
 ## UX Components
 
 - `LoadingSpinner`: Animated spinner with size variants (sm, md, lg)
 - `LoadingScreen`: Full-page loading with logo and message
 - `ButtonSubmit`: Supports `loading` prop for async submissions
+- `RoleToggle`: Toggle switch for selecting ADVISOR/CLIENT role
+- `InputCpfCnpj`: Auto-masking CPF (000.000.000-00) / CNPJ (00.000.000/0000-00) input using react-imask
+- `InputPhone`: International phone input with country selector using react-phone-number-input
 - Custom Tailwind animations: `animate-fade-in`, `animate-shake`, `animate-slide-up`
 - Form loading pattern: use `<fieldset disabled={isLoading}>` to disable all inputs during submission
 - AuthProvider shows LoadingScreen during initial auth check (prevents flicker)

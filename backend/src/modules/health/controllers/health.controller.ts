@@ -13,6 +13,8 @@ import {
 import { ApiResponseDto, ApiErrorResponseDto } from '@/common/schemas';
 import type { ApiResponse as ApiResponseType } from '@/common/schemas';
 import { JwtAuthGuard } from '@/common/guards/jwt-auth.guard';
+import { RolesGuard } from '@/common/guards';
+import { Roles } from '@/common/decorators';
 import { HealthService } from '../services/health.service';
 import { HealthApiResponseDto } from '../schemas';
 import type { HealthResponse } from '../schemas';
@@ -20,6 +22,8 @@ import type { HealthResponse } from '../schemas';
 @ApiTags('Health')
 @ApiBearerAuth()
 @UseGuards(JwtAuthGuard)
+@UseGuards(RolesGuard)
+@Roles('ADVISOR')
 @Controller('health')
 export class HealthController {
   constructor(private readonly healthService: HealthService) {}

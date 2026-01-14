@@ -7,6 +7,10 @@ interface ProtectedRouteProps {
   allowedRoles?: ('ADVISOR' | 'CLIENT' | 'ADMIN')[];
 }
 
+function getRoleBasedPath(role: string): string {
+  return role === 'CLIENT' ? '/client/home' : '/advisor/home';
+}
+
 export function ProtectedRoute({
   children,
   allowedRoles,
@@ -23,7 +27,7 @@ export function ProtectedRoute({
   }
 
   if (allowedRoles && user && !allowedRoles.includes(user.role)) {
-    return <Navigate to="/home" replace />;
+    return <Navigate to={getRoleBasedPath(user.role)} replace />;
   }
 
   return <>{children}</>;

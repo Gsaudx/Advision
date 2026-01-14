@@ -19,8 +19,10 @@ export default function LoginPage() {
     setIsLoading(true);
 
     try {
-      await signIn({ email, password });
-      navigate('/home');
+      const user = await signIn({ email, password });
+      const redirectPath =
+        user.role === 'CLIENT' ? '/client/home' : '/advisor/home';
+      navigate(redirectPath);
     } catch {
       setError('Credenciais invalidas. Verifique seu email e senha.');
       setIsLoading(false);

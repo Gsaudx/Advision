@@ -16,6 +16,7 @@ interface NavItem {
   icon: React.ElementType;
 }
 
+// TODO: Customize the sidebar icons based on the current modules and the access (advisor/client)
 const navItems: NavItem[] = [
   { name: 'Dashboard', href: '/home', icon: LayoutDashboard },
   { name: 'Clientes', href: '/clients', icon: Users },
