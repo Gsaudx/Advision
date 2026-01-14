@@ -7,7 +7,6 @@ import { Search, Plus, Users } from "lucide-react";
 import ButtonSubmit from "@/components/ui/ButtonSubmit.tsx";
 import Select from "@/components/ui/Select.tsx";
 import StatsCardClient from "../components/StatsCardClient.tsx";
-import ModalBase from "@/components/layout/ModalBase.tsx";
 import ModalClient from "../components/ModalClient.tsx";
 import NewClientModal from "../components/NewClientModal.tsx";
 

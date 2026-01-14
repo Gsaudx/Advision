@@ -19,10 +19,6 @@ export function useNewClientModal() {
             case "cpf":
                 formattedValue = formatCPF(value);
                 break;
-
-            case "phone":
-                formattedValue = formatPhone(value);
-                break;
             case "name":
                 formattedValue = formatName(value);
                 break;
@@ -34,15 +30,24 @@ export function useNewClientModal() {
         }));
     };
 
+    const handlePhoneChange = (value: string | undefined) => {
+        setFormData((prev) => ({
+            ...prev,
+            phone: value ?? ""
+        }));
+    };
+
     const handleSubmit = (e: FormEvent<HTMLFormElement>) => {
         e.preventDefault();
 
-        const email = validateEmail(formData.email);
+        // TODO: implement form validation and submission
+        validateEmail(formData.email);
     };
 
     return {
         formData,
         handleChange,
+        handlePhoneChange,
         handleSubmit
     };
 }
@@ -54,24 +59,6 @@ function formatCPF(cpf: string): string {
         .replace(/(\d{3})(\d)/, "$1.$2")
         .replace(/(\d{3})(\d)/, "$1.$2")
         .replace(/(\d{3})(\d{1,2})$/, "$1-$2");
-}
-
-function formatPhone(phone: string): string {
-    const digits = phone.replace(/\D/g, "").slice(0, 13);
-    
-    if (digits.length === 0) return "";
-    
-    const parts = [
-        digits.slice(0, 2),
-        digits.slice(2, 4),
-        digits.slice(4, 9),
-        digits.slice(9)
-    ].filter(Boolean);
-    
-    if (parts.length === 1) return `+${parts[0]}`;
-    if (parts.length === 2) return `+${parts[0]} (${parts[1]}`;
-    if (parts.length === 3) return `+${parts[0]} (${parts[1]}) ${parts[2]}`;
-    return `+${parts[0]} (${parts[1]}) ${parts[2]}-${parts[3]}`;
 }
 
 function formatName(name: string): string {
@@ -89,7 +76,6 @@ function formatName(name: string): string {
 }
 
 function validateEmail(email: string): boolean {
-    // Regex para validar formato: algo@algo.algo
     const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
     return emailRegex.test(email);
 }

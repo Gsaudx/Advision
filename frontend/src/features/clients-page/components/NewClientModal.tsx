@@ -14,7 +14,7 @@ interface ModalClientProps {
 }
 
 export default function NewClientModal({ isOpen, onClose, title, size }: ModalClientProps) {
-    const { formData, handleChange, handleSubmit } = useNewClientModal();
+    const { formData, handleChange, handlePhoneChange, handleSubmit } = useNewClientModal();
 
     const handleClose = () => {
         onClose();
@@ -59,12 +59,12 @@ export default function NewClientModal({ isOpen, onClose, title, size }: ModalCl
 
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                     <InputPhone
-                        name="phone"
+                        inputId="phone"
                         value={formData.phone}
-                        onChange={handleChange}
-                        className="bg-slate-800 border border-slate-600 rounded-lg px-4 py-3 text-white placeholder-gray-500 
-                                       focus:outline-none focus:border-slate-500 focus:ring-1 focus:ring-slate-500 transition-colors"
-                        placeholder="+55 (00) 00000-0000"
+                        onChange={handlePhoneChange}
+                        containerClassName="flex flex-col gap-1.5 sm:gap-2"
+                        inputClassName="bg-slate-800 border-slate-600 focus:border-slate-500"
+                        size="lg"
                     />
 
                     <InputCpf
