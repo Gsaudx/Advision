@@ -1,5 +1,5 @@
 import ModalBase from "@/components/layout/ModalBase";
-import type { Client } from "../types/client";
+import type { Client } from "../types";
 import { Briefcase, Flag, Mail, MapPin, MoreVertical, Pencil, Phone, Trash2, X } from "lucide-react";
 import { useState, useRef, useEffect } from "react";
 

@@ -73,6 +73,34 @@ export interface components {
       /** @description Caminho da requisicao */
       path?: string;
     };
+    ClientCrudResponseDto: {
+      /**
+       * @description Indica se a requisicao foi bem-sucedida
+       * @constant
+       */
+      success: boolean;
+      /** @description Dados do cliente */
+      data: {
+        /** @description ID unico do cliente */
+        id: string;
+        /** @description ID do assessor responsável pelo cliente */
+        id_advisor: string;
+        /** @description Nome completo do cliente */
+        name: string;
+        /** @description Email do cliente */
+        email: string;
+        /** @description Telefone do cliente */
+        phone: string;
+        /** @description CPF do cliente */
+        cpf: string;
+        /** @description Data de criacao do cliente (ISO 8601) */
+        createdAt?: string;
+      };
+      /** @description Data/hora de execução (ISO 8601) */
+      timestamp?: string;
+      /** @description Mensagem descritiva (opcional) */
+      message?: string;
+    }
   };
   responses: never;
   parameters: never;

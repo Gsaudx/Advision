@@ -1,7 +1,7 @@
 import { useState } from "react";
 import PageTitle from "@/components/layout/PageTitle";
 import { ClientCard } from "../components/ClientCard";
-import type { Client } from "../types/client.ts";
+import type { Client } from "../types/index.ts";
 
 import { Search, Plus, Users } from "lucide-react";
 import ButtonSubmit from "@/components/ui/ButtonSubmit.tsx";

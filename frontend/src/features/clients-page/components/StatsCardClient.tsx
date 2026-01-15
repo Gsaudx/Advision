@@ -1,5 +1,5 @@
 import { Users } from "lucide-react";
-import type { Client } from "../types/client";
+import type { Client } from "../types";
 import { formatCurrency } from "@/lib/utils";
 
 const mockClients: Client[] = [

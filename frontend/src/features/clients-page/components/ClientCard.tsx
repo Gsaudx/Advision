@@ -1,4 +1,4 @@
-import { riskProfileColors, statusColors, type Client } from "../types/client.ts";
+import { riskProfileColors, statusColors, type Client } from "../types/index.ts";
 import { User, Mail, Phone, TrendingUp } from "lucide-react";
 import { formatCurrency } from "@/lib/utils.ts";
 

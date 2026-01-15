@@ -64,10 +64,7 @@ export class ClientsInviteController {
     description: 'Cliente ja possui conta vinculada',
     type: ApiErrorResponseDto,
   })
-  async generateInvite(
-    @Param('id') clientId: string,
-    @CurrentUser() user: CurrentUserData,
-  ): Promise<ApiResponseType<InviteResponse>> {
+  async generateInvite( @Param('id') clientId: string, @CurrentUser() user: CurrentUserData ): Promise<ApiResponseType<InviteResponse>> {
     const data = await this.clientsInviteService.generateInvite(
       clientId,
       user.id,
@@ -93,10 +90,7 @@ export class ClientsInviteController {
     description: 'Cliente nao encontrado',
     type: ApiErrorResponseDto,
   })
-  async getInviteStatus(
-    @Param('id') clientId: string,
-    @CurrentUser() user: CurrentUserData,
-  ): Promise<ApiResponseType<InviteResponse | null>> {
+  async getInviteStatus(@Param('id') clientId: string, @CurrentUser() user: CurrentUserData): Promise<ApiResponseType<InviteResponse | null>> {
     const data = await this.clientsInviteService.getInviteStatus(
       clientId,
       user.id,

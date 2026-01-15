@@ -1,3 +1,5 @@
+import type { components } from "@/types/api";
+
 export interface Client {
     id: string;
     name: string;
@@ -27,3 +29,5 @@ export interface ClientFormData {
     phone: string;
     cpf: string;
 }
+
+export type ClientCrudResponse = components['schemas']['ClientCrudResponseDto'];

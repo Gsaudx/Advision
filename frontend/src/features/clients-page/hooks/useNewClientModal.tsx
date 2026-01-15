@@ -1,7 +1,8 @@
 import { useState, type ChangeEvent, type FormEvent } from "react";
-import { type ClientFormData } from "../types/client";
+import { type ClientFormData } from "../types";
 import { parsePhoneNumberFromString } from "libphonenumber-js";
 import { getFormErrors } from "@/lib/utils";
+import { useCreateClient } from "../api/useCreateClient";
 
 const initialFormData: ClientFormData = {
     name: "",
@@ -49,7 +50,7 @@ export function useNewClientModal() {
         }));
     };
 
-    const handleSubmit = (e: FormEvent<HTMLFormElement>) => {
+    const handleSubmit = async (e: FormEvent<HTMLFormElement>) => {
         e.preventDefault();
 
         const validations = [
@@ -99,6 +100,15 @@ export function useNewClientModal() {
         }
 
         setErrors({}); // Limpa erros anteriores
+
+        const newUser = {
+            name: formatPostName(formData.name),
+            email: formData.email,
+            phone: formData.phone,
+            cpf: formatPostCPF(formData.cpf)
+        };
+
+        useCreateClient(newUser);
     };
 
     return {
@@ -134,6 +144,7 @@ function formatName(name: string): string {
         })
         .join(" ");
 }
+
 function validateName(name: string): boolean {
     const nameRegex = /^[A-Za-zÀ-ÖØ-öø-ÿ\s]+$/;
     return nameRegex.test(name.trim());
@@ -176,4 +187,12 @@ function validarCPF(cpf: string): boolean {
 function validatePhoneNumber(phoneNumber: string): boolean {
     const phone = parsePhoneNumberFromString(phoneNumber);
     return phone ? phone.isValid() : false;
+}
+
+function formatPostName(name: string): string {
+    return name.trim().toUpperCase();
+}
+
+function formatPostCPF(cpf: string): string {
+    return cpf.replace(/\D/g, '');
 }
