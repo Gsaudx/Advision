@@ -3,8 +3,9 @@ import { PassportStrategy } from '@nestjs/passport';
 import { Injectable } from '@nestjs/common';
 import { Request } from 'express';
 import { env } from '@/config';
+import { AUTH_CONSTANTS } from '@/config/constants';
 
-export const AUTH_COOKIE_NAME = 'tcc_auth';
+export const AUTH_COOKIE_NAME = AUTH_CONSTANTS.COOKIE_NAME;
 
 export interface JwtPayload {
   sub: string;
