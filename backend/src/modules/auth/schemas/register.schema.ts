@@ -1,5 +1,6 @@
 import { z } from 'zod';
 import { createZodDto } from 'nestjs-zod';
+import { AUTH_CONSTANTS } from '@/config/constants';
 
 const cpfCnpjSchema = z
   .string()
@@ -28,13 +29,25 @@ const phoneSchema = z
 export const RegisterSchema = z.object({
   name: z
     .string()
-    .min(2, 'Nome deve ter pelo menos 2 caracteres')
-    .max(100, 'Nome deve ter no maximo 100 caracteres'),
+    .min(
+      AUTH_CONSTANTS.NAME_MIN_LENGTH,
+      `Nome deve ter pelo menos ${AUTH_CONSTANTS.NAME_MIN_LENGTH} caracteres`,
+    )
+    .max(
+      AUTH_CONSTANTS.NAME_MAX_LENGTH,
+      `Nome deve ter no maximo ${AUTH_CONSTANTS.NAME_MAX_LENGTH} caracteres`,
+    ),
   email: z.email('Email invalido'),
   password: z
     .string()
-    .min(8, 'Senha deve ter pelo menos 8 caracteres')
-    .max(100, 'Senha deve ter no maximo 100 caracteres'),
+    .min(
+      AUTH_CONSTANTS.PASSWORD_MIN_LENGTH,
+      `Senha deve ter pelo menos ${AUTH_CONSTANTS.PASSWORD_MIN_LENGTH} caracteres`,
+    )
+    .max(
+      AUTH_CONSTANTS.PASSWORD_MAX_LENGTH,
+      `Senha deve ter no maximo ${AUTH_CONSTANTS.PASSWORD_MAX_LENGTH} caracteres`,
+    ),
   role: z.enum(['ADVISOR', 'CLIENT']).default('ADVISOR'),
   cpfCnpj: cpfCnpjSchema,
   phone: phoneSchema,

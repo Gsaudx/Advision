@@ -1,13 +1,7 @@
 import { useState, type ChangeEvent } from 'react';
 import { parsePhoneNumberFromString } from 'libphonenumber-js';
 import { getFormErrors } from '@/lib/utils';
-import type { ClientFormData, CreateClientInput, RiskProfile } from '../types';
-
-export const RISK_PROFILE_OPTIONS: RiskProfile[] = [
-  'CONSERVATIVE',
-  'MODERATE',
-  'AGGRESSIVE',
-];
+import type { ClientFormData, CreateClientInput } from '../types';
 
 const INITIAL_FORM_DATA: ClientFormData = {
   name: '',
@@ -81,7 +75,7 @@ export function useNewClientModal({
       {
         isInvalid: formData.email !== '' && !validateEmail(formData.email),
         message:
-          'O email digitado é inválido. O formato aceito é exemplo@dominio.com',
+          'O email digitado e invalido. O formato aceito e exemplo@dominio.com',
         inputName: 'email',
       },
       {
@@ -91,12 +85,12 @@ export function useNewClientModal({
       },
       {
         isInvalid: !validarCPF(formData.cpf),
-        message: 'CPF informado é inválido.',
+        message: 'CPF informado e invalido.',
         inputName: 'cpf',
       },
       {
         isInvalid: !validatePhoneNumber(formData.phone),
-        message: 'Telefone informado é inválido.',
+        message: 'Telefone informado e invalido.',
         inputName: 'phone',
       },
     ];
@@ -115,7 +109,6 @@ export function useNewClientModal({
       cpf: formatPostCPF(formData.cpf),
       ...(formData.email && { email: formData.email }),
       ...(formData.phone && { phone: formData.phone }),
-      riskProfile: RISK_PROFILE_OPTIONS[1], // Default to 'MODERATE', add to form later
     };
 
     onSubmit(clientData);

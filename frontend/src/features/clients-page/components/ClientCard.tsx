@@ -33,11 +33,15 @@ export function ClientCard({ client, ...props }: ClientCardProps) {
         <div className="space-y-3">
           <div className="flex items-center gap-2 text-gray-400">
             <Mail className="w-4 h-4" />
-            <span className="text-sm">{client.email}</span>
+            <span className="text-sm">
+              {client.email ?? 'Nao informado'}
+            </span>
           </div>
           <div className="flex items-center gap-2 text-gray-400">
             <Phone className="w-4 h-4" />
-            <span className="text-sm">{client.phone}</span>
+            <span className="text-sm">
+              {client.phone ?? 'Nao informado'}
+            </span>
           </div>
           <div className="flex items-center gap-2 text-gray-400">
             <SquareActivity className="w-4 h-4" />

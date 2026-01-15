@@ -7,7 +7,7 @@ This document describes the database schema, relationships, and data model.
 - **Database:** PostgreSQL 16
 - **ORM:** Prisma 7.x with Driver Adapters
 - **Schema Location:** `backend/prisma/schema.prisma`
-- **Multi-tenant Model:** User (Advisor role) → Clients → Wallets → Positions/Transactions
+- **Multi-tenant Model:** User (Advisor role) -> Clients -> Wallets -> Positions/Transactions
 
 ## Enums
 
@@ -199,7 +199,7 @@ model RebalanceLog {
 
 | Table      | Purpose                                                                                                                                                                                                             |
 | ---------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| **User**   | System user with JWT authentication. The `role` field defines the type: ADVISOR, CLIENT, or ADMIN. Advisors are the **main tenant** of the multi-tenant model — each advisor only sees their own clients.          |
+| **User**   | System user with JWT authentication. The `role` field defines the type: ADVISOR, CLIENT, or ADMIN. Advisors are the **main tenant** of the multi-tenant model - each advisor only sees their own clients.          |
 | **Client** | Advisor's client. Contains CPF, risk profile and contact data. An advisor can have N clients.                                                                                                                       |
 | **Wallet** | Investment portfolio. Each client can have multiple wallets (e.g., "Retirement", "Short Term"). The `cashBalance` field represents available cash for investing.                                                    |
 
@@ -242,21 +242,13 @@ model RebalanceLog {
 ## Relationship Diagram
 
 ```
-┌─────────────┐       ┌─────────────┐       ┌─────────────┐
-│    User     │──1:N──│   Client    │──1:N──│   Wallet    │
-└─────────────┘       └─────────────┘       └─────────────┘
-                                                   │
-                      ┌────────────────────────────┼────────────────────────────┐
-                      │                            │                            │
-                      ▼                            ▼                            ▼
-               ┌─────────────┐            ┌───────────────┐           ┌─────────────────┐
-               │  Position   │            │  Transaction  │           │ OptimizationRun │
-               └─────────────┘            └───────────────┘           └─────────────────┘
-                      │                            │                            │
-                      ▼                            ▼                            ▼
-               ┌─────────────┐            ┌───────────────┐           ┌─────────────────┐
-               │    Asset    │────────────│ OptionDetail  │           │  RebalanceLog   │
-               └─────────────┘            └───────────────┘           └─────────────────┘
+User 1:N Client 1:N Wallet
+Wallet 1:N Position
+Wallet 1:N Transaction
+Wallet 1:N OptimizationRun 1:N RebalanceLog
+Asset 1:N Position
+Asset 1:N Transaction
+Asset 1:1 OptionDetail
 ```
 
 ## Database Commands

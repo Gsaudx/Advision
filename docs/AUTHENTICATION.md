@@ -20,50 +20,22 @@ The system uses **JWT (JSON Web Token) stateless** authentication with **HttpOnl
 
 ## Authentication Flow
 
-```
-┌──────────────────────────────────────────────────────────────────────────────┐
-│                            LOGIN FLOW                                         │
-├──────────────────────────────────────────────────────────────────────────────┤
-│                                                                              │
-│  1. Frontend sends POST /auth/login { email, password }                      │
-│                          │                                                   │
-│                          ▼                                                   │
-│  2. LocalStrategy validates credentials (bcrypt.compare)                     │
-│                          │                                                   │
-│                          ▼                                                   │
-│  3. AuthService generates JWT: { sub: id, email, role }                      │
-│                          │                                                   │
-│                          ▼                                                   │
-│  4. Backend sets HttpOnly cookie in response:                                │
-│     Set-Cookie: tcc_auth=<jwt>; HttpOnly; Secure; SameSite=Strict           │
-│                          │                                                   │
-│                          ▼                                                   │
-│  5. Browser stores cookie automatically (inaccessible to JS)                 │
-│                                                                              │
-└──────────────────────────────────────────────────────────────────────────────┘
+### Login Flow
 
-┌──────────────────────────────────────────────────────────────────────────────┐
-│                        AUTHENTICATED REQUEST FLOW                            │
-├──────────────────────────────────────────────────────────────────────────────┤
-│                                                                              │
-│  1. Frontend makes GET /health (axios with withCredentials: true)            │
-│                          │                                                   │
-│                          ▼                                                   │
-│  2. Browser attaches cookie automatically in header                          │
-│     Cookie: tcc_auth=<jwt>                                                   │
-│                          │                                                   │
-│                          ▼                                                   │
-│  3. JwtStrategy extracts token from cookie and validates:                    │
-│     - Verifies signature with JWT_SECRET                                     │
-│     - Verifies not expired (12h)                                             │
-│     - Decodes payload: { sub, email, role }                                  │
-│                          │                                                   │
-│                          ▼                                                   │
-│  4. If valid: req.user = { id, email, role } → Controller processes          │
-│     If invalid: returns 401 Unauthorized                                     │
-│                                                                              │
-└──────────────────────────────────────────────────────────────────────────────┘
-```
+1. Frontend sends `POST /auth/login { email, password }`
+2. LocalStrategy validates credentials (`bcrypt.compare`)
+3. AuthService generates JWT: `{ sub: id, email, role }`
+4. Backend sets HttpOnly cookie in response:
+   `Set-Cookie: tcc_auth=<jwt>; HttpOnly; Secure; SameSite=Strict`
+5. Browser stores cookie automatically (inaccessible to JS)
+
+### Authenticated Request Flow
+
+1. Frontend makes `GET /health` (axios with `withCredentials: true`)
+2. Browser attaches cookie automatically: `Cookie: tcc_auth=<jwt>`
+3. JwtStrategy validates signature and expiration
+4. If valid: `req.user = { id, email, role }`, controller processes request
+5. If invalid: returns `401 Unauthorized`
 
 ## JWT Structure
 
@@ -164,31 +136,13 @@ The system supports two user types with distinct experiences:
 
 ### Registration Flow
 
-```
-┌──────────────────────────────────────────────────────────────────────────────┐
-│                            USER REGISTRATION                                  │
-├──────────────────────────────────────────────────────────────────────────────┤
-│                                                                              │
-│  1. User accesses /register                                                  │
-│                          │                                                   │
-│                          ▼                                                   │
-│  2. Selects account type: Advisor or Client (toggle)                         │
-│                          │                                                   │
-│                          ▼                                                   │
-│  3. Fills data: name, email, CPF/CNPJ, phone, password                       │
-│     → CPF/CNPJ with automatic mask (11 or 14 digits)                         │
-│     → Phone with country selector (DDI) and formatting                       │
-│                          │                                                   │
-│                          ▼                                                   │
-│  4. POST /auth/register → Backend validates and creates user                 │
-│                          │                                                   │
-│                          ▼                                                   │
-│  5. Redirect based on role:                                                  │
-│     → ADVISOR: /advisor/home                                                 │
-│     → CLIENT: /client/home (shows invite prompt if not linked)               │
-│                                                                              │
-└──────────────────────────────────────────────────────────────────────────────┘
-```
+1. User accesses `/register`
+2. Selects account type: Advisor or Client (toggle)
+3. Fills data: name, email, CPF/CNPJ, phone, password
+4. `POST /auth/register` - backend validates and creates user
+5. Redirect based on role:
+   - ADVISOR: `/advisor/home`
+   - CLIENT: `/client/home` (shows invite prompt if not linked)
 
 ### Registration Fields
 
@@ -227,29 +181,11 @@ The system supports a "Hybrid Client" model where clients can link their user ac
 
 ### Invite Flow
 
-```
-┌──────────────────────────────────────────────────────────────────────────────┐
-│                         CLIENT INVITE FLOW                                   │
-├──────────────────────────────────────────────────────────────────────────────┤
-│                                                                              │
-│  1. Advisor creates a client in the system (basic data)                      │
-│                          │                                                   │
-│                          ▼                                                   │
-│  2. Advisor generates invite: POST /clients/:id/invite                       │
-│     → Returns token in format INV-XXXXXXXX (valid for 7 days)                │
-│                          │                                                   │
-│                          ▼                                                   │
-│  3. Advisor shares token with client (email, WhatsApp, etc.)                 │
-│                          │                                                   │
-│                          ▼                                                   │
-│  4. Client creates account: POST /auth/register                              │
-│                          │                                                   │
-│                          ▼                                                   │
-│  5. Client accepts invite: POST /clients/invite/accept { token }             │
-│     → Account linked to advisor's client profile                             │
-│                                                                              │
-└──────────────────────────────────────────────────────────────────────────────┘
-```
+1. Advisor creates a client in the system (basic data)
+2. Advisor generates invite: `POST /clients/:id/invite`
+3. Advisor shares token with client (email, WhatsApp, etc.)
+4. Client creates account: `POST /auth/register`
+5. Client accepts invite: `POST /clients/invite/accept { token }`
 
 ### Invite Endpoints
 

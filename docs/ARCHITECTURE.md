@@ -35,28 +35,28 @@ We do **not** use traditional layered architecture (Controller/Service/Repo at r
 
 ```
 src/
-├── common/                               # Reusable code across the application
-│   ├── decorators/                       #   Custom decorators
-│   ├── schemas/                          #   Base Zod schemas (ApiResponse, ApiError)
-│   ├── filters/                          #   Exception handling
-│   ├── guards/                           #   Access control
-│   └── utils/                            #   Utility functions
-├── config/                               # Environment configuration
-├── generated/                            # Prisma Client (auto-generated)
-├── modules/
-│   └── {feature}/                        # Each business domain
-│       ├── controllers/                  #   API endpoints
-│       ├── services/                     #   Business logic
-│       ├── schemas/                      #   Zod schemas (validation + types + DTOs)
-│       ├── enums/                        #   Domain enums
-│       ├── __tests__/                    #   Unit tests
-│       ├── {feature}.module.ts
-│       └── index.ts                      #   Barrel exports
-├── shared/                               # Global shared services
-│   ├── prisma/                           #   Database connection
-│   └── shared.module.ts                  #   @Global() module
-├── app.module.ts                         # Root module (imports SharedModule and feature modules)
-└── main.ts                               # Bootstrap: CORS, Filters, Pipes, Swagger
+  common/                         # Reusable code across the application
+    decorators/                   #   Custom decorators
+    schemas/                      #   Base Zod schemas (ApiResponse, ApiError)
+    filters/                      #   Exception handling
+    guards/                       #   Access control
+    utils/                        #   Utility functions
+  config/                         # Environment configuration
+  generated/                      # Prisma Client (auto-generated)
+  modules/
+    {feature}/                    # Each business domain
+      controllers/                #   API endpoints
+      services/                   #   Business logic
+      schemas/                    #   Zod schemas (validation + types + DTOs)
+      enums/                      #   Domain enums
+      __tests__/                  #   Unit tests
+      {feature}.module.ts
+      index.ts                    #   Barrel exports
+  shared/                         # Global shared services
+    prisma/                       #   Database connection
+    shared.module.ts              #   @Global() module
+  app.module.ts                   # Root module
+  main.ts                         # Bootstrap: CORS, Filters, Pipes, Swagger
 ```
 
 #### Complex Module
@@ -65,31 +65,31 @@ src/
 
 ```
 modules/wallet/
-├── core/                           # Wallet CRUD
-│   ├── controllers/
-│   │   └── wallet.controller.ts    # /wallets
-│   ├── services/
-│   │   └── wallet.service.ts
-│   └── schemas/
-│       └── wallet.schema.ts
-├── positions/                      # Sub-functionality: positions
-│   ├── controllers/
-│   │   └── positions.controller.ts # /wallets/:id/positions
-│   ├── services/
-│   │   └── positions.service.ts
-│   └── schemas/
-│       └── position.schema.ts
-├── transactions/                   # Sub-functionality: transactions
-│   ├── controllers/
-│   │   └── transactions.controller.ts
-│   ├── services/
-│   │   └── transactions.service.ts
-│   └── schemas/
-│       └── transaction.schema.ts
-├── enums/                          # Shared module enums
-├── __tests__/
-├── wallet.module.ts                # Registers ALL controllers/services
-└── index.ts
+  core/                           # Wallet CRUD
+    controllers/
+      wallet.controller.ts        # /wallets
+    services/
+      wallet.service.ts
+    schemas/
+      wallet.schema.ts
+  positions/                      # Sub-functionality: positions
+    controllers/
+      positions.controller.ts     # /wallets/:id/positions
+    services/
+      positions.service.ts
+    schemas/
+      position.schema.ts
+  transactions/                   # Sub-functionality: transactions
+    controllers/
+      transactions.controller.ts
+    services/
+      transactions.service.ts
+    schemas/
+      transaction.schema.ts
+  enums/                          # Shared module enums
+  __tests__/
+  wallet.module.ts                # Registers ALL controllers/services
+  index.ts
 ```
 
 ```typescript
@@ -107,7 +107,7 @@ export class WalletModule {}
 
 ### Folder Descriptions
 
-#### `modules/` — Business Domains
+#### `modules/` - Business Domains
 
 Each folder represents an **isolated feature** of the system. A module contains everything it needs to function.
 
@@ -117,25 +117,25 @@ Each folder represents an **isolated feature** of the system. A module contains 
 | **services/**      | Contains business logic. Knows nothing about HTTP.                                               | Calculations, business rule validations, data orchestration.        |
 | **schemas/**       | Defines Zod schemas for validation and typing. Generates DTOs (via `createZodDto`) and types.   | Input validation, contract definition, Swagger documentation.       |
 | **enums/**         | TypeScript enums specific to the domain. Ensures type-safety between Schema, Service and Swagger.| Whenever there are fixed values (`status`, `type`, etc.).           |
-| **\_\_tests\_\_/** | Module unit tests. Located close to the code they test.                                          | Testing services in isolation with mocks.                           |
+| **__tests__/**     | Module unit tests. Located close to the code they test.                                          | Testing services in isolation with mocks.                           |
 
-#### `common/` — Shared Code
+#### `common/` - Shared Code
 
 Contains functionality that is **shared** between multiple modules. Unlike `shared/` (which has injectable services like Prisma), here we have pure utilities.
 
 | Subfolder       | What it is                                                                                            | Example                                                                                                        |
 | --------------- | ----------------------------------------------------------------------------------------------------- | -------------------------------------------------------------------------------------------------------------- |
-| **decorators/** | Custom annotations for methods/classes. Extract data or add metadata.                                 | `@CurrentUser()` — extracts logged user from JWT token and injects into controller.                            |
+| **decorators/** | Custom annotations for methods/classes. Extract data or add metadata.                                 | `@CurrentUser()` - extracts logged user from JWT token and injects into controller.                            |
 | **schemas/**    | Reusable base Zod schemas. Define validation, DTOs and types for standardized responses.              | `ApiResponseSchema`: success wrapper. `ApiErrorResponseSchema`: standard error format.                         |
-| **filters/**    | Intercept exceptions and format error response. Ensure all errors follow the same pattern.            | `HttpExceptionFilter` — catches errors (including `ZodValidationException`) and returns standardized response. |
-| **guards/**     | Block or allow access to routes. Execute **before** the controller.                                   | `JwtAuthGuard` — verifies token. `RolesGuard` — verifies user permission.                                      |
+| **filters/**    | Intercept exceptions and format error response. Ensure all errors follow the same pattern.            | `HttpExceptionFilter` - catches errors and returns standardized response.                                      |
+| **guards/**     | Block or allow access to routes. Execute **before** the controller.                                   | `JwtAuthGuard` - verifies token. `RolesGuard` - verifies user permission.                                      |
 | **utils/**      | Pure helper functions, no NestJS dependency.                                                          | `formatCpf()`, `calculateAveragePrice()`, `slugify()`                                                          |
 
-#### `config/` — Environment Configuration
+#### `config/` - Environment Configuration
 
 Centralizes environment variables and typed configurations. Avoids scattered `process.env` in code.
 
-#### `shared/` — Global Services
+#### `shared/` - Global Services
 
 Services that **all modules** need to access. Marked with `@Global()` so no need to import in each module.
 
@@ -156,11 +156,9 @@ The API uses standardized wrappers to ensure response consistency. A global `Htt
 #### Request Flow
 
 ```
-Request → Controller → Service → Controller → Response
-                ↓           ↓          ↓
-           (validate)   (process)  (ApiResponseDto.success())
-                                        ↓
-           If error → throw HttpException → HttpExceptionFilter → ApiErrorResponseDto
+Request -> Controller -> Service -> Controller -> Response
+(validate)              (process)      (ApiResponseDto.success())
+If error -> throw HttpException -> HttpExceptionFilter -> ApiErrorResponseDto
 ```
 
 #### Separation of Concerns
@@ -236,27 +234,27 @@ We don't pile all components in a giant folder. We use **Colocation**: code live
 
 ```
 src/
-├── assets/                        # Images, static icons
-├── components/
-│   ├── ui/                        #   Base components (Button, Input, Card)
-│   └── layout/                    #   Structures (Sidebar, Header, ProtectedLayout)
-├── features/
-│   └── {feature}/                 # Each system functionality
-│       ├── pages/                 #   Feature pages/orchestrators
-│       │   └── {Feature}Page.tsx
-│       ├── api/                   #   Data fetching hooks (TanStack Query)
-│       │   └── use{Feature}.ts
-│       ├── components/            #   Feature components
-│       │   └── {Component}.tsx
-│       ├── hooks/                 #   UI logic hooks
-│       ├── types/                 #   Feature types
-│       │   └── index.ts
-│       └── index.ts               #   Barrel exports
-├── hooks/                         # Global hooks (useDebounce, useLocalStorage)
-├── lib/                           # axios, react-query, utils
-├── types/                         # Generated API types (api.d.ts)
-└── routes/                        # Route definitions (React Router)
-    └── index.tsx
+  assets/                        # Images, static icons
+  components/
+    ui/                          # Base components (Button, Input, Card)
+    layout/                      # Structures (Sidebar, Header, ProtectedLayout)
+  features/
+    {feature}/                   # Each system functionality
+      pages/                     # Feature pages/orchestrators
+        {Feature}Page.tsx
+      api/                       # Data fetching hooks (TanStack Query)
+        use{Feature}.ts
+      components/                # Feature components
+        {Component}.tsx
+      hooks/                     # UI logic hooks
+      types/                     # Feature types
+        index.ts
+      index.ts                   # Barrel exports
+  hooks/                         # Global hooks
+  lib/                           # axios, react-query, utils
+  types/                         # Generated API types (api.d.ts)
+  routes/                        # Route definitions (React Router)
+    index.tsx
 ```
 
 ### Simple vs Complex Features
@@ -267,31 +265,31 @@ src/
 
 ```
 features/wallet/
-├── core/                          # Wallet CRUD
-│   ├── pages/
-│   │   └── WalletPage.tsx
-│   ├── api/
-│   │   └── useWallet.ts           # useGetWallet, useCreateWallet, etc (TanStack Query)
-│   ├── hooks/
-│   │   └── useWalletFilters.ts    # useState + filter logic
-│   │   └── useWalletModal.ts      # Modal open/close control
-│   ├── components/
-│   │   └── WalletList.tsx         # Uses BOTH hooks
-│   └── types/
-│       └── index.ts
-├── positions/                     # Sub-functionality: positions
-│   ├── pages/
-│   │   └── PositionsPage.tsx
-│   ├── api/
-│   │   └── usePositions.ts
-│   ├── components/
-│   │   └── PositionsList.tsx
-│   └── types/
-│       └── index.ts
-├── transactions/                  # Sub-functionality: transactions
-├── hooks/                         # Shared feature hooks
-├── types/                         # Shared feature types
-└── index.ts                       # Barrel exports
+  core/                          # Wallet CRUD
+    pages/
+      WalletPage.tsx
+    api/
+      useWallet.ts               # useGetWallet, useCreateWallet, etc
+    hooks/
+      useWalletFilters.ts        # useState + filter logic
+      useWalletModal.ts          # Modal open/close control
+    components/
+      WalletList.tsx             # Uses BOTH hooks
+    types/
+      index.ts
+  positions/                     # Sub-functionality: positions
+    pages/
+      PositionsPage.tsx
+    api/
+      usePositions.ts
+    components/
+      PositionsList.tsx
+    types/
+      index.ts
+  transactions/                  # Sub-functionality: transactions
+  hooks/                         # Shared feature hooks
+  types/                         # Shared feature types
+  index.ts                       # Barrel exports
 ```
 
 ### Layout Routes with React Router
@@ -323,29 +321,16 @@ Page components render content directly without needing a wrapper component - th
 
 **Where to put?**
 
-- `features/{feature}/api/` → Feature-specific hook
-- `features/{feature}/hooks/` → Feature-specific hook
-- `src/hooks/` → Hook reused across multiple features
+- `features/{feature}/api/` - Feature-specific hook
+- `features/{feature}/hooks/` - Feature-specific hook
+- `src/hooks/` - Hook reused across multiple features
 
 ---
 
 ## Production Architecture
 
 ```
-┌─────────────┐     ┌─────────────┐     ┌─────────────┐
-│ CloudFront  │────▶│     S3      │     │   Route53   │
-│   (CDN)     │     │  (Frontend) │     │  (DNS)      │
-└─────────────┘     └─────────────┘     └─────────────┘
-                                               │
-                                               ▼
-┌─────────────┐     ┌─────────────┐     ┌─────────────┐
-│   Client    │────▶│   Caddy     │────▶│   Backend   │
-│  (Browser)  │     │ (SSL/Proxy) │     │  (NestJS)   │
-└─────────────┘     └─────────────┘     └─────────────┘
-                                               │
-                                               ▼
-                                        ┌─────────────┐
-                                        │     RDS     │
-                                        │ (PostgreSQL)│
-                                        └─────────────┘
+Client Browser
+  -> CloudFront (CDN) -> S3 (Frontend)
+  -> Caddy (SSL/Proxy) -> Backend (NestJS) -> RDS (PostgreSQL)
 ```

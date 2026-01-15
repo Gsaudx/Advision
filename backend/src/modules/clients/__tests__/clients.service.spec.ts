@@ -1,10 +1,6 @@
 // src/modules/clients/__tests__/clients.service.spec.ts
 import { Test, TestingModule } from '@nestjs/testing';
-import {
-  ConflictException,
-  ForbiddenException,
-  NotFoundException,
-} from '@nestjs/common';
+import { ConflictException, NotFoundException } from '@nestjs/common';
 import { ClientsService } from '../services/clients.service';
 import { PrismaService } from '@/shared/prisma/prisma.service';
 import { InviteStatus } from '../enums';
@@ -16,14 +12,12 @@ describe('ClientsService', () => {
       findFirst: jest.Mock;
       create: jest.Mock;
       findMany: jest.Mock;
-      findUnique: jest.Mock;
       update: jest.Mock;
       delete: jest.Mock;
     };
   };
 
   const advisorId = 'advisor-123';
-  const otherAdvisorId = 'advisor-999';
   const clientId = 'client-123';
 
   const baseDbClient = {
@@ -46,7 +40,6 @@ describe('ClientsService', () => {
         findFirst: jest.fn(),
         create: jest.fn(),
         findMany: jest.fn(),
-        findUnique: jest.fn(),
         update: jest.fn(),
         delete: jest.fn(),
       },
@@ -204,30 +197,19 @@ describe('ClientsService', () => {
 
   describe('findOne', () => {
     it('throws NotFoundException when client does not exist', async () => {
-      prisma.client.findUnique.mockResolvedValue(null);
+      prisma.client.findFirst.mockResolvedValue(null);
 
       await expect(service.findOne(clientId, advisorId)).rejects.toBeInstanceOf(
         NotFoundException,
       );
 
-      expect(prisma.client.findUnique).toHaveBeenCalledWith({
-        where: { id: clientId },
+      expect(prisma.client.findFirst).toHaveBeenCalledWith({
+        where: { id: clientId, advisorId },
       });
-    });
-
-    it('throws ForbiddenException when advisorId does not match', async () => {
-      prisma.client.findUnique.mockResolvedValue({
-        ...baseDbClient,
-        advisorId: otherAdvisorId,
-      });
-
-      await expect(service.findOne(clientId, advisorId)).rejects.toBeInstanceOf(
-        ForbiddenException,
-      );
     });
 
     it('returns formatted client when allowed', async () => {
-      prisma.client.findUnique.mockResolvedValue(baseDbClient);
+      prisma.client.findFirst.mockResolvedValue(baseDbClient);
 
       const result = await service.findOne(clientId, advisorId);
 
@@ -249,7 +231,7 @@ describe('ClientsService', () => {
 
   describe('update', () => {
     it('throws NotFoundException when client does not exist', async () => {
-      prisma.client.findUnique.mockResolvedValue(null);
+      prisma.client.findFirst.mockResolvedValue(null);
 
       await expect(
         service.update(clientId, advisorId, { name: 'X' }),
@@ -258,21 +240,8 @@ describe('ClientsService', () => {
       expect(prisma.client.update).not.toHaveBeenCalled();
     });
 
-    it('throws ForbiddenException when advisorId does not match', async () => {
-      prisma.client.findUnique.mockResolvedValue({
-        ...baseDbClient,
-        advisorId: otherAdvisorId,
-      });
-
-      await expect(
-        service.update(clientId, advisorId, { name: 'X' }),
-      ).rejects.toBeInstanceOf(ForbiddenException);
-
-      expect(prisma.client.update).not.toHaveBeenCalled();
-    });
-
     it('updates client and returns formatted response', async () => {
-      prisma.client.findUnique.mockResolvedValue(baseDbClient);
+      prisma.client.findFirst.mockResolvedValue(baseDbClient);
 
       const updatedDbClient = {
         ...baseDbClient,
@@ -320,7 +289,7 @@ describe('ClientsService', () => {
 
   describe('delete', () => {
     it('throws NotFoundException when client does not exist', async () => {
-      prisma.client.findUnique.mockResolvedValue(null);
+      prisma.client.findFirst.mockResolvedValue(null);
 
       await expect(service.delete(clientId, advisorId)).rejects.toBeInstanceOf(
         NotFoundException,
@@ -329,21 +298,8 @@ describe('ClientsService', () => {
       expect(prisma.client.delete).not.toHaveBeenCalled();
     });
 
-    it('throws ForbiddenException when advisorId does not match', async () => {
-      prisma.client.findUnique.mockResolvedValue({
-        ...baseDbClient,
-        advisorId: otherAdvisorId,
-      });
-
-      await expect(service.delete(clientId, advisorId)).rejects.toBeInstanceOf(
-        ForbiddenException,
-      );
-
-      expect(prisma.client.delete).not.toHaveBeenCalled();
-    });
-
     it('deletes client when allowed', async () => {
-      prisma.client.findUnique.mockResolvedValue(baseDbClient);
+      prisma.client.findFirst.mockResolvedValue(baseDbClient);
       prisma.client.delete.mockResolvedValue(undefined);
 
       await expect(

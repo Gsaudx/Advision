@@ -33,10 +33,10 @@ async function bootstrap() {
     const config = new DocumentBuilder()
       .setTitle('TCC Investimentos API')
       .setDescription(
-        'API para gestão de carteiras e otimização (Knapsack Problem)',
+        'API para gestao de carteiras e otimizacao (Knapsack Problem)',
       )
       .setVersion('1.0')
-      .addTag('Health', 'Monitoramento e status da aplicação')
+      .addTag('Health', 'Monitoramento e status da aplicacao')
       .build();
 
     const document = SwaggerModule.createDocument(app, config);

@@ -31,7 +31,7 @@ describe('HealthController - Decorator Metadata', () => {
 
     expect(operation).toMatchObject({
       summary: 'Verifica status da API',
-      description: expect.stringContaining('Retorna o status da aplicação'),
+      description: expect.stringContaining('Retorna o status da aplicacao'),
     });
   });
 

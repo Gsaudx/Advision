@@ -19,6 +19,7 @@ import { AuthService } from '../services/auth.service';
 import { RegisterDto, LoginDto, UserProfileApiResponseDto } from '../schemas';
 import type { UserProfile } from '../schemas';
 import { AUTH_COOKIE_NAME, type RequestUser } from '../strategies/jwt.strategy';
+import { LocalAuthGuard } from '../guards/local-auth.guard';
 
 interface RequestWithUser extends Request {
   user: RequestUser;
@@ -58,9 +59,9 @@ export class AuthController {
 
   @Post('register')
   @ApiOperation({
-    summary: 'Registrar novo assessor',
+    summary: 'Registrar novo usuario',
     description:
-      'Cria uma nova conta de assessor na plataforma. Define um cookie HttpOnly com o token JWT.',
+      'Cria uma nova conta na plataforma. Define um cookie HttpOnly com o token JWT.',
   })
   @ApiResponse({
     status: 201,
@@ -83,7 +84,7 @@ export class AuthController {
 
   @Post('login')
   @HttpCode(HttpStatus.OK)
-  @UseGuards(AuthGuard('local'))
+  @UseGuards(LocalAuthGuard)
   @ApiOperation({
     summary: 'Autenticar usuario',
     description:

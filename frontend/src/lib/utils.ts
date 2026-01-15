@@ -33,6 +33,6 @@ export const getFormErrors = (validations: ValidationRule[]) => {
     }
   });
 
-  // Retorna o objeto se houver erros, caso contrário retorna null
+  // Retorna o objeto se houver erros, caso contrario retorna null
   return Object.keys(newErrors).length > 0 ? newErrors : null;
 };

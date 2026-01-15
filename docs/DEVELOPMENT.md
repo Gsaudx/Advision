@@ -10,22 +10,22 @@ Create a new folder in `backend/src/modules/{feature}/`:
 
 ```
 modules/my-feature/
-├── controllers/
-│   ├── my-feature.controller.ts
-│   └── index.ts
-├── services/
-│   ├── my-feature.service.ts
-│   └── index.ts
-├── schemas/
-│   ├── my-feature.schema.ts
-│   └── index.ts
-├── enums/
-│   ├── my-feature.enum.ts        # (if needed)
-│   └── index.ts
-├── __tests__/
-│   └── my-feature.service.spec.ts
-├── my-feature.module.ts
-└── index.ts
+  controllers/
+    my-feature.controller.ts
+    index.ts
+  services/
+    my-feature.service.ts
+    index.ts
+  schemas/
+    my-feature.schema.ts
+    index.ts
+  enums/
+    my-feature.enum.ts        # if needed
+    index.ts
+  __tests__/
+    my-feature.service.spec.ts
+  my-feature.module.ts
+  index.ts
 ```
 
 ### 2. Module File
@@ -155,18 +155,18 @@ Create a new folder in `frontend/src/features/{feature}/`:
 
 ```
 features/my-feature/
-├── pages/
-│   └── MyFeaturePage.tsx
-├── api/
-│   └── useMyFeature.ts           # TanStack Query hooks
-├── components/
-│   ├── MyFeatureList.tsx
-│   └── MyFeatureCard.tsx
-├── hooks/
-│   └── useMyFeatureFilters.ts    # UI logic hooks
-├── types/
-│   └── index.ts
-└── index.ts                      # Barrel exports
+  pages/
+    MyFeaturePage.tsx
+  api/
+    useMyFeature.ts           # TanStack Query hooks
+  components/
+    MyFeatureList.tsx
+    MyFeatureCard.tsx
+  hooks/
+    useMyFeatureFilters.ts    # UI logic hooks
+  types/
+    index.ts
+  index.ts                    # Barrel exports
 ```
 
 ### 2. Types from Generated API
@@ -247,7 +247,7 @@ export function MyFeaturePage() {
   if (isLoading) return <LoadingSpinner size="lg" />;
   if (error) return <div>Error loading data</div>;
 
-  const filtered = data?.filter(item => {
+  const filtered = data?.filter((item) => {
     const matchesSearch = item.name.toLowerCase().includes(search.toLowerCase());
     const matchesStatus = status === 'all' || item.status === status;
     return matchesSearch && matchesStatus;
@@ -312,7 +312,7 @@ This creates `src/types/api.d.ts` with backend schemas.
 
 | Component        | Purpose                                   | Props                         |
 | ---------------- | ----------------------------------------- | ----------------------------- |
-| `LoadingSpinner` | Animated spinner for loading indication   | `size?: 'sm' \| 'md' \| 'lg'` |
+| `LoadingSpinner` | Animated spinner for loading indication   | `size?: 'sm' \\| 'md' \\| 'lg'`   |
 | `LoadingScreen`  | Full-page loading with logo and message   | `message?: string`            |
 
 ```tsx
@@ -336,7 +336,7 @@ This creates `src/types/api.d.ts` with backend schemas.
 
 | Class              | Effect                            | Use               |
 | ------------------ | --------------------------------- | ----------------- |
-| `animate-fade-in`  | Fade in with subtle slide (0.3s) | Cards, pages      |
+| `animate-fade-in`  | Fade in with subtle slide (0.3s)  | Cards, pages      |
 | `animate-shake`    | Horizontal shake (0.5s)           | Error messages    |
 | `animate-slide-up` | More pronounced slide up (0.3s)   | Modals, toasts    |
 
@@ -375,7 +375,7 @@ return (
 2. **Strict Typing**: No `any`. Frontend interfaces mirror backend DTOs.
 3. **Conventional Commits**: `feat`, `fix`, `chore`, etc.
 4. **Language**: Code in English. Comments only when strictly necessary, also in English. All UI text in Brazilian Portuguese.
-5. **Atomic Commits**: Commit working iterations. Semantic commits in English. Example: `feat(backend): Add wallet endpoint to list wallets`
+5. **Atomic Commits**: Commit working iterations. Semantic commits in English.
 6. **Documentation**: After committing changes, update README.md and CLAUDE.md if needed.
 
 ---
@@ -389,8 +389,8 @@ Quality checks run on PRs to main/master:
 
 ### Pipeline (`.github/workflows/deploy.yml`)
 
-1. **Backend:** Build Docker → Push DockerHub → Deploy EC2 → Migrate DB
-2. **Frontend:** Build Vite → Upload S3 → Invalidate CloudFront
+1. **Backend:** Build Docker -> Push DockerHub -> Deploy EC2 -> Migrate DB
+2. **Frontend:** Build Vite -> Upload S3 -> Invalidate CloudFront
 
 ### Required GitHub Secrets
 
@@ -444,10 +444,10 @@ Tests are colocated with the code they test:
 
 ```
 modules/my-feature/
-├── services/
-│   └── my-feature.service.ts
-└── __tests__/
-    └── my-feature.service.spec.ts
+  services/
+    my-feature.service.ts
+  __tests__/
+    my-feature.service.spec.ts
 ```
 
 ### Example Test

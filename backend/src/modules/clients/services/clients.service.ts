@@ -1,9 +1,4 @@
-import {
-  Injectable,
-  NotFoundException,
-  ForbiddenException,
-  ConflictException,
-} from '@nestjs/common';
+import { Injectable, NotFoundException, ConflictException } from '@nestjs/common';
 import { PrismaService } from '@/shared/prisma/prisma.service';
 import type { RiskProfile } from '@/generated/prisma/enums';
 import type { ClientResponse, ClientListResponse } from '../schemas';
@@ -95,18 +90,12 @@ export class ClientsService {
   }
 
   async findOne(clientId: string, advisorId: string): Promise<ClientResponse> {
-    const client = await this.prisma.client.findUnique({
-      where: { id: clientId },
+    const client = await this.prisma.client.findFirst({
+      where: { id: clientId, advisorId },
     });
 
     if (!client) {
       throw new NotFoundException('Cliente nao encontrado');
-    }
-
-    if (client.advisorId !== advisorId) {
-      throw new ForbiddenException(
-        'Voce nao tem permissao para visualizar este cliente',
-      );
     }
 
     return this.formatClientResponse(client);
@@ -117,18 +106,12 @@ export class ClientsService {
     advisorId: string,
     data: UpdateClientData,
   ): Promise<ClientResponse> {
-    const client = await this.prisma.client.findUnique({
-      where: { id: clientId },
+    const client = await this.prisma.client.findFirst({
+      where: { id: clientId, advisorId },
     });
 
     if (!client) {
       throw new NotFoundException('Cliente nao encontrado');
-    }
-
-    if (client.advisorId !== advisorId) {
-      throw new ForbiddenException(
-        'Voce nao tem permissao para editar este cliente',
-      );
     }
 
     const updatedClient = await this.prisma.client.update({
@@ -145,18 +128,12 @@ export class ClientsService {
   }
 
   async delete(clientId: string, advisorId: string): Promise<void> {
-    const client = await this.prisma.client.findUnique({
-      where: { id: clientId },
+    const client = await this.prisma.client.findFirst({
+      where: { id: clientId, advisorId },
     });
 
     if (!client) {
       throw new NotFoundException('Cliente nao encontrado');
-    }
-
-    if (client.advisorId !== advisorId) {
-      throw new ForbiddenException(
-        'Voce nao tem permissao para excluir este cliente',
-      );
     }
 
     await this.prisma.client.delete({

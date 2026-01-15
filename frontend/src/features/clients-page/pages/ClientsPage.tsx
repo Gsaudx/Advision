@@ -9,62 +9,8 @@ import Select from '@/components/ui/Select.tsx';
 import ClientStatsCard from '../components/ClientStatsCard.tsx';
 import ClientModal from '../components/ClientModal.tsx';
 import NewClientModal from '../components/NewClientModal.tsx';
-
-// Mock data - replace with API call
-const mockClients: Client[] = [
-  {
-    id: '1',
-    advisorId: 'advisor-uuid-1',
-    userId: 'user-uuid-1',
-    name: 'João Silva',
-    email: 'joao.silva@email.com',
-    cpf: '123.456.789-00',
-    phone: '(11) 99999-1234',
-    riskProfile: 'MODERATE',
-    inviteStatus: 'ACCEPTED',
-    createdAt: '2024-01-15T10:00:00Z',
-    updatedAt: '2024-01-15T10:00:00Z',
-  },
-  {
-    id: '2',
-    advisorId: 'advisor-uuid-1',
-    userId: null,
-    name: 'Maria Santos',
-    email: 'maria.santos@email.com',
-    cpf: '234.567.890-11',
-    phone: '(11) 98888-5678',
-    riskProfile: 'CONSERVATIVE',
-    inviteStatus: 'PENDING',
-    createdAt: '2024-02-20T14:30:00Z',
-    updatedAt: '2024-02-20T14:30:00Z',
-  },
-  {
-    id: '3',
-    advisorId: 'advisor-uuid-1',
-    userId: 'user-uuid-3',
-    name: 'Pedro Oliveira',
-    email: 'pedro.oliveira@email.com',
-    cpf: '345.678.901-22',
-    phone: '(21) 97777-9012',
-    riskProfile: 'AGGRESSIVE',
-    inviteStatus: 'ACCEPTED',
-    createdAt: '2024-03-10T09:15:00Z',
-    updatedAt: '2024-03-15T11:20:00Z',
-  },
-  {
-    id: '4',
-    advisorId: 'advisor-uuid-1',
-    userId: null,
-    name: 'Ana Costa',
-    email: 'ana.costa@email.com',
-    cpf: '456.789.012-33',
-    phone: '(31) 96666-3456',
-    riskProfile: 'MODERATE',
-    inviteStatus: 'SENT',
-    createdAt: '2023-11-05T16:45:00Z',
-    updatedAt: '2023-11-05T16:45:00Z',
-  },
-];
+import { useClients } from '../api';
+import { LoadingSpinner } from '@/components/ui/LoadingSpinner.tsx';
 
 export default function ClientsPage() {
   const [searchTerm, setSearchTerm] = useState('');
@@ -72,10 +18,15 @@ export default function ClientsPage() {
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [selectedClient, setSelectedClient] = useState<Client | null>(null);
 
-  const filteredClients = mockClients.filter((client) => {
-    const matchesSearch =
-      client.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      client.email?.toLowerCase().includes(searchTerm.toLowerCase());
+  const { data: clients = [], isLoading, isError } = useClients();
+
+  const filteredClients = clients.filter((client) => {
+    const normalizedSearch = searchTerm.trim().toLowerCase();
+    const matchesName = client.name.toLowerCase().includes(normalizedSearch);
+    const matchesEmail = client.email
+      ? client.email.toLowerCase().includes(normalizedSearch)
+      : false;
+    const matchesSearch = matchesName || matchesEmail;
     const matchesStatus =
       filterStatus === 'all' || client.inviteStatus === filterStatus;
     return matchesSearch && matchesStatus;
@@ -114,10 +65,8 @@ export default function ClientsPage() {
         size="xxl"
       />
       <div className="space-y-6">
-        {/* Stats Cards */}
-        <ClientStatsCard />
+        <ClientStatsCard clients={clients} />
 
-        {/* Search and Filter Bar */}
         <div className="flex flex-col md:flex-row gap-4 items-center justify-between">
           <div className="relative flex-1 w-full md:max-w-md">
             <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 w-5 h-5 text-gray-400" />
@@ -140,28 +89,46 @@ export default function ClientsPage() {
             <ButtonSubmit
               icon={<Plus className="w-5 h-5" />}
               className="!mt-0 !w-auto h-11"
-              children="Novo Cliente"
-              onClick={() => setIsModalOpen(true)}
-            />
+              onClick={() => {
+                setSelectedClient(null);
+                setIsModalOpen(true);
+              }}
+            >
+              Novo Cliente
+            </ButtonSubmit>
           </div>
         </div>
 
-        {/* Clients Grid */}
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-          {filteredClients.map((client) => (
-            <ClientCard
-              key={client.id}
-              client={client}
-              onClick={() => handleOpenModal(client)}
-            />
-          ))}
-        </div>
-
-        {filteredClients.length === 0 && (
+        {isLoading ? (
+          <div className="flex justify-center py-12">
+            <LoadingSpinner size="lg" />
+          </div>
+        ) : isError ? (
           <div className="text-center py-12">
             <Users className="w-12 h-12 text-gray-600 mx-auto mb-4" />
-            <p className="text-gray-400">Nenhum cliente encontrado</p>
+            <p className="text-gray-400">
+              Erro ao carregar clientes. Tente novamente.
+            </p>
           </div>
+        ) : (
+          <>
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+              {filteredClients.map((client) => (
+                <ClientCard
+                  key={client.id}
+                  client={client}
+                  onClick={() => handleOpenModal(client)}
+                />
+              ))}
+            </div>
+
+            {filteredClients.length === 0 && (
+              <div className="text-center py-12">
+                <Users className="w-12 h-12 text-gray-600 mx-auto mb-4" />
+                <p className="text-gray-400">Nenhum cliente encontrado</p>
+              </div>
+            )}
+          </>
         )}
       </div>
     </>

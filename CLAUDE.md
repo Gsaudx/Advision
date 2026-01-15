@@ -84,7 +84,7 @@ All endpoints return standardized responses:
 
 - PostgreSQL 16 with Prisma ORM 7.x (Driver Adapters)
 - Schema in `backend/prisma/schema.prisma`
-- Multi-tenant model: User (Advisor) → Clients → Wallets → Positions/Transactions
+- Multi-tenant model: User (Advisor) -> Clients -> Wallets -> Positions/Transactions
 - User roles: `UserRole` enum with ADVISOR, CLIENT, ADMIN
 
 ## Authentication

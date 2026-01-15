@@ -13,10 +13,13 @@ interface NavItem {
   icon: React.ElementType;
 }
 
-// Navigation items - only include routes that exist
-const navItems: NavItem[] = [
+const advisorNavItems: NavItem[] = [
   { name: 'Dashboard', href: '/advisor/home', icon: LayoutDashboard },
   { name: 'Clientes', href: '/clients', icon: Users },
+];
+
+const clientNavItems: NavItem[] = [
+  { name: 'Inicio', href: '/client/home', icon: LayoutDashboard },
 ];
 
 interface SidebarProps {
@@ -30,6 +33,7 @@ export function Sidebar({ isOpen, onToggle }: SidebarProps) {
 
   const userInitial = user?.name?.charAt(0).toUpperCase() ?? 'A';
   const userName = user?.name ?? 'Assessor';
+  const navItems = user?.role === 'CLIENT' ? clientNavItems : advisorNavItems;
 
   return (
     <aside
