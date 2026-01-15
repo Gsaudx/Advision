@@ -1,53 +1,63 @@
 import { Users } from "lucide-react";
 import type { Client } from "../types";
-import { formatCurrency } from "@/lib/utils";
 
 const mockClients: Client[] = [
     {
-        id: "1",
-        name: "João Silva",
-        email: "joao.silva@email.com",
-        phone: "(11) 99999-1234",
-        investmentTotal: 150000,
-        riskProfile: "Moderado",
-        status: "Ativo",
-        createdAt: "2024-01-15",
+        id: '1',
+        advisorId: '1',
+        userId: '3',
+        name: 'Guilherme Teste',
+        email: 'guilherme@teste.com',
+        cpf: '12345678901',
+        phone: '(11) 99999-1234',
+        riskProfile: 'MODERATE',
+        inviteStatus: 'ACCEPTED',
+        createdAt: '2024-01-15',
+        updatedAt: '2024-01-20',
     },
     {
-        id: "2",
-        name: "Maria Santos",
-        email: "maria.santos@email.com",
-        phone: "(11) 98888-5678",
-        investmentTotal: 320000,
-        riskProfile: "Conservador",
-        status: "Ativo",
-        createdAt: "2024-02-20",
+        id: '2',
+        advisorId: '1',
+        userId: '4',
+        name: 'Isaque Teste',
+        email: 'isaque@teste.com',
+        cpf: '12345678901',
+        phone: '(11) 99999-1234',
+        riskProfile: 'AGGRESSIVE',
+        inviteStatus: 'PENDING',
+        createdAt: '2024-01-15',
+        updatedAt: '2026-01-14',
     },
     {
-        id: "3",
-        name: "Pedro Oliveira",
-        email: "pedro.oliveira@email.com",
-        phone: "(21) 97777-9012",
-        investmentTotal: 85000,
-        riskProfile: "Agressivo",
-        status: "Ativo",
-        createdAt: "2024-03-10",
+        id: '3',
+        advisorId: '1',
+        userId: '4',
+        name: 'Guilherme Teste',
+        email: 'guilherme@teste.com',
+        cpf: '12345678901',
+        phone: '(11) 99999-1234',
+        riskProfile: 'MODERATE',
+        inviteStatus: 'ACCEPTED',
+        createdAt: '2024-01-15',
+        updatedAt: '2024-01-20',
     },
     {
-        id: "4",
-        name: "Ana Costa",
-        email: "ana.costa@email.com",
-        phone: "(31) 96666-3456",
-        investmentTotal: 200000,
-        riskProfile: "Moderado",
-        status: "Inativo",
-        createdAt: "2023-11-05",
+        id: '2',
+        advisorId: '1',
+        userId: '4',
+        name: 'Isaque Teste',
+        email: 'isaque@teste.com',
+        cpf: '12345678901',
+        phone: '(11) 99999-1234',
+        riskProfile: 'AGGRESSIVE',
+        inviteStatus: 'PENDING',
+        createdAt: '2024-01-15',
+        updatedAt: '2026-01-14',
     },
 ];
 
-const totalInvestment = mockClients.reduce((acc, client) => acc + client.investmentTotal, 0);
-const activeClients = mockClients.filter((c) => c.status === "Ativo").length;
-
+const linkedClientes = mockClients.filter((c) => c.inviteStatus === "ACCEPTED").length;
+const pendingToLinkClients = mockClients.filter((c) => c.inviteStatus === "PENDING").length;
 
 export default function StatsCardClient() {
     return (
@@ -69,8 +79,8 @@ export default function StatsCardClient() {
                         <Users className="w-5 h-5 text-green-400" />
                     </div>
                     <div>
-                        <p className="text-gray-400 text-sm">Clientes Ativos</p>
-                        <p className="text-white text-2xl font-bold">{activeClients}</p>
+                        <p className="text-gray-400 text-sm">Clientes Vinculados</p>
+                        <p className="text-white text-2xl font-bold">{linkedClientes}</p>
                     </div>
                 </div>
             </div>
@@ -80,8 +90,8 @@ export default function StatsCardClient() {
                         <Users className="w-5 h-5 text-purple-400" />
                     </div>
                     <div>
-                        <p className="text-gray-400 text-sm">Total Investido</p>
-                        <p className="text-white text-2xl font-bold">{formatCurrency(totalInvestment)}</p>
+                        <p className="text-gray-400 text-sm">Clientes com Convites Pendentes</p>
+                        <p className="text-white text-2xl font-bold">{pendingToLinkClients}</p>
                     </div>
                 </div>
             </div>

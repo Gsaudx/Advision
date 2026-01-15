@@ -1,6 +1,5 @@
-import { riskProfileColors, statusColors, type Client } from "../types/index.ts";
-import { User, Mail, Phone, TrendingUp } from "lucide-react";
-import { formatCurrency } from "@/lib/utils.ts";
+import { riskProfileColors, inviteStatusColors, inviteStatusLabels, type Client } from "../types/index.ts";
+import { User, Mail, Phone, SquareActivity } from "lucide-react";
 
 interface ClientCardProps extends React.ButtonHTMLAttributes<HTMLButtonElement> {
     client: Client;
@@ -16,13 +15,8 @@ export function ClientCard({ client, ...props }: ClientCardProps) {
                     <div className="flex items-center gap-3">
                         <div className="w-12 h-12 rounded-full bg-[#2a2a2a] flex items-center justify-center">
                             <User className="w-6 h-6 text-gray-400" />
-                        </div>
-                        <div>
-                            <h3 className="text-white font-semibold text-lg">{client.name}</h3>
-                            <span className={`text-xs px-2 py-1 rounded-full ${statusColors[client.status]}`}>
-                                {client.status}
-                            </span>
-                        </div>
+                        </div> 
+                        <span className="text-sm text-gray-400 font-bold">{client.name}</span>
                     </div>
                     <span className={`text-xs px-2 py-1 rounded-full ${riskProfileColors[client.riskProfile]}`}>
                         {client.riskProfile}
@@ -39,8 +33,8 @@ export function ClientCard({ client, ...props }: ClientCardProps) {
                         <span className="text-sm">{client.phone}</span>
                     </div>
                     <div className="flex items-center gap-2 text-gray-400">
-                        <TrendingUp className="w-4 h-4" />
-                        <span className="text-sm">Investimento: {formatCurrency(client.investmentTotal)}</span>
+                        <SquareActivity className="w-4 h-4" />
+                        <span className={`text-sm px-2 py-1 rounded-full ${inviteStatusColors[client.inviteStatus]}`}>Status do Convite: {inviteStatusLabels[client.inviteStatus]}</span>
                     </div>
                 </div>
             </div>

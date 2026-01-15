@@ -5,12 +5,12 @@ export function cn(...inputs: ClassValue[]) {
   return twMerge(clsx(inputs));
 }
 
-export const formatCurrency = (value: number) => {
-  return new Intl.NumberFormat("pt-BR", {
-    style: "currency",
-    currency: "BRL",
-  }).format(value);
-};
+// export const formatCurrency = (value: number) => {
+//   return new Intl.NumberFormat("pt-BR", {
+//     style: "currency",
+//     currency: "BRL",
+//   }).format(value);
+// };
 
 
 // Typing for the items in the validation array

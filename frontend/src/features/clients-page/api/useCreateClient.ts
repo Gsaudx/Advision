@@ -1,21 +1,15 @@
-import { useQuery } from '@tanstack/react-query';
-import { api } from '@/lib/axios';
-import type { ClientCrudResponse, ClientFormData } from '../types';
+import { useMutation, useQueryClient } from '@tanstack/react-query';
+import { clientsApi } from './clients.api';
+import type { CreateClientInput } from '../types';
 
-async function fetchCreateClient(formData: ClientFormData): Promise<ClientCrudResponse> {
-    const { data } = await api.post<ClientCrudResponse>('/clients-crud/create', formData);
-    return data;
+export function useCreateClient() {
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: (data: CreateClientInput) => clientsApi.create(data),
+    onSuccess: () => {
+      // Invalidate clients list to refetch
+      queryClient.invalidateQueries({ queryKey: ['clients'] });
+    },
+  });
 }
-
-
-export function useCreateClient(formData: ClientFormData) {
-    console.log(fetchCreateClient(formData));
-
-    // const query = useQuery({
-    //     queryKey: ['health'],
-    //     queryFn: () => fetchCreateClient(formData),
-    //     refetchInterval: false,
-    //     retry: false,
-    // });
-
-} 

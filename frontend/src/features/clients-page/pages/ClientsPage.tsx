@@ -1,7 +1,7 @@
 import { useState } from "react";
 import PageTitle from "@/components/layout/PageTitle";
 import { ClientCard } from "../components/ClientCard";
-import type { Client } from "../types/index.ts";
+import type { Client, InviteStatus } from "../types/index.ts";
 
 import { Search, Plus, Users } from "lucide-react";
 import ButtonSubmit from "@/components/ui/ButtonSubmit.tsx";
@@ -14,63 +14,77 @@ import NewClientModal from "../components/NewClientModal.tsx";
 const mockClients: Client[] = [
     {
         id: "1",
+        advisorId: "advisor-uuid-1",
+        userId: "user-uuid-1",
         name: "João Silva",
         email: "joao.silva@email.com",
+        cpf: "123.456.789-00",
         phone: "(11) 99999-1234",
-        investmentTotal: 150000,
-        riskProfile: "Moderado",
-        status: "Ativo",
-        createdAt: "2024-01-15",
+        riskProfile: "MODERATE",
+        inviteStatus: "ACCEPTED",
+        createdAt: "2024-01-15T10:00:00Z",
+        updatedAt: "2024-01-15T10:00:00Z",
     },
     {
         id: "2",
+        advisorId: "advisor-uuid-1",
+        userId: null,
         name: "Maria Santos",
         email: "maria.santos@email.com",
+        cpf: "234.567.890-11",
         phone: "(11) 98888-5678",
-        investmentTotal: 320000,
-        riskProfile: "Conservador",
-        status: "Ativo",
-        createdAt: "2024-02-20",
+        riskProfile: "CONSERVATIVE",
+        inviteStatus: "PENDING",
+        createdAt: "2024-02-20T14:30:00Z",
+        updatedAt: "2024-02-20T14:30:00Z",
     },
     {
         id: "3",
+        advisorId: "advisor-uuid-1",
+        userId: "user-uuid-3",
         name: "Pedro Oliveira",
         email: "pedro.oliveira@email.com",
+        cpf: "345.678.901-22",
         phone: "(21) 97777-9012",
-        investmentTotal: 85000,
-        riskProfile: "Agressivo",
-        status: "Ativo",
-        createdAt: "2024-03-10",
+        riskProfile: "AGGRESSIVE",
+        inviteStatus: "ACCEPTED",
+        createdAt: "2024-03-10T09:15:00Z",
+        updatedAt: "2024-03-15T11:20:00Z",
     },
     {
         id: "4",
+        advisorId: "advisor-uuid-1",
+        userId: null,
         name: "Ana Costa",
         email: "ana.costa@email.com",
+        cpf: "456.789.012-33",
         phone: "(31) 96666-3456",
-        investmentTotal: 200000,
-        riskProfile: "Moderado",
-        status: "Inativo",
-        createdAt: "2023-11-05",
+        riskProfile: "MODERATE",
+        inviteStatus: "SENT",
+        createdAt: "2023-11-05T16:45:00Z",
+        updatedAt: "2023-11-05T16:45:00Z",
     },
 ];
 
 export default function ClientsPage() {
     const [searchTerm, setSearchTerm] = useState("");
-    const [filterStatus, setFilterStatus] = useState<"all" | "Ativo" | "Inativo">("all");
+    const [filterStatus, setFilterStatus] = useState<"all" | InviteStatus>("all");
     const [isModalOpen, setIsModalOpen] = useState(false);
     const [selectedClient, setSelectedClient] = useState<Client | null>(null);
 
     const filteredClients = mockClients.filter((client) => {
         const matchesSearch = client.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-            client.email.toLowerCase().includes(searchTerm.toLowerCase());
-        const matchesStatus = filterStatus === "all" || client.status === filterStatus;
+            client.email?.toLowerCase().includes(searchTerm.toLowerCase());
+        const matchesStatus = filterStatus === "all" || client.inviteStatus === filterStatus;
         return matchesSearch && matchesStatus;
     });
 
     const optionsSelect = [
         { value: "all", label: "Todos" },
-        { value: "Ativo", label: "Ativos" },
-        { value: "Inativo", label: "Inativos" },
+        { value: "ACCEPTED", label: "Ativos" },
+        { value: "PENDING", label: "Pendentes" },
+        { value: "SENT", label: "Convite Enviado" },
+        { value: "REJECTED", label: "Rejeitados" },
     ];
 
     const handleOpenModal = (client: Client) => {
@@ -117,7 +131,7 @@ export default function ClientsPage() {
                         <Select
                             value={filterStatus}
                             options={optionsSelect}
-                            onChange={(e) => setFilterStatus(e.target.value as "all" | "Ativo" | "Inativo")}
+                            onChange={(e) => setFilterStatus(e.target.value as "all" | InviteStatus)}
                         />
                         <ButtonSubmit
                             icon={<Plus className="w-5 h-5" />}
