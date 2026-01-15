@@ -5,7 +5,7 @@ import {
   ConflictException,
 } from '@nestjs/common';
 import { PrismaService } from '@/shared/prisma/prisma.service';
-import type { RiskProfile } from '@prisma/client';
+import type { RiskProfile } from '@/generated/prisma/enums';
 import type { ClientResponse, ClientListResponse } from '../schemas';
 import { InviteStatus } from '../enums';
 
