@@ -1,7 +1,7 @@
 import { useState, type ChangeEvent } from 'react';
 import { parsePhoneNumberFromString } from 'libphonenumber-js';
 import { getFormErrors } from '@/lib/utils';
-import type { ClientFormData, CreateClientInput } from '../types';
+import type { ClientFormData, CreateClientInput, RiskProfile } from '../types';
 
 const INITIAL_FORM_DATA: ClientFormData = {
   name: '',
@@ -104,9 +104,10 @@ export function useNewClientModal({
 
     setErrors({});
 
-    const clientData: CreateClientInput = {
+  const clientData: CreateClientInput = {
       name: formatPostName(formData.name),
       cpf: formatPostCPF(formData.cpf),
+      riskProfile: 'MODERATE' as RiskProfile,
       ...(formData.email && { email: formData.email }),
       ...(formData.phone && { phone: formData.phone }),
     };
