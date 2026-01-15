@@ -1,13 +1,7 @@
-import {
-    Injectable,
-    NotFoundException,
-    ForbiddenException,
-    BadRequestException,
-    ConflictException,
-} from '@nestjs/common';
-import { randomBytes } from 'crypto';
+import { Injectable } from '@nestjs/common';
 import { PrismaService } from '@/shared/prisma/prisma.service';
 
+@Injectable()
 export class ClientsCrudService {
-    constructor(private readonly prisma: PrismaService) { }
+  constructor(private readonly prisma: PrismaService) {}
 }

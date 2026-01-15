@@ -16,20 +16,25 @@ interface ExceptionResponse {
   statusCode?: number;
 }
 
+const GENERIC_ERROR_MESSAGE = 'Erro interno do servidor';
+
 /**
  * Filtro global para padronizar todas as respostas de erro da API.
  * Captura HttpExceptions, ZodValidationException e erros nao tratados.
+ * Em producao, mascaramos erros internos para nao expor detalhes de implementacao.
  */
 @Catch()
 export class HttpExceptionFilter implements ExceptionFilter {
+  private readonly isProduction = process.env.NODE_ENV === 'production';
+
   catch(exception: unknown, host: ArgumentsHost): void {
     const ctx = host.switchToHttp();
     const response = ctx.getResponse<Response>();
     const request = ctx.getRequest<Request>();
 
     const status = this.getStatus(exception);
-    const message = this.extractMessage(exception);
-    const errors = this.extractErrors(exception);
+    const message = this.extractMessage(exception, status);
+    const errors = this.extractErrors(exception, status);
 
     const errorResponse: ApiErrorResponse = {
       success: false,
@@ -55,7 +60,15 @@ export class HttpExceptionFilter implements ExceptionFilter {
     return HttpStatus.INTERNAL_SERVER_ERROR;
   }
 
-  private extractMessage(exception: unknown): string {
+  private extractMessage(exception: unknown, status: number): string {
+    // In production, mask internal server errors
+    if (
+      this.isProduction &&
+      status === Number(HttpStatus.INTERNAL_SERVER_ERROR)
+    ) {
+      return GENERIC_ERROR_MESSAGE;
+    }
+
     if (exception instanceof ZodValidationException) {
       const zodError = exception.getZodError() as ZodError;
       return zodError.issues[0]?.message || 'Validation failed';
@@ -72,10 +85,21 @@ export class HttpExceptionFilter implements ExceptionFilter {
       }
     }
 
-    return 'Erro interno do servidor';
+    return GENERIC_ERROR_MESSAGE;
   }
 
-  private extractErrors(exception: unknown): string[] | undefined {
+  private extractErrors(
+    exception: unknown,
+    status: number,
+  ): string[] | undefined {
+    // In production, don't expose internal error details
+    if (
+      this.isProduction &&
+      status === Number(HttpStatus.INTERNAL_SERVER_ERROR)
+    ) {
+      return undefined;
+    }
+
     if (exception instanceof ZodValidationException) {
       const zodError = exception.getZodError() as ZodError;
 

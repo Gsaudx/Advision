@@ -2,6 +2,7 @@ import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom';
 import { HealthCheckPage } from '@/features/health-check';
 import { useAuth } from '@/features/auth';
 import { ProtectedLayout } from '@/components/layout/ProtectedLayout';
+import { NotFound } from '@/components/layout/NotFound';
 import { HomePageAdvisor, HomePageClient } from '@/features/home';
 import LoginPage from '@/features/login-register/pages/LoginPage';
 import RegisterPage from '@/features/login-register/pages/RegisterPage';
@@ -22,7 +23,11 @@ export function AppRoutes() {
         {/* Public routes */}
         <Route path="/login" element={<LoginPage />} />
         <Route path="/register" element={<RegisterPage />} />
-        <Route path="/healthcheck" element={<HealthCheckPage />} />
+
+        {/* Admin-only routes */}
+        <Route element={<ProtectedLayout allowedRoles={['ADMIN']} />}>
+          <Route path="/admin/health" element={<HealthCheckPage />} />
+        </Route>
 
         {/* Advisor layout - persists across child route changes */}
         <Route element={<ProtectedLayout allowedRoles={['ADVISOR', 'ADMIN']} />}>
@@ -40,6 +45,9 @@ export function AppRoutes() {
           <Route path="/" element={<RoleBasedRedirect />} />
           <Route path="/home" element={<RoleBasedRedirect />} />
         </Route>
+
+        {/* 404 Not Found - catch all */}
+        <Route path="*" element={<NotFound />} />
       </Routes>
     </BrowserRouter>
   );

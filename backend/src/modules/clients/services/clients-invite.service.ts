@@ -4,16 +4,16 @@ import {
   ForbiddenException,
   BadRequestException,
   ConflictException,
+  InternalServerErrorException,
 } from '@nestjs/common';
 import { randomBytes } from 'crypto';
 import { PrismaService } from '@/shared/prisma/prisma.service';
+import { INVITE_CONSTANTS } from '@/config';
 import { InviteStatus } from '../enums';
 import type { InviteResponse, AcceptInviteResponse } from '../schemas';
 
 @Injectable()
 export class ClientsInviteService {
-  private readonly INVITE_EXPIRATION_DAYS = 7;
-
   constructor(private readonly prisma: PrismaService) {}
 
   async generateInvite(
@@ -43,20 +43,46 @@ export class ClientsInviteService {
       throw new ConflictException('Convite ja foi aceito');
     }
 
-    const inviteToken = this.generateToken();
     const inviteExpiresAt = new Date();
     inviteExpiresAt.setDate(
-      inviteExpiresAt.getDate() + this.INVITE_EXPIRATION_DAYS,
+      inviteExpiresAt.getDate() + INVITE_CONSTANTS.EXPIRATION_DAYS,
     );
 
-    const updatedClient = await this.prisma.client.update({
-      where: { id: clientId },
-      data: {
-        inviteToken,
-        inviteStatus: InviteStatus.SENT,
-        inviteExpiresAt,
-      },
-    });
+    // Retry token generation on collision (unique constraint violation)
+    let updatedClient;
+    for (
+      let attempt = 0;
+      attempt < INVITE_CONSTANTS.MAX_GENERATION_RETRIES;
+      attempt++
+    ) {
+      const inviteToken = this.generateToken();
+      try {
+        updatedClient = await this.prisma.client.update({
+          where: { id: clientId },
+          data: {
+            inviteToken,
+            inviteStatus: InviteStatus.SENT,
+            inviteExpiresAt,
+          },
+        });
+        break;
+      } catch (error) {
+        const isUniqueConstraintError =
+          error instanceof Error &&
+          'code' in error &&
+          (error as { code: string }).code === 'P2002';
+        if (
+          !isUniqueConstraintError ||
+          attempt === INVITE_CONSTANTS.MAX_GENERATION_RETRIES - 1
+        ) {
+          throw error;
+        }
+      }
+    }
+
+    if (!updatedClient) {
+      throw new InternalServerErrorException('Falha ao gerar token de convite');
+    }
 
     return {
       clientId: updatedClient.id,
@@ -102,56 +128,82 @@ export class ClientsInviteService {
     userId: string,
     token: string,
   ): Promise<AcceptInviteResponse> {
-    const client = await this.prisma.client.findUnique({
-      where: { inviteToken: token },
-      include: { advisor: true },
+    // Use a transaction for atomic acceptance to prevent race conditions
+    return await this.prisma.$transaction(async (tx) => {
+      // Check if user is already linked to another client
+      const existingLink = await tx.client.findUnique({
+        where: { userId },
+      });
+
+      if (existingLink) {
+        throw new ConflictException(
+          'Voce ja esta vinculado a um perfil de cliente',
+        );
+      }
+
+      // Use conditional update to atomically accept the invite
+      // This prevents race conditions where two users try to accept the same invite
+      const updatedClient = await tx.client.updateMany({
+        where: {
+          inviteToken: token,
+          inviteStatus: InviteStatus.SENT,
+          inviteExpiresAt: { gt: new Date() },
+        },
+        data: {
+          userId,
+          inviteStatus: InviteStatus.ACCEPTED,
+          inviteToken: null,
+          inviteExpiresAt: null,
+        },
+      });
+
+      // If no rows were affected, the invite was invalid, already used, or expired
+      if (updatedClient.count === 0) {
+        // Fetch the client to provide a more specific error message
+        const client = await tx.client.findUnique({
+          where: { inviteToken: token },
+        });
+
+        if (!client) {
+          throw new BadRequestException('Token de convite invalido');
+        }
+
+        if (client.inviteStatus === InviteStatus.ACCEPTED) {
+          throw new ConflictException('Este convite ja foi utilizado');
+        }
+
+        if (client.inviteStatus !== InviteStatus.SENT) {
+          throw new BadRequestException(
+            'Convite nao esta disponivel para aceitacao',
+          );
+        }
+
+        if (client.inviteExpiresAt && new Date() > client.inviteExpiresAt) {
+          throw new BadRequestException('Token de convite expirado');
+        }
+
+        throw new BadRequestException('Falha ao aceitar convite');
+      }
+
+      // Fetch the updated client with advisor info for the response
+      const client = await tx.client.findUnique({
+        where: { userId },
+        include: { advisor: true },
+      });
+
+      if (!client) {
+        throw new InternalServerErrorException(
+          'Erro ao buscar cliente atualizado',
+        );
+      }
+
+      return {
+        clientId: client.id,
+        clientName: client.name,
+        advisorName: client.advisor.name,
+        message: 'Conta vinculada com sucesso',
+      };
     });
-
-    if (!client) {
-      throw new BadRequestException('Token de convite invalido');
-    }
-
-    if (client.inviteStatus === InviteStatus.ACCEPTED) {
-      throw new ConflictException('Este convite ja foi utilizado');
-    }
-
-    if (client.inviteStatus !== InviteStatus.SENT) {
-      throw new BadRequestException(
-        'Convite nao esta disponivel para aceitacao',
-      );
-    }
-
-    if (client.inviteExpiresAt && new Date() > client.inviteExpiresAt) {
-      throw new BadRequestException('Token de convite expirado');
-    }
-
-    const existingLink = await this.prisma.client.findUnique({
-      where: { userId },
-    });
-
-    if (existingLink) {
-      throw new ConflictException(
-        'Voce ja esta vinculado a um perfil de cliente',
-      );
-    }
-
-    const updatedClient = await this.prisma.client.update({
-      where: { id: client.id },
-      data: {
-        userId,
-        inviteStatus: InviteStatus.ACCEPTED,
-        inviteToken: null,
-        inviteExpiresAt: null,
-      },
-      include: { advisor: true },
-    });
-
-    return {
-      clientId: updatedClient.id,
-      clientName: updatedClient.name,
-      advisorName: updatedClient.advisor.name,
-      message: 'Conta vinculada com sucesso',
-    };
   }
 
   async revokeInvite(clientId: string, advisorId: string): Promise<void> {
@@ -190,19 +242,14 @@ export class ClientsInviteService {
   }
 
   private generateToken(): string {
-    const bytes = randomBytes(5);
-    const chars = 'ABCDEFGHJKLMNPQRSTUVWXYZ23456789';
+    const bytes = randomBytes(INVITE_CONSTANTS.TOKEN_LENGTH);
+    const chars = INVITE_CONSTANTS.TOKEN_CHARS;
     let code = '';
 
     for (const byte of bytes) {
       code += chars[byte % chars.length];
     }
 
-    const extraBytes = randomBytes(3);
-    for (const byte of extraBytes) {
-      code += chars[byte % chars.length];
-    }
-
-    return `INV-${code.slice(0, 8)}`;
+    return `${INVITE_CONSTANTS.TOKEN_PREFIX}${code.slice(0, INVITE_CONSTANTS.TOKEN_LENGTH)}`;
   }
 }

@@ -14,7 +14,7 @@ import { AuthGuard } from '@nestjs/passport';
 import { Response as ExpressResponse } from 'express';
 import { ApiResponseDto, ApiErrorResponseDto } from '@/common/schemas';
 import type { ApiResponse as ApiResponseType } from '@/common/schemas';
-import { env } from '@/config';
+import { env, parseJwtExpirationToMs } from '@/config';
 import { AuthService } from '../services/auth.service';
 import { RegisterDto, LoginDto, UserProfileApiResponseDto } from '../schemas';
 import type { UserProfile } from '../schemas';
@@ -29,7 +29,7 @@ interface RequestWithProfile extends Request {
 }
 
 function setAuthCookie(res: ExpressResponse, token: string): void {
-  const maxAge = 12 * 60 * 60 * 1000; // 12 hours in milliseconds
+  const maxAge = parseJwtExpirationToMs(env.JWT_EXPIRES_IN);
 
   res.cookie(AUTH_COOKIE_NAME, token, {
     httpOnly: true,

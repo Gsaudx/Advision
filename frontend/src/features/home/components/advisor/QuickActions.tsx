@@ -1,4 +1,5 @@
-import { UserPlus, Wallet, TrendingUp, FileText } from 'lucide-react';
+import { Users } from 'lucide-react';
+import { Link } from 'react-router-dom';
 
 interface QuickAction {
   label: string;
@@ -7,30 +8,13 @@ interface QuickAction {
   description: string;
 }
 
+// Only include actions that have existing routes
 const actions: QuickAction[] = [
   {
-    label: 'Novo Cliente',
-    icon: UserPlus,
-    href: '/clients/new',
-    description: 'Cadastrar um novo cliente',
-  },
-  {
-    label: 'Nova Carteira',
-    icon: Wallet,
-    href: '/wallets/new',
-    description: 'Criar uma nova carteira',
-  },
-  {
-    label: 'Otimizar',
-    icon: TrendingUp,
-    href: '/optimization',
-    description: 'Executar otimizacao de carteira',
-  },
-  {
-    label: 'Relatorios',
-    icon: FileText,
-    href: '/reports',
-    description: 'Visualizar relatorios',
+    label: 'Clientes',
+    icon: Users,
+    href: '/clients',
+    description: 'Gerenciar clientes',
   },
 ];
 
@@ -42,9 +26,9 @@ export function QuickActions() {
         {actions.map((action) => {
           const Icon = action.icon;
           return (
-            <a
+            <Link
               key={action.label}
-              href={action.href}
+              to={action.href}
               className="flex flex-col items-center gap-2 p-4 rounded-lg bg-slate-800/50 hover:bg-slate-800 border border-slate-700/50 hover:border-blue-400/50 transition-all duration-300 group"
             >
               <div className="p-2 rounded-lg bg-blue-500/20 group-hover:bg-blue-500/30 transition-colors">
@@ -56,7 +40,7 @@ export function QuickActions() {
               <span className="text-sm font-medium text-slate-300 group-hover:text-white text-center">
                 {action.label}
               </span>
-            </a>
+            </Link>
           );
         })}
       </div>

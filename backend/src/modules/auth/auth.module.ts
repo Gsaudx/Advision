@@ -11,7 +11,9 @@ import { LocalStrategy, JwtStrategy } from './strategies';
     PassportModule,
     JwtModule.register({
       secret: env.JWT_SECRET,
-      signOptions: { expiresIn: env.JWT_EXPIRES_IN as `${number}${'s' | 'm' | 'h' | 'd'}` },
+      signOptions: {
+        expiresIn: env.JWT_EXPIRES_IN as `${number}${'s' | 'm' | 'h' | 'd'}`,
+      },
     }),
   ],
   controllers: [AuthController],

@@ -1,6 +1,5 @@
 import { z } from 'zod';
 import { createZodDto } from 'nestjs-zod';
-import { createApiResponseSchema } from '@/common/schemas';
 
 /**
  * Schema for validating input data when creating a new client.
@@ -21,4 +20,6 @@ export const CreateClientInputSchema = z.object({
   phone: z.string().min(10, 'Telefone invalido'),
   cpf: z.string().min(11, 'CPF invalido'),
 });
-export class CreateClientInputDto extends createZodDto(CreateClientInputSchema) {}
+export class CreateClientInputDto extends createZodDto(
+  CreateClientInputSchema,
+) {}

@@ -4,6 +4,17 @@ import { ClientsInviteService } from '../services/clients-invite.service';
 import { InviteStatus } from '../enums';
 import type { CurrentUserData } from '@/common/decorators';
 
+// Mock the config module to avoid env validation
+jest.mock('@/config', () => ({
+  INVITE_CONSTANTS: {
+    TOKEN_PREFIX: 'INV-',
+    TOKEN_LENGTH: 8,
+    TOKEN_CHARS: 'ABCDEFGHJKLMNPQRSTUVWXYZ23456789',
+    EXPIRATION_DAYS: 7,
+    MAX_GENERATION_RETRIES: 5,
+  },
+}));
+
 const mockInviteResponse = {
   clientId: 'client-123',
   clientName: 'Test Client',

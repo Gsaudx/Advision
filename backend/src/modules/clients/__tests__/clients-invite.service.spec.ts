@@ -9,6 +9,17 @@ import { ClientsInviteService } from '../services/clients-invite.service';
 import { PrismaService } from '@/shared/prisma/prisma.service';
 import { InviteStatus } from '../enums';
 
+// Mock the config module to avoid env validation
+jest.mock('@/config', () => ({
+  INVITE_CONSTANTS: {
+    TOKEN_PREFIX: 'INV-',
+    TOKEN_LENGTH: 8,
+    TOKEN_CHARS: 'ABCDEFGHJKLMNPQRSTUVWXYZ23456789',
+    EXPIRATION_DAYS: 7,
+    MAX_GENERATION_RETRIES: 5,
+  },
+}));
+
 const mockAdvisor = {
   id: 'advisor-123',
   email: 'advisor@example.com',
@@ -40,21 +51,29 @@ const mockClientWithInvite = {
   inviteExpiresAt: new Date(Date.now() + 7 * 24 * 60 * 60 * 1000),
 };
 
+interface MockPrismaClient {
+  client: {
+    findUnique: jest.Mock;
+    update: jest.Mock;
+    updateMany: jest.Mock;
+  };
+  $transaction: jest.Mock;
+}
+
 describe('ClientsInviteService', () => {
   let service: ClientsInviteService;
-  let prismaService: {
-    client: {
-      findUnique: jest.Mock;
-      update: jest.Mock;
-    };
-  };
+  let prismaService: MockPrismaClient;
 
   beforeEach(async () => {
-    const mockPrismaService = {
+    const mockPrismaService: MockPrismaClient = {
       client: {
         findUnique: jest.fn(),
         update: jest.fn(),
+        updateMany: jest.fn(),
       },
+      $transaction: jest.fn((callback: (tx: MockPrismaClient) => unknown) =>
+        callback(mockPrismaService),
+      ),
     };
 
     const module: TestingModule = await Test.createTestingModule({
@@ -176,17 +195,21 @@ describe('ClientsInviteService', () => {
   });
 
   describe('acceptInvite', () => {
-    it('should accept invite and link user to client', async () => {
+    it('should accept invite and link user to client atomically', async () => {
+      // First call: check if user is already linked (returns null - not linked)
+      // Second call after updateMany: get updated client with advisor
       prismaService.client.findUnique
-        .mockResolvedValueOnce(mockClientWithInvite)
-        .mockResolvedValueOnce(null);
-      prismaService.client.update.mockResolvedValue({
-        ...mockClientWithInvite,
-        userId: 'user-789',
-        inviteStatus: InviteStatus.ACCEPTED,
-        inviteToken: null,
-        inviteExpiresAt: null,
-      });
+        .mockResolvedValueOnce(null) // User not linked to any client
+        .mockResolvedValueOnce({
+          ...mockClientWithInvite,
+          userId: 'user-789',
+          inviteStatus: InviteStatus.ACCEPTED,
+          inviteToken: null,
+          inviteExpiresAt: null,
+        });
+
+      // Atomic update succeeds
+      prismaService.client.updateMany.mockResolvedValue({ count: 1 });
 
       const result = await service.acceptInvite('user-789', 'INV-ABC12345');
 
@@ -196,20 +219,26 @@ describe('ClientsInviteService', () => {
         advisorName: 'Test Advisor',
         message: 'Conta vinculada com sucesso',
       });
-      expect(prismaService.client.update).toHaveBeenCalledWith({
-        where: { id: 'client-123' },
+      expect(prismaService.$transaction).toHaveBeenCalled();
+      expect(prismaService.client.updateMany).toHaveBeenCalledWith({
+        where: {
+          inviteToken: 'INV-ABC12345',
+          inviteStatus: InviteStatus.SENT,
+          inviteExpiresAt: { gt: expect.any(Date) },
+        },
         data: {
           userId: 'user-789',
           inviteStatus: InviteStatus.ACCEPTED,
           inviteToken: null,
           inviteExpiresAt: null,
         },
-        include: { advisor: true },
       });
     });
 
     it('should throw BadRequestException when token is invalid', async () => {
-      prismaService.client.findUnique.mockResolvedValue(null);
+      prismaService.client.findUnique.mockResolvedValueOnce(null); // Not linked
+      prismaService.client.updateMany.mockResolvedValue({ count: 0 }); // No rows affected
+      prismaService.client.findUnique.mockResolvedValueOnce(null); // Token not found
 
       await expect(
         service.acceptInvite('user-789', 'INVALID-TOKEN'),
@@ -217,7 +246,9 @@ describe('ClientsInviteService', () => {
     });
 
     it('should throw ConflictException when invite was already accepted', async () => {
-      prismaService.client.findUnique.mockResolvedValue({
+      prismaService.client.findUnique.mockResolvedValueOnce(null); // Not linked
+      prismaService.client.updateMany.mockResolvedValue({ count: 0 }); // No rows affected
+      prismaService.client.findUnique.mockResolvedValueOnce({
         ...mockClientWithInvite,
         inviteStatus: InviteStatus.ACCEPTED,
       });
@@ -228,7 +259,9 @@ describe('ClientsInviteService', () => {
     });
 
     it('should throw BadRequestException when invite status is not SENT', async () => {
-      prismaService.client.findUnique.mockResolvedValue({
+      prismaService.client.findUnique.mockResolvedValueOnce(null); // Not linked
+      prismaService.client.updateMany.mockResolvedValue({ count: 0 }); // No rows affected
+      prismaService.client.findUnique.mockResolvedValueOnce({
         ...mockClientWithInvite,
         inviteStatus: InviteStatus.PENDING,
       });
@@ -239,7 +272,9 @@ describe('ClientsInviteService', () => {
     });
 
     it('should throw BadRequestException when token is expired', async () => {
-      prismaService.client.findUnique.mockResolvedValue({
+      prismaService.client.findUnique.mockResolvedValueOnce(null); // Not linked
+      prismaService.client.updateMany.mockResolvedValue({ count: 0 }); // No rows affected
+      prismaService.client.findUnique.mockResolvedValueOnce({
         ...mockClientWithInvite,
         inviteExpiresAt: new Date(Date.now() - 1000),
       });
@@ -250,9 +285,10 @@ describe('ClientsInviteService', () => {
     });
 
     it('should throw ConflictException when user is already linked to another client', async () => {
-      prismaService.client.findUnique
-        .mockResolvedValueOnce(mockClientWithInvite)
-        .mockResolvedValueOnce({ id: 'other-client' });
+      // First findUnique returns a client - user is already linked
+      prismaService.client.findUnique.mockResolvedValueOnce({
+        id: 'other-client',
+      });
 
       await expect(
         service.acceptInvite('user-789', 'INV-ABC12345'),

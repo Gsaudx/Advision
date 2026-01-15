@@ -209,7 +209,9 @@ The system supports two user types with distinct experiences:
 | `/login`             | Public         | Login page                    |
 | `/register`          | Public         | Registration page             |
 | `/advisor/home`      | ADVISOR, ADMIN | Advisor home                  |
+| `/clients`           | ADVISOR, ADMIN | Client management             |
 | `/client/home`       | CLIENT         | Client home                   |
+| `/admin/health`      | ADMIN          | Health check page             |
 
 ### Registration UI Components
 
@@ -256,7 +258,7 @@ The system supports a "Hybrid Client" model where clients can link their user ac
 | POST   | `/clients/:id/invite`    | ADVISOR | Generate invite token             |
 | GET    | `/clients/:id/invite`    | ADVISOR | Check invite status/token         |
 | DELETE | `/clients/:id/invite`    | ADVISOR | Revoke pending invite             |
-| POST   | `/clients/invite/accept` | ANY     | Accept invite and link account    |
+| POST   | `/clients/invite/accept` | CLIENT  | Accept invite and link account    |
 
 ### Invite States (InviteStatus)
 

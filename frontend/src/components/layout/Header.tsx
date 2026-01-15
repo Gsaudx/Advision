@@ -1,13 +1,6 @@
 import { useState } from 'react';
 import { Link, useLocation, useNavigate } from 'react-router-dom';
-import { Menu, X, Bell, Search, LogOut } from 'lucide-react';
-import {
-  LayoutDashboard,
-  Users,
-  Wallet,
-  TrendingUp,
-  Settings,
-} from 'lucide-react';
+import { Menu, X, Bell, Search, LogOut, LayoutDashboard, Users } from 'lucide-react';
 import { useAuth } from '@/features/auth';
 
 interface NavItem {
@@ -16,12 +9,10 @@ interface NavItem {
   icon: React.ElementType;
 }
 
+// Navigation items - only include routes that exist
 const navItems: NavItem[] = [
-  { name: 'Dashboard', href: '/home', icon: LayoutDashboard },
+  { name: 'Dashboard', href: '/advisor/home', icon: LayoutDashboard },
   { name: 'Clientes', href: '/clients', icon: Users },
-  { name: 'Carteiras', href: '/wallets', icon: Wallet },
-  { name: 'Otimizacao', href: '/optimization', icon: TrendingUp },
-  { name: 'Configuracoes', href: '/settings', icon: Settings },
 ];
 
 export function Header() {
@@ -44,7 +35,7 @@ export function Header() {
         <div className="flex justify-between items-center h-16">
           {/* Logo */}
           <div className="flex items-center gap-4">
-            <Link to="/home" className="flex items-center gap-2">
+            <Link to="/" className="flex items-center gap-2">
               <div className="w-8 h-8 rounded-lg bg-gradient-to-br from-blue-400 to-emerald-400 flex items-center justify-center">
                 <span className="text-slate-900 font-bold text-sm">TI</span>
               </div>

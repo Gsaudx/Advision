@@ -111,9 +111,9 @@ Uses React Router layout routes for persistent navigation:
 | `/advisor/home`| ADVISOR, ADMIN | Advisor dashboard   |
 | `/clients`     | ADVISOR, ADMIN | Client management   |
 | `/client/home` | CLIENT         | Client dashboard    |
+| `/admin/health`| ADMIN          | Health check page   |
 | `/login`       | Public         | Login page          |
 | `/register`    | Public         | Registration page   |
-| `/healthcheck` | Public         | Health check page   |
 
 ## Client Invite System
 
