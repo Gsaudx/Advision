@@ -60,7 +60,10 @@ export default function InputPhone({
   return (
     <div className={containerClassName}>
       {!hideLabel && (
-        <label htmlFor={inputId} className={error ? `${labelClassName} text-red-500` : labelClassName}>
+        <label
+          htmlFor={inputId}
+          className={error ? `${labelClassName} text-red-500` : labelClassName}
+        >
           {label}
         </label>
       )}

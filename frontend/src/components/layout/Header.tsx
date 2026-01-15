@@ -1,6 +1,14 @@
 import { useState } from 'react';
 import { Link, useLocation, useNavigate } from 'react-router-dom';
-import { Menu, X, Bell, Search, LogOut, LayoutDashboard, Users } from 'lucide-react';
+import {
+  Menu,
+  X,
+  Bell,
+  Search,
+  LogOut,
+  LayoutDashboard,
+  Users,
+} from 'lucide-react';
 import { useAuth } from '@/features/auth';
 
 interface NavItem {

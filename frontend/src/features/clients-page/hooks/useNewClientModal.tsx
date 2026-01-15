@@ -21,7 +21,10 @@ interface UseNewClientModalProps {
   onSuccess?: () => void;
 }
 
-export function useNewClientModal({ onSubmit, onSuccess }: UseNewClientModalProps) {
+export function useNewClientModal({
+  onSubmit,
+  onSuccess,
+}: UseNewClientModalProps) {
   const [formData, setFormData] = useState<ClientFormData>(INITIAL_FORM_DATA);
   const [errors, setErrors] = useState<Record<string, string>>({});
 
@@ -72,13 +75,13 @@ export function useNewClientModal({ onSubmit, onSuccess }: UseNewClientModalProp
       },
       {
         isInvalid: !validateName(formData.name),
-        message:
-          'O nome deve conter de 3 a 100 caracteres.',
+        message: 'O nome deve conter de 3 a 100 caracteres.',
         inputName: 'name',
       },
       {
         isInvalid: formData.email !== '' && !validateEmail(formData.email),
-        message: 'O email digitado é inválido. O formato aceito é exemplo@dominio.com',
+        message:
+          'O email digitado é inválido. O formato aceito é exemplo@dominio.com',
         inputName: 'email',
       },
       {

@@ -1,59 +1,57 @@
 interface ModalBaseProps {
-    isOpen: boolean;
-    onClose: () => void;
-    title?: string;
-    children: React.ReactNode;
-    size?: "sm" | "md" | "lg" | "xl" | "xxl";
-    minHeight?: number;
-    backgroundColor?: string;
+  isOpen: boolean;
+  onClose: () => void;
+  title?: string;
+  children: React.ReactNode;
+  size?: 'sm' | 'md' | 'lg' | 'xl' | 'xxl';
+  minHeight?: number;
+  backgroundColor?: string;
 }
 
 export default function ModalBase({
-    isOpen,
-    onClose,
-    title,
-    children,
-    size = "md",
-    minHeight = 600,
-    backgroundColor = "bg-slate-800",
+  isOpen,
+  onClose,
+  title,
+  children,
+  size = 'md',
+  minHeight = 600,
+  backgroundColor = 'bg-slate-800',
 }: ModalBaseProps) {
-    if (!isOpen) return null;
+  if (!isOpen) return null;
 
-    const sizeClasses = {
-        sm: "max-w-sm",
-        md: "max-w-md",
-        lg: "max-w-lg",
-        xl: "max-w-xl",
-        xxl: "max-w-2xl",
-    };
+  const sizeClasses = {
+    sm: 'max-w-sm',
+    md: 'max-w-md',
+    lg: 'max-w-lg',
+    xl: 'max-w-xl',
+    xxl: 'max-w-2xl',
+  };
 
-    return (
-        <div className="fixed inset-0 z-50 flex items-center justify-center">
-            {/* Backdrop */}
-            <div
-                className="fixed inset-0 bg-black bg-opacity-40 backdrop-blur-sm animate-fade-in"
-                onClick={onClose}
-            />
+  return (
+    <div className="fixed inset-0 z-50 flex items-center justify-center">
+      {/* Backdrop */}
+      <div
+        className="fixed inset-0 bg-black bg-opacity-40 backdrop-blur-sm animate-fade-in"
+        onClick={onClose}
+      />
 
-            {/* Modal Content */}
-            <div
-                className={`relative z-50 ${backgroundColor} border border-slate-700 rounded-xl shadow-2xl ${sizeClasses[size]} w-full mx-4 animate-scale-in`}
-                style={{ minHeight: `${minHeight}px` }}
-            >
-                {/* Header */}
-                <div className="flex items-center justify-between">
-                    {title && (
-                        <h2 className="text-xl font-semibold text-white">{title}</h2>
-                    )}
-                </div>
+      {/* Modal Content */}
+      <div
+        className={`relative z-50 ${backgroundColor} border border-slate-700 rounded-xl shadow-2xl ${sizeClasses[size]} w-full mx-4 animate-scale-in`}
+        style={{ minHeight: `${minHeight}px` }}
+      >
+        {/* Header */}
+        <div className="flex items-center justify-between">
+          {title && (
+            <h2 className="text-xl font-semibold text-white">{title}</h2>
+          )}
+        </div>
 
-                {/* Body */}
-                <div className="text-gray-300">
-                    {children}
-                </div>
-            </div>
+        {/* Body */}
+        <div className="text-gray-300">{children}</div>
+      </div>
 
-            <style>{`
+      <style>{`
             @keyframes scale-in {
                 from {
                 transform: scale(0.5);
@@ -82,6 +80,6 @@ export default function ModalBase({
                 animation: fade-in 0.2s ease-out forwards;
             }
             `}</style>
-        </div>
-    );
+    </div>
+  );
 }

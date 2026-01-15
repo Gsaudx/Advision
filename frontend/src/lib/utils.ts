@@ -12,7 +12,6 @@ export function cn(...inputs: ClassValue[]) {
 //   }).format(value);
 // };
 
-
 // Typing for the items in the validation array
 interface ValidationRule {
   inputName: string;
@@ -28,7 +27,7 @@ interface ValidationRule {
 export const getFormErrors = (validations: ValidationRule[]) => {
   const newErrors: { [key: string]: string } = {};
 
-  validations.forEach(v => {
+  validations.forEach((v) => {
     if (v.isInvalid) {
       newErrors[v.inputName] = v.message;
     }

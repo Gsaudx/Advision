@@ -30,7 +30,9 @@ export function AppRoutes() {
         </Route>
 
         {/* Advisor layout - persists across child route changes */}
-        <Route element={<ProtectedLayout allowedRoles={['ADVISOR', 'ADMIN']} />}>
+        <Route
+          element={<ProtectedLayout allowedRoles={['ADVISOR', 'ADMIN']} />}
+        >
           <Route path="/advisor/home" element={<HomePageAdvisor />} />
           <Route path="/clients" element={<ClientsPage />} />
         </Route>

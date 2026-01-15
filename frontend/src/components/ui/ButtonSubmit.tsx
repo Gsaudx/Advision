@@ -20,11 +20,13 @@ export default function ButtonSubmit({
 
   return (
     <button
-      className={`${full ? 'w-full' : 'w-full sm:w-1/2'
-        } mt-4 bg-blue-600 text-white py-2.5 sm:py-2 px-4 rounded-lg transition-all duration-200 flex items-center justify-center gap-2 ${isDisabled
+      className={`${
+        full ? 'w-full' : 'w-full sm:w-1/2'
+      } mt-4 bg-blue-600 text-white py-2.5 sm:py-2 px-4 rounded-lg transition-all duration-200 flex items-center justify-center gap-2 ${
+        isDisabled
           ? 'opacity-70 cursor-not-allowed'
           : 'hover:bg-blue-700 hover:shadow-lg hover:shadow-blue-500/25'
-        } ${className}`}
+      } ${className}`}
       disabled={isDisabled}
       {...props}
     >

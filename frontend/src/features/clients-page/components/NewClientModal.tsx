@@ -23,17 +23,23 @@ export default function NewClientModal({
 }: NewClientModalProps) {
   const createClientMutation = useCreateClient();
 
-  const { formData, errors, handleChange, handlePhoneChange, handleSubmit, resetForm } =
-    useNewClientModal({
-      onSubmit: (data) => {
-        createClientMutation.mutate(data, {
-          onSuccess: () => {
-            resetForm();
-            onClose();
-          },
-        });
-      },
-    });
+  const {
+    formData,
+    errors,
+    handleChange,
+    handlePhoneChange,
+    handleSubmit,
+    resetForm,
+  } = useNewClientModal({
+    onSubmit: (data) => {
+      createClientMutation.mutate(data, {
+        onSuccess: () => {
+          resetForm();
+          onClose();
+        },
+      });
+    },
+  });
 
   const handleClose = () => {
     if (!createClientMutation.isPending) {
@@ -90,7 +96,9 @@ export default function NewClientModal({
             placeholder="Digite o nome completo do cliente"
             maxLength={100}
           />
-          {errors.name && <span className="text-red-500 text-sm">{errors.name}</span>}
+          {errors.name && (
+            <span className="text-red-500 text-sm">{errors.name}</span>
+          )}
         </div>
 
         <div className="flex flex-col">
@@ -102,7 +110,9 @@ export default function NewClientModal({
             className={`bg-slate-800 border rounded-lg px-4 py-3 text-white placeholder-gray-500 focus:outline-none focus:border-slate-500 focus:ring-1 focus:ring-slate-500 transition-colors ${errors.email ? 'border-red-500' : 'border-slate-600'}`}
             placeholder="Digite o e-mail do cliente (opcional)"
           />
-          {errors.email && <span className="text-red-500 text-sm">{errors.email}</span>}
+          {errors.email && (
+            <span className="text-red-500 text-sm">{errors.email}</span>
+          )}
         </div>
 
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
@@ -116,7 +126,9 @@ export default function NewClientModal({
               inputClassName={`bg-slate-800 border rounded-lg px-4 py-3 text-white placeholder-gray-500 focus:outline-none focus:border-slate-500 focus:ring-1 focus:ring-slate-500 transition-colors ${errors.phone ? 'border-red-500' : 'border-slate-600'}`}
               size="lg"
             />
-            {errors.phone && <span className="text-red-500 text-sm">{errors.phone}</span>}
+            {errors.phone && (
+              <span className="text-red-500 text-sm">{errors.phone}</span>
+            )}
           </div>
           <div className="flex flex-col">
             <InputCpf
@@ -127,7 +139,9 @@ export default function NewClientModal({
               className={`bg-slate-800 border rounded-lg px-4 py-3 text-white placeholder-gray-500 focus:outline-none focus:border-slate-500 focus:ring-1 focus:ring-slate-500 transition-colors ${errors.cpf ? 'border-red-500' : 'border-slate-600'}`}
               placeholder="000.000.000-00"
             />
-            {errors.cpf && <span className="text-red-500 text-sm">{errors.cpf}</span>}
+            {errors.cpf && (
+              <span className="text-red-500 text-sm">{errors.cpf}</span>
+            )}
           </div>
         </div>
 
