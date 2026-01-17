@@ -1,16 +1,16 @@
-import {
-  useEffect,
-  useMemo,
-  useRef,
-  useState,
-  type ChangeEvent,
-  type SelectHTMLAttributes,
-} from 'react';
+import { useEffect, useMemo, useRef, useState, type ChangeEvent } from 'react';
 import { ChevronDown, Search } from 'lucide-react';
 import { cn } from '@/lib/utils';
 
-interface SelectProps extends SelectHTMLAttributes<HTMLSelectElement> {
+interface SelectProps {
   options: { value: string; label: string }[];
+  value?: string;
+  defaultValue?: string;
+  onChange?: (event: ChangeEvent<HTMLSelectElement>) => void;
+  name?: string;
+  id?: string;
+  disabled?: boolean;
+  className?: string;
   searchPlaceholder?: string;
   emptyMessage?: string;
   dropdownClassName?: string;
@@ -22,12 +22,12 @@ export default function Select({
   defaultValue,
   onChange,
   name,
+  id,
   disabled,
   className,
   searchPlaceholder = 'Buscar...',
   emptyMessage = 'Nenhuma opcao encontrada',
   dropdownClassName,
-  ...props
 }: SelectProps) {
   const [isOpen, setIsOpen] = useState(false);
   const [searchTerm, setSearchTerm] = useState('');
@@ -109,7 +109,7 @@ export default function Select({
       {name ? <input type="hidden" name={name} value={currentValue} /> : null}
       <button
         type="button"
-        {...props}
+        id={id}
         onClick={handleToggle}
         disabled={disabled}
         className={cn(
