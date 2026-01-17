@@ -1,13 +1,14 @@
 import { useState, type ChangeEvent } from 'react';
 import { parsePhoneNumberFromString } from 'libphonenumber-js';
 import { getFormErrors } from '@/lib/utils';
-import type { ClientFormData, CreateClientInput, RiskProfile } from '../types';
+import type { ClientFormData, CreateClientInput } from '../types';
 
 const INITIAL_FORM_DATA: ClientFormData = {
   name: '',
   email: '',
   phone: '',
   cpf: '',
+  riskProfile: 'MODERATE',
 };
 
 interface UseNewClientModalProps {
@@ -22,7 +23,9 @@ export function useNewClientModal({
   const [formData, setFormData] = useState<ClientFormData>(INITIAL_FORM_DATA);
   const [errors, setErrors] = useState<Record<string, string>>({});
 
-  const handleChange = (e: ChangeEvent<HTMLInputElement>) => {
+  const handleChange = (
+    e: ChangeEvent<HTMLInputElement | HTMLSelectElement>,
+  ) => {
     const { name, value } = e.target;
     let formattedValue = value;
 
@@ -93,6 +96,11 @@ export function useNewClientModal({
         message: 'Telefone informado e invalido.',
         inputName: 'phone',
       },
+      {
+        isInvalid: !formData.riskProfile,
+        message: 'Selecione um perfil de risco.',
+        inputName: 'riskProfile',
+      },
     ];
 
     const errorList = getFormErrors(validations);
@@ -107,8 +115,8 @@ export function useNewClientModal({
     const clientData: CreateClientInput = {
       name: formatPostName(formData.name),
       cpf: formatPostCPF(formData.cpf),
-      riskProfile: 'MODERATE' as RiskProfile,
       ...(formData.email && { email: formData.email }),
+      riskProfile: formData.riskProfile,
       ...(formData.phone && { phone: formData.phone }),
     };
 

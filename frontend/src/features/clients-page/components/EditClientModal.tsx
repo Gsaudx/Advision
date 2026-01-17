@@ -2,6 +2,7 @@ import ModalBase from '@/components/layout/ModalBase';
 import InputEmail from '@/components/ui/InputEmail';
 import InputName from '@/components/ui/InputName';
 import InputPhone from '@/components/ui/InputPhone';
+import Select from '@/components/ui/Select';
 import { LoadingSpinner } from '@/components/ui/LoadingSpinner';
 import type { AxiosError } from 'axios';
 import { Pencil, X } from 'lucide-react';
@@ -181,20 +182,16 @@ export default function EditClientModal({
             <label htmlFor="riskProfile" className="text-sm font-medium text-gray-300">
               Perfil de Risco
             </label>
-            <select
+            <Select
               id="riskProfile"
               name="riskProfile"
               value={formData.riskProfile}
               onChange={handleChange}
               disabled={updateClientMutation.isPending}
-              className="bg-slate-800 border border-slate-600 rounded-lg px-4 py-3 text-white focus:outline-none focus:border-slate-500 focus:ring-1 focus:ring-slate-500 transition-colors"
-            >
-              {riskProfileOptions.map((option) => (
-                <option key={option.value} value={option.value}>
-                  {option.label}
-                </option>
-              ))}
-            </select>
+              options={riskProfileOptions}
+              className="bg-slate-800 border border-slate-600 focus:border-slate-500 focus:ring-1 focus:ring-slate-500"
+              dropdownClassName="bg-slate-900 border-slate-700"
+            />
           </div>
         </div>
 

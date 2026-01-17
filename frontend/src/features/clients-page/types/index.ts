@@ -62,6 +62,7 @@ export interface ClientFormData {
   email: string;
   phone: string;
   cpf: string;
+  riskProfile: RiskProfile;
 }
 
 // ============================================================================
