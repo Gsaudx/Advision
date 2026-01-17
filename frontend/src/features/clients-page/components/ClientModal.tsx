@@ -1,9 +1,5 @@
 import ModalBase from '@/components/layout/ModalBase';
-import {
-  riskProfileLabels,
-  inviteStatusLabels,
-  type Client,
-} from '../types';
+import { riskProfileLabels, inviteStatusLabels, type Client } from '../types';
 import {
   Mail,
   Phone,

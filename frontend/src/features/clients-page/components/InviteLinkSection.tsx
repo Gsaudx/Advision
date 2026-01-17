@@ -11,10 +11,7 @@ import {
 } from 'lucide-react';
 import { LoadingSpinner } from '@/components/ui/LoadingSpinner';
 import { useGetInviteStatus, useGenerateInvite, useRevokeInvite } from '../api';
-import {
-  isInviteExpired,
-  type InviteStatus,
-} from '../types';
+import { isInviteExpired, type InviteStatus } from '../types';
 
 interface InviteLinkSectionProps {
   clientId: string;
