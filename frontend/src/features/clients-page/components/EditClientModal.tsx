@@ -53,21 +53,27 @@ export default function EditClientModal({
     ? getApiErrorMessage(updateClientMutation.error)
     : null;
 
-  const { formData, errors, handleChange, handlePhoneChange, handleSubmit, resetForm } =
-    useEditClientForm({
-      client,
-      onSubmit: (data) => {
-        if (!client) return;
-        updateClientMutation.mutate(
-          { id: client.id, data },
-          {
-            onSuccess: () => {
-              onClose();
-            },
-          }
-        );
-      },
-    });
+  const {
+    formData,
+    errors,
+    handleChange,
+    handlePhoneChange,
+    handleSubmit,
+    resetForm,
+  } = useEditClientForm({
+    client,
+    onSubmit: (data) => {
+      if (!client) return;
+      updateClientMutation.mutate(
+        { id: client.id, data },
+        {
+          onSuccess: () => {
+            onClose();
+          },
+        },
+      );
+    },
+  });
 
   const handleClose = () => {
     if (!updateClientMutation.isPending) {
@@ -179,7 +185,10 @@ export default function EditClientModal({
           </div>
 
           <div className="flex flex-col gap-1.5">
-            <label htmlFor="riskProfile" className="text-sm font-medium text-gray-300">
+            <label
+              htmlFor="riskProfile"
+              className="text-sm font-medium text-gray-300"
+            >
               Perfil de Risco
             </label>
             <Select

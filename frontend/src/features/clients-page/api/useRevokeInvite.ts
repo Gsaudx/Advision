@@ -9,7 +9,9 @@ export function useRevokeInvite() {
     onSuccess: async (_data, clientId) => {
       // Invalidate and refetch both queries to get fresh data
       await Promise.all([
-        queryClient.invalidateQueries({ queryKey: ['invite-status', clientId] }),
+        queryClient.invalidateQueries({
+          queryKey: ['invite-status', clientId],
+        }),
         queryClient.invalidateQueries({ queryKey: ['clients'] }),
       ]);
     },

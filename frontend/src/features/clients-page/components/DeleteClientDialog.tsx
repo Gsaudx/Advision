@@ -35,13 +35,12 @@ export default function DeleteClientDialog({
       title="Excluir Cliente"
       message={
         <>
-          <p className="mb-2">
-            Tem certeza que deseja excluir o cliente
-          </p>
+          <p className="mb-2">Tem certeza que deseja excluir o cliente</p>
           <p className="text-white font-medium mb-3">"{client.name}"?</p>
           <p className="text-sm text-gray-500">
-            Esta ação não pode ser desfeita e todas as informações associadas a este cliente serão
-            permanentemente excluídas (carteiras, transações, documentos, etc.).
+            Esta ação não pode ser desfeita e todas as informações associadas a
+            este cliente serão permanentemente excluídas (carteiras, transações,
+            documentos, etc.).
           </p>
         </>
       }

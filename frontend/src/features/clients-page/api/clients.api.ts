@@ -39,14 +39,14 @@ export const clientsApi = {
 
   generateInvite: async (clientId: string): Promise<InviteResponse> => {
     const response = await api.post<ApiResponse<InviteResponse>>(
-      `/clients/${clientId}/invite`
+      `/clients/${clientId}/invite`,
     );
     return response.data.data;
   },
 
   getInviteStatus: async (clientId: string): Promise<InviteResponse | null> => {
     const response = await api.get<ApiResponse<InviteResponse | null>>(
-      `/clients/${clientId}/invite`
+      `/clients/${clientId}/invite`,
     );
     return response.data.data;
   },

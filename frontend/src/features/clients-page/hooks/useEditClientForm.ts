@@ -15,7 +15,10 @@ interface UseEditClientFormProps {
   onSubmit: (data: UpdateClientInput) => void;
 }
 
-export function useEditClientForm({ client, onSubmit }: UseEditClientFormProps) {
+export function useEditClientForm({
+  client,
+  onSubmit,
+}: UseEditClientFormProps) {
   const [formData, setFormData] = useState<EditClientFormData>({
     name: '',
     email: '',
@@ -38,7 +41,7 @@ export function useEditClientForm({ client, onSubmit }: UseEditClientFormProps) 
   }, [client]);
 
   const handleChange = (
-    e: ChangeEvent<HTMLInputElement | HTMLSelectElement>
+    e: ChangeEvent<HTMLInputElement | HTMLSelectElement>,
   ) => {
     const { name, value } = e.target;
     let formattedValue = value;

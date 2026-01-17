@@ -10,11 +10,7 @@ import {
   AlertCircle,
 } from 'lucide-react';
 import { LoadingSpinner } from '@/components/ui/LoadingSpinner';
-import {
-  useGetInviteStatus,
-  useGenerateInvite,
-  useRevokeInvite,
-} from '../api';
+import { useGetInviteStatus, useGenerateInvite, useRevokeInvite } from '../api';
 import {
   isInviteExpired,
   inviteStatusLabels,
@@ -32,15 +28,15 @@ export default function InviteLinkSection({
 }: InviteLinkSectionProps) {
   const [copied, setCopied] = useState(false);
 
-  const {
-    data: inviteData,
-    isLoading: isLoadingStatus,
-  } = useGetInviteStatus(clientId);
+  const { data: inviteData, isLoading: isLoadingStatus } =
+    useGetInviteStatus(clientId);
 
   const generateInviteMutation = useGenerateInvite();
   const revokeInviteMutation = useRevokeInvite();
 
-  const isExpired = inviteData ? isInviteExpired(inviteData.inviteExpiresAt) : false;
+  const isExpired = inviteData
+    ? isInviteExpired(inviteData.inviteExpiresAt)
+    : false;
   // Use fresh status from invite query when available, fall back to prop
   const effectiveStatus = inviteData?.inviteStatus ?? clientInviteStatus;
 
@@ -137,7 +133,9 @@ export default function InviteLinkSection({
 
           {generateInviteMutation.isError && (
             <div className="p-2 bg-red-500/10 border border-red-500/20 rounded mb-3">
-              <p className="text-red-400 text-sm">Erro ao gerar convite. Tente novamente.</p>
+              <p className="text-red-400 text-sm">
+                Erro ao gerar convite. Tente novamente.
+              </p>
             </div>
           )}
 
@@ -179,7 +177,9 @@ export default function InviteLinkSection({
 
         {/* Token display */}
         <div className="mb-4">
-          <label className="text-xs text-gray-500 mb-1 block">Codigo do Convite</label>
+          <label className="text-xs text-gray-500 mb-1 block">
+            Codigo do Convite
+          </label>
           <div className="flex items-center gap-2">
             <div className="flex-1 bg-slate-900 border border-slate-600 rounded-lg px-4 py-3 font-mono text-lg text-white tracking-wider">
               {inviteData?.inviteToken ?? '---'}
@@ -203,22 +203,27 @@ export default function InviteLinkSection({
         {inviteData?.inviteExpiresAt && (
           <div className="flex items-center gap-2 text-sm text-gray-400 mb-4">
             <Clock className="w-4 h-4" />
-            <span>Expira em: {formatExpiryDate(inviteData.inviteExpiresAt)}</span>
+            <span>
+              Expira em: {formatExpiryDate(inviteData.inviteExpiresAt)}
+            </span>
           </div>
         )}
 
         {/* Instructions */}
         <div className="bg-slate-900/50 rounded-lg p-3 mb-4">
           <p className="text-sm text-gray-400">
-            <strong className="text-gray-300">Como funciona:</strong> O cliente deve criar uma conta
-            no sistema como <span className="text-blue-400">Cliente</span> e inserir este codigo
+            <strong className="text-gray-300">Como funciona:</strong> O cliente
+            deve criar uma conta no sistema como{' '}
+            <span className="text-blue-400">Cliente</span> e inserir este codigo
             para vincular ao seu perfil.
           </p>
         </div>
 
         {revokeInviteMutation.isError && (
           <div className="p-2 bg-red-500/10 border border-red-500/20 rounded mb-3">
-            <p className="text-red-400 text-sm">Erro ao revogar convite. Tente novamente.</p>
+            <p className="text-red-400 text-sm">
+              Erro ao revogar convite. Tente novamente.
+            </p>
           </div>
         )}
 
@@ -264,14 +269,17 @@ export default function InviteLinkSection({
       {/* Instructions */}
       <div className="bg-slate-900/50 rounded-lg p-3 mb-4">
         <p className="text-sm text-gray-400">
-          Ao gerar um convite, um codigo sera criado para que o cliente possa vincular
-          sua conta ao perfil. O codigo expira em <strong className="text-gray-300">7 dias</strong>.
+          Ao gerar um convite, um codigo sera criado para que o cliente possa
+          vincular sua conta ao perfil. O codigo expira em{' '}
+          <strong className="text-gray-300">7 dias</strong>.
         </p>
       </div>
 
       {generateInviteMutation.isError && (
         <div className="p-2 bg-red-500/10 border border-red-500/20 rounded mb-3">
-          <p className="text-red-400 text-sm">Erro ao gerar convite. Tente novamente.</p>
+          <p className="text-red-400 text-sm">
+            Erro ao gerar convite. Tente novamente.
+          </p>
         </div>
       )}
 
