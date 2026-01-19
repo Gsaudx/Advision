@@ -44,13 +44,6 @@ function getInitials(name: string): string {
   return (words[0].charAt(0) + words[words.length - 1].charAt(0)).toUpperCase();
 }
 
-// // Risk profile gradient backgrounds (subtle, muted tones)
-// const riskProfileGradients: Record<Client['riskProfile'], string> = {
-//   CONSERVATIVE: 'from-blue-900/80 to-slate-900',
-//   MODERATE: 'from-amber-900/70 to-slate-900',
-//   AGGRESSIVE: 'from-orange-900/70 to-slate-900',
-// };
-
 export default function ClientModal({
   isOpen,
   onClose,
@@ -129,14 +122,13 @@ export default function ClientModal({
             Informacoes de Contato
           </h3>
           <div className="space-y-3">
-            <div className="flex items-center gap-3">
+            {/* <div className="flex items-center gap-3">
               <div className="w-10 h-10 rounded-lg bg-blue-500/20 flex items-center justify-center flex-shrink-0">
                 <Mail size={18} className="text-blue-400" />
               </div>
               <div className="min-w-0">
                 <p className="text-xs text-gray-500">E-mail</p>
                 <p className="text-white truncate">
-                  {selectedClient.email || 'Nao informado'}
                 </p>
               </div>
             </div>
@@ -148,7 +140,6 @@ export default function ClientModal({
               <div className="min-w-0">
                 <p className="text-xs text-gray-500">Telefone</p>
                 <p className="text-white">
-                  {selectedClient.phone || 'Nao informado'}
                 </p>
               </div>
             </div>
@@ -160,10 +151,9 @@ export default function ClientModal({
               <div className="min-w-0">
                 <p className="text-xs text-gray-500">CPF</p>
                 <p className="text-white font-mono">
-                  {formatCpf(selectedClient.cpf)}
                 </p>
               </div>
-            </div>
+            </div> */}
 
             <div className="flex items-center gap-3">
               <div className="w-10 h-10 rounded-lg bg-slate-500/20 flex items-center justify-center flex-shrink-0">
