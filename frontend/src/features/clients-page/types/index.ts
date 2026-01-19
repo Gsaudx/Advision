@@ -12,11 +12,6 @@ export type Client = NonNullable<
 >;
 
 /**
- * Risk profile enum from the API
- */
-export type RiskProfile = Client['riskProfile'];
-
-/**
  * Invite status enum from the API
  */
 export type InviteStatus = Client['inviteStatus'];
@@ -62,30 +57,11 @@ export interface ClientFormData {
   email: string;
   phone: string;
   cpf: string;
-  riskProfile: RiskProfile;
 }
 
 // ============================================================================
 // UI Display Constants
 // ============================================================================
-
-/**
- * Maps API risk profile to display text
- */
-export const riskProfileLabels: Record<RiskProfile, string> = {
-  CONSERVATIVE: 'Conservador',
-  MODERATE: 'Moderado',
-  AGGRESSIVE: 'Agressivo',
-};
-
-/**
- * Maps API risk profile to colors
- */
-export const riskProfileColors: Record<RiskProfile, string> = {
-  CONSERVATIVE: 'bg-blue-500/20 text-blue-400',
-  MODERATE: 'bg-yellow-500/20 text-yellow-400',
-  AGGRESSIVE: 'bg-orange-500/20 text-orange-400',
-};
 
 /**
  * Maps invite status to display text

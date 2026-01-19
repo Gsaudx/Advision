@@ -9,8 +9,6 @@ import type { AxiosError } from 'axios';
 import { User, X } from 'lucide-react';
 import { useNewClientModal } from '../hooks/useNewClientModal';
 import { useCreateClient } from '../api';
-import type { RiskProfile } from '../types';
-import { riskProfileLabels } from '../types';
 
 interface NewClientModalProps {
   isOpen: boolean;
@@ -75,11 +73,6 @@ export default function NewClientModal({
     }
   };
 
-  const riskProfileOptions: { value: RiskProfile; label: string }[] = [
-    { value: 'CONSERVATIVE', label: riskProfileLabels.CONSERVATIVE },
-    { value: 'MODERATE', label: riskProfileLabels.MODERATE },
-    { value: 'AGGRESSIVE', label: riskProfileLabels.AGGRESSIVE },
-  ];
 
   return (
     <ModalBase
@@ -175,27 +168,6 @@ export default function NewClientModal({
           </div>
         </div>
 
-        <div className="flex flex-col gap-1.5">
-          <label
-            htmlFor="riskProfile"
-            className="text-sm font-medium text-gray-300"
-          >
-            Perfil de Risco
-          </label>
-          <Select
-            id="riskProfile"
-            name="riskProfile"
-            value={formData.riskProfile}
-            onChange={handleChange}
-            disabled={createClientMutation.isPending}
-            options={riskProfileOptions}
-            className="bg-slate-800 border-slate-600 focus:border-slate-500 focus:ring-1 focus:ring-slate-500"
-            dropdownClassName="bg-slate-900 border-slate-700"
-          />
-          {errors.riskProfile && (
-            <span className="text-red-500 text-sm">{errors.riskProfile}</span>
-          )}
-        </div>
 
         {/* Footer with buttons */}
         <div className="flex justify-end gap-3 mt-4 pt-4 border-t border-slate-800">

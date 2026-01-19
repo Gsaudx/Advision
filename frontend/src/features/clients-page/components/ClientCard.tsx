@@ -1,6 +1,4 @@
 import {
-  riskProfileColors,
-  riskProfileLabels,
   inviteStatusColors,
   inviteStatusLabels,
   type Client,
@@ -24,11 +22,7 @@ export function ClientCard({ client, ...props }: ClientCardProps) {
               {client.name}
             </span>
           </div>
-          <span
-            className={`text-xs px-2 py-1 rounded-full ${riskProfileColors[client.riskProfile]}`}
-          >
-            {riskProfileLabels[client.riskProfile]}
-          </span>
+          
         </div>
 
         <div className="space-y-3">

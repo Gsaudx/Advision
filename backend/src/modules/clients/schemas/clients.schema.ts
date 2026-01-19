@@ -2,7 +2,6 @@ import { z } from 'zod';
 import { createZodDto } from 'nestjs-zod';
 import { createApiResponseSchema } from '@/common/schemas';
 import { InviteStatus } from '../enums';
-import { RiskProfile } from '../enums/risk-profile.enum';
 
 const phoneSchema = z.preprocess(
   (value) =>
@@ -46,10 +45,6 @@ export const CreateClientInputSchema = z.object({
     .string()
     .length(11, 'CPF deve ter 11 digitos')
     .regex(/^\d+$/, 'CPF deve conter apenas numeros'),
-  riskProfile: z
-    .nativeEnum(RiskProfile)
-    .optional()
-    .default(RiskProfile.MODERATE),
 });
 export class CreateClientInputDto extends createZodDto(
   CreateClientInputSchema,
@@ -67,7 +62,6 @@ export const UpdateClientInputSchema = z.object({
     .optional(),
   email: z.string().email('Email invalido').optional().nullable(),
   phone: nullablePhoneSchema,
-  riskProfile: z.nativeEnum(RiskProfile).optional(),
 });
 export class UpdateClientInputDto extends createZodDto(
   UpdateClientInputSchema,
@@ -84,7 +78,6 @@ export const ClientResponseSchema = z.object({
   email: z.string().nullable(),
   cpf: z.string(),
   phone: z.string().nullable(),
-  riskProfile: z.nativeEnum(RiskProfile),
   inviteStatus: z.nativeEnum(InviteStatus),
   createdAt: z.string(),
   updatedAt: z.string(),

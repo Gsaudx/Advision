@@ -28,7 +28,6 @@ describe('ClientsService', () => {
     email: 'client@example.com' as string | null,
     cpf: '12345678901',
     phone: '+5511999999999' as string | null,
-    riskProfile: 'MODERATE' as any,
     inviteStatus: InviteStatus.SENT,
     createdAt: new Date('2024-01-01T00:00:00.000Z'),
     updatedAt: new Date('2024-01-02T00:00:00.000Z'),
@@ -71,14 +70,13 @@ describe('ClientsService', () => {
       expect(prisma.client.create).not.toHaveBeenCalled();
     });
 
-    it('creates client with null email/phone when omitted and defaults riskProfile to MODERATE', async () => {
+    it('creates client with null email/phone when omitted', async () => {
       prisma.client.findFirst.mockResolvedValue(null);
 
       const createdDbClient = {
         ...baseDbClient,
         email: null,
         phone: null,
-        riskProfile: 'MODERATE',
       };
       prisma.client.create.mockResolvedValue(createdDbClient);
 
@@ -94,7 +92,6 @@ describe('ClientsService', () => {
           email: null,
           phone: null,
           cpf: '12345678901',
-          riskProfile: 'MODERATE',
         },
       });
 
@@ -106,21 +103,19 @@ describe('ClientsService', () => {
         email: null,
         cpf: '12345678901',
         phone: null,
-        riskProfile: 'MODERATE',
         inviteStatus: InviteStatus.SENT,
         createdAt: '2024-01-01T00:00:00.000Z',
         updatedAt: '2024-01-02T00:00:00.000Z',
       });
     });
 
-    it('creates client using provided email/phone/riskProfile', async () => {
+    it('creates client using provided email/phone', async () => {
       prisma.client.findFirst.mockResolvedValue(null);
 
       const createdDbClient = {
         ...baseDbClient,
         email: 'x@y.com',
         phone: '+5511988888888',
-        riskProfile: 'AGGRESSIVE',
       };
       prisma.client.create.mockResolvedValue(createdDbClient);
 
@@ -129,7 +124,6 @@ describe('ClientsService', () => {
         cpf: '12345678901',
         email: 'x@y.com',
         phone: '+5511988888888',
-        riskProfile: 'AGGRESSIVE' as any,
       });
 
       expect(prisma.client.create).toHaveBeenCalledWith({
@@ -139,11 +133,9 @@ describe('ClientsService', () => {
           email: 'x@y.com',
           phone: '+5511988888888',
           cpf: '12345678901',
-          riskProfile: 'AGGRESSIVE',
         },
       });
 
-      expect(result.riskProfile).toBe('AGGRESSIVE');
       expect(result.email).toBe('x@y.com');
       expect(result.phone).toBe('+5511988888888');
     });
@@ -178,7 +170,6 @@ describe('ClientsService', () => {
           email: c.email,
           cpf: c.cpf,
           phone: c.phone,
-          riskProfile: c.riskProfile,
           inviteStatus: c.inviteStatus,
           createdAt: c.createdAt.toISOString(),
           updatedAt: c.updatedAt.toISOString(),
@@ -221,7 +212,6 @@ describe('ClientsService', () => {
         email: 'client@example.com',
         cpf: '12345678901',
         phone: '+5511999999999',
-        riskProfile: 'MODERATE',
         inviteStatus: InviteStatus.SENT,
         createdAt: '2024-01-01T00:00:00.000Z',
         updatedAt: '2024-01-02T00:00:00.000Z',
@@ -248,7 +238,6 @@ describe('ClientsService', () => {
         name: 'Updated Name',
         email: null,
         phone: null,
-        riskProfile: 'CONSERVATIVE',
         updatedAt: new Date('2024-01-10T00:00:00.000Z'),
       };
 
@@ -258,7 +247,6 @@ describe('ClientsService', () => {
         name: 'Updated Name',
         email: null,
         phone: null,
-        riskProfile: 'CONSERVATIVE' as any,
       });
 
       expect(prisma.client.update).toHaveBeenCalledWith({
@@ -267,7 +255,6 @@ describe('ClientsService', () => {
           name: 'Updated Name',
           email: null,
           phone: null,
-          riskProfile: 'CONSERVATIVE',
         },
       });
 
@@ -279,7 +266,6 @@ describe('ClientsService', () => {
         email: null,
         cpf: '12345678901',
         phone: null,
-        riskProfile: 'CONSERVATIVE',
         inviteStatus: InviteStatus.SENT,
         createdAt: '2024-01-01T00:00:00.000Z',
         updatedAt: '2024-01-10T00:00:00.000Z',

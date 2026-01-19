@@ -4,7 +4,6 @@ import {
   ConflictException,
 } from '@nestjs/common';
 import { PrismaService } from '@/shared/prisma/prisma.service';
-import type { RiskProfile } from '@/generated/prisma/enums';
 import type { ClientResponse, ClientListResponse } from '../schemas';
 import { InviteStatus } from '../enums';
 
@@ -13,14 +12,12 @@ interface CreateClientData {
   email?: string;
   phone?: string;
   cpf: string;
-  riskProfile?: RiskProfile;
 }
 
 interface UpdateClientData {
   name?: string;
   email?: string | null;
   phone?: string | null;
-  riskProfile?: RiskProfile;
 }
 
 @Injectable()
@@ -35,7 +32,6 @@ export class ClientsService {
     email: string | null;
     cpf: string;
     phone: string | null;
-    riskProfile: RiskProfile;
     inviteStatus: InviteStatus;
     createdAt: Date;
     updatedAt: Date;
@@ -48,7 +44,6 @@ export class ClientsService {
       email: client.email,
       cpf: client.cpf,
       phone: client.phone,
-      riskProfile: client.riskProfile,
       inviteStatus: client.inviteStatus,
       createdAt: client.createdAt.toISOString(),
       updatedAt: client.updatedAt.toISOString(),
@@ -77,7 +72,6 @@ export class ClientsService {
         email: data.email || null,
         phone: data.phone || null,
         cpf: data.cpf,
-        riskProfile: data.riskProfile || 'MODERATE',
       },
     });
 
@@ -124,7 +118,6 @@ export class ClientsService {
         name: data.name,
         email: data.email,
         phone: data.phone,
-        riskProfile: data.riskProfile,
       },
     });
 

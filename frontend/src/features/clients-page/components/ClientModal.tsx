@@ -1,5 +1,5 @@
 import ModalBase from '@/components/layout/ModalBase';
-import { riskProfileLabels, inviteStatusLabels, type Client } from '../types';
+import { inviteStatusLabels, type Client } from '../types';
 import {
   Mail,
   Phone,
@@ -44,12 +44,12 @@ function getInitials(name: string): string {
   return (words[0].charAt(0) + words[words.length - 1].charAt(0)).toUpperCase();
 }
 
-// Risk profile gradient backgrounds (subtle, muted tones)
-const riskProfileGradients: Record<Client['riskProfile'], string> = {
-  CONSERVATIVE: 'from-blue-900/80 to-slate-900',
-  MODERATE: 'from-amber-900/70 to-slate-900',
-  AGGRESSIVE: 'from-orange-900/70 to-slate-900',
-};
+// // Risk profile gradient backgrounds (subtle, muted tones)
+// const riskProfileGradients: Record<Client['riskProfile'], string> = {
+//   CONSERVATIVE: 'from-blue-900/80 to-slate-900',
+//   MODERATE: 'from-amber-900/70 to-slate-900',
+//   AGGRESSIVE: 'from-orange-900/70 to-slate-900',
+// };
 
 export default function ClientModal({
   isOpen,
@@ -61,7 +61,7 @@ export default function ClientModal({
 }: ClientModalProps) {
   if (!selectedClient) return null;
 
-  const gradient = riskProfileGradients[selectedClient.riskProfile];
+  // const gradient = riskProfileGradients[selectedClient.riskProfile];
 
   return (
     <ModalBase
@@ -72,7 +72,7 @@ export default function ClientModal({
       minHeight={0}
     >
       {/* Header with gradient */}
-      <div className={`relative bg-gradient-to-r ${gradient} p-6 rounded-t-xl`}>
+      <div className={`relative bg-gradient-to-r p-6 from-orange-900/70 to-slate-900 rounded-t-xl`}>
         {/* Action buttons */}
         <div className="absolute top-4 right-4 flex items-center gap-2">
           <button
@@ -113,9 +113,6 @@ export default function ClientModal({
               {selectedClient.name}
             </h2>
             <div className="flex flex-wrap gap-2 mt-2">
-              <span className="text-xs px-2.5 py-1 rounded-full font-medium bg-white/10 text-white/90 border border-white/20">
-                {riskProfileLabels[selectedClient.riskProfile]}
-              </span>
               <span className="text-xs px-2.5 py-1 rounded-full font-medium bg-white/10 text-white/90 border border-white/20">
                 {inviteStatusLabels[selectedClient.inviteStatus]}
               </span>
