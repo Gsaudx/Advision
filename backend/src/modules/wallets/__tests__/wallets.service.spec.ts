@@ -24,6 +24,7 @@ describe('WalletsService', () => {
       findMany: jest.Mock;
       findUnique: jest.Mock;
       update: jest.Mock;
+      updateMany: jest.Mock;
     };
     position: {
       findMany: jest.Mock;
@@ -108,6 +109,7 @@ describe('WalletsService', () => {
         findMany: jest.fn(),
         findUnique: jest.fn(),
         update: jest.fn(),
+        updateMany: jest.fn().mockResolvedValue({ count: 1 }),
       },
       position: {
         findMany: jest.fn(),
@@ -338,10 +340,6 @@ describe('WalletsService', () => {
       prisma.transaction.findUnique.mockResolvedValue(null);
       prisma.wallet.findFirst.mockResolvedValue(baseWallet);
       prisma.wallet.findUnique.mockResolvedValue(baseWallet);
-      prisma.wallet.update.mockResolvedValue({
-        ...baseWallet,
-        cashBalance: mockDecimal(5000),
-      });
       prisma.position.findMany.mockResolvedValue([]);
       marketData.getBatchPrices.mockResolvedValue({});
 
@@ -356,7 +354,15 @@ describe('WalletsService', () => {
         advisorUser,
       );
 
-      expect(prisma.wallet.update).toHaveBeenCalled();
+      expect(prisma.wallet.updateMany).toHaveBeenCalledWith(
+        expect.objectContaining({
+          where: expect.objectContaining({
+            id: 'wallet-123',
+            cashBalance: { gte: 5000 },
+          }),
+          data: { cashBalance: { decrement: 5000 } },
+        }),
+      );
     });
 
     it('rejects insufficient balance for withdrawal', async () => {
@@ -366,6 +372,7 @@ describe('WalletsService', () => {
         ...baseWallet,
         cashBalance: mockDecimal(1000),
       });
+      prisma.wallet.updateMany.mockResolvedValue({ count: 0 });
 
       await expect(
         service.cashOperation(
@@ -464,6 +471,7 @@ describe('WalletsService', () => {
         ...baseWallet,
         cashBalance: mockDecimal(100),
       });
+      prisma.wallet.updateMany.mockResolvedValue({ count: 0 });
       assetResolver.ensureAssetExists.mockResolvedValue(baseAsset);
 
       await expect(

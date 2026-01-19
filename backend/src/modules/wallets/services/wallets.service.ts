@@ -358,7 +358,7 @@ export class WalletsService {
     await this.verifyWalletAccess(walletId, actor);
 
     await this.prisma.$transaction(async (tx) => {
-      // Get wallet with lock (SELECT FOR UPDATE via findFirst + immediate update)
+      // Ensure wallet exists before applying atomic updates.
       const wallet = await tx.wallet.findUnique({
         where: { id: walletId },
       });
@@ -367,25 +367,40 @@ export class WalletsService {
         throw new NotFoundException('Carteira nao encontrada');
       }
 
-      const currentBalance = new Decimal(wallet.cashBalance);
       const amount = new Decimal(data.amount);
+      let updatedWallet: Wallet;
 
-      // Validate withdrawal
-      if (data.type === 'WITHDRAWAL' && currentBalance.lessThan(amount)) {
-        throw new BadRequestException('Saldo insuficiente para saque');
+      if (data.type === 'DEPOSIT') {
+        updatedWallet = await tx.wallet.update({
+          where: { id: walletId },
+          data: { cashBalance: { increment: amount.toNumber() } },
+        });
+      } else {
+        const updateResult = await tx.wallet.updateMany({
+          where: { id: walletId, cashBalance: { gte: amount.toNumber() } },
+          data: { cashBalance: { decrement: amount.toNumber() } },
+        });
+
+        if (updateResult.count === 0) {
+          throw new BadRequestException('Saldo insuficiente para saque');
+        }
+
+        const refreshedWallet = await tx.wallet.findUnique({
+          where: { id: walletId },
+        });
+
+        if (!refreshedWallet) {
+          throw new NotFoundException('Carteira nao encontrada');
+        }
+
+        updatedWallet = refreshedWallet;
       }
 
-      // Calculate new balance
-      const newBalance =
+      const updatedBalance = new Decimal(updatedWallet.cashBalance);
+      const previousBalance =
         data.type === 'DEPOSIT'
-          ? currentBalance.plus(amount)
-          : currentBalance.minus(amount);
-
-      // Update wallet
-      await tx.wallet.update({
-        where: { id: walletId },
-        data: { cashBalance: newBalance.toNumber() },
-      });
+          ? updatedBalance.minus(amount)
+          : updatedBalance.plus(amount);
 
       // Create transaction
       await tx.transaction.create({
@@ -405,8 +420,8 @@ export class WalletsService {
         action: 'UPDATE',
         actorId: actor.id,
         actorRole: actor.role,
-        snapshotBefore: { cashBalance: currentBalance.toNumber() },
-        snapshotAfter: { cashBalance: newBalance.toNumber() },
+        snapshotBefore: { cashBalance: previousBalance.toNumber() },
+        snapshotAfter: { cashBalance: updatedBalance.toNumber() },
         context: { operation: data.type, amount: data.amount },
       });
     });
@@ -454,13 +469,6 @@ export class WalletsService {
         throw new NotFoundException('Carteira nao encontrada');
       }
 
-      const currentBalance = new Decimal(wallet.cashBalance);
-
-      // Validate sufficient cash
-      if (currentBalance.lessThan(totalCost)) {
-        throw new BadRequestException('Saldo insuficiente');
-      }
-
       // Get existing position
       const existingPosition = await tx.position.findUnique({
         where: { walletId_assetId: { walletId, assetId: asset.id } },
@@ -496,11 +504,29 @@ export class WalletsService {
         },
       });
 
-      // Deduct cash
-      await tx.wallet.update({
-        where: { id: walletId },
+      // Deduct cash only if sufficient balance is available.
+      const cashUpdateResult = await tx.wallet.updateMany({
+        where: {
+          id: walletId,
+          cashBalance: { gte: totalCost.toNumber() },
+        },
         data: { cashBalance: { decrement: totalCost.toNumber() } },
       });
+
+      if (cashUpdateResult.count === 0) {
+        throw new BadRequestException('Saldo insuficiente');
+      }
+
+      const updatedWallet = await tx.wallet.findUnique({
+        where: { id: walletId },
+      });
+
+      if (!updatedWallet) {
+        throw new NotFoundException('Carteira nao encontrada');
+      }
+
+      const updatedBalance = new Decimal(updatedWallet.cashBalance);
+      const previousBalance = updatedBalance.plus(totalCost);
 
       // Create transaction
       await tx.transaction.create({
@@ -542,9 +568,9 @@ export class WalletsService {
         action: 'UPDATE',
         actorId: actor.id,
         actorRole: actor.role,
-        snapshotBefore: { cashBalance: currentBalance.toNumber() },
+        snapshotBefore: { cashBalance: previousBalance.toNumber() },
         snapshotAfter: {
-          cashBalance: currentBalance.minus(totalCost).toNumber(),
+          cashBalance: updatedBalance.toNumber(),
         },
         context: {
           trade: 'BUY',
