@@ -69,7 +69,17 @@ export class YahooMarketService extends MarketDataProvider {
     return Date.now() - entry.timestamp < CACHE_TTL_MS;
   }
 
+  private pruneCache(now = Date.now()): void {
+    for (const [ticker, entry] of this.priceCache.entries()) {
+      if (now - entry.timestamp >= CACHE_TTL_MS) {
+        this.priceCache.delete(ticker);
+      }
+    }
+  }
+
   async getPrice(ticker: string): Promise<number> {
+    this.pruneCache();
+
     const cached = this.priceCache.get(ticker);
     if (this.isCacheValid(cached)) {
       return cached!.value;
@@ -150,6 +160,8 @@ export class YahooMarketService extends MarketDataProvider {
   }
 
   async getBatchPrices(tickers: string[]): Promise<Record<string, number>> {
+    this.pruneCache();
+
     const result: Record<string, number> = {};
     const tickersToFetch: string[] = [];
 

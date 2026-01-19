@@ -404,6 +404,28 @@ describe('WalletsService', () => {
         ),
       ).rejects.toBeInstanceOf(ConflictException);
     });
+
+    it('translates idempotency unique constraint to ConflictException', async () => {
+      prisma.transaction.findUnique.mockResolvedValue(null);
+      prisma.wallet.findFirst.mockResolvedValue(baseWallet);
+      prisma.$transaction.mockRejectedValueOnce({
+        code: 'P2002',
+        meta: { target: ['walletId', 'idempotencyKey'] },
+      });
+
+      await expect(
+        service.cashOperation(
+          'wallet-123',
+          {
+            type: 'DEPOSIT',
+            amount: 1000,
+            date: '2024-01-15T10:00:00.000Z',
+            idempotencyKey: 'dup-unique',
+          },
+          advisorUser,
+        ),
+      ).rejects.toBeInstanceOf(ConflictException);
+    });
   });
 
   describe('buy', () => {

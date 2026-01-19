@@ -114,6 +114,31 @@ export class WalletsService {
     };
   }
 
+  private isIdempotencyConflict(error: unknown): boolean {
+    if (!error || typeof error !== 'object' || !('code' in error)) {
+      return false;
+    }
+
+    //P2002 is Prisma's unique constraint violation code
+    if ((error as { code?: string }).code !== 'P2002') {
+      return false;
+    }
+
+    const target = (error as { meta?: { target?: string | string[] } }).meta
+      ?.target;
+
+    if (!target) {
+      return false;
+    }
+
+    const targets = Array.isArray(target) ? target : [target];
+
+    return (
+      targets.includes('walletId_idempotencyKey') ||
+      (targets.includes('walletId') && targets.includes('idempotencyKey'))
+    );
+  }
+
   /**
    * Format a wallet for API response
    */
@@ -357,74 +382,81 @@ export class WalletsService {
     // Verify access
     await this.verifyWalletAccess(walletId, actor);
 
-    await this.prisma.$transaction(async (tx) => {
-      // Ensure wallet exists before applying atomic updates.
-      const wallet = await tx.wallet.findUnique({
-        where: { id: walletId },
-      });
-
-      if (!wallet) {
-        throw new NotFoundException('Carteira nao encontrada');
-      }
-
-      const amount = new Decimal(data.amount);
-      let updatedWallet: Wallet;
-
-      if (data.type === 'DEPOSIT') {
-        updatedWallet = await tx.wallet.update({
-          where: { id: walletId },
-          data: { cashBalance: { increment: amount.toNumber() } },
-        });
-      } else {
-        const updateResult = await tx.wallet.updateMany({
-          where: { id: walletId, cashBalance: { gte: amount.toNumber() } },
-          data: { cashBalance: { decrement: amount.toNumber() } },
-        });
-
-        if (updateResult.count === 0) {
-          throw new BadRequestException('Saldo insuficiente para saque');
-        }
-
-        const refreshedWallet = await tx.wallet.findUnique({
+    try {
+      await this.prisma.$transaction(async (tx) => {
+        // Ensure wallet exists before applying atomic updates.
+        const wallet = await tx.wallet.findUnique({
           where: { id: walletId },
         });
 
-        if (!refreshedWallet) {
+        if (!wallet) {
           throw new NotFoundException('Carteira nao encontrada');
         }
 
-        updatedWallet = refreshedWallet;
+        const amount = new Decimal(data.amount);
+        let updatedWallet: Wallet;
+
+        if (data.type === 'DEPOSIT') {
+          updatedWallet = await tx.wallet.update({
+            where: { id: walletId },
+            data: { cashBalance: { increment: amount.toNumber() } },
+          });
+        } else {
+          const updateResult = await tx.wallet.updateMany({
+            where: { id: walletId, cashBalance: { gte: amount.toNumber() } },
+            data: { cashBalance: { decrement: amount.toNumber() } },
+          });
+
+          if (updateResult.count === 0) {
+            throw new BadRequestException('Saldo insuficiente para saque');
+          }
+
+          const refreshedWallet = await tx.wallet.findUnique({
+            where: { id: walletId },
+          });
+
+          if (!refreshedWallet) {
+            throw new NotFoundException('Carteira nao encontrada');
+          }
+
+          updatedWallet = refreshedWallet;
+        }
+
+        const updatedBalance = new Decimal(updatedWallet.cashBalance);
+        const previousBalance =
+          data.type === 'DEPOSIT'
+            ? updatedBalance.minus(amount)
+            : updatedBalance.plus(amount);
+
+        // Create transaction
+        await tx.transaction.create({
+          data: {
+            walletId,
+            type: data.type,
+            totalValue: data.amount,
+            executedAt: data.date,
+            idempotencyKey: data.idempotencyKey,
+          },
+        });
+
+        // Audit log
+        await this.auditService.log(tx, {
+          tableName: 'wallets',
+          recordId: walletId,
+          action: 'UPDATE',
+          actorId: actor.id,
+          actorRole: actor.role,
+          snapshotBefore: { cashBalance: previousBalance.toNumber() },
+          snapshotAfter: { cashBalance: updatedBalance.toNumber() },
+          context: { operation: data.type, amount: data.amount },
+        });
+      });
+    } catch (error) {
+      if (this.isIdempotencyConflict(error)) {
+        throw new ConflictException('Operacao duplicada');
       }
-
-      const updatedBalance = new Decimal(updatedWallet.cashBalance);
-      const previousBalance =
-        data.type === 'DEPOSIT'
-          ? updatedBalance.minus(amount)
-          : updatedBalance.plus(amount);
-
-      // Create transaction
-      await tx.transaction.create({
-        data: {
-          walletId,
-          type: data.type,
-          totalValue: data.amount,
-          executedAt: data.date,
-          idempotencyKey: data.idempotencyKey,
-        },
-      });
-
-      // Audit log
-      await this.auditService.log(tx, {
-        tableName: 'wallets',
-        recordId: walletId,
-        action: 'UPDATE',
-        actorId: actor.id,
-        actorRole: actor.role,
-        snapshotBefore: { cashBalance: previousBalance.toNumber() },
-        snapshotAfter: { cashBalance: updatedBalance.toNumber() },
-        context: { operation: data.type, amount: data.amount },
-      });
-    });
+      throw error;
+    }
 
     return this.getDashboard(walletId, actor);
   }
@@ -459,126 +491,133 @@ export class WalletsService {
 
     const totalCost = new Decimal(data.quantity).times(data.price);
 
-    await this.prisma.$transaction(async (tx) => {
-      // Get wallet
-      const wallet = await tx.wallet.findUnique({
-        where: { id: walletId },
-      });
+    try {
+      await this.prisma.$transaction(async (tx) => {
+        // Get wallet
+        const wallet = await tx.wallet.findUnique({
+          where: { id: walletId },
+        });
 
-      if (!wallet) {
-        throw new NotFoundException('Carteira nao encontrada');
+        if (!wallet) {
+          throw new NotFoundException('Carteira nao encontrada');
+        }
+
+        // Get existing position
+        const existingPosition = await tx.position.findUnique({
+          where: { walletId_assetId: { walletId, assetId: asset.id } },
+        });
+
+        // Calculate new position values
+        const existingQty = existingPosition
+          ? Number(existingPosition.quantity)
+          : 0;
+        const existingAvg = existingPosition
+          ? Number(existingPosition.averagePrice)
+          : 0;
+
+        const { newQuantity, newAveragePrice } = this.calculateBuyAverage(
+          existingQty,
+          existingAvg,
+          data.quantity,
+          data.price,
+        );
+
+        // Upsert position
+        const position = await tx.position.upsert({
+          where: { walletId_assetId: { walletId, assetId: asset.id } },
+          create: {
+            walletId,
+            assetId: asset.id,
+            quantity: newQuantity,
+            averagePrice: newAveragePrice,
+          },
+          update: {
+            quantity: newQuantity,
+            averagePrice: newAveragePrice,
+          },
+        });
+
+        // Deduct cash only if sufficient balance is available.
+        const cashUpdateResult = await tx.wallet.updateMany({
+          where: {
+            id: walletId,
+            cashBalance: { gte: totalCost.toNumber() },
+          },
+          data: { cashBalance: { decrement: totalCost.toNumber() } },
+        });
+
+        if (cashUpdateResult.count === 0) {
+          throw new BadRequestException('Saldo insuficiente');
+        }
+
+        const updatedWallet = await tx.wallet.findUnique({
+          where: { id: walletId },
+        });
+
+        if (!updatedWallet) {
+          throw new NotFoundException('Carteira nao encontrada');
+        }
+
+        const updatedBalance = new Decimal(updatedWallet.cashBalance);
+        const previousBalance = updatedBalance.plus(totalCost);
+
+        // Create transaction
+        await tx.transaction.create({
+          data: {
+            walletId,
+            assetId: asset.id,
+            type: 'BUY',
+            quantity: data.quantity,
+            price: data.price,
+            totalValue: totalCost.toNumber(),
+            executedAt: data.date,
+            idempotencyKey: data.idempotencyKey,
+          },
+        });
+
+        // Audit logs
+        await this.auditService.log(tx, {
+          tableName: 'positions',
+          recordId: position.id,
+          action: existingPosition ? 'UPDATE' : 'CREATE',
+          actorId: actor.id,
+          actorRole: actor.role,
+          snapshotBefore: existingPosition
+            ? {
+                quantity: existingQty,
+                averagePrice: existingAvg,
+              }
+            : undefined,
+          snapshotAfter: {
+            quantity: newQuantity,
+            averagePrice: newAveragePrice,
+          },
+          context: { trade: 'BUY', ticker: data.ticker },
+        });
+
+        await this.auditService.log(tx, {
+          tableName: 'wallets',
+          recordId: walletId,
+          action: 'UPDATE',
+          actorId: actor.id,
+          actorRole: actor.role,
+          snapshotBefore: { cashBalance: previousBalance.toNumber() },
+          snapshotAfter: {
+            cashBalance: updatedBalance.toNumber(),
+          },
+          context: {
+            trade: 'BUY',
+            ticker: data.ticker,
+            cost: totalCost.toNumber(),
+          },
+        });
+      });
+    } catch (error) {
+      if (this.isIdempotencyConflict(error)) {
+        throw new ConflictException('Operacao duplicada');
       }
-
-      // Get existing position
-      const existingPosition = await tx.position.findUnique({
-        where: { walletId_assetId: { walletId, assetId: asset.id } },
-      });
-
-      // Calculate new position values
-      const existingQty = existingPosition
-        ? Number(existingPosition.quantity)
-        : 0;
-      const existingAvg = existingPosition
-        ? Number(existingPosition.averagePrice)
-        : 0;
-
-      const { newQuantity, newAveragePrice } = this.calculateBuyAverage(
-        existingQty,
-        existingAvg,
-        data.quantity,
-        data.price,
-      );
-
-      // Upsert position
-      const position = await tx.position.upsert({
-        where: { walletId_assetId: { walletId, assetId: asset.id } },
-        create: {
-          walletId,
-          assetId: asset.id,
-          quantity: newQuantity,
-          averagePrice: newAveragePrice,
-        },
-        update: {
-          quantity: newQuantity,
-          averagePrice: newAveragePrice,
-        },
-      });
-
-      // Deduct cash only if sufficient balance is available.
-      const cashUpdateResult = await tx.wallet.updateMany({
-        where: {
-          id: walletId,
-          cashBalance: { gte: totalCost.toNumber() },
-        },
-        data: { cashBalance: { decrement: totalCost.toNumber() } },
-      });
-
-      if (cashUpdateResult.count === 0) {
-        throw new BadRequestException('Saldo insuficiente');
-      }
-
-      const updatedWallet = await tx.wallet.findUnique({
-        where: { id: walletId },
-      });
-
-      if (!updatedWallet) {
-        throw new NotFoundException('Carteira nao encontrada');
-      }
-
-      const updatedBalance = new Decimal(updatedWallet.cashBalance);
-      const previousBalance = updatedBalance.plus(totalCost);
-
-      // Create transaction
-      await tx.transaction.create({
-        data: {
-          walletId,
-          assetId: asset.id,
-          type: 'BUY',
-          quantity: data.quantity,
-          price: data.price,
-          totalValue: totalCost.toNumber(),
-          executedAt: data.date,
-          idempotencyKey: data.idempotencyKey,
-        },
-      });
-
-      // Audit logs
-      await this.auditService.log(tx, {
-        tableName: 'positions',
-        recordId: position.id,
-        action: existingPosition ? 'UPDATE' : 'CREATE',
-        actorId: actor.id,
-        actorRole: actor.role,
-        snapshotBefore: existingPosition
-          ? {
-              quantity: existingQty,
-              averagePrice: existingAvg,
-            }
-          : undefined,
-        snapshotAfter: {
-          quantity: newQuantity,
-          averagePrice: newAveragePrice,
-        },
-        context: { trade: 'BUY', ticker: data.ticker },
-      });
-
-      await this.auditService.log(tx, {
-        tableName: 'wallets',
-        recordId: walletId,
-        action: 'UPDATE',
-        actorId: actor.id,
-        actorRole: actor.role,
-        snapshotBefore: { cashBalance: previousBalance.toNumber() },
-        snapshotAfter: {
-          cashBalance: updatedBalance.toNumber(),
-        },
-        context: {
-          trade: 'BUY',
-          ticker: data.ticker,
-          cost: totalCost.toNumber(),
-        },
-      });
-    });
+      throw error;
+    }
 
     return this.getDashboard(walletId, actor);
   }
@@ -619,109 +658,116 @@ export class WalletsService {
 
     const totalProceeds = new Decimal(data.quantity).times(data.price);
 
-    await this.prisma.$transaction(async (tx) => {
-      // Get wallet
-      const wallet = await tx.wallet.findUnique({
-        where: { id: walletId },
-      });
-
-      if (!wallet) {
-        throw new NotFoundException('Carteira nao encontrada');
-      }
-
-      // Get existing position
-      const existingPosition = await tx.position.findUnique({
-        where: { walletId_assetId: { walletId, assetId: asset.id } },
-      });
-
-      if (!existingPosition) {
-        throw new BadRequestException(
-          `Nenhuma posicao encontrada para ${data.ticker}`,
-        );
-      }
-
-      const existingQty = Number(existingPosition.quantity);
-
-      if (existingQty < data.quantity) {
-        throw new BadRequestException(
-          `Quantidade insuficiente. Disponivel: ${existingQty}`,
-        );
-      }
-
-      const newQuantity = existingQty - data.quantity;
-      const currentBalance = new Decimal(wallet.cashBalance);
-
-      if (newQuantity === 0) {
-        // Delete position if fully sold
-        await tx.position.delete({
-          where: { id: existingPosition.id },
+    try {
+      await this.prisma.$transaction(async (tx) => {
+        // Get wallet
+        const wallet = await tx.wallet.findUnique({
+          where: { id: walletId },
         });
-      } else {
-        // Update position quantity (average price stays the same on sell)
-        await tx.position.update({
-          where: { id: existingPosition.id },
-          data: { quantity: newQuantity },
+
+        if (!wallet) {
+          throw new NotFoundException('Carteira nao encontrada');
+        }
+
+        // Get existing position
+        const existingPosition = await tx.position.findUnique({
+          where: { walletId_assetId: { walletId, assetId: asset.id } },
         });
+
+        if (!existingPosition) {
+          throw new BadRequestException(
+            `Nenhuma posicao encontrada para ${data.ticker}`,
+          );
+        }
+
+        const existingQty = Number(existingPosition.quantity);
+
+        if (existingQty < data.quantity) {
+          throw new BadRequestException(
+            `Quantidade insuficiente. Disponivel: ${existingQty}`,
+          );
+        }
+
+        const newQuantity = existingQty - data.quantity;
+        const currentBalance = new Decimal(wallet.cashBalance);
+
+        if (newQuantity === 0) {
+          // Delete position if fully sold
+          await tx.position.delete({
+            where: { id: existingPosition.id },
+          });
+        } else {
+          // Update position quantity (average price stays the same on sell)
+          await tx.position.update({
+            where: { id: existingPosition.id },
+            data: { quantity: newQuantity },
+          });
+        }
+
+        // Add cash
+        await tx.wallet.update({
+          where: { id: walletId },
+          data: { cashBalance: { increment: totalProceeds.toNumber() } },
+        });
+
+        // Create transaction
+        await tx.transaction.create({
+          data: {
+            walletId,
+            assetId: asset.id,
+            type: 'SELL',
+            quantity: data.quantity,
+            price: data.price,
+            totalValue: totalProceeds.toNumber(),
+            executedAt: data.date,
+            idempotencyKey: data.idempotencyKey,
+          },
+        });
+
+        // Audit logs
+        await this.auditService.log(tx, {
+          tableName: 'positions',
+          recordId: existingPosition.id,
+          action: newQuantity === 0 ? 'DELETE' : 'UPDATE',
+          actorId: actor.id,
+          actorRole: actor.role,
+          snapshotBefore: {
+            quantity: existingQty,
+            averagePrice: Number(existingPosition.averagePrice),
+          },
+          snapshotAfter:
+            newQuantity > 0
+              ? {
+                  quantity: newQuantity,
+                  averagePrice: Number(existingPosition.averagePrice),
+                }
+              : undefined,
+          context: { trade: 'SELL', ticker: data.ticker },
+        });
+
+        await this.auditService.log(tx, {
+          tableName: 'wallets',
+          recordId: walletId,
+          action: 'UPDATE',
+          actorId: actor.id,
+          actorRole: actor.role,
+          snapshotBefore: { cashBalance: currentBalance.toNumber() },
+          snapshotAfter: {
+            cashBalance: currentBalance.plus(totalProceeds).toNumber(),
+          },
+          context: {
+            trade: 'SELL',
+            ticker: data.ticker,
+            proceeds: totalProceeds.toNumber(),
+          },
+        });
+      });
+    } catch (error) {
+      if (this.isIdempotencyConflict(error)) {
+        throw new ConflictException('Operacao duplicada');
       }
-
-      // Add cash
-      await tx.wallet.update({
-        where: { id: walletId },
-        data: { cashBalance: { increment: totalProceeds.toNumber() } },
-      });
-
-      // Create transaction
-      await tx.transaction.create({
-        data: {
-          walletId,
-          assetId: asset.id,
-          type: 'SELL',
-          quantity: data.quantity,
-          price: data.price,
-          totalValue: totalProceeds.toNumber(),
-          executedAt: data.date,
-          idempotencyKey: data.idempotencyKey,
-        },
-      });
-
-      // Audit logs
-      await this.auditService.log(tx, {
-        tableName: 'positions',
-        recordId: existingPosition.id,
-        action: newQuantity === 0 ? 'DELETE' : 'UPDATE',
-        actorId: actor.id,
-        actorRole: actor.role,
-        snapshotBefore: {
-          quantity: existingQty,
-          averagePrice: Number(existingPosition.averagePrice),
-        },
-        snapshotAfter:
-          newQuantity > 0
-            ? {
-                quantity: newQuantity,
-                averagePrice: Number(existingPosition.averagePrice),
-              }
-            : undefined,
-        context: { trade: 'SELL', ticker: data.ticker },
-      });
-
-      await this.auditService.log(tx, {
-        tableName: 'wallets',
-        recordId: walletId,
-        action: 'UPDATE',
-        actorId: actor.id,
-        actorRole: actor.role,
-        snapshotBefore: { cashBalance: currentBalance.toNumber() },
-        snapshotAfter: {
-          cashBalance: currentBalance.plus(totalProceeds).toNumber(),
-        },
-        context: {
-          trade: 'SELL',
-          ticker: data.ticker,
-          proceeds: totalProceeds.toNumber(),
-        },
-      });
-    });
+      throw error;
+    }
 
     return this.getDashboard(walletId, actor);
   }
