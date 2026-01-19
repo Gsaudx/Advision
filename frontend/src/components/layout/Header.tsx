@@ -10,7 +10,7 @@ import {
   Users,
 } from 'lucide-react';
 import { useAuth } from '@/features/auth';
-import fullLogo from '@/assets/logos/full_logo.png';
+import fullLogo from '@/assets/logos/Advision_logo_2.png';
 
 interface NavItem {
   name: string;

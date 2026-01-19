@@ -8,7 +8,7 @@ import InputCpfCnpj from '@/components/ui/InputCpfCnpj';
 import RoleToggle from '@/components/ui/RoleToggle';
 import { useAuth } from '@/features/auth';
 import InputPhoneFormated from '../components/InputPhoneFormated';
-import fullLogo from '@/assets/logos/full_logo.png';
+import fullLogo from '@/assets/logos/Advision_logo_2.png';
 
 export default function RegisterPage() {
   const navigate = useNavigate();

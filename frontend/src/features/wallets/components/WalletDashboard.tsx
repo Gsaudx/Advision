@@ -265,7 +265,7 @@ export function WalletDashboard({
                   />
                 ) : (
                   <TransactionTimeline
-                    transactions={transactions?.items ?? []}
+                    transactions={transactions ?? []}
                     currency={wallet.currency}
                     isLoading={isLoadingTransactions}
                   />

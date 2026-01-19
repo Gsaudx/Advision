@@ -4,7 +4,7 @@ import ButtonSubmit from '@/components/ui/ButtonSubmit';
 import InputEmail from '@/components/ui/InputEmail';
 import InputPassword from '@/components/ui/InputPassword';
 import { useAuth } from '@/features/auth';
-import fullLogo from '@/assets/logos/full_logo.png';
+import fullLogo from '@/assets/logos/Advision_logo_2.png';
 
 export default function LoginPage() {
   const navigate = useNavigate();

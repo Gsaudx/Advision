@@ -16,6 +16,7 @@ export function useCashOperation() {
     onSuccess: (_, { walletId }) => {
       queryClient.invalidateQueries({ queryKey: ['wallets'] });
       queryClient.invalidateQueries({ queryKey: ['wallet', walletId] });
+      queryClient.invalidateQueries({ queryKey: ['transactions', walletId] });
     },
   });
 }

@@ -1,5 +1,5 @@
 import { LoadingSpinner } from './LoadingSpinner';
-import logoMark from '@/assets/logos/AV_200-90.png';
+import logoMark from '@/assets/logos/AV_400x180_white.png';
 
 interface LoadingScreenProps {
   message?: string;

@@ -169,15 +169,28 @@ export class TransactionApiResponseDto extends createZodDto(
 
 /**
  * Transaction list response schema (paginated)
+ * Note: Defined as a complete response schema to work around nestjs-zod OpenAPI generation bug
  */
 export const TransactionListResponseSchema = z.object({
   items: z.array(TransactionResponseSchema),
   nextCursor: z.string().uuid().nullable(),
 });
-export type TransactionListResponse = z.infer<typeof TransactionListResponseSchema>;
+export type TransactionListResponse = z.infer<
+  typeof TransactionListResponseSchema
+>;
+
+/**
+ * Full API response for transaction list
+ * Note: Defined explicitly to ensure correct OpenAPI schema generation
+ */
+export const TransactionListApiResponseSchema = z.object({
+  success: z.literal(true),
+  data: TransactionListResponseSchema.optional(),
+  message: z.string().optional(),
+});
 
 export class TransactionListApiResponseDto extends createZodDto(
-  createApiResponseSchema(TransactionListResponseSchema),
+  TransactionListApiResponseSchema,
 ) {}
 
 // ============================================================================

@@ -1,4 +1,4 @@
-import fullLogo from '@/assets/logos/full_logo.png';
+import fullLogo from '@/assets/logos/Advision_logo_2.png';
 
 export function HeroSection() {
   return (
