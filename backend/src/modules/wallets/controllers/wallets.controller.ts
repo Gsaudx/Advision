@@ -131,7 +131,17 @@ export class WalletsController {
     @Query('q') query: string,
     @Query('limit') limit?: string,
   ): Promise<ApiResponseType<AssetSearchResponse>> {
-    const maxResults = limit ? parseInt(limit, 10) : 10;
+    const DEFAULT_LIMIT = 10;
+    const MAX_LIMIT = 50;
+
+    let maxResults = DEFAULT_LIMIT;
+    if (limit) {
+      const parsed = parseInt(limit, 10);
+      if (!Number.isNaN(parsed) && parsed > 0) {
+        maxResults = Math.min(parsed, MAX_LIMIT);
+      }
+    }
+
     const data = await this.marketService.search(query, maxResults);
     return ApiResponseDto.success(data);
   }

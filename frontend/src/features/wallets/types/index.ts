@@ -77,8 +77,9 @@ export type Transaction = NonNullable<
 
 /**
  * Transaction list response
- * Note: Due to nestjs-zod serialization, the API returns an array directly
- * instead of { items, nextCursor }. We type it as the array for now.
+ * Note: Due to nestjs-zod serialization behavior, the API actually returns
+ * an array directly instead of { items, nextCursor }. We type it as array
+ * to match runtime behavior.
  */
 export type TransactionList = Transaction[];
 

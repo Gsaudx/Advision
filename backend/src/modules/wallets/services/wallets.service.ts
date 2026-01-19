@@ -387,6 +387,9 @@ export class WalletsService {
     data: CashOperationInput,
     actor: CurrentUserData,
   ): Promise<WalletResponse> {
+    // Verify access first (before any other checks)
+    await this.verifyWalletAccess(walletId, actor);
+
     // Check idempotency BEFORE transaction
     const existing = await this.prisma.transaction.findUnique({
       where: {
@@ -400,9 +403,6 @@ export class WalletsService {
     if (existing) {
       throw new ConflictException('Operacao duplicada');
     }
-
-    // Verify access
-    await this.verifyWalletAccess(walletId, actor);
 
     try {
       await this.prisma.$transaction(async (tx) => {
@@ -491,6 +491,9 @@ export class WalletsService {
     data: TradeInput,
     actor: CurrentUserData,
   ): Promise<WalletResponse> {
+    // Verify access first (before any other checks)
+    await this.verifyWalletAccess(walletId, actor);
+
     // Check idempotency BEFORE transaction
     const existing = await this.prisma.transaction.findUnique({
       where: {
@@ -504,9 +507,6 @@ export class WalletsService {
     if (existing) {
       throw new ConflictException('Operacao duplicada');
     }
-
-    // Verify access
-    await this.verifyWalletAccess(walletId, actor);
 
     // Resolve asset OUTSIDE transaction (may call external API)
     const asset = await this.assetResolver.ensureAssetExists(data.ticker);
@@ -693,6 +693,9 @@ export class WalletsService {
     data: TradeInput,
     actor: CurrentUserData,
   ): Promise<WalletResponse> {
+    // Verify access first (before any other checks)
+    await this.verifyWalletAccess(walletId, actor);
+
     // Check idempotency BEFORE transaction
     const existing = await this.prisma.transaction.findUnique({
       where: {
@@ -706,9 +709,6 @@ export class WalletsService {
     if (existing) {
       throw new ConflictException('Operacao duplicada');
     }
-
-    // Verify access
-    await this.verifyWalletAccess(walletId, actor);
 
     // Resolve asset - must exist for sell
     const asset = await this.prisma.asset.findUnique({

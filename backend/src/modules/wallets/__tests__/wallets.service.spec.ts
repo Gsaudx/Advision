@@ -408,6 +408,7 @@ describe('WalletsService', () => {
     });
 
     it('rejects duplicate idempotencyKey for same wallet', async () => {
+      prisma.wallet.findFirst.mockResolvedValue(baseWallet);
       prisma.transaction.findUnique.mockResolvedValue({ id: 'existing-tx' });
 
       await expect(
@@ -532,6 +533,7 @@ describe('WalletsService', () => {
     });
 
     it('rejects duplicate idempotencyKey', async () => {
+      prisma.wallet.findFirst.mockResolvedValue(baseWallet);
       prisma.transaction.findUnique.mockResolvedValue({ id: 'existing' });
 
       await expect(
