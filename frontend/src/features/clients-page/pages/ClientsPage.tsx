@@ -33,7 +33,9 @@ export default function ClientsPage() {
   const filteredClients = clients.filter((client) => {
     const normalizedSearch = searchTerm.trim().toLowerCase();
     const matchesName = client.name.toLowerCase().includes(normalizedSearch);
-    const matchesClientCode = client.clientCode ? client.clientCode.toLowerCase().includes(normalizedSearch) : false;
+    const matchesClientCode = client.clientCode
+      ? client.clientCode.toLowerCase().includes(normalizedSearch)
+      : false;
     const matchesSearch = matchesName || matchesClientCode;
     const matchesStatus =
       filterStatus === 'all' || client.inviteStatus === filterStatus;
