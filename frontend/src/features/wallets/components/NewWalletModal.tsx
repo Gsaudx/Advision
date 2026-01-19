@@ -130,9 +130,6 @@ export function NewWalletModal({ isOpen, onClose }: NewWalletModalProps) {
 
         {/* Wallet Name */}
         <div className="flex flex-col gap-1.5">
-          <label htmlFor="name" className="text-sm font-medium text-gray-300">
-            Nome da Carteira *
-          </label>
           <InputName
             id="name"
             name="name"
