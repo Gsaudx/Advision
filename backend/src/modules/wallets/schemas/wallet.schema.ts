@@ -166,3 +166,55 @@ export class WalletListApiResponseDto extends createZodDto(
 export class TransactionApiResponseDto extends createZodDto(
   createApiResponseSchema(TransactionResponseSchema),
 ) {}
+
+/**
+ * Transaction list response schema
+ */
+export const TransactionListResponseSchema = z.array(TransactionResponseSchema);
+export type TransactionListResponse = z.infer<
+  typeof TransactionListResponseSchema
+>;
+
+export class TransactionListApiResponseDto extends createZodDto(
+  createApiResponseSchema(TransactionListResponseSchema),
+) {}
+
+// ============================================================================
+// ASSET SEARCH SCHEMAS
+// ============================================================================
+
+/**
+ * Asset search result schema
+ */
+export const AssetSearchResultSchema = z.object({
+  ticker: z.string(),
+  name: z.string(),
+  type: z.string(),
+  exchange: z.string(),
+});
+export type AssetSearchResultType = z.infer<typeof AssetSearchResultSchema>;
+
+/**
+ * Asset search response schema (array of results)
+ */
+export const AssetSearchResponseSchema = z.array(AssetSearchResultSchema);
+export type AssetSearchResponse = z.infer<typeof AssetSearchResponseSchema>;
+
+export class AssetSearchApiResponseDto extends createZodDto(
+  createApiResponseSchema(AssetSearchResponseSchema),
+) {}
+
+/**
+ * Asset price response schema
+ */
+export const AssetPriceResponseSchema = z.object({
+  ticker: z.string(),
+  price: z.number(),
+  name: z.string().optional(),
+  type: z.string().optional(),
+});
+export type AssetPriceResponse = z.infer<typeof AssetPriceResponseSchema>;
+
+export class AssetPriceApiResponseDto extends createZodDto(
+  createApiResponseSchema(AssetPriceResponseSchema),
+) {}

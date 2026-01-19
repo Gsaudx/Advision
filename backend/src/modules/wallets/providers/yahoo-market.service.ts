@@ -1,10 +1,17 @@
 import { Injectable, Logger, NotFoundException } from '@nestjs/common';
-import yahooFinance from 'yahoo-finance2';
+import YahooFinance from 'yahoo-finance2';
 import { MarketDataProvider, AssetMetadata } from './market-data.provider';
 
 interface CacheEntry {
   value: number;
   timestamp: number;
+}
+
+export interface AssetSearchResult {
+  ticker: string;
+  name: string;
+  type: string;
+  exchange: string;
 }
 
 interface YahooQuote {
@@ -19,12 +26,27 @@ interface YahooQuote {
   optionType?: string;
 }
 
+interface YahooSearchQuote {
+  symbol?: string;
+  shortname?: string;
+  longname?: string;
+  quoteType?: string;
+  exchange?: string;
+}
+
+interface YahooSearchResult {
+  quotes: YahooSearchQuote[];
+}
+
 const CACHE_TTL_MS = 60 * 1000; // 60 seconds
 
 @Injectable()
 export class YahooMarketService extends MarketDataProvider {
   private readonly logger = new Logger(YahooMarketService.name);
   private readonly priceCache = new Map<string, CacheEntry>();
+  private readonly yahooFinance = new YahooFinance({
+    suppressNotices: ['yahooSurvey'],
+  });
 
   /**
    * Convert Brazilian ticker to Yahoo Finance format
@@ -57,7 +79,7 @@ export class YahooMarketService extends MarketDataProvider {
 
     try {
       const quote = (await Promise.resolve(
-        yahooFinance.quote(yahooTicker),
+        this.yahooFinance.quote(yahooTicker),
       )) as YahooQuote;
 
       if (!quote || quote.regularMarketPrice === undefined) {
@@ -85,7 +107,7 @@ export class YahooMarketService extends MarketDataProvider {
 
     try {
       const quote = (await Promise.resolve(
-        yahooFinance.quote(yahooTicker),
+        this.yahooFinance.quote(yahooTicker),
       )) as YahooQuote;
 
       if (!quote) {
@@ -149,7 +171,9 @@ export class YahooMarketService extends MarketDataProvider {
     const yahooTickers = tickersToFetch.map((t) => this.toYahooTicker(t));
 
     try {
-      const quotes = await Promise.resolve(yahooFinance.quote(yahooTickers));
+      const quotes = await Promise.resolve(
+        this.yahooFinance.quote(yahooTickers),
+      );
 
       // Handle single quote response (when only one ticker)
       const quotesArray = Array.isArray(quotes)
@@ -178,5 +202,56 @@ export class YahooMarketService extends MarketDataProvider {
     }
 
     return result;
+  }
+
+  /**
+   * Search for assets by query string (for autocomplete)
+   * Filters to show only Brazilian stocks (.SA suffix)
+   */
+  async search(query: string, limit = 10): Promise<AssetSearchResult[]> {
+    if (!query || query.length < 2) {
+      return [];
+    }
+
+    try {
+      const searchResult = (await Promise.resolve(
+        this.yahooFinance.search(query, { quotesCount: limit * 2 }),
+      )) as YahooSearchResult;
+
+      if (!searchResult || !searchResult.quotes) {
+        return [];
+      }
+
+      // Filter for Brazilian stocks and equities only
+      const results: AssetSearchResult[] = [];
+
+      for (const quote of searchResult.quotes) {
+        // Skip if no symbol
+        if (!quote.symbol) continue;
+
+        // Include Brazilian stocks (.SA) or if user is searching with .SA
+        const isBrazilian = quote.symbol.endsWith('.SA');
+        const isEquity = quote.quoteType === 'EQUITY';
+
+        if (isBrazilian && isEquity) {
+          // Remove .SA suffix for display
+          const ticker = quote.symbol.replace('.SA', '');
+
+          results.push({
+            ticker,
+            name: quote.shortname || quote.longname || ticker,
+            type: 'STOCK',
+            exchange: quote.exchange || 'BVMF',
+          });
+
+          if (results.length >= limit) break;
+        }
+      }
+
+      return results;
+    } catch (error) {
+      this.logger.error(`Erro ao buscar ativos: ${(error as Error).message}`);
+      return [];
+    }
   }
 }

@@ -3,7 +3,7 @@ interface ModalBaseProps {
   onClose: () => void;
   title?: string;
   children: React.ReactNode;
-  size?: 'sm' | 'md' | 'lg' | 'xl' | 'xxl';
+  size?: 'sm' | 'md' | 'lg' | 'xl' | 'xxl' | '3xl' | '4xl' | '5xl' | '6xl';
   minHeight?: number;
   backgroundColor?: string;
 }
@@ -25,6 +25,10 @@ export default function ModalBase({
     lg: 'max-w-lg',
     xl: 'max-w-xl',
     xxl: 'max-w-2xl',
+    '3xl': 'max-w-3xl',
+    '4xl': 'max-w-4xl',
+    '5xl': 'max-w-5xl',
+    '6xl': 'max-w-6xl',
   };
 
   return (

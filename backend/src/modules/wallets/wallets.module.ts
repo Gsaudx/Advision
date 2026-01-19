@@ -9,9 +9,10 @@ import { YahooMarketService } from './providers';
     WalletsService,
     AuditService,
     AssetResolverService,
+    YahooMarketService,
     {
       provide: 'MARKET_DATA_PROVIDER',
-      useClass: YahooMarketService,
+      useExisting: YahooMarketService,
     },
   ],
   exports: [WalletsService],

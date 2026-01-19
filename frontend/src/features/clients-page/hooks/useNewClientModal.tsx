@@ -115,9 +115,9 @@ export function useNewClientModal({
     const clientData: CreateClientInput = {
       name: formatPostName(formData.name),
       cpf: formatPostCPF(formData.cpf),
-      ...(formData.email && { email: formData.email }),
+      phone: formData.phone,
       riskProfile: formData.riskProfile,
-      ...(formData.phone && { phone: formData.phone }),
+      ...(formData.email && { email: formData.email }),
     };
 
     onSubmit(clientData);

@@ -22,21 +22,34 @@ import { CurrentUser, type CurrentUserData } from '@/common/decorators';
 import { RolesGuard } from '@/common/guards';
 import { Roles } from '@/common/decorators';
 import { WalletsService } from '../services';
+import { YahooMarketService } from '../providers/yahoo-market.service';
 import {
   CreateWalletInputDto,
   CashOperationInputDto,
   TradeInputDto,
   WalletApiResponseDto,
   WalletListApiResponseDto,
+  AssetSearchApiResponseDto,
+  AssetPriceApiResponseDto,
+  TransactionListApiResponseDto,
 } from '../schemas';
-import type { WalletResponse, WalletSummaryResponse } from '../schemas';
+import type {
+  WalletResponse,
+  WalletSummaryResponse,
+  AssetSearchResponse,
+  AssetPriceResponse,
+  TransactionResponse,
+} from '../schemas';
 
 @ApiTags('Wallets')
 @Controller('wallets')
 @UseGuards(AuthGuard('jwt'), RolesGuard)
 @ApiCookieAuth()
 export class WalletsController {
-  constructor(private readonly walletsService: WalletsService) {}
+  constructor(
+    private readonly walletsService: WalletsService,
+    private readonly marketService: YahooMarketService,
+  ) {}
 
   @Post()
   @Roles('ADVISOR', 'ADMIN')
@@ -92,6 +105,72 @@ export class WalletsController {
     return ApiResponseDto.success(data);
   }
 
+  @Get('assets/search')
+  @Roles('ADVISOR', 'ADMIN')
+  @ApiOperation({
+    summary: 'Buscar ativos',
+    description:
+      'Busca ativos por ticker ou nome para autocomplete. Retorna apenas acoes brasileiras.',
+  })
+  @ApiQuery({
+    name: 'q',
+    required: true,
+    description: 'Termo de busca (ticker ou nome)',
+  })
+  @ApiQuery({
+    name: 'limit',
+    required: false,
+    description: 'Numero maximo de resultados (padrao: 10)',
+  })
+  @ApiResponse({
+    status: 200,
+    description: 'Lista de ativos encontrados',
+    type: AssetSearchApiResponseDto,
+  })
+  async searchAssets(
+    @Query('q') query: string,
+    @Query('limit') limit?: string,
+  ): Promise<ApiResponseType<AssetSearchResponse>> {
+    const maxResults = limit ? parseInt(limit, 10) : 10;
+    const data = await this.marketService.search(query, maxResults);
+    return ApiResponseDto.success(data);
+  }
+
+  @Get('assets/:ticker/price')
+  @Roles('ADVISOR', 'ADMIN')
+  @ApiOperation({
+    summary: 'Obter preco do ativo',
+    description: 'Retorna o preco atual de mercado de um ativo.',
+  })
+  @ApiParam({ name: 'ticker', description: 'Ticker do ativo (ex: PETR4)' })
+  @ApiResponse({
+    status: 200,
+    description: 'Preco atual do ativo',
+    type: AssetPriceApiResponseDto,
+  })
+  @ApiResponse({
+    status: 404,
+    description: 'Ativo nao encontrado',
+    type: ApiErrorResponseDto,
+  })
+  async getAssetPrice(
+    @Param('ticker') ticker: string,
+  ): Promise<ApiResponseType<AssetPriceResponse>> {
+    const [price, metadata] = await Promise.all([
+      this.marketService.getPrice(ticker.toUpperCase()),
+      this.marketService.getMetadata(ticker.toUpperCase()),
+    ]);
+
+    const data: AssetPriceResponse = {
+      ticker: ticker.toUpperCase(),
+      price,
+      name: metadata.name,
+      type: metadata.type,
+    };
+
+    return ApiResponseDto.success(data);
+  }
+
   @Get(':id')
   @Roles('ADVISOR', 'ADMIN', 'CLIENT')
   @ApiOperation({
@@ -119,6 +198,37 @@ export class WalletsController {
     @CurrentUser() user: CurrentUserData,
   ): Promise<ApiResponseType<WalletResponse>> {
     const data = await this.walletsService.getDashboard(id, user);
+    return ApiResponseDto.success(data);
+  }
+
+  @Get(':id/transactions')
+  @Roles('ADVISOR', 'ADMIN', 'CLIENT')
+  @ApiOperation({
+    summary: 'Historico de transacoes',
+    description:
+      'Retorna o historico de todas as transacoes da carteira (compras, vendas, depositos, saques).',
+  })
+  @ApiParam({ name: 'id', description: 'ID da carteira' })
+  @ApiResponse({
+    status: 200,
+    description: 'Lista de transacoes',
+    type: TransactionListApiResponseDto,
+  })
+  @ApiResponse({
+    status: 403,
+    description: 'Sem permissao para acessar esta carteira',
+    type: ApiErrorResponseDto,
+  })
+  @ApiResponse({
+    status: 404,
+    description: 'Carteira nao encontrada',
+    type: ApiErrorResponseDto,
+  })
+  async getTransactions(
+    @Param('id') id: string,
+    @CurrentUser() user: CurrentUserData,
+  ): Promise<ApiResponseType<TransactionResponse[]>> {
+    const data = await this.walletsService.getTransactions(id, user);
     return ApiResponseDto.success(data);
   }
 
