@@ -1,15 +1,11 @@
 import ModalBase from '@/components/layout/ModalBase';
-import InputEmail from '@/components/ui/InputEmail';
 import InputName from '@/components/ui/InputName';
-import InputPhone from '@/components/ui/InputPhone';
-import Select from '@/components/ui/Select';
 import { LoadingSpinner } from '@/components/ui/LoadingSpinner';
 import type { AxiosError } from 'axios';
 import { Pencil, X } from 'lucide-react';
 import { useEditClientForm } from '../hooks/useEditClientForm';
 import { useUpdateClient } from '../api';
-import type { Client, RiskProfile } from '../types';
-import { riskProfileLabels } from '../types';
+import type { Client } from '../types';
 
 interface EditClientModalProps {
   isOpen: boolean;
@@ -37,12 +33,6 @@ function getApiErrorMessage(error: unknown): string {
   return 'Erro ao atualizar cliente. Tente novamente.';
 }
 
-function formatCpfDisplay(cpf: string): string {
-  const digits = cpf.replace(/\D/g, '');
-  if (digits.length !== 11) return cpf;
-  return digits.replace(/(\d{3})(\d{3})(\d{3})(\d{2})/, '$1.$2.$3-$4');
-}
-
 export default function EditClientModal({
   isOpen,
   onClose,
@@ -53,27 +43,21 @@ export default function EditClientModal({
     ? getApiErrorMessage(updateClientMutation.error)
     : null;
 
-  const {
-    formData,
-    errors,
-    handleChange,
-    handlePhoneChange,
-    handleSubmit,
-    resetForm,
-  } = useEditClientForm({
-    client,
-    onSubmit: (data) => {
-      if (!client) return;
-      updateClientMutation.mutate(
-        { id: client.id, data },
-        {
-          onSuccess: () => {
-            onClose();
+  const { formData, errors, handleChange, handleSubmit, resetForm } =
+    useEditClientForm({
+      client,
+      onSubmit: (data) => {
+        if (!client) return;
+        updateClientMutation.mutate(
+          { id: client.id, data },
+          {
+            onSuccess: () => {
+              onClose();
+            },
           },
-        },
-      );
-    },
-  });
+        );
+      },
+    });
 
   const handleClose = () => {
     if (!updateClientMutation.isPending) {
@@ -84,12 +68,6 @@ export default function EditClientModal({
   };
 
   if (!client) return null;
-
-  const riskProfileOptions: { value: RiskProfile; label: string }[] = [
-    { value: 'CONSERVATIVE', label: riskProfileLabels.CONSERVATIVE },
-    { value: 'MODERATE', label: riskProfileLabels.MODERATE },
-    { value: 'AGGRESSIVE', label: riskProfileLabels.AGGRESSIVE },
-  ];
 
   return (
     <ModalBase
@@ -125,20 +103,10 @@ export default function EditClientModal({
           </div>
         )}
 
-        {/* CPF (read-only) */}
-        <div className="flex flex-col gap-1.5">
-          <label className="text-sm font-medium text-gray-300">CPF</label>
-          <div className="bg-slate-800/50 border border-slate-700 rounded-lg px-4 py-3 text-gray-400">
-            {formatCpfDisplay(client.cpf)}
-          </div>
-          <span className="text-xs text-gray-500">
-            O CPF nao pode ser alterado
-          </span>
-        </div>
-
         {/* Name */}
         <div className="flex flex-col">
           <InputName
+            label="Apelido"
             name="name"
             value={formData.name}
             onChange={handleChange}
@@ -152,56 +120,18 @@ export default function EditClientModal({
           )}
         </div>
 
-        {/* Email */}
-        <div className="flex flex-col">
-          <InputEmail
-            name="email"
-            value={formData.email}
-            onChange={handleChange}
-            disabled={updateClientMutation.isPending}
-            className={`bg-slate-800 border rounded-lg px-4 py-3 text-white placeholder-gray-500 focus:outline-none focus:border-slate-500 focus:ring-1 focus:ring-slate-500 transition-colors ${errors.email ? 'border-red-500' : 'border-slate-600'}`}
-            placeholder="Digite o e-mail do cliente (opcional)"
-          />
-          {errors.email && (
-            <span className="text-red-500 text-sm mt-1">{errors.email}</span>
-          )}
-        </div>
-
-        {/* Phone and Risk Profile */}
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-          <div className="flex flex-col">
-            <InputPhone
-              inputId="phone"
-              value={formData.phone}
-              onChange={handlePhoneChange}
-              disabled={updateClientMutation.isPending}
-              containerClassName="flex flex-col gap-1.5"
-              inputClassName={`bg-slate-800 border rounded-lg px-4 py-3 text-white placeholder-gray-500 focus:outline-none focus:border-slate-500 focus:ring-1 focus:ring-slate-500 transition-colors ${errors.phone ? 'border-red-500' : 'border-slate-600'}`}
-              size="lg"
-            />
-            {errors.phone && (
-              <span className="text-red-500 text-sm mt-1">{errors.phone}</span>
-            )}
+        {/* Client Code */}
+        {/* CPF (read-only) */}
+        <div className="flex flex-col gap-1.5">
+          <label className="text-sm font-medium text-gray-300">
+            Código do cliente
+          </label>
+          <div className="bg-slate-800/50 border border-slate-700 rounded-lg px-4 py-3 text-gray-400">
+            {formData.clientCode}
           </div>
-
-          <div className="flex flex-col gap-1.5">
-            <label
-              htmlFor="riskProfile"
-              className="text-sm font-medium text-gray-300"
-            >
-              Perfil de Risco
-            </label>
-            <Select
-              id="riskProfile"
-              name="riskProfile"
-              value={formData.riskProfile}
-              onChange={handleChange}
-              disabled={updateClientMutation.isPending}
-              options={riskProfileOptions}
-              className="bg-slate-800 border border-slate-600 focus:border-slate-500 focus:ring-1 focus:ring-slate-500"
-              dropdownClassName="bg-slate-900 border-slate-700"
-            />
-          </div>
+          <span className="text-xs text-gray-500">
+            O código do cliente não pode ser alterado
+          </span>
         </div>
 
         {/* Footer with buttons */}

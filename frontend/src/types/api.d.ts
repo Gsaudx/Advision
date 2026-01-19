@@ -13,7 +13,7 @@ export interface paths {
     };
     /**
      * Verifica status da API
-     * @description Retorna o status da aplicação e a conexão com o banco de dados. Use este endpoint para monitoramento e health checks de infraestrutura.
+     * @description Retorna o status da aplicacao e a conexao com o banco de dados. Use este endpoint para monitoramento e health checks de infraestrutura.
      */
     get: operations['HealthController_check'];
     put?: never;
@@ -34,8 +34,8 @@ export interface paths {
     get?: never;
     put?: never;
     /**
-     * Registrar novo assessor
-     * @description Cria uma nova conta de assessor na plataforma. Define um cookie HttpOnly com o token JWT.
+     * Registrar novo usuario
+     * @description Cria uma nova conta na plataforma. Define um cookie HttpOnly com o token JWT.
      */
     post: operations['AuthController_register'];
     delete?: never;
@@ -319,14 +319,7 @@ export interface components {
     };
     CreateClientInputDto: {
       name: string;
-      email?: string | '';
-      phone?: string | '';
-      cpf: string;
-      /**
-       * @default MODERATE
-       * @enum {string}
-       */
-      riskProfile: 'CONSERVATIVE' | 'MODERATE' | 'AGGRESSIVE';
+      clientCode: string;
     };
     ClientApiResponseDto: {
       /** @constant */
@@ -338,11 +331,7 @@ export interface components {
         advisorId: string;
         userId: string | null;
         name: string;
-        email: string | null;
-        cpf: string;
-        phone: string | null;
-        /** @enum {string} */
-        riskProfile: 'CONSERVATIVE' | 'MODERATE' | 'AGGRESSIVE';
+        clientCode: string;
         /** @enum {string} */
         inviteStatus: 'PENDING' | 'SENT' | 'ACCEPTED' | 'REJECTED';
         createdAt: string;
@@ -360,11 +349,7 @@ export interface components {
         advisorId: string;
         userId: string | null;
         name: string;
-        email: string | null;
-        cpf: string;
-        phone: string | null;
-        /** @enum {string} */
-        riskProfile: 'CONSERVATIVE' | 'MODERATE' | 'AGGRESSIVE';
+        clientCode: string;
         /** @enum {string} */
         inviteStatus: 'PENDING' | 'SENT' | 'ACCEPTED' | 'REJECTED';
         createdAt: string;
@@ -374,10 +359,7 @@ export interface components {
     };
     UpdateClientInputDto: {
       name?: string;
-      email?: string | null;
-      phone?: string | null;
-      /** @enum {string} */
-      riskProfile?: 'CONSERVATIVE' | 'MODERATE' | 'AGGRESSIVE';
+      clientCode: string;
     };
   };
   responses: never;
@@ -406,7 +388,7 @@ export interface operations {
           'application/json': components['schemas']['HealthApiResponseDto'];
         };
       };
-      /** @description Token JWT inválido ou ausente */
+      /** @description Token JWT invalido ou ausente */
       401: {
         headers: {
           [name: string]: unknown;
@@ -679,7 +661,7 @@ export interface operations {
           'application/json': components['schemas']['AcceptInviteApiResponseDto'];
         };
       };
-      /** @description Token invalido ou expirado */
+      /** @description Convite invalido ou expirado */
       400: {
         headers: {
           [name: string]: unknown;

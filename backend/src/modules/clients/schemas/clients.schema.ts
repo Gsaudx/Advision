@@ -2,34 +2,6 @@ import { z } from 'zod';
 import { createZodDto } from 'nestjs-zod';
 import { createApiResponseSchema } from '@/common/schemas';
 import { InviteStatus } from '../enums';
-import { RiskProfile } from '../enums/risk-profile.enum';
-
-const phoneSchema = z.preprocess(
-  (value) =>
-    typeof value === 'string' && value.trim() === '' ? undefined : value,
-  z
-    .string()
-    .regex(
-      /^\+\d{10,15}$/,
-      'Telefone deve estar no formato internacional (+DDI + numero)',
-    )
-    .optional(),
-);
-
-const nullablePhoneSchema = z.preprocess(
-  (value) => (typeof value === 'string' && value.trim() === '' ? null : value),
-  z
-    .union([
-      z
-        .string()
-        .regex(
-          /^\+\d{10,15}$/,
-          'Telefone deve estar no formato internacional (+DDI + numero)',
-        ),
-      z.null(),
-    ])
-    .optional(),
-);
 
 /**
  * Schema for creating a new client.
@@ -38,18 +10,11 @@ const nullablePhoneSchema = z.preprocess(
 export const CreateClientInputSchema = z.object({
   name: z
     .string()
-    .min(2, 'Nome deve ter pelo menos 2 caracteres')
-    .max(100, 'Nome deve ter no maximo 100 caracteres'),
-  email: z.string().email('Email invalido').optional().or(z.literal('')),
-  phone: phoneSchema,
-  cpf: z
+    .min(2, 'Apelido deve ter pelo menos 2 caracteres')
+    .max(100, 'Apelido deve ter no maximo 100 caracteres'),
+  clientCode: z
     .string()
-    .length(11, 'CPF deve ter 11 digitos')
-    .regex(/^\d+$/, 'CPF deve conter apenas numeros'),
-  riskProfile: z
-    .nativeEnum(RiskProfile)
-    .optional()
-    .default(RiskProfile.MODERATE),
+    .regex(/^\d+$/, 'Codigo do cliente deve conter apenas numeros'),
 });
 export class CreateClientInputDto extends createZodDto(
   CreateClientInputSchema,
@@ -62,12 +27,12 @@ export class CreateClientInputDto extends createZodDto(
 export const UpdateClientInputSchema = z.object({
   name: z
     .string()
-    .min(2, 'Nome deve ter pelo menos 2 caracteres')
-    .max(100, 'Nome deve ter no maximo 100 caracteres')
+    .min(2, 'Apelido deve ter pelo menos 2 caracteres')
+    .max(100, 'Apelido deve ter no maximo 100 caracteres')
     .optional(),
-  email: z.string().email('Email invalido').optional().nullable(),
-  phone: nullablePhoneSchema,
-  riskProfile: z.nativeEnum(RiskProfile).optional(),
+  clientCode: z
+    .string()
+    .regex(/^\d+$/, 'Codigo do cliente deve conter apenas numeros'),
 });
 export class UpdateClientInputDto extends createZodDto(
   UpdateClientInputSchema,
@@ -81,10 +46,7 @@ export const ClientResponseSchema = z.object({
   advisorId: z.string().uuid(),
   userId: z.string().uuid().nullable(),
   name: z.string(),
-  email: z.string().nullable(),
-  cpf: z.string(),
-  phone: z.string().nullable(),
-  riskProfile: z.nativeEnum(RiskProfile),
+  clientCode: z.string(),
   inviteStatus: z.nativeEnum(InviteStatus),
   createdAt: z.string(),
   updatedAt: z.string(),

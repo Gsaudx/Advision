@@ -5,12 +5,17 @@ const NAME_MAX_LENGTH = 100;
 
 type InputNameProps = React.InputHTMLAttributes<HTMLInputElement> & {
   inputId?: string;
+  label?: string;
 };
 
-export default function InputName({ inputId, ...props }: InputNameProps) {
+export default function InputName({
+  inputId,
+  label = 'Nome',
+  ...props
+}: InputNameProps) {
   return (
     <Input
-      label="Nome"
+      label={label}
       type="text"
       placeholder="Digite seu nome"
       maxLength={NAME_MAX_LENGTH}

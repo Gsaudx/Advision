@@ -25,10 +25,7 @@ describe('ClientsService', () => {
     advisorId,
     userId: null as string | null,
     name: 'Test Client',
-    email: 'client@example.com' as string | null,
-    cpf: '12345678901',
-    phone: '+5511999999999' as string | null,
-    riskProfile: 'MODERATE' as any,
+    clientCode: '12132132132',
     inviteStatus: InviteStatus.SENT,
     createdAt: new Date('2024-01-01T00:00:00.000Z'),
     updatedAt: new Date('2024-01-02T00:00:00.000Z'),
@@ -55,98 +52,58 @@ describe('ClientsService', () => {
   });
 
   describe('create', () => {
-    it('throws ConflictException when client with same cpf already exists', async () => {
+    it('throws ConflictException when client with same clientCode already exists', async () => {
       prisma.client.findFirst.mockResolvedValue({ id: 'existing' });
 
       await expect(
         service.create(advisorId, {
           name: 'Any',
-          cpf: '12345678901',
+          clientCode: '12345678901',
         }),
       ).rejects.toBeInstanceOf(ConflictException);
 
       expect(prisma.client.findFirst).toHaveBeenCalledWith({
-        where: { advisorId, cpf: '12345678901' },
+        where: { advisorId, clientCode: '12345678901' },
       });
       expect(prisma.client.create).not.toHaveBeenCalled();
     });
 
-    it('creates client with null email/phone when omitted and defaults riskProfile to MODERATE', async () => {
+    it('creates client with valid data', async () => {
       prisma.client.findFirst.mockResolvedValue(null);
 
       const createdDbClient = {
         ...baseDbClient,
-        email: null,
-        phone: null,
-        riskProfile: 'MODERATE',
+        clientCode: '12345678901',
       };
       prisma.client.create.mockResolvedValue(createdDbClient);
 
       const result = await service.create(advisorId, {
         name: 'Test Client',
-        cpf: '12345678901',
+        clientCode: '12345678901',
       });
 
       expect(prisma.client.create).toHaveBeenCalledWith({
         data: {
           advisorId,
           name: 'Test Client',
-          email: null,
-          phone: null,
-          cpf: '12345678901',
-          riskProfile: 'MODERATE',
+          clientCode: '12345678901',
         },
       });
+
 
       expect(result).toEqual({
         id: clientId,
         advisorId,
         userId: null,
         name: 'Test Client',
-        email: null,
-        cpf: '12345678901',
-        phone: null,
-        riskProfile: 'MODERATE',
+        clientCode: '12345678901',
         inviteStatus: InviteStatus.SENT,
         createdAt: '2024-01-01T00:00:00.000Z',
         updatedAt: '2024-01-02T00:00:00.000Z',
       });
     });
 
-    it('creates client using provided email/phone/riskProfile', async () => {
-      prisma.client.findFirst.mockResolvedValue(null);
-
-      const createdDbClient = {
-        ...baseDbClient,
-        email: 'x@y.com',
-        phone: '+5511988888888',
-        riskProfile: 'AGGRESSIVE',
-      };
-      prisma.client.create.mockResolvedValue(createdDbClient);
-
-      const result = await service.create(advisorId, {
-        name: 'Test Client',
-        cpf: '12345678901',
-        email: 'x@y.com',
-        phone: '+5511988888888',
-        riskProfile: 'AGGRESSIVE' as any,
-      });
-
-      expect(prisma.client.create).toHaveBeenCalledWith({
-        data: {
-          advisorId,
-          name: 'Test Client',
-          email: 'x@y.com',
-          phone: '+5511988888888',
-          cpf: '12345678901',
-          riskProfile: 'AGGRESSIVE',
-        },
-      });
-
-      expect(result.riskProfile).toBe('AGGRESSIVE');
-      expect(result.email).toBe('x@y.com');
-      expect(result.phone).toBe('+5511988888888');
-    });
+    // Não há mais campos email/phone/cpf no schema nem no service
   });
 
   describe('findAll', () => {
@@ -175,10 +132,7 @@ describe('ClientsService', () => {
           advisorId: c.advisorId,
           userId: c.userId,
           name: c.name,
-          email: c.email,
-          cpf: c.cpf,
-          phone: c.phone,
-          riskProfile: c.riskProfile,
+          clientCode: c.clientCode,
           inviteStatus: c.inviteStatus,
           createdAt: c.createdAt.toISOString(),
           updatedAt: c.updatedAt.toISOString(),
@@ -218,10 +172,7 @@ describe('ClientsService', () => {
         advisorId,
         userId: null,
         name: 'Test Client',
-        email: 'client@example.com',
-        cpf: '12345678901',
-        phone: '+5511999999999',
-        riskProfile: 'MODERATE',
+        clientCode: '12132132132',
         inviteStatus: InviteStatus.SENT,
         createdAt: '2024-01-01T00:00:00.000Z',
         updatedAt: '2024-01-02T00:00:00.000Z',
@@ -246,9 +197,6 @@ describe('ClientsService', () => {
       const updatedDbClient = {
         ...baseDbClient,
         name: 'Updated Name',
-        email: null,
-        phone: null,
-        riskProfile: 'CONSERVATIVE',
         updatedAt: new Date('2024-01-10T00:00:00.000Z'),
       };
 
@@ -256,18 +204,13 @@ describe('ClientsService', () => {
 
       const result = await service.update(clientId, advisorId, {
         name: 'Updated Name',
-        email: null,
-        phone: null,
-        riskProfile: 'CONSERVATIVE' as any,
       });
 
       expect(prisma.client.update).toHaveBeenCalledWith({
         where: { id: clientId },
         data: {
           name: 'Updated Name',
-          email: null,
-          phone: null,
-          riskProfile: 'CONSERVATIVE',
+          clientCode: undefined,
         },
       });
 
@@ -276,10 +219,7 @@ describe('ClientsService', () => {
         advisorId,
         userId: null,
         name: 'Updated Name',
-        email: null,
-        cpf: '12345678901',
-        phone: null,
-        riskProfile: 'CONSERVATIVE',
+        clientCode: '12132132132',
         inviteStatus: InviteStatus.SENT,
         createdAt: '2024-01-01T00:00:00.000Z',
         updatedAt: '2024-01-10T00:00:00.000Z',

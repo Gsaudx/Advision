@@ -1,14 +1,10 @@
 import { useState, type ChangeEvent } from 'react';
-import { parsePhoneNumberFromString } from 'libphonenumber-js';
 import { getFormErrors } from '@/lib/utils';
 import type { ClientFormData, CreateClientInput } from '../types';
 
 const INITIAL_FORM_DATA: ClientFormData = {
   name: '',
-  email: '',
-  phone: '',
-  cpf: '',
-  riskProfile: 'MODERATE',
+  clientCode: '',
 };
 
 interface UseNewClientModalProps {
@@ -30,8 +26,8 @@ export function useNewClientModal({
     let formattedValue = value;
 
     switch (name) {
-      case 'cpf':
-        formattedValue = formatCPF(value);
+      case 'clientCode':
+        formattedValue = formatClientCode(value);
         break;
       case 'name':
         formattedValue = formatName(value);
@@ -67,46 +63,25 @@ export function useNewClientModal({
     const validations = [
       {
         isInvalid: !formData.name,
-        message: 'Digite um nome.',
+        message: 'Digite um apelido.',
         inputName: 'name',
       },
       {
         isInvalid: !validateName(formData.name),
-        message: 'O nome deve conter de 2 a 100 caracteres.',
+        message: 'O apelido deve conter de 2 a 100 caracteres.',
         inputName: 'name',
       },
       {
-        isInvalid: formData.email !== '' && !validateEmail(formData.email),
-        message:
-          'O email digitado e invalido. O formato aceito e exemplo@dominio.com',
-        inputName: 'email',
-      },
-      {
-        isInvalid: !formData.cpf,
-        message: 'Digite um CPF.',
-        inputName: 'cpf',
-      },
-      {
-        isInvalid: !validarCPF(formData.cpf),
-        message: 'CPF informado e invalido.',
-        inputName: 'cpf',
-      },
-      {
-        isInvalid: !validatePhoneNumber(formData.phone),
-        message: 'Telefone informado e invalido.',
-        inputName: 'phone',
-      },
-      {
-        isInvalid: !formData.riskProfile,
-        message: 'Selecione um perfil de risco.',
-        inputName: 'riskProfile',
+        isInvalid: formData.clientCode == '',
+        message: 'Digite o código do cliente.',
+        inputName: 'clientCode',
       },
     ];
-
     const errorList = getFormErrors(validations);
 
     if (errorList) {
       setErrors(errorList);
+      console.log('errors', errorList);
       return;
     }
 
@@ -114,10 +89,7 @@ export function useNewClientModal({
 
     const clientData: CreateClientInput = {
       name: formatPostName(formData.name),
-      cpf: formatPostCPF(formData.cpf),
-      ...(formData.email && { email: formData.email }),
-      riskProfile: formData.riskProfile,
-      ...(formData.phone && { phone: formData.phone }),
+      clientCode: formData.clientCode,
     };
 
     onSubmit(clientData);
@@ -139,14 +111,6 @@ export function useNewClientModal({
     setFormData,
     setErrors,
   };
-}
-
-function formatCPF(cpf: string): string {
-  const digits = cpf.replace(/\D/g, '').slice(0, 11);
-  return digits
-    .replace(/(\d{3})(\d)/, '$1.$2')
-    .replace(/(\d{3})(\d)/, '$1.$2')
-    .replace(/(\d{3})(\d{1,2})$/, '$1-$2');
 }
 
 function formatName(name: string): string {
@@ -174,45 +138,10 @@ function validateName(name: string): boolean {
   return nameRegex.test(cleanName);
 }
 
-function validateEmail(email: string): boolean {
-  const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-  return emailRegex.test(email);
-}
-
-function validarCPF(cpf: string): boolean {
-  cpf = cpf.replace(/[^\d]+/g, '');
-
-  if (cpf.length !== 11 || !!cpf.match(/(\d)\1{10}/)) {
-    return false;
-  }
-
-  const digitos = cpf.split('').map((el) => +el);
-
-  const calcularDigito = (count: number): number => {
-    let soma = 0;
-    for (let i = 0; i < count; i++) {
-      soma += digitos[i] * (count + 1 - i);
-    }
-    const resto = (soma * 10) % 11;
-    return resto === 10 || resto === 11 ? 0 : resto;
-  };
-
-  const dg1 = calcularDigito(9);
-  const dg2 = calcularDigito(10);
-
-  return dg1 === digitos[9] && dg2 === digitos[10];
-}
-
-function validatePhoneNumber(phoneNumber: string): boolean {
-  if (!phoneNumber) return true; // Phone is optional
-  const phone = parsePhoneNumberFromString(phoneNumber);
-  return phone ? phone.isValid() : false;
-}
-
 function formatPostName(name: string): string {
   return name.trim().toUpperCase();
 }
 
-function formatPostCPF(cpf: string): string {
-  return cpf.replace(/\D/g, '');
+function formatClientCode(clientCode: string): string {
+  return clientCode.trim().replace(/[^0-9]/g, '');
 }

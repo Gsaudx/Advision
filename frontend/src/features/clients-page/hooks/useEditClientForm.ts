@@ -1,13 +1,10 @@
 import { useState, type ChangeEvent } from 'react';
-import { parsePhoneNumberFromString } from 'libphonenumber-js';
 import { getFormErrors } from '@/lib/utils';
-import type { Client, UpdateClientInput, RiskProfile } from '../types';
+import type { Client, UpdateClientInput } from '../types';
 
 interface EditClientFormData {
   name: string;
-  email: string;
-  phone: string;
-  riskProfile: RiskProfile;
+  clientCode: string;
 }
 
 interface UseEditClientFormProps {
@@ -17,9 +14,7 @@ interface UseEditClientFormProps {
 
 const EMPTY_FORM_DATA: EditClientFormData = {
   name: '',
-  email: '',
-  phone: '',
-  riskProfile: 'MODERATE',
+  clientCode: '',
 };
 
 function getInitialFormData(client: Client | null): EditClientFormData {
@@ -29,9 +24,7 @@ function getInitialFormData(client: Client | null): EditClientFormData {
 
   return {
     name: client.name,
-    email: client.email ?? '',
-    phone: client.phone ?? '',
-    riskProfile: client.riskProfile,
+    clientCode: client.clientCode,
   };
 }
 
@@ -65,17 +58,6 @@ export function useEditClientForm({
     }));
   };
 
-  const handlePhoneChange = (value: string | undefined) => {
-    setFormData((prev) => ({
-      ...prev,
-      phone: value ?? '',
-    }));
-    setErrors((prev) => ({
-      ...prev,
-      phone: '',
-    }));
-  };
-
   const handleSubmit = (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
 
@@ -89,17 +71,6 @@ export function useEditClientForm({
         isInvalid: !validateName(formData.name),
         message: 'O nome deve conter de 2 a 100 caracteres.',
         inputName: 'name',
-      },
-      {
-        isInvalid: formData.email !== '' && !validateEmail(formData.email),
-        message:
-          'O email digitado e invalido. O formato aceito e exemplo@dominio.com',
-        inputName: 'email',
-      },
-      {
-        isInvalid: !validatePhoneNumber(formData.phone),
-        message: 'Telefone informado e invalido.',
-        inputName: 'phone',
       },
     ];
 
@@ -115,9 +86,7 @@ export function useEditClientForm({
     // Build update payload, normalizing empty strings to null
     const updateData: UpdateClientInput = {
       name: formatPostName(formData.name),
-      riskProfile: formData.riskProfile,
-      email: formData.email.trim() || null,
-      phone: formData.phone.trim() || null,
+      clientCode: formData.clientCode,
     };
 
     onSubmit(updateData);
@@ -132,7 +101,6 @@ export function useEditClientForm({
     formData,
     errors,
     handleChange,
-    handlePhoneChange,
     handleSubmit,
     resetForm,
   };
@@ -155,17 +123,6 @@ function formatName(name: string): string {
 function validateName(name: string): boolean {
   const cleanName = name.trim();
   return cleanName.length >= 2 && cleanName.length <= 100;
-}
-
-function validateEmail(email: string): boolean {
-  const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-  return emailRegex.test(email);
-}
-
-function validatePhoneNumber(phoneNumber: string): boolean {
-  if (!phoneNumber) return true;
-  const phone = parsePhoneNumberFromString(phoneNumber);
-  return phone ? phone.isValid() : false;
 }
 
 function formatPostName(name: string): string {
