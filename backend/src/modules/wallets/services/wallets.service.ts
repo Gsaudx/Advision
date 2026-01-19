@@ -749,7 +749,9 @@ export class WalletsService {
 
           if (!existingPosition) {
             if (attempt > 0) {
-              throw new ConflictException('Operacao concorrente, tente novamente');
+              throw new ConflictException(
+                'Operacao concorrente, tente novamente',
+              );
             }
             throw new BadRequestException(
               `Nenhuma posicao encontrada para ${data.ticker}`,
@@ -912,7 +914,7 @@ export class WalletsService {
     const items = transactions.map((tx) => this.formatTransaction(tx));
     const nextCursor =
       transactions.length === take
-        ? transactions[transactions.length - 1]?.id ?? null
+        ? (transactions[transactions.length - 1]?.id ?? null)
         : null;
 
     return { items, nextCursor };

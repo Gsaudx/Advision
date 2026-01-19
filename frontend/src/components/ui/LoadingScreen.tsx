@@ -1,4 +1,5 @@
 import { LoadingSpinner } from './LoadingSpinner';
+import logoMark from '@/assets/logos/AV_200-90.png';
 
 interface LoadingScreenProps {
   message?: string;
@@ -11,9 +12,7 @@ export function LoadingScreen({
     <div className="min-h-screen flex flex-col items-center justify-center bg-slate-950 transition-opacity duration-300">
       <div className="flex flex-col items-center gap-4">
         {/* Logo */}
-        <div className="w-12 h-12 rounded-xl bg-gradient-to-br from-blue-400 to-emerald-400 flex items-center justify-center mb-2">
-          <span className="text-slate-900 font-bold text-lg">TI</span>
-        </div>
+        <img src={logoMark} alt="Advision" className="h-12 w-auto mb-2" />
 
         {/* Spinner */}
         <LoadingSpinner size="lg" />

@@ -1,8 +1,10 @@
+import fullLogo from '@/assets/logos/full_logo.png';
+
 export function HeroSection() {
   return (
     <div className="space-y-4">
-      <h1 className="text-5xl font-bold bg-gradient-to-r from-blue-400 to-emerald-400 bg-clip-text text-transparent">
-        Advision
+      <h1 className="flex">
+        <img src={fullLogo} alt="Advision" className="h-12 w-auto" />
       </h1>
       <p className="text-xl text-slate-400">
         Sistema de Gerenciamento e Gestao de Carteiras
