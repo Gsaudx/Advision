@@ -1,6 +1,7 @@
 import { Test, TestingModule } from '@nestjs/testing';
 import { WalletsController } from '../controllers/wallets.controller';
 import { WalletsService } from '../services/wallets.service';
+import { YahooMarketService } from '../providers';
 
 describe('WalletsController', () => {
   let controller: WalletsController;
@@ -45,7 +46,16 @@ describe('WalletsController', () => {
 
     const module: TestingModule = await Test.createTestingModule({
       controllers: [WalletsController],
-      providers: [{ provide: WalletsService, useValue: walletsService }],
+      providers: [
+        {
+          provide: WalletsService,
+          useValue: walletsService,
+        },
+        {
+          provide: YahooMarketService,
+          useValue: {},
+        },
+      ],
     }).compile();
 
     controller = module.get<WalletsController>(WalletsController);
