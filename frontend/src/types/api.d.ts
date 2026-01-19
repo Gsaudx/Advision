@@ -319,9 +319,7 @@ export interface components {
         };
         CreateClientInputDto: {
             name: string;
-            email?: string | "";
-            phone: string;
-            cpf: string;
+            clientCode: string;
         };
         ClientApiResponseDto: {
             /** @constant */
@@ -333,9 +331,7 @@ export interface components {
                 advisorId: string;
                 userId: string | null;
                 name: string;
-                email: string | null;
-                cpf: string;
-                phone: string | null;
+                clientCode: string;
                 /** @enum {string} */
                 inviteStatus: "PENDING" | "SENT" | "ACCEPTED" | "REJECTED";
                 createdAt: string;
@@ -353,9 +349,7 @@ export interface components {
                 advisorId: string;
                 userId: string | null;
                 name: string;
-                email: string | null;
-                cpf: string;
-                phone: string | null;
+                clientCode: string;
                 /** @enum {string} */
                 inviteStatus: "PENDING" | "SENT" | "ACCEPTED" | "REJECTED";
                 createdAt: string;
@@ -365,8 +359,7 @@ export interface components {
         };
         UpdateClientInputDto: {
             name?: string;
-            email?: string | null;
-            phone: string | null;
+            clientCode: string;
         };
     };
     responses: never;

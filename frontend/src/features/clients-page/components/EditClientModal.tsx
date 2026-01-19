@@ -2,7 +2,6 @@ import ModalBase from '@/components/layout/ModalBase';
 import InputEmail from '@/components/ui/InputEmail';
 import InputName from '@/components/ui/InputName';
 import InputPhone from '@/components/ui/InputPhone';
-import Select from '@/components/ui/Select';
 import { LoadingSpinner } from '@/components/ui/LoadingSpinner';
 import type { AxiosError } from 'axios';
 import { Pencil, X } from 'lucide-react';
