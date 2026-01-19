@@ -68,20 +68,20 @@ export type AssetPriceResult = NonNullable<
 
 /**
  * Single transaction record
- * Note: Defined manually because nestjs-zod generates incorrect OpenAPI schema
- * for paginated responses (flattens the object to just an array)
+ * Note: Using the generated schema element for field shape only.
  */
 export type Transaction = NonNullable<
   components['schemas']['TransactionListApiResponseDto']['data']
 >[number];
 
 /**
- * Transaction list response
- * Note: Due to nestjs-zod serialization behavior, the API actually returns
- * an array directly instead of { items, nextCursor }. We type it as array
- * to match runtime behavior.
+ * Transaction list response (paginated)
+ * Note: Backend returns { items, nextCursor }.
  */
-export type TransactionList = Transaction[];
+export type TransactionList = {
+  items: Transaction[];
+  nextCursor: string | null;
+};
 
 export type TransactionType =
   | 'BUY'
