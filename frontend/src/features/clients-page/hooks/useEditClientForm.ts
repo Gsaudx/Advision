@@ -1,5 +1,4 @@
 import { useState, type ChangeEvent } from 'react';
-import { parsePhoneNumberFromString } from 'libphonenumber-js';
 import { getFormErrors } from '@/lib/utils';
 import type { Client, UpdateClientInput } from '../types';
 
@@ -56,17 +55,6 @@ export function useEditClientForm({
     setErrors((prev) => ({
       ...prev,
       [name]: '',
-    }));
-  };
-
-  const handlePhoneChange = (value: string | undefined) => {
-    setFormData((prev) => ({
-      ...prev,
-      phone: value ?? '',
-    }));
-    setErrors((prev) => ({
-      ...prev,
-      phone: '',
     }));
   };
 
