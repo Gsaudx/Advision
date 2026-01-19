@@ -45,8 +45,6 @@ export default function ClientModal({
 }: ClientModalProps) {
   if (!selectedClient) return null;
 
-  // const gradient = riskProfileGradients[selectedClient.riskProfile];
-
   return (
     <ModalBase
       isOpen={isOpen}
@@ -96,8 +94,11 @@ export default function ClientModal({
             <h2 className="text-2xl font-bold text-white truncate">
               {selectedClient.name}
             </h2>
-            <div className="flex flex-wrap gap-2 mt-2">
-              <span className="text-xs px-2.5 py-1 rounded-full font-medium bg-white/10 text-white/90 border border-white/20">
+            <div className="flex flex-col gap-2">
+              <span className="text-md text-gray-500 font-semibold text-left">
+                #{selectedClient.clientCode}
+              </span>
+              <span className="text-xs px-2.5 py-1 rounded-full font-medium bg-white/10 text-white/90 border border-white/20 w-fit">
                 {inviteStatusLabels[selectedClient.inviteStatus]}
               </span>
             </div>
@@ -110,7 +111,7 @@ export default function ClientModal({
         {/* Contact Information */}
         <div>
           <h3 className="text-sm font-semibold text-gray-400 uppercase tracking-wider mb-4">
-            Informacoes de Contato
+            Informações de Contato
           </h3>
           <div className="space-y-3">
             {/* <div className="flex items-center gap-3">
