@@ -4,7 +4,7 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 ## Project Overview
 
-TCC Investimentos is a B2B SaaS platform for investment advisors. It provides portfolio management and investment optimization using the Knapsack algorithm (part of an academic research project).
+Advision is a B2B SaaS platform for investment advisors. It provides portfolio management and investment optimization using the Knapsack algorithm (part of an academic research project).
 
 ## Quick Reference
 

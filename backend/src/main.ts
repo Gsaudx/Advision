@@ -31,7 +31,7 @@ async function bootstrap() {
   // 5. Swagger (API Documentation) - Development only
   if (env.NODE_ENV !== 'production') {
     const config = new DocumentBuilder()
-      .setTitle('TCC Investimentos API')
+      .setTitle('Advision API')
       .setDescription(
         'API para gestao de carteiras e otimizacao (Knapsack Problem)',
       )

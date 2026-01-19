@@ -1,4 +1,4 @@
-# TCC Investimentos
+# Advision
 
 B2B SaaS platform for investment advisors. Portfolio management and investment optimization using the Knapsack algorithm (academic research project).
 

@@ -50,10 +50,10 @@ export function Header() {
           <div className="flex items-center gap-4">
             <Link to="/" className="flex items-center gap-2">
               <div className="w-8 h-8 rounded-lg bg-gradient-to-br from-blue-400 to-emerald-400 flex items-center justify-center">
-                <span className="text-slate-900 font-bold text-sm">TI</span>
+                <span className="text-slate-900 font-bold text-sm">AD</span>
               </div>
               <span className="text-lg font-bold text-white hidden sm:block">
-                TCC Investimentos
+                Advision
               </span>
             </Link>
           </div>

@@ -2,7 +2,7 @@ export function HeroSection() {
   return (
     <div className="space-y-4">
       <h1 className="text-5xl font-bold bg-gradient-to-r from-blue-400 to-emerald-400 bg-clip-text text-transparent">
-        TCC Investimentos
+        Advision
       </h1>
       <p className="text-xl text-slate-400">
         Sistema de Gerenciamento e Gestao de Carteiras

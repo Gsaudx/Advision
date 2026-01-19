@@ -63,7 +63,7 @@ export default function RegisterPage() {
           {/* Branding Section - Hidden on mobile, shown on lg+ */}
           <div className="hidden lg:flex lg:w-72 xl:w-80 bg-slate-950 rounded-l-3xl p-8 flex-col justify-center items-center">
             <h1 className="text-2xl xl:text-3xl font-bold text-white text-center">
-              TCC INVESTIMENTO
+              Advision
             </h1>
             <div className="mt-8 text-slate-400 text-center text-sm">
               {/* TODO: Add branding image or illustration */}
