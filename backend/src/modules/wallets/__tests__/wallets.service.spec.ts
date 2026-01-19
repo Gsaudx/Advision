@@ -27,14 +27,17 @@ describe('WalletsService', () => {
       updateMany: jest.Mock;
     };
     position: {
+      create: jest.Mock;
       findMany: jest.Mock;
       findUnique: jest.Mock;
       upsert: jest.Mock;
+      updateMany: jest.Mock;
       update: jest.Mock;
       delete: jest.Mock;
     };
     transaction: {
       create: jest.Mock;
+      findFirst: jest.Mock;
       findUnique: jest.Mock;
       findMany: jest.Mock;
     };
@@ -101,6 +104,19 @@ describe('WalletsService', () => {
     asset: baseAsset,
   };
 
+  const baseTransaction = {
+    id: 'tx-123',
+    walletId: 'wallet-123',
+    assetId: null,
+    type: 'DEPOSIT',
+    quantity: null,
+    price: null,
+    totalValue: mockDecimal(1000),
+    executedAt: new Date('2024-01-10T10:00:00.000Z'),
+    createdAt: new Date('2024-01-10T10:00:00.000Z'),
+    asset: null,
+  };
+
   beforeEach(async () => {
     prisma = {
       wallet: {
@@ -112,14 +128,17 @@ describe('WalletsService', () => {
         updateMany: jest.fn().mockResolvedValue({ count: 1 }),
       },
       position: {
+        create: jest.fn(),
         findMany: jest.fn(),
         findUnique: jest.fn(),
         upsert: jest.fn(),
+        updateMany: jest.fn().mockResolvedValue({ count: 1 }),
         update: jest.fn(),
         delete: jest.fn(),
       },
       transaction: {
         create: jest.fn(),
+        findFirst: jest.fn(),
         findUnique: jest.fn(),
         findMany: jest.fn(),
       },
@@ -435,7 +454,6 @@ describe('WalletsService', () => {
       prisma.wallet.findUnique.mockResolvedValue(baseWallet);
       assetResolver.ensureAssetExists.mockResolvedValue(baseAsset);
       prisma.position.findUnique.mockResolvedValue(basePosition);
-      prisma.position.upsert.mockResolvedValue(basePosition);
       prisma.position.findMany.mockResolvedValue([basePosition]);
       marketData.getBatchPrices.mockResolvedValue({ PETR4: 35 });
 
@@ -454,9 +472,9 @@ describe('WalletsService', () => {
       // Existing: 100 shares @ 30 = 3000
       // New: 100 shares @ 40 = 4000
       // Total: 200 shares, avg = 7000/200 = 35
-      const upsertCall = prisma.position.upsert.mock.calls[0][0];
-      expect(upsertCall.update.quantity).toBe(200);
-      expect(upsertCall.update.averagePrice).toBe(35);
+      const updateCall = prisma.position.updateMany.mock.calls[0][0];
+      expect(updateCall.data.quantity).toBe(200);
+      expect(updateCall.data.averagePrice).toBe(35);
     });
 
     it('creates new position when none exists', async () => {
@@ -465,7 +483,7 @@ describe('WalletsService', () => {
       prisma.wallet.findUnique.mockResolvedValue(baseWallet);
       assetResolver.ensureAssetExists.mockResolvedValue(baseAsset);
       prisma.position.findUnique.mockResolvedValue(null);
-      prisma.position.upsert.mockResolvedValue(basePosition);
+      prisma.position.create.mockResolvedValue(basePosition);
       prisma.position.findMany.mockResolvedValue([basePosition]);
       marketData.getBatchPrices.mockResolvedValue({ PETR4: 35 });
 
@@ -481,9 +499,9 @@ describe('WalletsService', () => {
         advisorUser,
       );
 
-      const upsertCall = prisma.position.upsert.mock.calls[0][0];
-      expect(upsertCall.create.quantity).toBe(100);
-      expect(upsertCall.create.averagePrice).toBe(30);
+      const createCall = prisma.position.create.mock.calls[0][0];
+      expect(createCall.data.quantity).toBe(100);
+      expect(createCall.data.averagePrice).toBe(30);
     });
 
     it('rejects when insufficient cash', async () => {
@@ -493,6 +511,8 @@ describe('WalletsService', () => {
         ...baseWallet,
         cashBalance: mockDecimal(100),
       });
+      prisma.position.findUnique.mockResolvedValue(basePosition);
+      prisma.position.updateMany.mockResolvedValue({ count: 1 });
       prisma.wallet.updateMany.mockResolvedValue({ count: 0 });
       assetResolver.ensureAssetExists.mockResolvedValue(baseAsset);
 
@@ -537,10 +557,6 @@ describe('WalletsService', () => {
       prisma.wallet.findUnique.mockResolvedValue(baseWallet);
       prisma.asset.findUnique.mockResolvedValue(baseAsset);
       prisma.position.findUnique.mockResolvedValue(basePosition);
-      prisma.position.update.mockResolvedValue({
-        ...basePosition,
-        quantity: mockDecimal(50),
-      });
       prisma.position.findMany.mockResolvedValue([]);
       marketData.getBatchPrices.mockResolvedValue({});
 
@@ -556,7 +572,7 @@ describe('WalletsService', () => {
         advisorUser,
       );
 
-      expect(prisma.position.update).toHaveBeenCalledWith(
+      expect(prisma.position.updateMany).toHaveBeenCalledWith(
         expect.objectContaining({
           data: { quantity: 50 },
         }),
@@ -656,6 +672,34 @@ describe('WalletsService', () => {
           advisorUser,
         ),
       ).rejects.toBeInstanceOf(NotFoundException);
+    });
+  });
+
+  describe('getTransactions', () => {
+    it('returns paginated transactions with nextCursor', async () => {
+      prisma.wallet.findFirst.mockResolvedValue(baseWallet);
+      prisma.transaction.findMany.mockResolvedValue([
+        baseTransaction,
+        { ...baseTransaction, id: 'tx-124' },
+      ]);
+
+      const result = await service.getTransactions(
+        'wallet-123',
+        advisorUser,
+        2,
+      );
+
+      expect(result.items).toHaveLength(2);
+      expect(result.nextCursor).toBe('tx-124');
+    });
+
+    it('rejects when cursor is invalid', async () => {
+      prisma.wallet.findFirst.mockResolvedValue(baseWallet);
+      prisma.transaction.findFirst.mockResolvedValue(null);
+
+      await expect(
+        service.getTransactions('wallet-123', advisorUser, 50, 'missing'),
+      ).rejects.toBeInstanceOf(BadRequestException);
     });
   });
 

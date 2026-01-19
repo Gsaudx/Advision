@@ -69,9 +69,11 @@ export type AssetPriceResult = NonNullable<
 /**
  * Transaction record from the transaction history endpoint
  */
-export type Transaction = NonNullable<
+export type TransactionList = NonNullable<
   components['schemas']['TransactionListApiResponseDto']['data']
->[number];
+>;
+
+export type Transaction = TransactionList['items'][number];
 
 export type TransactionType =
   | 'BUY'

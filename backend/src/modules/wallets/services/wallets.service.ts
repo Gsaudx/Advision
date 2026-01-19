@@ -26,6 +26,7 @@ import type {
   WalletSummaryResponse,
   PositionResponse,
   TransactionResponse,
+  TransactionListResponse,
 } from '../schemas';
 
 type WalletWithClient = Wallet & {
@@ -114,28 +115,49 @@ export class WalletsService {
     };
   }
 
-  private isIdempotencyConflict(error: unknown): boolean {
+  private getUniqueConstraintTargets(error: unknown): string[] | null {
     if (!error || typeof error !== 'object' || !('code' in error)) {
-      return false;
+      return null;
     }
 
-    //P2002 is Prisma's unique constraint violation code
+    // P2002 is Prisma's unique constraint violation code
     if ((error as { code?: string }).code !== 'P2002') {
-      return false;
+      return null;
     }
 
     const target = (error as { meta?: { target?: string | string[] } }).meta
       ?.target;
 
     if (!target) {
-      return false;
+      return [];
     }
 
-    const targets = Array.isArray(target) ? target : [target];
+    return Array.isArray(target) ? target : [target];
+  }
+
+  private isIdempotencyConflict(error: unknown): boolean {
+    const targets = this.getUniqueConstraintTargets(error);
+
+    if (!targets) {
+      return false;
+    }
 
     return (
       targets.includes('walletId_idempotencyKey') ||
       (targets.includes('walletId') && targets.includes('idempotencyKey'))
+    );
+  }
+
+  private isPositionConflict(error: unknown): boolean {
+    const targets = this.getUniqueConstraintTargets(error);
+
+    if (!targets) {
+      return false;
+    }
+
+    return (
+      targets.includes('walletId_assetId') ||
+      (targets.includes('walletId') && targets.includes('assetId'))
     );
   }
 
@@ -502,40 +524,89 @@ export class WalletsService {
           throw new NotFoundException('Carteira nao encontrada');
         }
 
-        // Get existing position
-        const existingPosition = await tx.position.findUnique({
-          where: { walletId_assetId: { walletId, assetId: asset.id } },
-        });
+        const maxPositionAttempts = 3;
+        let positionId: string | null = null;
+        let positionAction: 'CREATE' | 'UPDATE' = 'CREATE';
+        let positionBefore:
+          | { quantity: number; averagePrice: number }
+          | undefined;
+        let positionAfter:
+          | { quantity: number; averagePrice: number }
+          | undefined;
 
-        // Calculate new position values
-        const existingQty = existingPosition
-          ? Number(existingPosition.quantity)
-          : 0;
-        const existingAvg = existingPosition
-          ? Number(existingPosition.averagePrice)
-          : 0;
+        for (let attempt = 0; attempt < maxPositionAttempts; attempt++) {
+          const existingPosition = await tx.position.findUnique({
+            where: { walletId_assetId: { walletId, assetId: asset.id } },
+          });
 
-        const { newQuantity, newAveragePrice } = this.calculateBuyAverage(
-          existingQty,
-          existingAvg,
-          data.quantity,
-          data.price,
-        );
+          if (!existingPosition) {
+            try {
+              const createdPosition = await tx.position.create({
+                data: {
+                  walletId,
+                  assetId: asset.id,
+                  quantity: data.quantity,
+                  averagePrice: data.price,
+                },
+              });
 
-        // Upsert position
-        const position = await tx.position.upsert({
-          where: { walletId_assetId: { walletId, assetId: asset.id } },
-          create: {
-            walletId,
-            assetId: asset.id,
+              positionId = createdPosition.id;
+              positionAction = 'CREATE';
+              positionAfter = {
+                quantity: data.quantity,
+                averagePrice: data.price,
+              };
+              break;
+            } catch (error) {
+              if (this.isPositionConflict(error)) {
+                continue;
+              }
+              throw error;
+            }
+          }
+
+          const existingQty = Number(existingPosition.quantity);
+          const existingAvg = Number(existingPosition.averagePrice);
+
+          const { newQuantity, newAveragePrice } = this.calculateBuyAverage(
+            existingQty,
+            existingAvg,
+            data.quantity,
+            data.price,
+          );
+
+          const updateResult = await tx.position.updateMany({
+            where: {
+              id: existingPosition.id,
+              quantity: existingPosition.quantity,
+              averagePrice: existingPosition.averagePrice,
+            },
+            data: {
+              quantity: newQuantity,
+              averagePrice: newAveragePrice,
+            },
+          });
+
+          if (updateResult.count === 0) {
+            continue;
+          }
+
+          positionId = existingPosition.id;
+          positionAction = 'UPDATE';
+          positionBefore = {
+            quantity: existingQty,
+            averagePrice: existingAvg,
+          };
+          positionAfter = {
             quantity: newQuantity,
             averagePrice: newAveragePrice,
-          },
-          update: {
-            quantity: newQuantity,
-            averagePrice: newAveragePrice,
-          },
-        });
+          };
+          break;
+        }
+
+        if (!positionId || !positionAfter) {
+          throw new ConflictException('Operacao concorrente, tente novamente');
+        }
 
         // Deduct cash only if sufficient balance is available.
         const cashUpdateResult = await tx.wallet.updateMany({
@@ -578,20 +649,12 @@ export class WalletsService {
         // Audit logs
         await this.auditService.log(tx, {
           tableName: 'positions',
-          recordId: position.id,
-          action: existingPosition ? 'UPDATE' : 'CREATE',
+          recordId: positionId,
+          action: positionAction,
           actorId: actor.id,
           actorRole: actor.role,
-          snapshotBefore: existingPosition
-            ? {
-                quantity: existingQty,
-                averagePrice: existingAvg,
-              }
-            : undefined,
-          snapshotAfter: {
-            quantity: newQuantity,
-            averagePrice: newAveragePrice,
-          },
+          snapshotBefore: positionBefore,
+          snapshotAfter: positionAfter,
           context: { trade: 'BUY', ticker: data.ticker },
         });
 
@@ -669,40 +732,82 @@ export class WalletsService {
           throw new NotFoundException('Carteira nao encontrada');
         }
 
-        // Get existing position
-        const existingPosition = await tx.position.findUnique({
-          where: { walletId_assetId: { walletId, assetId: asset.id } },
-        });
+        const maxPositionAttempts = 3;
+        let positionId: string | null = null;
+        let positionAction: 'UPDATE' | 'DELETE' | null = null;
+        let positionBefore:
+          | { quantity: number; averagePrice: number }
+          | undefined;
+        let positionAfter:
+          | { quantity: number; averagePrice: number }
+          | undefined;
 
-        if (!existingPosition) {
-          throw new BadRequestException(
-            `Nenhuma posicao encontrada para ${data.ticker}`,
-          );
-        }
-
-        const existingQty = Number(existingPosition.quantity);
-
-        if (existingQty < data.quantity) {
-          throw new BadRequestException(
-            `Quantidade insuficiente. Disponivel: ${existingQty}`,
-          );
-        }
-
-        const newQuantity = existingQty - data.quantity;
-        const currentBalance = new Decimal(wallet.cashBalance);
-
-        if (newQuantity === 0) {
-          // Delete position if fully sold
-          await tx.position.delete({
-            where: { id: existingPosition.id },
+        for (let attempt = 0; attempt < maxPositionAttempts; attempt++) {
+          const existingPosition = await tx.position.findUnique({
+            where: { walletId_assetId: { walletId, assetId: asset.id } },
           });
-        } else {
-          // Update position quantity (average price stays the same on sell)
-          await tx.position.update({
-            where: { id: existingPosition.id },
+
+          if (!existingPosition) {
+            if (attempt > 0) {
+              throw new ConflictException('Operacao concorrente, tente novamente');
+            }
+            throw new BadRequestException(
+              `Nenhuma posicao encontrada para ${data.ticker}`,
+            );
+          }
+
+          const existingQty = Number(existingPosition.quantity);
+          const existingAvg = Number(existingPosition.averagePrice);
+
+          if (existingQty < data.quantity) {
+            throw new BadRequestException(
+              `Quantidade insuficiente. Disponivel: ${existingQty}`,
+            );
+          }
+
+          const newQuantity = existingQty - data.quantity;
+
+          const updateResult = await tx.position.updateMany({
+            where: {
+              id: existingPosition.id,
+              quantity: existingPosition.quantity,
+              averagePrice: existingPosition.averagePrice,
+            },
             data: { quantity: newQuantity },
           });
+
+          if (updateResult.count === 0) {
+            continue;
+          }
+
+          positionId = existingPosition.id;
+          positionAction = newQuantity === 0 ? 'DELETE' : 'UPDATE';
+          positionBefore = {
+            quantity: existingQty,
+            averagePrice: existingAvg,
+          };
+          positionAfter =
+            newQuantity > 0
+              ? {
+                  quantity: newQuantity,
+                  averagePrice: existingAvg,
+                }
+              : undefined;
+
+          if (newQuantity === 0) {
+            // Delete position if fully sold
+            await tx.position.delete({
+              where: { id: existingPosition.id },
+            });
+          }
+          break;
         }
+
+        if (!positionId || !positionAction) {
+          throw new ConflictException('Operacao concorrente, tente novamente');
+        }
+
+        const currentBalance = new Decimal(wallet.cashBalance);
 
         // Add cash
         await tx.wallet.update({
@@ -727,21 +832,12 @@ export class WalletsService {
         // Audit logs
         await this.auditService.log(tx, {
           tableName: 'positions',
-          recordId: existingPosition.id,
-          action: newQuantity === 0 ? 'DELETE' : 'UPDATE',
+          recordId: positionId,
+          action: positionAction,
           actorId: actor.id,
           actorRole: actor.role,
-          snapshotBefore: {
-            quantity: existingQty,
-            averagePrice: Number(existingPosition.averagePrice),
-          },
-          snapshotAfter:
-            newQuantity > 0
-              ? {
-                  quantity: newQuantity,
-                  averagePrice: Number(existingPosition.averagePrice),
-                }
-              : undefined,
+          snapshotBefore: positionBefore,
+          snapshotAfter: positionAfter,
           context: { trade: 'SELL', ticker: data.ticker },
         });
 
@@ -778,15 +874,47 @@ export class WalletsService {
   async getTransactions(
     walletId: string,
     actor: CurrentUserData,
-  ): Promise<TransactionResponse[]> {
+    limit = 50,
+    cursor?: string,
+  ): Promise<TransactionListResponse> {
     await this.verifyWalletAccess(walletId, actor);
 
+    const take = Math.max(limit, 1);
+    let cursorTransaction: Transaction | null = null;
+
+    if (cursor) {
+      cursorTransaction = await this.prisma.transaction.findFirst({
+        where: { id: cursor, walletId },
+      });
+      if (!cursorTransaction) {
+        throw new BadRequestException('Cursor invalido');
+      }
+    }
+
     const transactions = await this.prisma.transaction.findMany({
-      where: { walletId },
+      where: cursorTransaction
+        ? {
+            walletId,
+            OR: [
+              { executedAt: { lt: cursorTransaction.executedAt } },
+              {
+                executedAt: cursorTransaction.executedAt,
+                id: { lt: cursorTransaction.id },
+              },
+            ],
+          }
+        : { walletId },
       include: { asset: true },
-      orderBy: { executedAt: 'desc' },
+      orderBy: [{ executedAt: 'desc' }, { id: 'desc' }],
+      take,
     });
 
-    return transactions.map((tx) => this.formatTransaction(tx));
+    const items = transactions.map((tx) => this.formatTransaction(tx));
+    const nextCursor =
+      transactions.length === take
+        ? transactions[transactions.length - 1]?.id ?? null
+        : null;
+
+    return { items, nextCursor };
   }
 }

@@ -168,12 +168,13 @@ export class TransactionApiResponseDto extends createZodDto(
 ) {}
 
 /**
- * Transaction list response schema
+ * Transaction list response schema (paginated)
  */
-export const TransactionListResponseSchema = z.array(TransactionResponseSchema);
-export type TransactionListResponse = z.infer<
-  typeof TransactionListResponseSchema
->;
+export const TransactionListResponseSchema = z.object({
+  items: z.array(TransactionResponseSchema),
+  nextCursor: z.string().uuid().nullable(),
+});
+export type TransactionListResponse = z.infer<typeof TransactionListResponseSchema>;
 
 export class TransactionListApiResponseDto extends createZodDto(
   createApiResponseSchema(TransactionListResponseSchema),

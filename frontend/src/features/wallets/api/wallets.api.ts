@@ -7,7 +7,7 @@ import type {
   TradeInput,
   AssetSearchResult,
   AssetPriceResult,
-  Transaction,
+  TransactionList,
 } from '../types';
 
 interface ApiResponse<T> {
@@ -82,9 +82,16 @@ export const walletsApi = {
     return response.data.data;
   },
 
-  getTransactions: async (walletId: string): Promise<Transaction[]> => {
-    const response = await api.get<ApiResponse<Transaction[]>>(
+  getTransactions: async (
+    walletId: string,
+    options?: { limit?: number; cursor?: string },
+  ): Promise<TransactionList> => {
+    const params: Record<string, string> = {};
+    if (options?.limit) params.limit = String(options.limit);
+    if (options?.cursor) params.cursor = options.cursor;
+    const response = await api.get<ApiResponse<TransactionList>>(
       `/wallets/${walletId}/transactions`,
+      { params },
     );
     return response.data.data;
   },

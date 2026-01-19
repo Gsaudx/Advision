@@ -38,7 +38,7 @@ import type {
   WalletSummaryResponse,
   AssetSearchResponse,
   AssetPriceResponse,
-  TransactionResponse,
+  TransactionListResponse,
 } from '../schemas';
 
 @ApiTags('Wallets')
@@ -209,10 +209,25 @@ export class WalletsController {
       'Retorna o historico de todas as transacoes da carteira (compras, vendas, depositos, saques).',
   })
   @ApiParam({ name: 'id', description: 'ID da carteira' })
+  @ApiQuery({
+    name: 'limit',
+    required: false,
+    description: 'Numero maximo de registros (padrao: 50, maximo: 100)',
+  })
+  @ApiQuery({
+    name: 'cursor',
+    required: false,
+    description: 'ID da transacao para paginacao por cursor',
+  })
   @ApiResponse({
     status: 200,
     description: 'Lista de transacoes',
     type: TransactionListApiResponseDto,
+  })
+  @ApiResponse({
+    status: 400,
+    description: 'Cursor invalido',
+    type: ApiErrorResponseDto,
   })
   @ApiResponse({
     status: 403,
@@ -227,8 +242,19 @@ export class WalletsController {
   async getTransactions(
     @Param('id') id: string,
     @CurrentUser() user: CurrentUserData,
-  ): Promise<ApiResponseType<TransactionResponse[]>> {
-    const data = await this.walletsService.getTransactions(id, user);
+    @Query('limit') limit?: string,
+    @Query('cursor') cursor?: string,
+  ): Promise<ApiResponseType<TransactionListResponse>> {
+    const parsedLimit = limit ? parseInt(limit, 10) : 50;
+    const maxResults = Number.isFinite(parsedLimit)
+      ? Math.min(Math.max(parsedLimit, 1), 100)
+      : 50;
+    const data = await this.walletsService.getTransactions(
+      id,
+      user,
+      maxResults,
+      cursor,
+    );
     return ApiResponseDto.success(data);
   }
 
