@@ -184,7 +184,14 @@ describe('WalletsService', () => {
           }),
         }),
       );
-      expect(auditService.log).toHaveBeenCalled();
+      expect(auditService.log).toHaveBeenCalledWith(
+        expect.anything(),
+        expect.objectContaining({
+          tableName: 'transactions',
+          recordId: 'tx-123',
+          action: 'CREATE',
+        }),
+      );
       expect(result.cashBalance).toBe(5000);
     });
 

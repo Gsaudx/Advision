@@ -211,7 +211,7 @@ export class WalletsService {
 
       // Create initial deposit transaction if applicable
       if (hasInitialDeposit) {
-        await tx.transaction.create({
+        const initialDepositTransaction = await tx.transaction.create({
           data: {
             walletId: newWallet.id,
             type: 'DEPOSIT',
@@ -223,7 +223,7 @@ export class WalletsService {
 
         await this.auditService.log(tx, {
           tableName: 'transactions',
-          recordId: newWallet.id,
+          recordId: initialDepositTransaction.id,
           action: 'CREATE',
           actorId: actor.id,
           actorRole: actor.role,
