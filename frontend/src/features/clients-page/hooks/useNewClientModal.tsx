@@ -18,7 +18,6 @@ export function useNewClientModal({
 }: UseNewClientModalProps) {
   const [formData, setFormData] = useState<ClientFormData>(INITIAL_FORM_DATA);
   const [errors, setErrors] = useState<Record<string, string>>({});
-  
 
   const handleChange = (
     e: ChangeEvent<HTMLInputElement | HTMLSelectElement>,
@@ -29,10 +28,10 @@ export function useNewClientModal({
     switch (name) {
       case 'clientCode':
         formattedValue = formatClientCode(value);
-        break;      
+        break;
       case 'name':
         formattedValue = formatName(value);
-        break;      
+        break;
     }
 
     setFormData((prev) => ({
@@ -76,11 +75,11 @@ export function useNewClientModal({
         isInvalid: formData.clientCode == '',
         message: 'Digite o código do cliente.',
         inputName: 'clientCode',
-      }
-    ];   
+      },
+    ];
     const errorList = getFormErrors(validations);
 
-    if (errorList) {      
+    if (errorList) {
       setErrors(errorList);
       console.log('errors', errorList);
       return;

@@ -8,7 +8,11 @@ type InputNameProps = React.InputHTMLAttributes<HTMLInputElement> & {
   label?: string;
 };
 
-export default function InputName({ inputId, label = "Nome", ...props }: InputNameProps) {
+export default function InputName({
+  inputId,
+  label = 'Nome',
+  ...props
+}: InputNameProps) {
   return (
     <Input
       label={label}

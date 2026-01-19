@@ -1,11 +1,6 @@
 import ModalBase from '@/components/layout/ModalBase';
 import { inviteStatusLabels, type Client } from '../types';
-import {
-  Calendar,
-  Pencil,
-  Trash2,
-  X,
-} from 'lucide-react';
+import { Calendar, Pencil, Trash2, X } from 'lucide-react';
 import InviteLinkSection from './InviteLinkSection';
 
 interface ClientModalProps {
@@ -54,7 +49,9 @@ export default function ClientModal({
       minHeight={0}
     >
       {/* Header with gradient */}
-      <div className={`relative bg-gradient-to-r p-6 from-orange-900/70 to-slate-900 rounded-t-xl`}>
+      <div
+        className={`relative bg-gradient-to-r p-6 from-orange-900/70 to-slate-900 rounded-t-xl`}
+      >
         {/* Action buttons */}
         <div className="absolute top-4 right-4 flex items-center gap-2">
           <button

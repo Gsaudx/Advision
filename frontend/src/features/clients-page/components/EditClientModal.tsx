@@ -7,7 +7,6 @@ import { useEditClientForm } from '../hooks/useEditClientForm';
 import { useUpdateClient } from '../api';
 import type { Client } from '../types';
 
-
 interface EditClientModalProps {
   isOpen: boolean;
   onClose: () => void;
@@ -44,26 +43,21 @@ export default function EditClientModal({
     ? getApiErrorMessage(updateClientMutation.error)
     : null;
 
-  const {
-    formData,
-    errors,
-    handleChange,
-    handleSubmit,
-    resetForm,
-  } = useEditClientForm({
-    client,
-    onSubmit: (data) => {
-      if (!client) return;
-      updateClientMutation.mutate(
-        { id: client.id, data },
-        {
-          onSuccess: () => {
-            onClose();
+  const { formData, errors, handleChange, handleSubmit, resetForm } =
+    useEditClientForm({
+      client,
+      onSubmit: (data) => {
+        if (!client) return;
+        updateClientMutation.mutate(
+          { id: client.id, data },
+          {
+            onSuccess: () => {
+              onClose();
+            },
           },
-        },
-      );
-    },
-  });
+        );
+      },
+    });
 
   const handleClose = () => {
     if (!updateClientMutation.isPending) {
@@ -74,7 +68,6 @@ export default function EditClientModal({
   };
 
   if (!client) return null;
-
 
   return (
     <ModalBase
@@ -113,7 +106,7 @@ export default function EditClientModal({
         {/* Name */}
         <div className="flex flex-col">
           <InputName
-            label='Apelido'
+            label="Apelido"
             name="name"
             value={formData.name}
             onChange={handleChange}
@@ -130,7 +123,9 @@ export default function EditClientModal({
         {/* Client Code */}
         {/* CPF (read-only) */}
         <div className="flex flex-col gap-1.5">
-          <label className="text-sm font-medium text-gray-300">Código do cliente</label>
+          <label className="text-sm font-medium text-gray-300">
+            Código do cliente
+          </label>
           <div className="bg-slate-800/50 border border-slate-700 rounded-lg px-4 py-3 text-gray-400">
             {formData.clientCode}
           </div>

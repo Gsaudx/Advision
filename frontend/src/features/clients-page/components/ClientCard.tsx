@@ -27,7 +27,6 @@ export function ClientCard({ client, ...props }: ClientCardProps) {
               </span>
             </div>
           </div>
-          
         </div>
 
         <div className="space-y-3">

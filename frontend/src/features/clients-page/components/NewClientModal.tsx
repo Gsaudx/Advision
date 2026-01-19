@@ -45,22 +45,17 @@ export default function NewClientModal({
     ? getApiErrorMessage(createClientMutation.error)
     : null;
 
-  const {
-    formData,
-    errors,
-    handleChange,
-    handleSubmit,
-    resetForm,
-  } = useNewClientModal({
-    onSubmit: (data) => {
-      createClientMutation.mutate(data, {
-        onSuccess: () => {
-          resetForm();
-          onClose();
-        },
-      });
-    },
-  });
+  const { formData, errors, handleChange, handleSubmit, resetForm } =
+    useNewClientModal({
+      onSubmit: (data) => {
+        createClientMutation.mutate(data, {
+          onSuccess: () => {
+            resetForm();
+            onClose();
+          },
+        });
+      },
+    });
 
   const handleClose = () => {
     if (!createClientMutation.isPending) {
@@ -68,7 +63,6 @@ export default function NewClientModal({
       onClose();
     }
   };
-  
 
   return (
     <ModalBase
@@ -108,7 +102,7 @@ export default function NewClientModal({
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
           <div>
             <InputName
-              label='Apelido'
+              label="Apelido"
               name="name"
               value={formData.name}
               onChange={handleChange}

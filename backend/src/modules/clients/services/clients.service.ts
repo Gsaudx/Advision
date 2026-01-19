@@ -107,7 +107,7 @@ export class ClientsService {
       where: { id: clientId },
       data: {
         name: data.name,
-        clientCode: data.clientCode
+        clientCode: data.clientCode,
       },
     });
 

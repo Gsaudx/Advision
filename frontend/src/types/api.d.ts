@@ -4,850 +4,850 @@
  */
 
 export interface paths {
-    "/health": {
-        parameters: {
-            query?: never;
-            header?: never;
-            path?: never;
-            cookie?: never;
-        };
-        /**
-         * Verifica status da API
-         * @description Retorna o status da aplicacao e a conexao com o banco de dados. Use este endpoint para monitoramento e health checks de infraestrutura.
-         */
-        get: operations["HealthController_check"];
-        put?: never;
-        post?: never;
-        delete?: never;
-        options?: never;
-        head?: never;
-        patch?: never;
-        trace?: never;
+  '/health': {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
     };
-    "/auth/register": {
-        parameters: {
-            query?: never;
-            header?: never;
-            path?: never;
-            cookie?: never;
-        };
-        get?: never;
-        put?: never;
-        /**
-         * Registrar novo usuario
-         * @description Cria uma nova conta na plataforma. Define um cookie HttpOnly com o token JWT.
-         */
-        post: operations["AuthController_register"];
-        delete?: never;
-        options?: never;
-        head?: never;
-        patch?: never;
-        trace?: never;
+    /**
+     * Verifica status da API
+     * @description Retorna o status da aplicacao e a conexao com o banco de dados. Use este endpoint para monitoramento e health checks de infraestrutura.
+     */
+    get: operations['HealthController_check'];
+    put?: never;
+    post?: never;
+    delete?: never;
+    options?: never;
+    head?: never;
+    patch?: never;
+    trace?: never;
+  };
+  '/auth/register': {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
     };
-    "/auth/login": {
-        parameters: {
-            query?: never;
-            header?: never;
-            path?: never;
-            cookie?: never;
-        };
-        get?: never;
-        put?: never;
-        /**
-         * Autenticar usuario
-         * @description Autentica o usuario e define um cookie HttpOnly com o token JWT.
-         */
-        post: operations["AuthController_login"];
-        delete?: never;
-        options?: never;
-        head?: never;
-        patch?: never;
-        trace?: never;
+    get?: never;
+    put?: never;
+    /**
+     * Registrar novo usuario
+     * @description Cria uma nova conta na plataforma. Define um cookie HttpOnly com o token JWT.
+     */
+    post: operations['AuthController_register'];
+    delete?: never;
+    options?: never;
+    head?: never;
+    patch?: never;
+    trace?: never;
+  };
+  '/auth/login': {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
     };
-    "/auth/logout": {
-        parameters: {
-            query?: never;
-            header?: never;
-            path?: never;
-            cookie?: never;
-        };
-        get?: never;
-        put?: never;
-        /**
-         * Encerrar sessao
-         * @description Remove o cookie de autenticacao.
-         */
-        post: operations["AuthController_logout"];
-        delete?: never;
-        options?: never;
-        head?: never;
-        patch?: never;
-        trace?: never;
+    get?: never;
+    put?: never;
+    /**
+     * Autenticar usuario
+     * @description Autentica o usuario e define um cookie HttpOnly com o token JWT.
+     */
+    post: operations['AuthController_login'];
+    delete?: never;
+    options?: never;
+    head?: never;
+    patch?: never;
+    trace?: never;
+  };
+  '/auth/logout': {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
     };
-    "/auth/me": {
-        parameters: {
-            query?: never;
-            header?: never;
-            path?: never;
-            cookie?: never;
-        };
-        /**
-         * Obter perfil do usuario
-         * @description Retorna os dados do usuario autenticado via cookie.
-         */
-        get: operations["AuthController_getProfile"];
-        put?: never;
-        post?: never;
-        delete?: never;
-        options?: never;
-        head?: never;
-        patch?: never;
-        trace?: never;
+    get?: never;
+    put?: never;
+    /**
+     * Encerrar sessao
+     * @description Remove o cookie de autenticacao.
+     */
+    post: operations['AuthController_logout'];
+    delete?: never;
+    options?: never;
+    head?: never;
+    patch?: never;
+    trace?: never;
+  };
+  '/auth/me': {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
     };
-    "/clients/{id}/invite": {
-        parameters: {
-            query?: never;
-            header?: never;
-            path?: never;
-            cookie?: never;
-        };
-        /**
-         * Consultar status do convite
-         * @description Retorna o status atual do convite de um cliente. Permite ao assessor verificar o token e sua validade.
-         */
-        get: operations["ClientsInviteController_getInviteStatus"];
-        put?: never;
-        /**
-         * Gerar convite para cliente
-         * @description Gera um token de convite para que o cliente possa vincular sua conta. Apenas assessores podem gerar convites.
-         */
-        post: operations["ClientsInviteController_generateInvite"];
-        /**
-         * Revogar convite
-         * @description Revoga um convite pendente. O token sera invalidado e o cliente nao podera mais usa-lo.
-         */
-        delete: operations["ClientsInviteController_revokeInvite"];
-        options?: never;
-        head?: never;
-        patch?: never;
-        trace?: never;
+    /**
+     * Obter perfil do usuario
+     * @description Retorna os dados do usuario autenticado via cookie.
+     */
+    get: operations['AuthController_getProfile'];
+    put?: never;
+    post?: never;
+    delete?: never;
+    options?: never;
+    head?: never;
+    patch?: never;
+    trace?: never;
+  };
+  '/clients/{id}/invite': {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
     };
-    "/clients/invite/accept": {
-        parameters: {
-            query?: never;
-            header?: never;
-            path?: never;
-            cookie?: never;
-        };
-        get?: never;
-        put?: never;
-        /**
-         * Aceitar convite
-         * @description Aceita um convite e vincula a conta do usuario autenticado ao perfil de cliente. Apenas usuarios com role CLIENT podem aceitar convites.
-         */
-        post: operations["ClientsInviteController_acceptInvite"];
-        delete?: never;
-        options?: never;
-        head?: never;
-        patch?: never;
-        trace?: never;
+    /**
+     * Consultar status do convite
+     * @description Retorna o status atual do convite de um cliente. Permite ao assessor verificar o token e sua validade.
+     */
+    get: operations['ClientsInviteController_getInviteStatus'];
+    put?: never;
+    /**
+     * Gerar convite para cliente
+     * @description Gera um token de convite para que o cliente possa vincular sua conta. Apenas assessores podem gerar convites.
+     */
+    post: operations['ClientsInviteController_generateInvite'];
+    /**
+     * Revogar convite
+     * @description Revoga um convite pendente. O token sera invalidado e o cliente nao podera mais usa-lo.
+     */
+    delete: operations['ClientsInviteController_revokeInvite'];
+    options?: never;
+    head?: never;
+    patch?: never;
+    trace?: never;
+  };
+  '/clients/invite/accept': {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
     };
-    "/clients": {
-        parameters: {
-            query?: never;
-            header?: never;
-            path?: never;
-            cookie?: never;
-        };
-        /**
-         * Listar clientes
-         * @description Retorna todos os clientes do assessor autenticado.
-         */
-        get: operations["ClientsController_findAll"];
-        put?: never;
-        /**
-         * Criar novo cliente
-         * @description Cadastra um novo cliente vinculado ao assessor autenticado.
-         */
-        post: operations["ClientsController_create"];
-        delete?: never;
-        options?: never;
-        head?: never;
-        patch?: never;
-        trace?: never;
+    get?: never;
+    put?: never;
+    /**
+     * Aceitar convite
+     * @description Aceita um convite e vincula a conta do usuario autenticado ao perfil de cliente. Apenas usuarios com role CLIENT podem aceitar convites.
+     */
+    post: operations['ClientsInviteController_acceptInvite'];
+    delete?: never;
+    options?: never;
+    head?: never;
+    patch?: never;
+    trace?: never;
+  };
+  '/clients': {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
     };
-    "/clients/{id}": {
-        parameters: {
-            query?: never;
-            header?: never;
-            path?: never;
-            cookie?: never;
-        };
-        /**
-         * Buscar cliente
-         * @description Retorna os dados de um cliente especifico.
-         */
-        get: operations["ClientsController_findOne"];
-        /**
-         * Atualizar cliente
-         * @description Atualiza os dados de um cliente existente.
-         */
-        put: operations["ClientsController_update"];
-        post?: never;
-        /**
-         * Excluir cliente
-         * @description Remove um cliente do sistema.
-         */
-        delete: operations["ClientsController_delete"];
-        options?: never;
-        head?: never;
-        patch?: never;
-        trace?: never;
+    /**
+     * Listar clientes
+     * @description Retorna todos os clientes do assessor autenticado.
+     */
+    get: operations['ClientsController_findAll'];
+    put?: never;
+    /**
+     * Criar novo cliente
+     * @description Cadastra um novo cliente vinculado ao assessor autenticado.
+     */
+    post: operations['ClientsController_create'];
+    delete?: never;
+    options?: never;
+    head?: never;
+    patch?: never;
+    trace?: never;
+  };
+  '/clients/{id}': {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
     };
+    /**
+     * Buscar cliente
+     * @description Retorna os dados de um cliente especifico.
+     */
+    get: operations['ClientsController_findOne'];
+    /**
+     * Atualizar cliente
+     * @description Atualiza os dados de um cliente existente.
+     */
+    put: operations['ClientsController_update'];
+    post?: never;
+    /**
+     * Excluir cliente
+     * @description Remove um cliente do sistema.
+     */
+    delete: operations['ClientsController_delete'];
+    options?: never;
+    head?: never;
+    patch?: never;
+    trace?: never;
+  };
 }
 export type webhooks = Record<string, never>;
 export interface components {
-    schemas: {
-        HealthApiResponseDto: {
-            /**
-             * @description Indica se a requisicao foi bem-sucedida
-             * @constant
-             */
-            success: true;
-            /** @description Dados de saude da aplicacao */
-            data: {
-                /**
-                 * @description Status geral da aplicacao
-                 * @enum {string}
-                 */
-                status: "ok" | "error";
-                /**
-                 * @description Status da conexao com o banco de dados
-                 * @enum {string}
-                 */
-                database: "connected" | "disconnected";
-                /** @description Data/hora da verificacao (ISO 8601) */
-                timestamp?: string;
-                /** @description Ambiente de execucao */
-                environment?: string;
-                /** @description Mensagem de erro (apenas quando status = error) */
-                error?: string;
-            };
-            /** @description Mensagem descritiva (opcional) */
-            message?: string;
-        };
-        ApiErrorResponseDto: {
-            /**
-             * @description Indica que houve erro
-             * @constant
-             */
-            success: false;
-            /** @description Codigo HTTP do erro */
-            statusCode: number;
-            /** @description Mensagem de erro */
-            message: string;
-            /** @description Detalhes do erro (validacao, etc.) */
-            errors?: string[];
-            /** @description Timestamp do erro */
-            timestamp: string;
-            /** @description Caminho da requisicao */
-            path?: string;
-        };
-        RegisterDto: {
-            name: string;
-            /** Format: email */
-            email: string;
-            password: string;
-            /**
-             * @default ADVISOR
-             * @enum {string}
-             */
-            role: "ADVISOR" | "CLIENT";
-            cpfCnpj?: string;
-            phone?: string;
-        };
-        UserProfileApiResponseDto: {
-            /** @constant */
-            success: true;
-            data?: {
-                /** Format: uuid */
-                id: string;
-                email: string;
-                name: string;
-                /** @enum {string} */
-                role: "ADVISOR" | "CLIENT" | "ADMIN";
-                cpfCnpj: string | null;
-                phone: string | null;
-                clientProfileId: string | null;
-                createdAt: string;
-            };
-            message?: string;
-        };
-        LoginDto: {
-            /** Format: email */
-            email: string;
-            password: string;
-        };
-        InviteApiResponseDto: {
-            /** @constant */
-            success: true;
-            data?: {
-                /** Format: uuid */
-                clientId: string;
-                clientName: string;
-                inviteToken: string;
-                /** @enum {string} */
-                inviteStatus: "PENDING" | "SENT" | "ACCEPTED" | "REJECTED";
-                inviteExpiresAt: string;
-            };
-            message?: string;
-        };
-        AcceptInviteDto: {
-            token: string;
-        };
-        AcceptInviteApiResponseDto: {
-            /** @constant */
-            success: true;
-            data?: {
-                /** Format: uuid */
-                clientId: string;
-                clientName: string;
-                advisorName: string;
-                message: string;
-            };
-            message?: string;
-        };
-        CreateClientInputDto: {
-            name: string;
-            clientCode: string;
-        };
-        ClientApiResponseDto: {
-            /** @constant */
-            success: true;
-            data?: {
-                /** Format: uuid */
-                id: string;
-                /** Format: uuid */
-                advisorId: string;
-                userId: string | null;
-                name: string;
-                clientCode: string;
-                /** @enum {string} */
-                inviteStatus: "PENDING" | "SENT" | "ACCEPTED" | "REJECTED";
-                createdAt: string;
-                updatedAt: string;
-            };
-            message?: string;
-        };
-        ClientListApiResponseDto: {
-            /** @constant */
-            success: true;
-            data?: {
-                /** Format: uuid */
-                id: string;
-                /** Format: uuid */
-                advisorId: string;
-                userId: string | null;
-                name: string;
-                clientCode: string;
-                /** @enum {string} */
-                inviteStatus: "PENDING" | "SENT" | "ACCEPTED" | "REJECTED";
-                createdAt: string;
-                updatedAt: string;
-            }[];
-            message?: string;
-        };
-        UpdateClientInputDto: {
-            name?: string;
-            clientCode: string;
-        };
+  schemas: {
+    HealthApiResponseDto: {
+      /**
+       * @description Indica se a requisicao foi bem-sucedida
+       * @constant
+       */
+      success: true;
+      /** @description Dados de saude da aplicacao */
+      data: {
+        /**
+         * @description Status geral da aplicacao
+         * @enum {string}
+         */
+        status: 'ok' | 'error';
+        /**
+         * @description Status da conexao com o banco de dados
+         * @enum {string}
+         */
+        database: 'connected' | 'disconnected';
+        /** @description Data/hora da verificacao (ISO 8601) */
+        timestamp?: string;
+        /** @description Ambiente de execucao */
+        environment?: string;
+        /** @description Mensagem de erro (apenas quando status = error) */
+        error?: string;
+      };
+      /** @description Mensagem descritiva (opcional) */
+      message?: string;
     };
-    responses: never;
-    parameters: never;
-    requestBodies: never;
-    headers: never;
-    pathItems: never;
+    ApiErrorResponseDto: {
+      /**
+       * @description Indica que houve erro
+       * @constant
+       */
+      success: false;
+      /** @description Codigo HTTP do erro */
+      statusCode: number;
+      /** @description Mensagem de erro */
+      message: string;
+      /** @description Detalhes do erro (validacao, etc.) */
+      errors?: string[];
+      /** @description Timestamp do erro */
+      timestamp: string;
+      /** @description Caminho da requisicao */
+      path?: string;
+    };
+    RegisterDto: {
+      name: string;
+      /** Format: email */
+      email: string;
+      password: string;
+      /**
+       * @default ADVISOR
+       * @enum {string}
+       */
+      role: 'ADVISOR' | 'CLIENT';
+      cpfCnpj?: string;
+      phone?: string;
+    };
+    UserProfileApiResponseDto: {
+      /** @constant */
+      success: true;
+      data?: {
+        /** Format: uuid */
+        id: string;
+        email: string;
+        name: string;
+        /** @enum {string} */
+        role: 'ADVISOR' | 'CLIENT' | 'ADMIN';
+        cpfCnpj: string | null;
+        phone: string | null;
+        clientProfileId: string | null;
+        createdAt: string;
+      };
+      message?: string;
+    };
+    LoginDto: {
+      /** Format: email */
+      email: string;
+      password: string;
+    };
+    InviteApiResponseDto: {
+      /** @constant */
+      success: true;
+      data?: {
+        /** Format: uuid */
+        clientId: string;
+        clientName: string;
+        inviteToken: string;
+        /** @enum {string} */
+        inviteStatus: 'PENDING' | 'SENT' | 'ACCEPTED' | 'REJECTED';
+        inviteExpiresAt: string;
+      };
+      message?: string;
+    };
+    AcceptInviteDto: {
+      token: string;
+    };
+    AcceptInviteApiResponseDto: {
+      /** @constant */
+      success: true;
+      data?: {
+        /** Format: uuid */
+        clientId: string;
+        clientName: string;
+        advisorName: string;
+        message: string;
+      };
+      message?: string;
+    };
+    CreateClientInputDto: {
+      name: string;
+      clientCode: string;
+    };
+    ClientApiResponseDto: {
+      /** @constant */
+      success: true;
+      data?: {
+        /** Format: uuid */
+        id: string;
+        /** Format: uuid */
+        advisorId: string;
+        userId: string | null;
+        name: string;
+        clientCode: string;
+        /** @enum {string} */
+        inviteStatus: 'PENDING' | 'SENT' | 'ACCEPTED' | 'REJECTED';
+        createdAt: string;
+        updatedAt: string;
+      };
+      message?: string;
+    };
+    ClientListApiResponseDto: {
+      /** @constant */
+      success: true;
+      data?: {
+        /** Format: uuid */
+        id: string;
+        /** Format: uuid */
+        advisorId: string;
+        userId: string | null;
+        name: string;
+        clientCode: string;
+        /** @enum {string} */
+        inviteStatus: 'PENDING' | 'SENT' | 'ACCEPTED' | 'REJECTED';
+        createdAt: string;
+        updatedAt: string;
+      }[];
+      message?: string;
+    };
+    UpdateClientInputDto: {
+      name?: string;
+      clientCode: string;
+    };
+  };
+  responses: never;
+  parameters: never;
+  requestBodies: never;
+  headers: never;
+  pathItems: never;
 }
 export type $defs = Record<string, never>;
 export interface operations {
-    HealthController_check: {
-        parameters: {
-            query?: never;
-            header?: never;
-            path?: never;
-            cookie?: never;
-        };
-        requestBody?: never;
-        responses: {
-            /** @description Sistema operacional */
-            200: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": components["schemas"]["HealthApiResponseDto"];
-                };
-            };
-            /** @description Token JWT invalido ou ausente */
-            401: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": components["schemas"]["ApiErrorResponseDto"];
-                };
-            };
-            /** @description Sistema com falha (banco desconectado) */
-            503: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": components["schemas"]["ApiErrorResponseDto"];
-                };
-            };
-        };
+  HealthController_check: {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
     };
-    AuthController_register: {
-        parameters: {
-            query?: never;
-            header?: never;
-            path?: never;
-            cookie?: never;
+    requestBody?: never;
+    responses: {
+      /** @description Sistema operacional */
+      200: {
+        headers: {
+          [name: string]: unknown;
         };
-        requestBody: {
-            content: {
-                "application/json": components["schemas"]["RegisterDto"];
-            };
+        content: {
+          'application/json': components['schemas']['HealthApiResponseDto'];
         };
-        responses: {
-            /** @description Assessor registrado com sucesso */
-            201: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": components["schemas"]["UserProfileApiResponseDto"];
-                };
-            };
-            /** @description Email ja cadastrado */
-            409: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": components["schemas"]["ApiErrorResponseDto"];
-                };
-            };
+      };
+      /** @description Token JWT invalido ou ausente */
+      401: {
+        headers: {
+          [name: string]: unknown;
         };
+        content: {
+          'application/json': components['schemas']['ApiErrorResponseDto'];
+        };
+      };
+      /** @description Sistema com falha (banco desconectado) */
+      503: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/json': components['schemas']['ApiErrorResponseDto'];
+        };
+      };
     };
-    AuthController_login: {
-        parameters: {
-            query?: never;
-            header?: never;
-            path?: never;
-            cookie?: never;
-        };
-        requestBody: {
-            content: {
-                "application/json": components["schemas"]["LoginDto"];
-            };
-        };
-        responses: {
-            /** @description Login realizado com sucesso */
-            200: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": components["schemas"]["UserProfileApiResponseDto"];
-                };
-            };
-            /** @description Credenciais invalidas */
-            401: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": components["schemas"]["ApiErrorResponseDto"];
-                };
-            };
-        };
+  };
+  AuthController_register: {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
     };
-    AuthController_logout: {
-        parameters: {
-            query?: never;
-            header?: never;
-            path?: never;
-            cookie?: never;
-        };
-        requestBody?: never;
-        responses: {
-            /** @description Logout realizado com sucesso */
-            200: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content?: never;
-            };
-        };
+    requestBody: {
+      content: {
+        'application/json': components['schemas']['RegisterDto'];
+      };
     };
-    AuthController_getProfile: {
-        parameters: {
-            query?: never;
-            header?: never;
-            path?: never;
-            cookie?: never;
+    responses: {
+      /** @description Assessor registrado com sucesso */
+      201: {
+        headers: {
+          [name: string]: unknown;
         };
-        requestBody?: never;
-        responses: {
-            /** @description Perfil retornado com sucesso */
-            200: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": components["schemas"]["UserProfileApiResponseDto"];
-                };
-            };
-            /** @description Cookie invalido ou expirado */
-            401: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": components["schemas"]["ApiErrorResponseDto"];
-                };
-            };
+        content: {
+          'application/json': components['schemas']['UserProfileApiResponseDto'];
         };
+      };
+      /** @description Email ja cadastrado */
+      409: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/json': components['schemas']['ApiErrorResponseDto'];
+        };
+      };
     };
-    ClientsInviteController_getInviteStatus: {
-        parameters: {
-            query?: never;
-            header?: never;
-            path: {
-                id: string;
-            };
-            cookie?: never;
-        };
-        requestBody?: never;
-        responses: {
-            /** @description Status do convite retornado */
-            200: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": components["schemas"]["InviteApiResponseDto"];
-                };
-            };
-            /** @description Cliente nao encontrado */
-            404: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": components["schemas"]["ApiErrorResponseDto"];
-                };
-            };
-        };
+  };
+  AuthController_login: {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
     };
-    ClientsInviteController_generateInvite: {
-        parameters: {
-            query?: never;
-            header?: never;
-            path: {
-                id: string;
-            };
-            cookie?: never;
-        };
-        requestBody?: never;
-        responses: {
-            /** @description Convite gerado com sucesso */
-            201: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": components["schemas"]["InviteApiResponseDto"];
-                };
-            };
-            /** @description Sem permissao para convidar este cliente */
-            403: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": components["schemas"]["ApiErrorResponseDto"];
-                };
-            };
-            /** @description Cliente nao encontrado */
-            404: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": components["schemas"]["ApiErrorResponseDto"];
-                };
-            };
-            /** @description Cliente ja possui conta vinculada */
-            409: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": components["schemas"]["ApiErrorResponseDto"];
-                };
-            };
-        };
+    requestBody: {
+      content: {
+        'application/json': components['schemas']['LoginDto'];
+      };
     };
-    ClientsInviteController_revokeInvite: {
-        parameters: {
-            query?: never;
-            header?: never;
-            path: {
-                id: string;
-            };
-            cookie?: never;
+    responses: {
+      /** @description Login realizado com sucesso */
+      200: {
+        headers: {
+          [name: string]: unknown;
         };
-        requestBody?: never;
-        responses: {
-            /** @description Convite revogado com sucesso */
-            200: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content?: never;
-            };
-            /** @description Cliente nao encontrado */
-            404: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": components["schemas"]["ApiErrorResponseDto"];
-                };
-            };
-            /** @description Convite ja foi aceito */
-            409: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": components["schemas"]["ApiErrorResponseDto"];
-                };
-            };
+        content: {
+          'application/json': components['schemas']['UserProfileApiResponseDto'];
         };
+      };
+      /** @description Credenciais invalidas */
+      401: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/json': components['schemas']['ApiErrorResponseDto'];
+        };
+      };
     };
-    ClientsInviteController_acceptInvite: {
-        parameters: {
-            query?: never;
-            header?: never;
-            path?: never;
-            cookie?: never;
-        };
-        requestBody: {
-            content: {
-                "application/json": components["schemas"]["AcceptInviteDto"];
-            };
-        };
-        responses: {
-            /** @description Conta vinculada com sucesso */
-            200: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": components["schemas"]["AcceptInviteApiResponseDto"];
-                };
-            };
-            /** @description Convite invalido ou expirado */
-            400: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": components["schemas"]["ApiErrorResponseDto"];
-                };
-            };
-            /** @description Apenas usuarios com role CLIENT podem aceitar convites */
-            403: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": components["schemas"]["ApiErrorResponseDto"];
-                };
-            };
-            /** @description Usuario ja vinculado a outro cliente */
-            409: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": components["schemas"]["ApiErrorResponseDto"];
-                };
-            };
-        };
+  };
+  AuthController_logout: {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
     };
-    ClientsController_findAll: {
-        parameters: {
-            query?: never;
-            header?: never;
-            path?: never;
-            cookie?: never;
+    requestBody?: never;
+    responses: {
+      /** @description Logout realizado com sucesso */
+      200: {
+        headers: {
+          [name: string]: unknown;
         };
-        requestBody?: never;
-        responses: {
-            /** @description Lista de clientes */
-            200: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": components["schemas"]["ClientListApiResponseDto"];
-                };
-            };
-        };
+        content?: never;
+      };
     };
-    ClientsController_create: {
-        parameters: {
-            query?: never;
-            header?: never;
-            path?: never;
-            cookie?: never;
-        };
-        requestBody: {
-            content: {
-                "application/json": components["schemas"]["CreateClientInputDto"];
-            };
-        };
-        responses: {
-            /** @description Cliente criado com sucesso */
-            201: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": components["schemas"]["ClientApiResponseDto"];
-                };
-            };
-            /** @description Dados invalidos */
-            400: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": components["schemas"]["ApiErrorResponseDto"];
-                };
-            };
-            /** @description Cliente com este CPF ja existe */
-            409: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": components["schemas"]["ApiErrorResponseDto"];
-                };
-            };
-        };
+  };
+  AuthController_getProfile: {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
     };
-    ClientsController_findOne: {
-        parameters: {
-            query?: never;
-            header?: never;
-            path: {
-                /** @description ID do cliente */
-                id: string;
-            };
-            cookie?: never;
+    requestBody?: never;
+    responses: {
+      /** @description Perfil retornado com sucesso */
+      200: {
+        headers: {
+          [name: string]: unknown;
         };
-        requestBody?: never;
-        responses: {
-            /** @description Dados do cliente */
-            200: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": components["schemas"]["ClientApiResponseDto"];
-                };
-            };
-            /** @description Cliente nao encontrado */
-            404: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": components["schemas"]["ApiErrorResponseDto"];
-                };
-            };
+        content: {
+          'application/json': components['schemas']['UserProfileApiResponseDto'];
         };
+      };
+      /** @description Cookie invalido ou expirado */
+      401: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/json': components['schemas']['ApiErrorResponseDto'];
+        };
+      };
     };
-    ClientsController_update: {
-        parameters: {
-            query?: never;
-            header?: never;
-            path: {
-                /** @description ID do cliente */
-                id: string;
-            };
-            cookie?: never;
-        };
-        requestBody: {
-            content: {
-                "application/json": components["schemas"]["UpdateClientInputDto"];
-            };
-        };
-        responses: {
-            /** @description Cliente atualizado com sucesso */
-            200: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": components["schemas"]["ClientApiResponseDto"];
-                };
-            };
-            /** @description Cliente nao encontrado */
-            404: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": components["schemas"]["ApiErrorResponseDto"];
-                };
-            };
-        };
+  };
+  ClientsInviteController_getInviteStatus: {
+    parameters: {
+      query?: never;
+      header?: never;
+      path: {
+        id: string;
+      };
+      cookie?: never;
     };
-    ClientsController_delete: {
-        parameters: {
-            query?: never;
-            header?: never;
-            path: {
-                /** @description ID do cliente */
-                id: string;
-            };
-            cookie?: never;
+    requestBody?: never;
+    responses: {
+      /** @description Status do convite retornado */
+      200: {
+        headers: {
+          [name: string]: unknown;
         };
-        requestBody?: never;
-        responses: {
-            /** @description Cliente excluido com sucesso */
-            200: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content?: never;
-            };
-            /** @description Cliente nao encontrado */
-            404: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": components["schemas"]["ApiErrorResponseDto"];
-                };
-            };
+        content: {
+          'application/json': components['schemas']['InviteApiResponseDto'];
         };
+      };
+      /** @description Cliente nao encontrado */
+      404: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/json': components['schemas']['ApiErrorResponseDto'];
+        };
+      };
     };
+  };
+  ClientsInviteController_generateInvite: {
+    parameters: {
+      query?: never;
+      header?: never;
+      path: {
+        id: string;
+      };
+      cookie?: never;
+    };
+    requestBody?: never;
+    responses: {
+      /** @description Convite gerado com sucesso */
+      201: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/json': components['schemas']['InviteApiResponseDto'];
+        };
+      };
+      /** @description Sem permissao para convidar este cliente */
+      403: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/json': components['schemas']['ApiErrorResponseDto'];
+        };
+      };
+      /** @description Cliente nao encontrado */
+      404: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/json': components['schemas']['ApiErrorResponseDto'];
+        };
+      };
+      /** @description Cliente ja possui conta vinculada */
+      409: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/json': components['schemas']['ApiErrorResponseDto'];
+        };
+      };
+    };
+  };
+  ClientsInviteController_revokeInvite: {
+    parameters: {
+      query?: never;
+      header?: never;
+      path: {
+        id: string;
+      };
+      cookie?: never;
+    };
+    requestBody?: never;
+    responses: {
+      /** @description Convite revogado com sucesso */
+      200: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content?: never;
+      };
+      /** @description Cliente nao encontrado */
+      404: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/json': components['schemas']['ApiErrorResponseDto'];
+        };
+      };
+      /** @description Convite ja foi aceito */
+      409: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/json': components['schemas']['ApiErrorResponseDto'];
+        };
+      };
+    };
+  };
+  ClientsInviteController_acceptInvite: {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    requestBody: {
+      content: {
+        'application/json': components['schemas']['AcceptInviteDto'];
+      };
+    };
+    responses: {
+      /** @description Conta vinculada com sucesso */
+      200: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/json': components['schemas']['AcceptInviteApiResponseDto'];
+        };
+      };
+      /** @description Convite invalido ou expirado */
+      400: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/json': components['schemas']['ApiErrorResponseDto'];
+        };
+      };
+      /** @description Apenas usuarios com role CLIENT podem aceitar convites */
+      403: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/json': components['schemas']['ApiErrorResponseDto'];
+        };
+      };
+      /** @description Usuario ja vinculado a outro cliente */
+      409: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/json': components['schemas']['ApiErrorResponseDto'];
+        };
+      };
+    };
+  };
+  ClientsController_findAll: {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    requestBody?: never;
+    responses: {
+      /** @description Lista de clientes */
+      200: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/json': components['schemas']['ClientListApiResponseDto'];
+        };
+      };
+    };
+  };
+  ClientsController_create: {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    requestBody: {
+      content: {
+        'application/json': components['schemas']['CreateClientInputDto'];
+      };
+    };
+    responses: {
+      /** @description Cliente criado com sucesso */
+      201: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/json': components['schemas']['ClientApiResponseDto'];
+        };
+      };
+      /** @description Dados invalidos */
+      400: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/json': components['schemas']['ApiErrorResponseDto'];
+        };
+      };
+      /** @description Cliente com este CPF ja existe */
+      409: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/json': components['schemas']['ApiErrorResponseDto'];
+        };
+      };
+    };
+  };
+  ClientsController_findOne: {
+    parameters: {
+      query?: never;
+      header?: never;
+      path: {
+        /** @description ID do cliente */
+        id: string;
+      };
+      cookie?: never;
+    };
+    requestBody?: never;
+    responses: {
+      /** @description Dados do cliente */
+      200: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/json': components['schemas']['ClientApiResponseDto'];
+        };
+      };
+      /** @description Cliente nao encontrado */
+      404: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/json': components['schemas']['ApiErrorResponseDto'];
+        };
+      };
+    };
+  };
+  ClientsController_update: {
+    parameters: {
+      query?: never;
+      header?: never;
+      path: {
+        /** @description ID do cliente */
+        id: string;
+      };
+      cookie?: never;
+    };
+    requestBody: {
+      content: {
+        'application/json': components['schemas']['UpdateClientInputDto'];
+      };
+    };
+    responses: {
+      /** @description Cliente atualizado com sucesso */
+      200: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/json': components['schemas']['ClientApiResponseDto'];
+        };
+      };
+      /** @description Cliente nao encontrado */
+      404: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/json': components['schemas']['ApiErrorResponseDto'];
+        };
+      };
+    };
+  };
+  ClientsController_delete: {
+    parameters: {
+      query?: never;
+      header?: never;
+      path: {
+        /** @description ID do cliente */
+        id: string;
+      };
+      cookie?: never;
+    };
+    requestBody?: never;
+    responses: {
+      /** @description Cliente excluido com sucesso */
+      200: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content?: never;
+      };
+      /** @description Cliente nao encontrado */
+      404: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/json': components['schemas']['ApiErrorResponseDto'];
+        };
+      };
+    };
+  };
 }
