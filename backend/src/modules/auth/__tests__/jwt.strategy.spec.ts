@@ -72,7 +72,7 @@ describe('JwtStrategy', () => {
 
   describe('AUTH_COOKIE_NAME', () => {
     it('should export the correct cookie name', () => {
-      expect(AUTH_COOKIE_NAME).toBe('tcc_auth');
+      expect(AUTH_COOKIE_NAME).toBe('advision_auth');
     });
   });
 });

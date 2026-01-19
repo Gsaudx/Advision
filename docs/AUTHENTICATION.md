@@ -26,13 +26,13 @@ The system uses **JWT (JSON Web Token) stateless** authentication with **HttpOnl
 2. LocalStrategy validates credentials (`bcrypt.compare`)
 3. AuthService generates JWT: `{ sub: id, email, role }`
 4. Backend sets HttpOnly cookie in response:
-   `Set-Cookie: tcc_auth=<jwt>; HttpOnly; Secure; SameSite=Strict`
+   `Set-Cookie: advision_auth=<jwt>; HttpOnly; Secure; SameSite=Strict`
 5. Browser stores cookie automatically (inaccessible to JS)
 
 ### Authenticated Request Flow
 
 1. Frontend makes `GET /health` (axios with `withCredentials: true`)
-2. Browser attaches cookie automatically: `Cookie: tcc_auth=<jwt>`
+2. Browser attaches cookie automatically: `Cookie: advision_auth=<jwt>`
 3. JwtStrategy validates signature and expiration
 4. If valid: `req.user = { id, email, role }`, controller processes request
 5. If invalid: returns `401 Unauthorized`
@@ -89,7 +89,7 @@ getProfile(@CurrentUser() user: RequestUser) {
 
 ```typescript
 // auth.controller.ts
-res.cookie("tcc_auth", token, {
+res.cookie("advision_auth", token, {
   httpOnly: true, // Inaccessible via JavaScript (protects against XSS)
   secure: true, // HTTPS only in production
   sameSite: "strict", // Not sent in cross-site requests (protects CSRF)

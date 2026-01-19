@@ -13,7 +13,7 @@ describe('AppController (e2e)', () => {
     process.env = {
       ...originalEnv,
       DATABASE_URL:
-        'postgresql://admin:password123@localhost:5432/tcc_investimentos?schema=public',
+        'postgresql://admin:password123@localhost:5432/advision?schema=public',
       JWT_SECRET: 'test-secret-test-secret-test-secret-1234',
       CORS_ORIGIN: 'http://localhost:5173',
       NODE_ENV: 'test',
