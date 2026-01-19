@@ -26,9 +26,7 @@ describe('ClientsService', () => {
     userId: null as string | null,
     name: 'Test Client',
     clientCode: '12132132132',
-    inviteToken: null,
     inviteStatus: InviteStatus.SENT,
-    inviteExpiresAt: null,
     createdAt: new Date('2024-01-01T00:00:00.000Z'),
     updatedAt: new Date('2024-01-02T00:00:00.000Z'),
   };
@@ -92,15 +90,14 @@ describe('ClientsService', () => {
         },
       });
 
+
       expect(result).toEqual({
         id: clientId,
         advisorId,
         userId: null,
         name: 'Test Client',
         clientCode: '12345678901',
-        inviteToken: null,
         inviteStatus: InviteStatus.SENT,
-        inviteExpiresAt: null,
         createdAt: '2024-01-01T00:00:00.000Z',
         updatedAt: '2024-01-02T00:00:00.000Z',
       });
@@ -136,9 +133,7 @@ describe('ClientsService', () => {
           userId: c.userId,
           name: c.name,
           clientCode: c.clientCode,
-          inviteToken: c.inviteToken,
           inviteStatus: c.inviteStatus,
-          inviteExpiresAt: c.inviteExpiresAt,
           createdAt: c.createdAt.toISOString(),
           updatedAt: c.updatedAt.toISOString(),
         })),
@@ -178,9 +173,7 @@ describe('ClientsService', () => {
         userId: null,
         name: 'Test Client',
         clientCode: '12132132132',
-        inviteToken: null,
         inviteStatus: InviteStatus.SENT,
-        inviteExpiresAt: null,
         createdAt: '2024-01-01T00:00:00.000Z',
         updatedAt: '2024-01-02T00:00:00.000Z',
       });
@@ -227,9 +220,7 @@ describe('ClientsService', () => {
         userId: null,
         name: 'Updated Name',
         clientCode: '12132132132',
-        inviteToken: null,
         inviteStatus: InviteStatus.SENT,
-        inviteExpiresAt: null,
         createdAt: '2024-01-01T00:00:00.000Z',
         updatedAt: '2024-01-10T00:00:00.000Z',
       });
