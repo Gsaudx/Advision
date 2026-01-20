@@ -5,5 +5,7 @@ export function useClientActivity(limit = 10) {
   return useQuery({
     queryKey: ['activity', 'client', limit],
     queryFn: () => activityApi.getClientActivity(limit),
+    refetchOnMount: 'always',
+    staleTime: 30000,
   });
 }

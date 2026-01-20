@@ -1,28 +1,51 @@
 import { useState } from 'react';
-import { Loader2 } from 'lucide-react';
+import { RefreshCw } from 'lucide-react';
 import type { ActivityItem } from '../../api';
 import { formatTimeAgo, getActivityTarget } from '../../utils/activity.utils';
 import { ActivityDetailModal } from './ActivityDetailModal';
+import { ActivitySkeleton } from './ActivitySkeleton';
 
 interface RecentActivityProps {
   activities: ActivityItem[];
   isLoading?: boolean;
+  isRefreshing?: boolean;
+  onRefresh?: () => void;
 }
 
-export function RecentActivity({ activities, isLoading }: RecentActivityProps) {
+export function RecentActivity({
+  activities,
+  isLoading,
+  isRefreshing,
+  onRefresh,
+}: RecentActivityProps) {
   const [selectedActivity, setSelectedActivity] = useState<ActivityItem | null>(
     null,
   );
 
+  const showSkeleton = isLoading || isRefreshing;
+
   return (
     <>
       <div className="bg-slate-900 rounded-xl p-5 border border-slate-800 flex flex-col h-fit">
-        <h3 className="text-white font-semibold mb-4">Atividade Recente</h3>
+        <div className="flex items-center justify-between mb-4">
+          <h3 className="text-white font-semibold">Atividade Recente</h3>
+          {onRefresh && (
+            <button
+              onClick={onRefresh}
+              disabled={isRefreshing}
+              className="text-slate-400 hover:text-white transition-colors p-1.5 hover:bg-slate-800 rounded-lg disabled:opacity-50"
+              title="Atualizar"
+            >
+              <RefreshCw
+                size={16}
+                className={isRefreshing ? 'animate-spin' : ''}
+              />
+            </button>
+          )}
+        </div>
         <div className="space-y-3 max-h-80 overflow-y-auto pr-1">
-          {isLoading ? (
-            <div className="flex items-center justify-center py-8">
-              <Loader2 className="w-6 h-6 text-blue-400 animate-spin" />
-            </div>
+          {showSkeleton ? (
+            <ActivitySkeleton count={5} />
           ) : activities.length === 0 ? (
             <p className="text-slate-400 text-sm text-center py-8">
               Nenhuma atividade recente.

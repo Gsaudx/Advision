@@ -1,20 +1,27 @@
 import { useState } from 'react';
-import { Loader2, User } from 'lucide-react';
+import { RefreshCw, User } from 'lucide-react';
 import { useAuth } from '@/features/auth';
 import { InviteTokenPrompt } from '../components/client/InviteTokenPrompt';
 import { useClientActivity, useClientProfile, type ActivityItem } from '../api';
 import { ActivityDetailModal } from '../components/advisor/ActivityDetailModal';
+import { ActivitySkeleton } from '../components/advisor/ActivitySkeleton';
 import { formatTimeAgo, getActivityTarget } from '../utils/activity.utils';
 
 export function HomePageClient() {
   const { user, signOut } = useAuth();
   const isLinked = user?.clientProfileId !== null;
-  const { data: activities = [], isLoading: isLoadingActivities } =
-    useClientActivity(5);
+  const {
+    data: activities = [],
+    isLoading: isLoadingActivities,
+    isFetching: isFetchingActivities,
+    refetch: refetchActivities,
+  } = useClientActivity(5);
   const { data: profile } = useClientProfile();
   const [selectedActivity, setSelectedActivity] = useState<ActivityItem | null>(
     null,
   );
+  const isRefreshingActivities = isFetchingActivities && !isLoadingActivities;
+  const showSkeleton = isLoadingActivities || isRefreshingActivities;
 
   const handleInviteSuccess = () => {
     window.location.reload();
@@ -80,12 +87,23 @@ export function HomePageClient() {
 
       {/* Recent Activity */}
       <div className="bg-slate-900 rounded-xl p-5 border border-slate-800">
-        <h3 className="text-white font-semibold mb-4">Atividade Recente</h3>
+        <div className="flex items-center justify-between mb-4">
+          <h3 className="text-white font-semibold">Atividade Recente</h3>
+          <button
+            onClick={() => refetchActivities()}
+            disabled={isRefreshingActivities}
+            className="text-slate-400 hover:text-white transition-colors p-1.5 hover:bg-slate-800 rounded-lg disabled:opacity-50"
+            title="Atualizar"
+          >
+            <RefreshCw
+              size={16}
+              className={isRefreshingActivities ? 'animate-spin' : ''}
+            />
+          </button>
+        </div>
         <div className="space-y-3 max-h-80 overflow-y-auto pr-1">
-          {isLoadingActivities ? (
-            <div className="flex items-center justify-center py-8">
-              <Loader2 className="w-6 h-6 text-blue-400 animate-spin" />
-            </div>
+          {showSkeleton ? (
+            <ActivitySkeleton count={5} />
           ) : activities.length === 0 ? (
             <p className="text-slate-400 text-sm text-center py-8">
               Nenhuma atividade recente.

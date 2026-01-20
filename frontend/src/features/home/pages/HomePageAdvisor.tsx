@@ -48,12 +48,17 @@ const mockDueDates: DueDate[] = [
 export function HomePageAdvisor() {
   const { user } = useAuth();
   const userName = user?.name ?? 'Assessor';
-  const { data: activities = [], isLoading: isLoadingActivities } =
-    useAdvisorActivity(5);
+  const {
+    data: activities = [],
+    isLoading: isLoadingActivities,
+    isFetching: isFetchingActivities,
+    refetch: refetchActivities,
+  } = useAdvisorActivity(5);
   const { data: metrics } = useAdvisorMetrics();
 
   const clientCount = metrics?.clientCount ?? 0;
   const totalWalletValue = metrics?.totalWalletValue ?? 0;
+  const isRefreshingActivities = isFetchingActivities && !isLoadingActivities;
 
   return (
     <div className="space-y-6">
@@ -90,7 +95,12 @@ export function HomePageAdvisor() {
       {/* Main Content Grid - items-start prevents stretch */}
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 items-start">
         <div className="lg:col-span-2">
-          <RecentActivity activities={activities} isLoading={isLoadingActivities} />
+          <RecentActivity
+            activities={activities}
+            isLoading={isLoadingActivities}
+            isRefreshing={isRefreshingActivities}
+            onRefresh={() => refetchActivities()}
+          />
         </div>
         <QuickActions />
       </div>
