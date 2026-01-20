@@ -13,7 +13,6 @@ export {
 // Types
 export type {
   Client,
-  RiskProfile,
   InviteStatus,
   CreateClientInput,
   UpdateClientInput,
@@ -23,8 +22,6 @@ export type {
 
 export {
   isInviteExpired,
-  riskProfileLabels,
-  riskProfileColors,
   inviteStatusLabels,
   inviteStatusColors,
 } from './types';
