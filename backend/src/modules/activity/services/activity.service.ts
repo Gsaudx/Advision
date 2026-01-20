@@ -5,6 +5,7 @@ import type {
   ActivityItem,
   AdvisorMetrics,
   ClientProfile,
+  PaginatedActivity,
 } from '../schemas';
 
 /**
@@ -242,6 +243,160 @@ export class ActivityService {
       clientName: client.name,
       advisorId: client.advisor.id,
       advisorName: client.advisor.name,
+    };
+  }
+
+  /**
+   * Get paginated activity for an advisor (all their clients' events)
+   */
+  async getAdvisorActivityPaginated(
+    advisorId: string,
+    page: number,
+    pageSize: number,
+  ): Promise<PaginatedActivity> {
+    // Get all client IDs for this advisor
+    const clients = await this.prisma.client.findMany({
+      where: { advisorId },
+      select: { id: true, name: true },
+    });
+
+    const clientIds = clients.map((c) => c.id);
+    const clientMap = new Map(clients.map((c) => [c.id, c.name]));
+
+    // Get wallet IDs for these clients
+    const wallets = await this.prisma.wallet.findMany({
+      where: { clientId: { in: clientIds } },
+      select: { id: true, name: true, clientId: true },
+    });
+
+    const walletIds = wallets.map((w) => w.id);
+    const walletMap = new Map(wallets.map((w) => [w.id, w]));
+
+    // Build where clause
+    const whereClause = {
+      OR: [
+        { aggregateType: 'CLIENT' as const, aggregateId: { in: clientIds } },
+        { aggregateType: 'WALLET' as const, aggregateId: { in: walletIds } },
+      ],
+    };
+
+    // Get total count
+    const total = await this.prisma.domainEvent.count({
+      where: whereClause,
+    });
+
+    // Fetch paginated events
+    const events = await this.prisma.domainEvent.findMany({
+      where: whereClause,
+      orderBy: { occurredAt: 'desc' },
+      skip: (page - 1) * pageSize,
+      take: pageSize,
+    });
+
+    const items = events.map((event): ActivityItem => {
+      let clientName: string | null = null;
+      let walletName: string | null = null;
+
+      if (event.aggregateType === 'CLIENT') {
+        clientName = clientMap.get(event.aggregateId) || null;
+      } else if (event.aggregateType === 'WALLET') {
+        const wallet = walletMap.get(event.aggregateId);
+        if (wallet) {
+          walletName = wallet.name;
+          clientName = clientMap.get(wallet.clientId) || null;
+        }
+      }
+
+      return {
+        id: event.id,
+        action: EVENT_LABELS[event.eventType] || event.eventType,
+        description: getDescription(event.eventType, event.payload),
+        clientName,
+        walletName,
+        occurredAt: event.occurredAt.toISOString(),
+        aggregateType: event.aggregateType,
+        eventType: event.eventType,
+      };
+    });
+
+    return {
+      items,
+      total,
+      page,
+      pageSize,
+      totalPages: Math.ceil(total / pageSize),
+    };
+  }
+
+  /**
+   * Get paginated activity for a client (only their own events)
+   */
+  async getClientActivityPaginated(
+    clientId: string,
+    page: number,
+    pageSize: number,
+  ): Promise<PaginatedActivity> {
+    // Get client info
+    const client = await this.prisma.client.findUnique({
+      where: { id: clientId },
+      select: { id: true, name: true },
+    });
+
+    // Get wallet IDs for this client
+    const wallets = await this.prisma.wallet.findMany({
+      where: { clientId },
+      select: { id: true, name: true },
+    });
+
+    const walletIds = wallets.map((w) => w.id);
+    const walletMap = new Map(wallets.map((w) => [w.id, w.name]));
+
+    // Build where clause
+    const whereClause = {
+      OR: [
+        { aggregateType: 'CLIENT' as const, aggregateId: clientId },
+        { aggregateType: 'WALLET' as const, aggregateId: { in: walletIds } },
+      ],
+    };
+
+    // Get total count
+    const total = await this.prisma.domainEvent.count({
+      where: whereClause,
+    });
+
+    // Fetch paginated events
+    const events = await this.prisma.domainEvent.findMany({
+      where: whereClause,
+      orderBy: { occurredAt: 'desc' },
+      skip: (page - 1) * pageSize,
+      take: pageSize,
+    });
+
+    const items = events.map((event): ActivityItem => {
+      let walletName: string | null = null;
+
+      if (event.aggregateType === 'WALLET') {
+        walletName = walletMap.get(event.aggregateId) || null;
+      }
+
+      return {
+        id: event.id,
+        action: EVENT_LABELS[event.eventType] || event.eventType,
+        description: getDescription(event.eventType, event.payload),
+        clientName: client?.name || null,
+        walletName,
+        occurredAt: event.occurredAt.toISOString(),
+        aggregateType: event.aggregateType,
+        eventType: event.eventType,
+      };
+    });
+
+    return {
+      items,
+      total,
+      page,
+      pageSize,
+      totalPages: Math.ceil(total / pageSize),
     };
   }
 }

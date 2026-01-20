@@ -1,14 +1,20 @@
+import { useState } from 'react';
 import { Users, Wallet, Clock, AlertTriangle } from 'lucide-react';
 import { useAuth } from '@/features/auth';
 import { StatCard } from '../components/advisor/StatCard';
 import { QuickActions } from '../components/advisor/QuickActions';
 import { WelcomeSection } from '../components/advisor/WelcomeSection';
 import { RecentActivity } from '../components/advisor/RecentActivity';
+import { ActivityHistoryModal } from '../components/advisor/ActivityHistoryModal';
 import {
   UpcomingDueDates,
   type DueDate,
 } from '../components/advisor/UpcomingDueDates';
-import { useAdvisorActivity, useAdvisorMetrics } from '../api';
+import {
+  useAdvisorActivity,
+  useAdvisorActivityHistory,
+  useAdvisorMetrics,
+} from '../api';
 
 /**
  * Format currency value in a compact way (e.g., R$ 2.4M, R$ 150K)
@@ -48,6 +54,9 @@ const mockDueDates: DueDate[] = [
 export function HomePageAdvisor() {
   const { user } = useAuth();
   const userName = user?.name ?? 'Assessor';
+  const [showHistoryModal, setShowHistoryModal] = useState(false);
+  const [historyPage, setHistoryPage] = useState(1);
+
   const {
     data: activities = [],
     isLoading: isLoadingActivities,
@@ -55,10 +64,17 @@ export function HomePageAdvisor() {
     refetch: refetchActivities,
   } = useAdvisorActivity(5);
   const { data: metrics } = useAdvisorMetrics();
+  const { data: historyData, isLoading: isLoadingHistory } =
+    useAdvisorActivityHistory(historyPage, 20);
 
   const clientCount = metrics?.clientCount ?? 0;
   const totalWalletValue = metrics?.totalWalletValue ?? 0;
   const isRefreshingActivities = isFetchingActivities && !isLoadingActivities;
+
+  const handleOpenHistory = () => {
+    setHistoryPage(1);
+    setShowHistoryModal(true);
+  };
 
   return (
     <div className="space-y-6">
@@ -100,12 +116,22 @@ export function HomePageAdvisor() {
             isLoading={isLoadingActivities}
             isRefreshing={isRefreshingActivities}
             onRefresh={() => refetchActivities()}
+            onSeeAll={handleOpenHistory}
           />
         </div>
         <QuickActions />
       </div>
 
       <UpcomingDueDates dueDates={mockDueDates} />
+
+      <ActivityHistoryModal
+        isOpen={showHistoryModal}
+        onClose={() => setShowHistoryModal(false)}
+        data={historyData}
+        isLoading={isLoadingHistory}
+        page={historyPage}
+        onPageChange={setHistoryPage}
+      />
     </div>
   );
 }

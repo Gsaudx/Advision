@@ -10,6 +10,7 @@ interface RecentActivityProps {
   isLoading?: boolean;
   isRefreshing?: boolean;
   onRefresh?: () => void;
+  onSeeAll?: () => void;
 }
 
 export function RecentActivity({
@@ -17,6 +18,7 @@ export function RecentActivity({
   isLoading,
   isRefreshing,
   onRefresh,
+  onSeeAll,
 }: RecentActivityProps) {
   const [selectedActivity, setSelectedActivity] = useState<ActivityItem | null>(
     null,
@@ -75,6 +77,14 @@ export function RecentActivity({
             ))
           )}
         </div>
+        {onSeeAll && activities.length > 0 && !showSkeleton && (
+          <button
+            onClick={onSeeAll}
+            className="mt-4 w-full py-2 text-sm text-blue-400 hover:text-blue-300 hover:bg-slate-800 rounded-lg transition-colors"
+          >
+            Ver tudo
+          </button>
+        )}
       </div>
 
       <ActivityDetailModal

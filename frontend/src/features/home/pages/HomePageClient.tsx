@@ -2,14 +2,23 @@ import { useState } from 'react';
 import { RefreshCw, User } from 'lucide-react';
 import { useAuth } from '@/features/auth';
 import { InviteTokenPrompt } from '../components/client/InviteTokenPrompt';
-import { useClientActivity, useClientProfile, type ActivityItem } from '../api';
+import {
+  useClientActivity,
+  useClientActivityHistory,
+  useClientProfile,
+  type ActivityItem,
+} from '../api';
 import { ActivityDetailModal } from '../components/advisor/ActivityDetailModal';
+import { ActivityHistoryModal } from '../components/advisor/ActivityHistoryModal';
 import { ActivitySkeleton } from '../components/advisor/ActivitySkeleton';
 import { formatTimeAgo, getActivityTarget } from '../utils/activity.utils';
 
 export function HomePageClient() {
   const { user, signOut } = useAuth();
   const isLinked = user?.clientProfileId !== null;
+  const [showHistoryModal, setShowHistoryModal] = useState(false);
+  const [historyPage, setHistoryPage] = useState(1);
+
   const {
     data: activities = [],
     isLoading: isLoadingActivities,
@@ -17,11 +26,18 @@ export function HomePageClient() {
     refetch: refetchActivities,
   } = useClientActivity(5);
   const { data: profile } = useClientProfile();
+  const { data: historyData, isLoading: isLoadingHistory } =
+    useClientActivityHistory(historyPage, 20);
   const [selectedActivity, setSelectedActivity] = useState<ActivityItem | null>(
     null,
   );
   const isRefreshingActivities = isFetchingActivities && !isLoadingActivities;
   const showSkeleton = isLoadingActivities || isRefreshingActivities;
+
+  const handleOpenHistory = () => {
+    setHistoryPage(1);
+    setShowHistoryModal(true);
+  };
 
   const handleInviteSuccess = () => {
     window.location.reload();
@@ -133,11 +149,28 @@ export function HomePageClient() {
             ))
           )}
         </div>
+        {activities.length > 0 && !showSkeleton && (
+          <button
+            onClick={handleOpenHistory}
+            className="mt-4 w-full py-2 text-sm text-blue-400 hover:text-blue-300 hover:bg-slate-800 rounded-lg transition-colors"
+          >
+            Ver tudo
+          </button>
+        )}
       </div>
 
       <ActivityDetailModal
         activity={selectedActivity}
         onClose={() => setSelectedActivity(null)}
+      />
+
+      <ActivityHistoryModal
+        isOpen={showHistoryModal}
+        onClose={() => setShowHistoryModal(false)}
+        data={historyData}
+        isLoading={isLoadingHistory}
+        page={historyPage}
+        onPageChange={setHistoryPage}
       />
     </div>
   );

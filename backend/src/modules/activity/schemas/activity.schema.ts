@@ -67,3 +67,23 @@ export type ClientProfile = z.infer<typeof clientProfileSchema>;
 export class ClientProfileApiResponseDto extends createZodDto(
   createApiResponseSchema(clientProfileSchema),
 ) {}
+
+/**
+ * Paginated activity response schema
+ */
+export const paginatedActivitySchema = z.object({
+  items: z.array(activityItemSchema),
+  total: z.number(),
+  page: z.number(),
+  pageSize: z.number(),
+  totalPages: z.number(),
+});
+
+export type PaginatedActivity = z.infer<typeof paginatedActivitySchema>;
+
+/**
+ * Paginated activity response DTO for Swagger documentation
+ */
+export class PaginatedActivityApiResponseDto extends createZodDto(
+  createApiResponseSchema(paginatedActivitySchema),
+) {}

@@ -24,9 +24,11 @@ import {
   ActivityListApiResponseDto,
   AdvisorMetricsApiResponseDto,
   ClientProfileApiResponseDto,
+  PaginatedActivityApiResponseDto,
   type ActivityList,
   type AdvisorMetrics,
   type ClientProfile,
+  type PaginatedActivity,
 } from '../schemas';
 
 @ApiTags('Activity')
@@ -157,6 +159,104 @@ export class ActivityController {
       throw new NotFoundException('Perfil de cliente nao encontrado');
     }
 
+    return ApiResponseDto.success(data);
+  }
+
+  @Get('advisor/history')
+  @Roles('ADVISOR', 'ADMIN')
+  @ApiOperation({
+    summary: 'Historico de atividades do assessor (paginado)',
+    description:
+      'Retorna o historico completo de atividades de todos os clientes do assessor com paginacao.',
+  })
+  @ApiQuery({
+    name: 'page',
+    required: false,
+    type: Number,
+    description: 'Numero da pagina (padrao: 1)',
+  })
+  @ApiQuery({
+    name: 'pageSize',
+    required: false,
+    type: Number,
+    description: 'Itens por pagina (padrao: 20, max: 100)',
+  })
+  @ApiResponse({
+    status: 200,
+    description: 'Historico de atividades paginado',
+    type: PaginatedActivityApiResponseDto,
+  })
+  async getAdvisorActivityHistory(
+    @CurrentUser() user: CurrentUserData,
+    @Query('page') page?: string,
+    @Query('pageSize') pageSize?: string,
+  ): Promise<ApiResponseType<PaginatedActivity>> {
+    const parsedPage = page ? Math.max(parseInt(page, 10), 1) : 1;
+    const parsedPageSize = pageSize
+      ? Math.min(Math.max(parseInt(pageSize, 10), 1), 100)
+      : 20;
+
+    const data = await this.activityService.getAdvisorActivityPaginated(
+      user.id,
+      parsedPage,
+      parsedPageSize,
+    );
+    return ApiResponseDto.success(data);
+  }
+
+  @Get('client/history')
+  @Roles('CLIENT')
+  @ApiOperation({
+    summary: 'Historico de atividades do cliente (paginado)',
+    description:
+      'Retorna o historico completo de atividades do cliente autenticado com paginacao.',
+  })
+  @ApiQuery({
+    name: 'page',
+    required: false,
+    type: Number,
+    description: 'Numero da pagina (padrao: 1)',
+  })
+  @ApiQuery({
+    name: 'pageSize',
+    required: false,
+    type: Number,
+    description: 'Itens por pagina (padrao: 20, max: 100)',
+  })
+  @ApiResponse({
+    status: 200,
+    description: 'Historico de atividades paginado',
+    type: PaginatedActivityApiResponseDto,
+  })
+  @ApiResponse({
+    status: 404,
+    description: 'Perfil de cliente nao encontrado',
+    type: ApiErrorResponseDto,
+  })
+  async getClientActivityHistory(
+    @CurrentUser() user: CurrentUserData,
+    @Query('page') page?: string,
+    @Query('pageSize') pageSize?: string,
+  ): Promise<ApiResponseType<PaginatedActivity>> {
+    // Find the client profile linked to this user
+    const client = await this.prisma.client.findUnique({
+      where: { userId: user.id },
+    });
+
+    if (!client) {
+      throw new NotFoundException('Perfil de cliente nao encontrado');
+    }
+
+    const parsedPage = page ? Math.max(parseInt(page, 10), 1) : 1;
+    const parsedPageSize = pageSize
+      ? Math.min(Math.max(parseInt(pageSize, 10), 1), 100)
+      : 20;
+
+    const data = await this.activityService.getClientActivityPaginated(
+      client.id,
+      parsedPage,
+      parsedPageSize,
+    );
     return ApiResponseDto.success(data);
   }
 }

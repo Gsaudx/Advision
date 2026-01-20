@@ -11,6 +11,14 @@ export interface ActivityItem {
   eventType: string;
 }
 
+export interface PaginatedActivity {
+  items: ActivityItem[];
+  total: number;
+  page: number;
+  pageSize: number;
+  totalPages: number;
+}
+
 export interface AdvisorMetrics {
   clientCount: number;
   totalWalletValue: number;
@@ -40,6 +48,26 @@ export const activityApi = {
   getClientActivity: async (limit = 10): Promise<ActivityItem[]> => {
     const response = await api.get<ApiResponse<ActivityItem[]>>(
       `/activity/client?limit=${limit}`,
+    );
+    return response.data.data;
+  },
+
+  getAdvisorActivityHistory: async (
+    page = 1,
+    pageSize = 20,
+  ): Promise<PaginatedActivity> => {
+    const response = await api.get<ApiResponse<PaginatedActivity>>(
+      `/activity/advisor/history?page=${page}&pageSize=${pageSize}`,
+    );
+    return response.data.data;
+  },
+
+  getClientActivityHistory: async (
+    page = 1,
+    pageSize = 20,
+  ): Promise<PaginatedActivity> => {
+    const response = await api.get<ApiResponse<PaginatedActivity>>(
+      `/activity/client/history?page=${page}&pageSize=${pageSize}`,
     );
     return response.data.data;
   },
