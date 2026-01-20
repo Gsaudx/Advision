@@ -68,6 +68,7 @@ const mockClientResponse: ClientResponse = {
   clientCode: '12345',
   advisorId: 'advisor-123',
   userId: null,
+  advisionFirm: 'XP',
   inviteStatus: 'PENDING',
   createdAt: '2024-01-01T00:00:00.000Z',
   updatedAt: '2024-01-01T00:00:00.000Z',
@@ -104,6 +105,7 @@ describe('ClientsController', () => {
       const body: CreateClientInputDto = {
         name: 'Test Client',
         clientCode: '12345',
+        advisionFirm: 'XP',
       };
 
       service.create.mockResolvedValue(mockClientResponse);
@@ -152,6 +154,7 @@ describe('ClientsController', () => {
       const body: UpdateClientInputDto = {
         name: 'Updated Name',
         clientCode: '12345',
+        advisionFirm: 'XP',
       };
 
       const updated: ClientResponse = { ...mockClientResponse, ...body };

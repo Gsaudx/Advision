@@ -368,6 +368,126 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/activity/advisor": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * Atividade recente do assessor
+         * @description Retorna as atividades recentes de todos os clientes do assessor.
+         */
+        get: operations["ActivityController_getAdvisorActivity"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/activity/client": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * Atividade recente do cliente
+         * @description Retorna as atividades recentes do cliente autenticado.
+         */
+        get: operations["ActivityController_getClientActivity"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/activity/advisor/metrics": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * Metricas do assessor
+         * @description Retorna metricas do dashboard do assessor (total de clientes, valor em carteiras).
+         */
+        get: operations["ActivityController_getAdvisorMetrics"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/activity/client/profile": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * Perfil do cliente
+         * @description Retorna informacoes do perfil do cliente, incluindo nome do assessor.
+         */
+        get: operations["ActivityController_getClientProfile"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/activity/advisor/history": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * Historico de atividades do assessor (paginado)
+         * @description Retorna o historico completo de atividades de todos os clientes do assessor com paginacao.
+         */
+        get: operations["ActivityController_getAdvisorActivityHistory"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/activity/client/history": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * Historico de atividades do cliente (paginado)
+         * @description Retorna o historico completo de atividades do cliente autenticado com paginacao.
+         */
+        get: operations["ActivityController_getClientActivityHistory"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
 }
 export type webhooks = Record<string, never>;
 export interface components {
@@ -655,6 +775,68 @@ export interface components {
             /** Format: date-time */
             date: string;
             idempotencyKey: string;
+        };
+        ActivityListApiResponseDto: {
+            /** @constant */
+            success: true;
+            data?: {
+                /** Format: uuid */
+                id: string;
+                action: string;
+                description: string;
+                clientName: string | null;
+                walletName: string | null;
+                /** Format: date-time */
+                occurredAt: string;
+                aggregateType: string;
+                eventType: string;
+            }[];
+            message?: string;
+        };
+        AdvisorMetricsApiResponseDto: {
+            /** @constant */
+            success: true;
+            data?: {
+                clientCount: number;
+                totalWalletValue: number;
+            };
+            message?: string;
+        };
+        ClientProfileApiResponseDto: {
+            /** @constant */
+            success: true;
+            data?: {
+                /** Format: uuid */
+                clientId: string;
+                clientName: string;
+                /** Format: uuid */
+                advisorId: string;
+                advisorName: string;
+            };
+            message?: string;
+        };
+        PaginatedActivityApiResponseDto: {
+            /** @constant */
+            success: true;
+            data?: {
+                items: {
+                    /** Format: uuid */
+                    id: string;
+                    action: string;
+                    description: string;
+                    clientName: string | null;
+                    walletName: string | null;
+                    /** Format: date-time */
+                    occurredAt: string;
+                    aggregateType: string;
+                    eventType: string;
+                }[];
+                total: number;
+                page: number;
+                pageSize: number;
+                totalPages: number;
+            };
+            message?: string;
         };
     };
     responses: never;
@@ -1534,6 +1716,169 @@ export interface operations {
             };
             /** @description Operacao duplicada (idempotencyKey ja utilizada) */
             409: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ApiErrorResponseDto"];
+                };
+            };
+        };
+    };
+    ActivityController_getAdvisorActivity: {
+        parameters: {
+            query?: {
+                /** @description Numero maximo de atividades (padrao: 10) */
+                limit?: number;
+            };
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Lista de atividades recentes */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ActivityListApiResponseDto"];
+                };
+            };
+        };
+    };
+    ActivityController_getClientActivity: {
+        parameters: {
+            query?: {
+                /** @description Numero maximo de atividades (padrao: 10) */
+                limit?: number;
+            };
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Lista de atividades recentes */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ActivityListApiResponseDto"];
+                };
+            };
+            /** @description Perfil de cliente nao encontrado */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ApiErrorResponseDto"];
+                };
+            };
+        };
+    };
+    ActivityController_getAdvisorMetrics: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Metricas do assessor */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["AdvisorMetricsApiResponseDto"];
+                };
+            };
+        };
+    };
+    ActivityController_getClientProfile: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Perfil do cliente */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ClientProfileApiResponseDto"];
+                };
+            };
+            /** @description Perfil de cliente nao encontrado */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ApiErrorResponseDto"];
+                };
+            };
+        };
+    };
+    ActivityController_getAdvisorActivityHistory: {
+        parameters: {
+            query?: {
+                /** @description Numero da pagina (padrao: 1) */
+                page?: number;
+                /** @description Itens por pagina (padrao: 20, max: 100) */
+                pageSize?: number;
+            };
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Historico de atividades paginado */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["PaginatedActivityApiResponseDto"];
+                };
+            };
+        };
+    };
+    ActivityController_getClientActivityHistory: {
+        parameters: {
+            query?: {
+                /** @description Numero da pagina (padrao: 1) */
+                page?: number;
+                /** @description Itens por pagina (padrao: 20, max: 100) */
+                pageSize?: number;
+            };
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Historico de atividades paginado */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["PaginatedActivityApiResponseDto"];
+                };
+            };
+            /** @description Perfil de cliente nao encontrado */
+            404: {
                 headers: {
                     [name: string]: unknown;
                 };
