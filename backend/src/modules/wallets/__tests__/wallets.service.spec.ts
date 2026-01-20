@@ -13,6 +13,7 @@ const mockDecimal = (value: number) => value;
 import { AssetResolverService } from '../services/asset-resolver.service';
 import { AuditService } from '../services/audit.service';
 import { PrismaService } from '@/shared/prisma/prisma.service';
+import { DomainEventsService } from '@/shared/domain-events';
 import type { CurrentUserData } from '@/common/decorators';
 
 describe('WalletsService', () => {
@@ -47,6 +48,10 @@ describe('WalletsService', () => {
     asset: {
       findUnique: jest.Mock;
     };
+    domainEvent: {
+      findFirst: jest.Mock;
+      create: jest.Mock;
+    };
     $transaction: jest.Mock;
   };
   let marketData: {
@@ -57,6 +62,9 @@ describe('WalletsService', () => {
   };
   let auditService: {
     log: jest.Mock;
+  };
+  let domainEventsService: {
+    record: jest.Mock;
   };
 
   const advisorUser: CurrentUserData = {
@@ -148,6 +156,10 @@ describe('WalletsService', () => {
       asset: {
         findUnique: jest.fn(),
       },
+      domainEvent: {
+        findFirst: jest.fn().mockResolvedValue(null),
+        create: jest.fn().mockResolvedValue({ id: 'event-123' }),
+      },
       $transaction: jest.fn((callback) => callback(prisma)),
     };
 
@@ -163,6 +175,10 @@ describe('WalletsService', () => {
       log: jest.fn(),
     };
 
+    domainEventsService = {
+      record: jest.fn().mockResolvedValue('event-123'),
+    };
+
     const module: TestingModule = await Test.createTestingModule({
       providers: [
         WalletsService,
@@ -170,6 +186,7 @@ describe('WalletsService', () => {
         { provide: 'MARKET_DATA_PROVIDER', useValue: marketData },
         { provide: AssetResolverService, useValue: assetResolver },
         { provide: AuditService, useValue: auditService },
+        { provide: DomainEventsService, useValue: domainEventsService },
       ],
     }).compile();
 

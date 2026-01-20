@@ -49,6 +49,12 @@ import { Test, TestingModule } from '@nestjs/testing';
 import { ClientsController } from '../controllers/clients.controller';
 import { ClientsService } from '../services';
 import type { CurrentUserData } from '@/common/decorators';
+import type {
+  CreateClientInputDto,
+  UpdateClientInputDto,
+  ClientResponse,
+  ClientListResponse,
+} from '../schemas/clients.schema';
 
 const mockAdvisorUser: CurrentUserData = {
   id: 'advisor-123',
@@ -56,21 +62,18 @@ const mockAdvisorUser: CurrentUserData = {
   role: 'ADVISOR',
 };
 
-const mockClientResponse = {
+const mockClientResponse: ClientResponse = {
   id: 'client-123',
   name: 'Test Client',
-  email: 'client@example.com',
-  phone: '+5511999999999',
-  cpf: '12345678901',
+  clientCode: '12345',
   advisorId: 'advisor-123',
   userId: null,
-  riskProfile: 'MODERATE',
   inviteStatus: 'PENDING',
   createdAt: '2024-01-01T00:00:00.000Z',
   updatedAt: '2024-01-01T00:00:00.000Z',
 };
 
-const mockClientListResponse = [mockClientResponse];
+const mockClientListResponse: ClientListResponse = [mockClientResponse];
 
 describe('ClientsController', () => {
   let controller: ClientsController;
@@ -98,15 +101,12 @@ describe('ClientsController', () => {
 
   describe('create', () => {
     it('should create a client and return success response', async () => {
-      const body = {
+      const body: CreateClientInputDto = {
         name: 'Test Client',
-        email: 'client@example.com',
-        phone: '+5511999999999',
-        cpf: '12345678901',
-        riskProfile: 'MODERATE',
-      } as any;
+        clientCode: '12345',
+      };
 
-      service.create.mockResolvedValue(mockClientResponse as any);
+      service.create.mockResolvedValue(mockClientResponse);
 
       const result = await controller.create(body, mockAdvisorUser);
 
@@ -121,7 +121,7 @@ describe('ClientsController', () => {
 
   describe('findAll', () => {
     it('should return client list for current advisor', async () => {
-      service.findAll.mockResolvedValue(mockClientListResponse as any);
+      service.findAll.mockResolvedValue(mockClientListResponse);
 
       const result = await controller.findAll(mockAdvisorUser);
 
@@ -135,7 +135,7 @@ describe('ClientsController', () => {
 
   describe('findOne', () => {
     it('should return client data when found', async () => {
-      service.findOne.mockResolvedValue(mockClientResponse as any);
+      service.findOne.mockResolvedValue(mockClientResponse);
 
       const result = await controller.findOne('client-123', mockAdvisorUser);
 
@@ -149,12 +149,12 @@ describe('ClientsController', () => {
 
   describe('update', () => {
     it('should update a client and return success response', async () => {
-      const body = {
+      const body: UpdateClientInputDto = {
         name: 'Updated Name',
-        phone: '+5511988888888',
-      } as any;
+        clientCode: '12345',
+      };
 
-      const updated = { ...mockClientResponse, ...body };
+      const updated: ClientResponse = { ...mockClientResponse, ...body };
 
       service.update.mockResolvedValue(updated);
 
@@ -179,7 +179,7 @@ describe('ClientsController', () => {
 
   describe('delete', () => {
     it('should delete a client and return success response', async () => {
-      service.delete.mockResolvedValue(undefined as any);
+      service.delete.mockResolvedValue(undefined);
 
       const result = await controller.delete('client-123', mockAdvisorUser);
 

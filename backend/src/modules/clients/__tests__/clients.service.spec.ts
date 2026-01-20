@@ -3,6 +3,7 @@ import { Test, TestingModule } from '@nestjs/testing';
 import { ConflictException, NotFoundException } from '@nestjs/common';
 import { ClientsService } from '../services/clients.service';
 import { PrismaService } from '@/shared/prisma/prisma.service';
+import { DomainEventsService } from '@/shared/domain-events';
 import { InviteStatus } from '../enums';
 
 describe('ClientsService', () => {
@@ -15,6 +16,14 @@ describe('ClientsService', () => {
       update: jest.Mock;
       delete: jest.Mock;
     };
+    domainEvent: {
+      findFirst: jest.Mock;
+      create: jest.Mock;
+    };
+    $transaction: jest.Mock;
+  };
+  let domainEventsService: {
+    record: jest.Mock;
   };
 
   const advisorId = 'advisor-123';
@@ -40,10 +49,23 @@ describe('ClientsService', () => {
         update: jest.fn(),
         delete: jest.fn(),
       },
+      domainEvent: {
+        findFirst: jest.fn().mockResolvedValue(null),
+        create: jest.fn().mockResolvedValue({ id: 'event-123' }),
+      },
+      $transaction: jest.fn((callback) => callback(prisma)),
+    };
+
+    domainEventsService = {
+      record: jest.fn().mockResolvedValue('event-123'),
     };
 
     const module: TestingModule = await Test.createTestingModule({
-      providers: [ClientsService, { provide: PrismaService, useValue: prisma }],
+      providers: [
+        ClientsService,
+        { provide: PrismaService, useValue: prisma },
+        { provide: DomainEventsService, useValue: domainEventsService },
+      ],
     }).compile();
 
     service = module.get(ClientsService);
