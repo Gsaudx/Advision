@@ -5,6 +5,7 @@ import {
   Wallet,
   ChevronLeft,
   ChevronRight,
+  ChartNoAxesCombined,
 } from 'lucide-react';
 import { useAuth } from '@/features/auth';
 
@@ -18,6 +19,7 @@ const advisorNavItems: NavItem[] = [
   { name: 'Dashboard', href: '/advisor/home', icon: LayoutDashboard },
   { name: 'Clientes', href: '/clients', icon: Users },
   { name: 'Carteiras', href: '/wallets', icon: Wallet },
+  { name: 'Operações', href: '/operations', icon: ChartNoAxesCombined },
 ];
 
 const clientNavItems: NavItem[] = [

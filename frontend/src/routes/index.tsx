@@ -8,6 +8,7 @@ import LoginPage from '@/features/login-register/pages/LoginPage';
 import RegisterPage from '@/features/login-register/pages/RegisterPage';
 import ClientsPage from '@/features/clients-page/pages/ClientsPage';
 import { WalletsPage } from '@/features/wallets';
+import OperationsPage from '@/features/operations/pages/OperationsPage';
 
 function RoleBasedRedirect() {
   const { user } = useAuth();
@@ -50,6 +51,15 @@ export function AppRoutes() {
           }
         >
           <Route path="/wallets" element={<WalletsPage />} />
+        </Route>
+
+        {/* Shared wallets route - accessible by all authenticated roles */}
+        <Route
+          element={
+            <ProtectedLayout allowedRoles={['ADVISOR', 'ADMIN', 'CLIENT']} />
+          }
+        >
+          <Route path="/operations" element={<OperationsPage />} />
         </Route>
 
         {/* Protected redirects */}
