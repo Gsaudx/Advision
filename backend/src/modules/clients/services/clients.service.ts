@@ -4,6 +4,13 @@ import {
   ConflictException,
 } from '@nestjs/common';
 import { PrismaService } from '@/shared/prisma/prisma.service';
+import {
+  DomainEventsService,
+  ClientEvents,
+  type ClientCreatedPayload,
+  type ClientUpdatedPayload,
+  type ClientDeletedPayload,
+} from '@/shared/domain-events';
 import type { ClientResponse, ClientListResponse } from '../schemas';
 import { AdvisionFirm, InviteStatus } from '../enums';
 
@@ -21,7 +28,10 @@ interface UpdateClientData {
 
 @Injectable()
 export class ClientsService {
-  constructor(private readonly prisma: PrismaService) { }
+  constructor(
+    private readonly prisma: PrismaService,
+    private readonly domainEvents: DomainEventsService,
+  ) {}
 
   private formatClientResponse(client: {
     id: string;
@@ -63,13 +73,31 @@ export class ClientsService {
       throw new ConflictException('Ja existe um cliente com este código nesta assessoria');
     }
 
-    const client = await this.prisma.client.create({
-      data: {
-        advisorId,
-        name: data.name,
-        clientCode: data.clientCode,
+    const client = await this.prisma.$transaction(async (tx) => {
+      const newClient = await tx.client.create({
+        data: {
+          advisorId,
+          name: data.name,
+          clientCode: data.clientCode,
         advisionFirm: data.advisionFirm,
-      },
+        },
+      });
+
+      // Domain event: ClientCreated
+      await this.domainEvents.record<ClientCreatedPayload>(tx, {
+        aggregateType: 'CLIENT',
+        aggregateId: newClient.id,
+        eventType: ClientEvents.CREATED,
+        payload: {
+          clientId: newClient.id,
+          advisorId,
+          name: newClient.name,
+          clientCode: newClient.clientCode,
+        },
+        actorId: advisorId,
+      });
+
+      return newClient;
     });
 
     return this.formatClientResponse(client);
@@ -109,13 +137,43 @@ export class ClientsService {
       throw new NotFoundException('Cliente nao encontrado');
     }
 
-    const updatedClient = await this.prisma.client.update({
-      where: { id: clientId },
-      data: {
-        name: data.name,
-        clientCode: data.clientCode,
-        advisionFirm: data.advisionFirm,
+    const updatedClient = await this.prisma.$transaction(async (tx) => {
+      const result = await tx.client.update({
+        where: { id: clientId },
+        data: {
+          name: data.name,
+          clientCode: data.clientCode,
+          advisionFirm: data.advisionFirm,
       },
+      });
+
+      // Build changes object for the event payload
+      const changes: ClientUpdatedPayload['changes'] = {};
+      if (data.name !== undefined && data.name !== client.name) {
+        changes.name = { from: client.name, to: data.name };
+      }
+      if (
+        data.clientCode !== undefined &&
+        data.clientCode !== client.clientCode
+      ) {
+        changes.clientCode = { from: client.clientCode, to: data.clientCode };
+      }
+
+      // Only record event if there are actual changes
+      if (Object.keys(changes).length > 0) {
+        await this.domainEvents.record<ClientUpdatedPayload>(tx, {
+          aggregateType: 'CLIENT',
+          aggregateId: clientId,
+          eventType: ClientEvents.UPDATED,
+          payload: {
+            clientId,
+            changes,
+          },
+          actorId: advisorId,
+        });
+      }
+
+      return result;
     });
 
     return this.formatClientResponse(updatedClient);
@@ -130,8 +188,24 @@ export class ClientsService {
       throw new NotFoundException('Cliente nao encontrado');
     }
 
-    await this.prisma.client.delete({
-      where: { id: clientId },
+    await this.prisma.$transaction(async (tx) => {
+      // Domain event: ClientDeleted (record before deletion)
+      await this.domainEvents.record<ClientDeletedPayload>(tx, {
+        aggregateType: 'CLIENT',
+        aggregateId: clientId,
+        eventType: ClientEvents.DELETED,
+        payload: {
+          clientId,
+          advisorId,
+          name: client.name,
+          clientCode: client.clientCode,
+        },
+        actorId: advisorId,
+      });
+
+      await tx.client.delete({
+        where: { id: clientId },
+      });
     });
   }
 }

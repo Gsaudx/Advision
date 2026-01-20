@@ -7,6 +7,7 @@ import {
 } from '@nestjs/common';
 import { ClientsInviteService } from '../services/clients-invite.service';
 import { PrismaService } from '@/shared/prisma/prisma.service';
+import { DomainEventsService } from '@/shared/domain-events';
 import { InviteStatus } from '../enums';
 
 // Mock the config module to avoid env validation
@@ -57,12 +58,17 @@ interface MockPrismaClient {
     update: jest.Mock;
     updateMany: jest.Mock;
   };
+  domainEvent: {
+    findFirst: jest.Mock;
+    create: jest.Mock;
+  };
   $transaction: jest.Mock;
 }
 
 describe('ClientsInviteService', () => {
   let service: ClientsInviteService;
   let prismaService: MockPrismaClient;
+  let domainEventsService: { record: jest.Mock };
 
   beforeEach(async () => {
     const mockPrismaService: MockPrismaClient = {
@@ -71,15 +77,24 @@ describe('ClientsInviteService', () => {
         update: jest.fn(),
         updateMany: jest.fn(),
       },
+      domainEvent: {
+        findFirst: jest.fn().mockResolvedValue(null),
+        create: jest.fn().mockResolvedValue({ id: 'event-123' }),
+      },
       $transaction: jest.fn((callback: (tx: MockPrismaClient) => unknown) =>
         callback(mockPrismaService),
       ),
+    };
+
+    domainEventsService = {
+      record: jest.fn().mockResolvedValue('event-123'),
     };
 
     const module: TestingModule = await Test.createTestingModule({
       providers: [
         ClientsInviteService,
         { provide: PrismaService, useValue: mockPrismaService },
+        { provide: DomainEventsService, useValue: domainEventsService },
       ],
     }).compile();
 

@@ -8,13 +8,23 @@ import {
 } from '@nestjs/common';
 import { randomBytes } from 'crypto';
 import { PrismaService } from '@/shared/prisma/prisma.service';
+import {
+  DomainEventsService,
+  ClientEvents,
+  type InviteSentPayload,
+  type InviteAcceptedPayload,
+  type InviteRevokedPayload,
+} from '@/shared/domain-events';
 import { INVITE_CONSTANTS } from '@/config';
 import { InviteStatus } from '../enums';
 import type { InviteResponse, AcceptInviteResponse } from '../schemas';
 
 @Injectable()
 export class ClientsInviteService {
-  constructor(private readonly prisma: PrismaService) {}
+  constructor(
+    private readonly prisma: PrismaService,
+    private readonly domainEvents: DomainEventsService,
+  ) {}
 
   async generateInvite(
     clientId: string,
@@ -57,13 +67,30 @@ export class ClientsInviteService {
     ) {
       const inviteToken = this.generateToken();
       try {
-        updatedClient = await this.prisma.client.update({
-          where: { id: clientId },
-          data: {
-            inviteToken,
-            inviteStatus: InviteStatus.SENT,
-            inviteExpiresAt,
-          },
+        updatedClient = await this.prisma.$transaction(async (tx) => {
+          const result = await tx.client.update({
+            where: { id: clientId },
+            data: {
+              inviteToken,
+              inviteStatus: InviteStatus.SENT,
+              inviteExpiresAt,
+            },
+          });
+
+          // Domain event: InviteSent
+          await this.domainEvents.record<InviteSentPayload>(tx, {
+            aggregateType: 'CLIENT',
+            aggregateId: clientId,
+            eventType: ClientEvents.INVITE_SENT,
+            payload: {
+              clientId,
+              advisorId,
+              expiresAt: inviteExpiresAt.toISOString(),
+            },
+            actorId: advisorId,
+          });
+
+          return result;
         });
         break;
       } catch (error) {
@@ -197,6 +224,19 @@ export class ClientsInviteService {
         );
       }
 
+      // Domain event: InviteAccepted
+      await this.domainEvents.record<InviteAcceptedPayload>(tx, {
+        aggregateType: 'CLIENT',
+        aggregateId: client.id,
+        eventType: ClientEvents.INVITE_ACCEPTED,
+        payload: {
+          clientId: client.id,
+          userId,
+          advisorId: client.advisorId,
+        },
+        actorId: userId,
+      });
+
       return {
         clientId: client.id,
         clientName: client.name,
@@ -231,13 +271,27 @@ export class ClientsInviteService {
       throw new BadRequestException('Nenhum convite ativo para revogar');
     }
 
-    await this.prisma.client.update({
-      where: { id: clientId },
-      data: {
-        inviteToken: null,
-        inviteStatus: InviteStatus.PENDING,
-        inviteExpiresAt: null,
-      },
+    await this.prisma.$transaction(async (tx) => {
+      await tx.client.update({
+        where: { id: clientId },
+        data: {
+          inviteToken: null,
+          inviteStatus: InviteStatus.PENDING,
+          inviteExpiresAt: null,
+        },
+      });
+
+      // Domain event: InviteRevoked
+      await this.domainEvents.record<InviteRevokedPayload>(tx, {
+        aggregateType: 'CLIENT',
+        aggregateId: clientId,
+        eventType: ClientEvents.INVITE_REVOKED,
+        payload: {
+          clientId,
+          advisorId,
+        },
+        actorId: advisorId,
+      });
     });
   }
 

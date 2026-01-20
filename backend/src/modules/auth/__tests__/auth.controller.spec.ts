@@ -120,7 +120,7 @@ describe('AuthController', () => {
 
       const mockRequest = {
         user: mockUserProfile,
-      } as unknown as Request & { user: typeof mockUserProfile };
+      } as Parameters<typeof authController.login>[1];
 
       const result = authController.login(
         { email: 'test@example.com', password: 'password123' },
@@ -170,10 +170,14 @@ describe('AuthController', () => {
       authService.getProfile.mockResolvedValue(mockUserProfile);
 
       const mockRequest = {
-        user: { id: 'user-123', email: 'test@example.com', role: 'ADVISOR' },
-      };
+        user: {
+          id: 'user-123',
+          email: 'test@example.com',
+          role: 'ADVISOR' as const,
+        },
+      } as Parameters<typeof authController.getProfile>[0];
 
-      const result = await authController.getProfile(mockRequest as any);
+      const result = await authController.getProfile(mockRequest);
 
       expect(authService.getProfile).toHaveBeenCalledWith('user-123');
       expect(result).toEqual({

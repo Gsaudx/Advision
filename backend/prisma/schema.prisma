@@ -76,6 +76,15 @@ enum AuditAction {
   DELETE
 }
 
+enum AggregateType {
+  WALLET
+  CLIENT
+  POSITION
+  TRANSACTION
+  OPTIMIZATION
+  USER
+}
+
 // ============================================================================
 // MODELS
 // ============================================================================
@@ -263,4 +272,25 @@ model AuditLog {
   @@index([actorId])
   @@index([createdAt])
   @@map("audit_logs")
+}
+
+model DomainEvent {
+  id            String        @id @default(uuid())
+  aggregateType AggregateType
+  aggregateId   String
+  eventType     String        @db.VarChar(100)
+  occurredAt    DateTime      @default(now())
+  actorId       String?
+  actorRole     String?       @db.VarChar(20)
+  requestId     String?       @db.VarChar(36)
+  correlationId String?       @db.VarChar(36)
+  payload       Json
+  sequence      Int
+
+  @@unique([aggregateId, sequence])
+  @@index([aggregateType, aggregateId])
+  @@index([eventType])
+  @@index([occurredAt])
+  @@index([correlationId])
+  @@map("domain_events")
 }

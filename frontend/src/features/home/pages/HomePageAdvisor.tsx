@@ -1,26 +1,35 @@
+import { useState } from 'react';
 import { Users, Wallet, Clock, AlertTriangle } from 'lucide-react';
 import { useAuth } from '@/features/auth';
 import { StatCard } from '../components/advisor/StatCard';
 import { QuickActions } from '../components/advisor/QuickActions';
 import { WelcomeSection } from '../components/advisor/WelcomeSection';
-import {
-  RecentActivity,
-  type Activity,
-} from '../components/advisor/RecentActivity';
+import { RecentActivity } from '../components/advisor/RecentActivity';
+import { ActivityHistoryModal } from '../components/advisor/ActivityHistoryModal';
 import {
   UpcomingDueDates,
   type DueDate,
 } from '../components/advisor/UpcomingDueDates';
+import {
+  useAdvisorActivity,
+  useAdvisorActivityHistory,
+  useAdvisorMetrics,
+} from '../api';
 
-// TODO: Replace with real data from API
-const mockActivities: Activity[] = [
-  { action: 'Nova carteira criada', client: 'Cliente A', time: 'Ha 2 horas' },
-  { action: 'Otimizacao executada', client: 'Cliente B', time: 'Ha 5 horas' },
-  { action: 'Transacao registrada', client: 'Cliente C', time: 'Ontem' },
-  { action: 'Cliente cadastrado', client: 'Cliente D', time: 'Ha 2 dias' },
-];
+/**
+ * Format currency value in a compact way (e.g., R$ 2.4M, R$ 150K)
+ */
+function formatCompactCurrency(value: number): string {
+  if (value >= 1_000_000) {
+    return `R$ ${(value / 1_000_000).toFixed(1).replace('.', ',')}M`;
+  }
+  if (value >= 1_000) {
+    return `R$ ${(value / 1_000).toFixed(1).replace('.', ',')}K`;
+  }
+  return `R$ ${value.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}`;
+}
 
-// TODO: Replace with real data from API
+// TODO: Replace with real data from API (options expiration tracking)
 const mockDueDates: DueDate[] = [
   {
     asset: 'PETR4 Call',
@@ -45,6 +54,27 @@ const mockDueDates: DueDate[] = [
 export function HomePageAdvisor() {
   const { user } = useAuth();
   const userName = user?.name ?? 'Assessor';
+  const [showHistoryModal, setShowHistoryModal] = useState(false);
+  const [historyPage, setHistoryPage] = useState(1);
+
+  const {
+    data: activities = [],
+    isLoading: isLoadingActivities,
+    isFetching: isFetchingActivities,
+    refetch: refetchActivities,
+  } = useAdvisorActivity(5);
+  const { data: metrics } = useAdvisorMetrics();
+  const { data: historyData, isLoading: isLoadingHistory } =
+    useAdvisorActivityHistory(historyPage, 20);
+
+  const clientCount = metrics?.clientCount ?? 0;
+  const totalWalletValue = metrics?.totalWalletValue ?? 0;
+  const isRefreshingActivities = isFetchingActivities && !isLoadingActivities;
+
+  const handleOpenHistory = () => {
+    setHistoryPage(1);
+    setShowHistoryModal(true);
+  };
 
   return (
     <div className="space-y-6">
@@ -54,40 +84,54 @@ export function HomePageAdvisor() {
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
         <StatCard
           label="Total de Clientes"
-          value={42}
+          value={clientCount}
           icon={Users}
-          trend={{ value: 12, isPositive: true }}
           accentColor="blue"
         />
         <StatCard
           label="Valor em Carteiras"
-          value="R$ 2.4M"
+          value={formatCompactCurrency(totalWalletValue)}
           icon={Wallet}
-          trend={{ value: 8, isPositive: true }}
           accentColor="emerald"
         />
         <StatCard
           label="Operacoes Pendentes"
-          value={7}
+          value={0}
           icon={Clock}
           accentColor="amber"
         />
         <StatCard
           label="Opcoes a Vencer"
-          value={15}
+          value={0}
           icon={AlertTriangle}
-          trend={{ value: 3, isPositive: false }}
           accentColor="rose"
         />
       </div>
 
-      {/* Main Content Grid */}
-      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-        <RecentActivity activities={mockActivities} />
+      {/* Main Content Grid - items-start prevents stretch */}
+      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 items-start">
+        <div className="lg:col-span-2">
+          <RecentActivity
+            activities={activities}
+            isLoading={isLoadingActivities}
+            isRefreshing={isRefreshingActivities}
+            onRefresh={() => refetchActivities()}
+            onSeeAll={handleOpenHistory}
+          />
+        </div>
         <QuickActions />
       </div>
 
       <UpcomingDueDates dueDates={mockDueDates} />
+
+      <ActivityHistoryModal
+        isOpen={showHistoryModal}
+        onClose={() => setShowHistoryModal(false)}
+        data={historyData}
+        isLoading={isLoadingHistory}
+        page={historyPage}
+        onPageChange={setHistoryPage}
+      />
     </div>
   );
 }

@@ -1,10 +1,43 @@
-import { Construction } from 'lucide-react';
+import { useState } from 'react';
+import { RefreshCw, User } from 'lucide-react';
 import { useAuth } from '@/features/auth';
 import { InviteTokenPrompt } from '../components/client/InviteTokenPrompt';
+import {
+  useClientActivity,
+  useClientActivityHistory,
+  useClientProfile,
+  type ActivityItem,
+} from '../api';
+import { ActivityDetailModal } from '../components/advisor/ActivityDetailModal';
+import { ActivityHistoryModal } from '../components/advisor/ActivityHistoryModal';
+import { ActivitySkeleton } from '../components/advisor/ActivitySkeleton';
+import { formatTimeAgo, getActivityTarget } from '../utils/activity.utils';
 
 export function HomePageClient() {
   const { user, signOut } = useAuth();
   const isLinked = user?.clientProfileId !== null;
+  const [showHistoryModal, setShowHistoryModal] = useState(false);
+  const [historyPage, setHistoryPage] = useState(1);
+
+  const {
+    data: activities = [],
+    isLoading: isLoadingActivities,
+    isFetching: isFetchingActivities,
+    refetch: refetchActivities,
+  } = useClientActivity(5);
+  const { data: profile } = useClientProfile();
+  const { data: historyData, isLoading: isLoadingHistory } =
+    useClientActivityHistory(historyPage, 20);
+  const [selectedActivity, setSelectedActivity] = useState<ActivityItem | null>(
+    null,
+  );
+  const isRefreshingActivities = isFetchingActivities && !isLoadingActivities;
+  const showSkeleton = isLoadingActivities || isRefreshingActivities;
+
+  const handleOpenHistory = () => {
+    setHistoryPage(1);
+    setShowHistoryModal(true);
+  };
 
   const handleInviteSuccess = () => {
     window.location.reload();
@@ -34,29 +67,111 @@ export function HomePageClient() {
   }
 
   return (
-    <div className="flex flex-col items-center justify-center min-h-[60vh] text-center">
-      <div className="p-6 rounded-full bg-amber-500/20 mb-6">
-        <Construction className="w-16 h-16 text-amber-400" />
+    <div className="space-y-6">
+      {/* Welcome Section */}
+      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+        <div>
+          <h1 className="text-2xl sm:text-3xl font-bold text-white">
+            Ola, <span className="text-blue-400">{user?.name}</span>
+          </h1>
+          <p className="text-slate-400 mt-1">
+            Acompanhe suas movimentacoes e investimentos
+          </p>
+        </div>
+        <button
+          onClick={signOut}
+          className="text-slate-400 hover:text-white text-sm transition-colors self-start sm:self-auto"
+        >
+          Sair da conta
+        </button>
       </div>
-      <h1 className="text-2xl sm:text-3xl font-bold text-white mb-4">
-        Area do Cliente em Desenvolvimento
-      </h1>
-      <p className="text-slate-400 max-w-md mb-8">
-        Estamos trabalhando para trazer a melhor experiencia para voce. Em breve
-        voce podera acompanhar suas carteiras e investimentos por aqui.
-      </p>
-      <div className="bg-slate-900 rounded-xl p-6 border border-slate-800 max-w-sm w-full">
-        <p className="text-sm text-slate-400 mb-2">
-          Sua conta esta vinculada ao assessor:
-        </p>
-        <p className="text-lg font-semibold text-white">Assessor vinculado</p>
+
+      {/* Advisor Info Card */}
+      <div className="bg-slate-900 rounded-xl p-5 border border-slate-800">
+        <div className="flex items-center gap-4">
+          <div className="p-3 rounded-full bg-blue-500/20">
+            <User className="w-6 h-6 text-blue-400" />
+          </div>
+          <div>
+            <p className="text-sm text-slate-400">Seu assessor</p>
+            <p className="text-lg font-semibold text-blue-400">
+              {profile?.advisorName ?? 'Carregando...'}
+            </p>
+          </div>
+        </div>
       </div>
-      <button
-        onClick={signOut}
-        className="mt-6 text-slate-400 hover:text-white text-sm transition-colors"
-      >
-        Sair da conta
-      </button>
+
+      {/* Recent Activity */}
+      <div className="bg-slate-900 rounded-xl p-5 border border-slate-800">
+        <div className="flex items-center justify-between mb-4">
+          <h3 className="text-white font-semibold">Atividade Recente</h3>
+          <button
+            onClick={() => refetchActivities()}
+            disabled={isRefreshingActivities}
+            className="text-slate-400 hover:text-white transition-colors p-1.5 hover:bg-slate-800 rounded-lg disabled:opacity-50"
+            title="Atualizar"
+          >
+            <RefreshCw
+              size={16}
+              className={isRefreshingActivities ? 'animate-spin' : ''}
+            />
+          </button>
+        </div>
+        <div className="space-y-3 max-h-80 overflow-y-auto pr-1">
+          {showSkeleton ? (
+            <ActivitySkeleton count={5} />
+          ) : activities.length === 0 ? (
+            <p className="text-slate-400 text-sm text-center py-8">
+              Nenhuma atividade recente.
+            </p>
+          ) : (
+            activities.map((activity) => (
+              <button
+                key={activity.id}
+                onClick={() => setSelectedActivity(activity)}
+                className="flex items-center justify-between p-3 rounded-lg bg-slate-800/50 hover:bg-slate-800 transition-colors w-full text-left cursor-pointer"
+              >
+                <div className="flex items-center gap-3 min-w-0 flex-1">
+                  <div className="w-2 h-2 rounded-full bg-blue-400 flex-shrink-0" />
+                  <div className="min-w-0">
+                    <p className="text-sm text-white truncate">
+                      {activity.action}
+                    </p>
+                    <p className="text-xs text-slate-400 truncate">
+                      {getActivityTarget(activity)}
+                    </p>
+                  </div>
+                </div>
+                <span className="text-xs text-slate-500 flex-shrink-0 ml-2">
+                  {formatTimeAgo(activity.occurredAt)}
+                </span>
+              </button>
+            ))
+          )}
+        </div>
+        {activities.length > 0 && !showSkeleton && (
+          <button
+            onClick={handleOpenHistory}
+            className="mt-4 w-full py-2 text-sm text-blue-400 hover:text-blue-300 hover:bg-slate-800 rounded-lg transition-colors"
+          >
+            Ver tudo
+          </button>
+        )}
+      </div>
+
+      <ActivityDetailModal
+        activity={selectedActivity}
+        onClose={() => setSelectedActivity(null)}
+      />
+
+      <ActivityHistoryModal
+        isOpen={showHistoryModal}
+        onClose={() => setShowHistoryModal(false)}
+        data={historyData}
+        isLoading={isLoadingHistory}
+        page={historyPage}
+        onPageChange={setHistoryPage}
+      />
     </div>
   );
 }
