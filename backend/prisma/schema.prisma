@@ -24,12 +24,6 @@ enum UserRole {
   ADMIN
 }
 
-enum RiskProfile {
-  CONSERVATIVE
-  MODERATE
-  AGGRESSIVE
-}
-
 enum AssetType {
   STOCK
   OPTION
@@ -92,7 +86,6 @@ model User {
   role         UserRole @default(ADVISOR)
   createdAt    DateTime @default(now())
   updatedAt    DateTime @updatedAt
-
   clients       Client[] @relation("AdvisorClients")
   clientProfile Client?  @relation("LinkedUser")
 
@@ -104,10 +97,7 @@ model Client {
   advisorId    String
   userId       String?      @unique
   name         String
-  email        String?
-  cpf          String
-  phone        String?
-  riskProfile  RiskProfile  @default(MODERATE)
+  clientCode   String
   inviteToken     String?      @unique
   inviteStatus    InviteStatus @default(PENDING)
   inviteExpiresAt DateTime?
@@ -119,7 +109,7 @@ model Client {
   wallets Wallet[]
 
   @@index([advisorId])
-  @@unique([advisorId, cpf])
+  @@unique([advisorId, id])
   @@map("clients")
 }
 

@@ -1,16 +1,11 @@
 import ModalBase from '@/components/layout/ModalBase';
-import InputCpf from '@/components/ui/InputCpf';
-import InputEmail from '@/components/ui/InputEmail';
 import InputName from '@/components/ui/InputName';
-import InputPhone from '@/components/ui/InputPhone';
 import { LoadingSpinner } from '@/components/ui/LoadingSpinner';
-import Select from '@/components/ui/Select';
 import type { AxiosError } from 'axios';
 import { User, X } from 'lucide-react';
 import { useNewClientModal } from '../hooks/useNewClientModal';
 import { useCreateClient } from '../api';
-import type { RiskProfile } from '../types';
-import { riskProfileLabels } from '../types';
+import InputCode from '@/components/ui/InputCode';
 
 interface NewClientModalProps {
   isOpen: boolean;
@@ -50,23 +45,17 @@ export default function NewClientModal({
     ? getApiErrorMessage(createClientMutation.error)
     : null;
 
-  const {
-    formData,
-    errors,
-    handleChange,
-    handlePhoneChange,
-    handleSubmit,
-    resetForm,
-  } = useNewClientModal({
-    onSubmit: (data) => {
-      createClientMutation.mutate(data, {
-        onSuccess: () => {
-          resetForm();
-          onClose();
-        },
-      });
-    },
-  });
+  const { formData, errors, handleChange, handleSubmit, resetForm } =
+    useNewClientModal({
+      onSubmit: (data) => {
+        createClientMutation.mutate(data, {
+          onSuccess: () => {
+            resetForm();
+            onClose();
+          },
+        });
+      },
+    });
 
   const handleClose = () => {
     if (!createClientMutation.isPending) {
@@ -74,12 +63,6 @@ export default function NewClientModal({
       onClose();
     }
   };
-
-  const riskProfileOptions: { value: RiskProfile; label: string }[] = [
-    { value: 'CONSERVATIVE', label: riskProfileLabels.CONSERVATIVE },
-    { value: 'MODERATE', label: riskProfileLabels.MODERATE },
-    { value: 'AGGRESSIVE', label: riskProfileLabels.AGGRESSIVE },
-  ];
 
   return (
     <ModalBase
@@ -116,85 +99,34 @@ export default function NewClientModal({
           </div>
         )}
 
-        <div className="flex flex-col">
-          <InputName
-            name="name"
-            value={formData.name}
-            onChange={handleChange}
-            disabled={createClientMutation.isPending}
-            className={`bg-slate-800 border rounded-lg px-4 py-3 text-white placeholder-gray-500 focus:outline-none focus:border-slate-500 focus:ring-1 focus:ring-slate-500 transition-colors ${errors.name ? 'border-red-500' : 'border-slate-600'}`}
-            placeholder="Digite o nome completo do cliente"
-            maxLength={100}
-          />
-          {errors.name && (
-            <span className="text-red-500 text-sm">{errors.name}</span>
-          )}
-        </div>
-
-        <div className="flex flex-col">
-          <InputEmail
-            name="email"
-            value={formData.email}
-            onChange={handleChange}
-            disabled={createClientMutation.isPending}
-            className={`bg-slate-800 border rounded-lg px-4 py-3 text-white placeholder-gray-500 focus:outline-none focus:border-slate-500 focus:ring-1 focus:ring-slate-500 transition-colors ${errors.email ? 'border-red-500' : 'border-slate-600'}`}
-            placeholder="Digite o e-mail do cliente (opcional)"
-          />
-          {errors.email && (
-            <span className="text-red-500 text-sm">{errors.email}</span>
-          )}
-        </div>
-
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-          <div className="flex flex-col">
-            <InputPhone
-              inputId="phone"
-              value={formData.phone}
-              onChange={handlePhoneChange}
-              disabled={createClientMutation.isPending}
-              containerClassName="flex flex-col gap-1.5 sm:gap-2"
-              inputClassName={`bg-slate-800 border rounded-lg px-4 py-3 text-white placeholder-gray-500 focus:outline-none focus:border-slate-500 focus:ring-1 focus:ring-slate-500 transition-colors ${errors.phone ? 'border-red-500' : 'border-slate-600'}`}
-              size="lg"
-            />
-            {errors.phone && (
-              <span className="text-red-500 text-sm">{errors.phone}</span>
-            )}
-          </div>
-          <div className="flex flex-col">
-            <InputCpf
-              name="cpf"
-              value={formData.cpf}
+          <div>
+            <InputName
+              label="Apelido"
+              name="name"
+              value={formData.name}
               onChange={handleChange}
               disabled={createClientMutation.isPending}
-              className={`bg-slate-800 border rounded-lg px-4 py-3 text-white placeholder-gray-500 focus:outline-none focus:border-slate-500 focus:ring-1 focus:ring-slate-500 transition-colors ${errors.cpf ? 'border-red-500' : 'border-slate-600'}`}
-              placeholder="000.000.000-00"
+              className={`bg-slate-800 border rounded-lg px-4 py-3 text-white placeholder-gray-500 focus:outline-none focus:border-slate-500 focus:ring-1 focus:ring-slate-500 transition-colors ${errors.name ? 'border-red-500' : 'border-slate-600'}`}
+              placeholder="Digite o nome completo do cliente"
+              maxLength={100}
             />
-            {errors.cpf && (
-              <span className="text-red-500 text-sm">{errors.cpf}</span>
+            {errors.name && (
+              <span className="text-red-500 text-sm">{errors.name}</span>
             )}
           </div>
-        </div>
-
-        <div className="flex flex-col gap-1.5">
-          <label
-            htmlFor="riskProfile"
-            className="text-sm font-medium text-gray-300"
-          >
-            Perfil de Risco
-          </label>
-          <Select
-            id="riskProfile"
-            name="riskProfile"
-            value={formData.riskProfile}
-            onChange={handleChange}
-            disabled={createClientMutation.isPending}
-            options={riskProfileOptions}
-            className="bg-slate-800 border-slate-600 focus:border-slate-500 focus:ring-1 focus:ring-slate-500"
-            dropdownClassName="bg-slate-900 border-slate-700"
-          />
-          {errors.riskProfile && (
-            <span className="text-red-500 text-sm">{errors.riskProfile}</span>
-          )}
+          <div>
+            <InputCode
+              name="clientCode"
+              value={formData.clientCode}
+              onChange={handleChange}
+              disabled={createClientMutation.isPending}
+              className={`bg-slate-800 border rounded-lg px-4 py-3 text-white placeholder-gray-500 focus:outline-none focus:border-slate-500 focus:ring-1 focus:ring-slate-500 transition-colors ${errors.clientCode ? 'border-red-500' : 'border-slate-600'}`}
+            />
+            {errors.clientCode && (
+              <span className="text-red-500 text-sm">{errors.clientCode}</span>
+            )}
+          </div>
         </div>
 
         {/* Footer with buttons */}

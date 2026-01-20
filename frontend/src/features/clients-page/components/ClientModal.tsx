@@ -1,14 +1,6 @@
 import ModalBase from '@/components/layout/ModalBase';
-import { riskProfileLabels, inviteStatusLabels, type Client } from '../types';
-import {
-  Mail,
-  Phone,
-  CreditCard,
-  Calendar,
-  Pencil,
-  Trash2,
-  X,
-} from 'lucide-react';
+import { inviteStatusLabels, type Client } from '../types';
+import { Calendar, Pencil, Trash2, X } from 'lucide-react';
 import InviteLinkSection from './InviteLinkSection';
 
 interface ClientModalProps {
@@ -19,12 +11,6 @@ interface ClientModalProps {
   size?: 'sm' | 'md' | 'lg' | 'xl' | 'xxl';
   onSwitchToEdit?: () => void;
   onSwitchToDelete?: () => void;
-}
-
-function formatCpf(cpf: string): string {
-  const digits = cpf.replace(/\D/g, '');
-  if (digits.length !== 11) return cpf;
-  return digits.replace(/(\d{3})(\d{3})(\d{3})(\d{2})/, '$1.$2.$3-$4');
 }
 
 function formatDate(dateString: string): string {
@@ -44,13 +30,6 @@ function getInitials(name: string): string {
   return (words[0].charAt(0) + words[words.length - 1].charAt(0)).toUpperCase();
 }
 
-// Risk profile gradient backgrounds (subtle, muted tones)
-const riskProfileGradients: Record<Client['riskProfile'], string> = {
-  CONSERVATIVE: 'from-blue-900/80 to-slate-900',
-  MODERATE: 'from-amber-900/70 to-slate-900',
-  AGGRESSIVE: 'from-orange-900/70 to-slate-900',
-};
-
 export default function ClientModal({
   isOpen,
   onClose,
@@ -61,8 +40,6 @@ export default function ClientModal({
 }: ClientModalProps) {
   if (!selectedClient) return null;
 
-  const gradient = riskProfileGradients[selectedClient.riskProfile];
-
   return (
     <ModalBase
       isOpen={isOpen}
@@ -72,7 +49,9 @@ export default function ClientModal({
       minHeight={0}
     >
       {/* Header with gradient */}
-      <div className={`relative bg-gradient-to-r ${gradient} p-6 rounded-t-xl`}>
+      <div
+        className={`relative bg-gradient-to-r p-6 from-orange-900/70 to-slate-900 rounded-t-xl`}
+      >
         {/* Action buttons */}
         <div className="absolute top-4 right-4 flex items-center gap-2">
           <button
@@ -112,11 +91,11 @@ export default function ClientModal({
             <h2 className="text-2xl font-bold text-white truncate">
               {selectedClient.name}
             </h2>
-            <div className="flex flex-wrap gap-2 mt-2">
-              <span className="text-xs px-2.5 py-1 rounded-full font-medium bg-white/10 text-white/90 border border-white/20">
-                {riskProfileLabels[selectedClient.riskProfile]}
+            <div className="flex flex-col gap-2">
+              <span className="text-md text-gray-500 font-semibold text-left">
+                #{selectedClient.clientCode}
               </span>
-              <span className="text-xs px-2.5 py-1 rounded-full font-medium bg-white/10 text-white/90 border border-white/20">
+              <span className="text-xs px-2.5 py-1 rounded-full font-medium bg-white/10 text-white/90 border border-white/20 w-fit">
                 {inviteStatusLabels[selectedClient.inviteStatus]}
               </span>
             </div>
@@ -129,17 +108,16 @@ export default function ClientModal({
         {/* Contact Information */}
         <div>
           <h3 className="text-sm font-semibold text-gray-400 uppercase tracking-wider mb-4">
-            Informacoes de Contato
+            Informações de Contato
           </h3>
           <div className="space-y-3">
-            <div className="flex items-center gap-3">
+            {/* <div className="flex items-center gap-3">
               <div className="w-10 h-10 rounded-lg bg-blue-500/20 flex items-center justify-center flex-shrink-0">
                 <Mail size={18} className="text-blue-400" />
               </div>
               <div className="min-w-0">
                 <p className="text-xs text-gray-500">E-mail</p>
                 <p className="text-white truncate">
-                  {selectedClient.email || 'Nao informado'}
                 </p>
               </div>
             </div>
@@ -151,7 +129,6 @@ export default function ClientModal({
               <div className="min-w-0">
                 <p className="text-xs text-gray-500">Telefone</p>
                 <p className="text-white">
-                  {selectedClient.phone || 'Nao informado'}
                 </p>
               </div>
             </div>
@@ -163,10 +140,9 @@ export default function ClientModal({
               <div className="min-w-0">
                 <p className="text-xs text-gray-500">CPF</p>
                 <p className="text-white font-mono">
-                  {formatCpf(selectedClient.cpf)}
                 </p>
               </div>
-            </div>
+            </div> */}
 
             <div className="flex items-center gap-3">
               <div className="w-10 h-10 rounded-lg bg-slate-500/20 flex items-center justify-center flex-shrink-0">

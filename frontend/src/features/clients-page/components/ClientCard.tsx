@@ -1,11 +1,9 @@
 import {
-  riskProfileColors,
-  riskProfileLabels,
   inviteStatusColors,
   inviteStatusLabels,
   type Client,
 } from '../types/index.ts';
-import { User, Mail, Phone, SquareActivity } from 'lucide-react';
+import { User, SquareActivity } from 'lucide-react';
 
 interface ClientCardProps extends React.ButtonHTMLAttributes<HTMLButtonElement> {
   client: Client;
@@ -20,26 +18,26 @@ export function ClientCard({ client, ...props }: ClientCardProps) {
             <div className="w-12 h-12 rounded-full bg-[#2a2a2a] flex items-center justify-center">
               <User className="w-6 h-6 text-gray-400" />
             </div>
-            <span className="text-sm text-gray-400 font-bold">
-              {client.name}
-            </span>
+            <div className="flex flex-col">
+              <span className="text-sm text-gray-400 font-bold text-left">
+                {client.name}
+              </span>
+              <span className="text-xs text-gray-500 font-semibold text-left mt-0.5">
+                #{client.clientCode}
+              </span>
+            </div>
           </div>
-          <span
-            className={`text-xs px-2 py-1 rounded-full ${riskProfileColors[client.riskProfile]}`}
-          >
-            {riskProfileLabels[client.riskProfile]}
-          </span>
         </div>
 
         <div className="space-y-3">
-          <div className="flex items-center gap-2 text-gray-400">
+          {/* <div className="flex items-center gap-2 text-gray-400">
             <Mail className="w-4 h-4" />
             <span className="text-sm">{client.email ?? 'Nao informado'}</span>
           </div>
           <div className="flex items-center gap-2 text-gray-400">
             <Phone className="w-4 h-4" />
             <span className="text-sm">{client.phone ?? 'Nao informado'}</span>
-          </div>
+          </div> */}
           <div className="flex items-center gap-2 text-gray-400">
             <SquareActivity className="w-4 h-4" />
             <span

@@ -4,38 +4,29 @@ import {
   ConflictException,
 } from '@nestjs/common';
 import { PrismaService } from '@/shared/prisma/prisma.service';
-import type { RiskProfile } from '@/generated/prisma/enums';
 import type { ClientResponse, ClientListResponse } from '../schemas';
 import { InviteStatus } from '../enums';
 
 interface CreateClientData {
   name: string;
-  email?: string;
-  phone?: string;
-  cpf: string;
-  riskProfile?: RiskProfile;
+  clientCode: string;
 }
 
 interface UpdateClientData {
   name?: string;
-  email?: string | null;
-  phone?: string | null;
-  riskProfile?: RiskProfile;
+  clientCode?: string;
 }
 
 @Injectable()
 export class ClientsService {
-  constructor(private readonly prisma: PrismaService) {}
+  constructor(private readonly prisma: PrismaService) { }
 
   private formatClientResponse(client: {
     id: string;
     advisorId: string;
     userId: string | null;
     name: string;
-    email: string | null;
-    cpf: string;
-    phone: string | null;
-    riskProfile: RiskProfile;
+    clientCode: string;
     inviteStatus: InviteStatus;
     createdAt: Date;
     updatedAt: Date;
@@ -45,10 +36,7 @@ export class ClientsService {
       advisorId: client.advisorId,
       userId: client.userId,
       name: client.name,
-      email: client.email,
-      cpf: client.cpf,
-      phone: client.phone,
-      riskProfile: client.riskProfile,
+      clientCode: client.clientCode,
       inviteStatus: client.inviteStatus,
       createdAt: client.createdAt.toISOString(),
       updatedAt: client.updatedAt.toISOString(),
@@ -62,22 +50,19 @@ export class ClientsService {
     const existingClient = await this.prisma.client.findFirst({
       where: {
         advisorId,
-        cpf: data.cpf,
+        clientCode: String(data.clientCode),
       },
     });
 
     if (existingClient) {
-      throw new ConflictException('Ja existe um cliente com este CPF');
+      throw new ConflictException('Ja existe um cliente com este código');
     }
 
     const client = await this.prisma.client.create({
       data: {
         advisorId,
         name: data.name,
-        email: data.email || null,
-        phone: data.phone || null,
-        cpf: data.cpf,
-        riskProfile: data.riskProfile || 'MODERATE',
+        clientCode: String(data.clientCode),
       },
     });
 
@@ -122,9 +107,7 @@ export class ClientsService {
       where: { id: clientId },
       data: {
         name: data.name,
-        email: data.email,
-        phone: data.phone,
-        riskProfile: data.riskProfile,
+        clientCode: data.clientCode,
       },
     });
 
