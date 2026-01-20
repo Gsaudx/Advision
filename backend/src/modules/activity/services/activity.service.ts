@@ -22,8 +22,10 @@ const EVENT_LABELS: Record<string, string> = {
   // Client events
   ClientCreated: 'Cliente cadastrado',
   ClientUpdated: 'Cliente atualizado',
+  ClientDeleted: 'Cliente removido',
   InviteSent: 'Convite enviado',
   InviteAccepted: 'Convite aceito',
+  InviteRevoked: 'Convite revogado',
   UserLinked: 'Usuario vinculado',
   // Optimization events
   OptimizationRunCreated: 'Otimizacao iniciada',
@@ -56,10 +58,14 @@ function getDescription(eventType: string, payload: unknown): string {
       return `Cliente "${String(p.name)}" cadastrado`;
     case 'ClientUpdated':
       return 'Dados do cliente atualizados';
+    case 'ClientDeleted':
+      return `Cliente "${String(p.name)}" removido`;
     case 'InviteSent':
       return 'Convite de acesso enviado';
     case 'InviteAccepted':
       return 'Convite aceito pelo cliente';
+    case 'InviteRevoked':
+      return 'Convite de acesso revogado';
     default:
       return EVENT_LABELS[eventType] || eventType;
   }

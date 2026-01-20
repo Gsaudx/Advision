@@ -19,8 +19,10 @@ export const WalletEvents = {
 export const ClientEvents = {
   CREATED: 'ClientCreated',
   UPDATED: 'ClientUpdated',
+  DELETED: 'ClientDeleted',
   INVITE_SENT: 'InviteSent',
   INVITE_ACCEPTED: 'InviteAccepted',
+  INVITE_REVOKED: 'InviteRevoked',
   USER_LINKED: 'UserLinked',
 } as const;
 
@@ -196,5 +198,23 @@ export interface InviteAcceptedPayload {
 export interface UserLinkedPayload {
   clientId: string;
   userId: string;
+  advisorId: string;
+}
+
+/**
+ * Payload for ClientDeleted event
+ */
+export interface ClientDeletedPayload {
+  clientId: string;
+  advisorId: string;
+  name: string;
+  clientCode: string;
+}
+
+/**
+ * Payload for InviteRevoked event
+ */
+export interface InviteRevokedPayload {
+  clientId: string;
   advisorId: string;
 }

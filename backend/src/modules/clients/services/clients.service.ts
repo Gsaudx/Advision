@@ -9,6 +9,7 @@ import {
   ClientEvents,
   type ClientCreatedPayload,
   type ClientUpdatedPayload,
+  type ClientDeletedPayload,
 } from '@/shared/domain-events';
 import type { ClientResponse, ClientListResponse } from '../schemas';
 import { InviteStatus } from '../enums';
@@ -180,8 +181,24 @@ export class ClientsService {
       throw new NotFoundException('Cliente nao encontrado');
     }
 
-    await this.prisma.client.delete({
-      where: { id: clientId },
+    await this.prisma.$transaction(async (tx) => {
+      // Domain event: ClientDeleted (record before deletion)
+      await this.domainEvents.record<ClientDeletedPayload>(tx, {
+        aggregateType: 'CLIENT',
+        aggregateId: clientId,
+        eventType: ClientEvents.DELETED,
+        payload: {
+          clientId,
+          advisorId,
+          name: client.name,
+          clientCode: client.clientCode,
+        },
+        actorId: advisorId,
+      });
+
+      await tx.client.delete({
+        where: { id: clientId },
+      });
     });
   }
 }

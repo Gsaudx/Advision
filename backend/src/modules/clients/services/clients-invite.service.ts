@@ -13,6 +13,7 @@ import {
   ClientEvents,
   type InviteSentPayload,
   type InviteAcceptedPayload,
+  type InviteRevokedPayload,
 } from '@/shared/domain-events';
 import { INVITE_CONSTANTS } from '@/config';
 import { InviteStatus } from '../enums';
@@ -270,13 +271,27 @@ export class ClientsInviteService {
       throw new BadRequestException('Nenhum convite ativo para revogar');
     }
 
-    await this.prisma.client.update({
-      where: { id: clientId },
-      data: {
-        inviteToken: null,
-        inviteStatus: InviteStatus.PENDING,
-        inviteExpiresAt: null,
-      },
+    await this.prisma.$transaction(async (tx) => {
+      await tx.client.update({
+        where: { id: clientId },
+        data: {
+          inviteToken: null,
+          inviteStatus: InviteStatus.PENDING,
+          inviteExpiresAt: null,
+        },
+      });
+
+      // Domain event: InviteRevoked
+      await this.domainEvents.record<InviteRevokedPayload>(tx, {
+        aggregateType: 'CLIENT',
+        aggregateId: clientId,
+        eventType: ClientEvents.INVITE_REVOKED,
+        payload: {
+          clientId,
+          advisorId,
+        },
+        actorId: advisorId,
+      });
     });
   }
 
