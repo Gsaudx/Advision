@@ -1,5 +1,5 @@
 import PageTitle from "@/components/layout/PageTitle";
-import { Calendar, DollarSign, Download, Search, TrendingDown, TrendingUp, User } from "lucide-react";
+import { Calendar, DollarSign, Search, TrendingDown, TrendingUp, User } from "lucide-react";
 import { useState } from "react";
 import OperationsStatsCards from "../components/OperationsStatsCards";
 
@@ -179,7 +179,7 @@ export default function OperationsPage() {
                     <div className="bg-slate-800/50 border border-[#2a2a2a] rounded-lg shadow mb-6 p-6">
                         <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
                             {/* Busca */}
-                            <div className="md:col-span-2">
+                            <div>
                                 <div className="relative">
                                     <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400" size={20} />
                                     <input
@@ -195,7 +195,7 @@ export default function OperationsPage() {
                             {/* Filtro Tipo */}
                             <div>
                                 <select
-                                    className="w-full w-full bg-slate-800 border rounded-lg px-4 py-3 text-white placeholder-gray-500 focus:outline-none focus:border-slate-500 focus:ring-1 focus:ring-slate-500 transition-colors border-slate-600"
+                                    className="w-full bg-slate-800 border rounded-lg px-4 py-3 text-white placeholder-gray-500 focus:outline-none focus:border-slate-500 focus:ring-1 focus:ring-slate-500 transition-colors border-slate-600"
                                     value={filterType}
                                     onChange={(e) => setFilterType(e.target.value)}
                                 >
@@ -208,7 +208,7 @@ export default function OperationsPage() {
                             {/* Filtro Status */}
                             <div>
                                 <select
-                                    className="w-full w-full bg-slate-800 border rounded-lg px-4 py-3 text-white placeholder-gray-500 focus:outline-none focus:border-slate-500 focus:ring-1 focus:ring-slate-500 transition-colors border-slate-600"
+                                    className="w-full bg-slate-800 border rounded-lg px-4 py-3 text-white placeholder-gray-500 focus:outline-none focus:border-slate-500 focus:ring-1 focus:ring-slate-500 transition-colors border-slate-600"
                                     value={filterStatus}
                                     onChange={(e) => setFilterStatus(e.target.value)}
                                 >
@@ -216,6 +216,14 @@ export default function OperationsPage() {
                                     <option value="executada">Executada</option>
                                     <option value="pendente">Pendente</option>
                                 </select>
+                            </div>
+                            {/* Filtro Data Execução */}
+                            <div>
+                                <input
+                                    type="date"
+                                    className="w-full bg-slate-800 border rounded-lg px-4 py-2.5 text-white placeholder-gray-500 focus:outline-none focus:border-slate-500 focus:ring-1 focus:ring-slate-500 transition-colors border-slate-600"
+                                    // Adapte o value/onChange conforme sua lógica de filtro de data
+                                />
                             </div>
                         </div>
                     </div>
