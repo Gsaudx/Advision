@@ -3,24 +3,14 @@ import { useAuth } from '@/features/auth';
 import { StatCard } from '../components/advisor/StatCard';
 import { QuickActions } from '../components/advisor/QuickActions';
 import { WelcomeSection } from '../components/advisor/WelcomeSection';
-import {
-  RecentActivity,
-  type Activity,
-} from '../components/advisor/RecentActivity';
+import { RecentActivity } from '../components/advisor/RecentActivity';
 import {
   UpcomingDueDates,
   type DueDate,
 } from '../components/advisor/UpcomingDueDates';
+import { useAdvisorActivity } from '../api';
 
-// TODO: Replace with real data from API
-const mockActivities: Activity[] = [
-  { action: 'Nova carteira criada', client: 'Cliente A', time: 'Ha 2 horas' },
-  { action: 'Otimizacao executada', client: 'Cliente B', time: 'Ha 5 horas' },
-  { action: 'Transacao registrada', client: 'Cliente C', time: 'Ontem' },
-  { action: 'Cliente cadastrado', client: 'Cliente D', time: 'Ha 2 dias' },
-];
-
-// TODO: Replace with real data from API
+// TODO: Replace with real data from API (options expiration tracking)
 const mockDueDates: DueDate[] = [
   {
     asset: 'PETR4 Call',
@@ -45,6 +35,8 @@ const mockDueDates: DueDate[] = [
 export function HomePageAdvisor() {
   const { user } = useAuth();
   const userName = user?.name ?? 'Assessor';
+  const { data: activities = [], isLoading: isLoadingActivities } =
+    useAdvisorActivity(5);
 
   return (
     <div className="space-y-6">
@@ -81,9 +73,11 @@ export function HomePageAdvisor() {
         />
       </div>
 
-      {/* Main Content Grid */}
-      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-        <RecentActivity activities={mockActivities} />
+      {/* Main Content Grid - items-start prevents stretch */}
+      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 items-start">
+        <div className="lg:col-span-2">
+          <RecentActivity activities={activities} isLoading={isLoadingActivities} />
+        </div>
         <QuickActions />
       </div>
 

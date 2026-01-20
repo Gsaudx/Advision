@@ -1,5 +1,5 @@
 import { Injectable } from '@nestjs/common';
-import type { DomainEventCreateInput } from '@/generated/prisma/models/DomainEvent';
+import type { Prisma } from '@/generated/prisma/client';
 import type { RecordEventParams } from './domain-events.types';
 
 /**
@@ -12,7 +12,9 @@ interface TransactionClient {
       where: { aggregateId: string };
       orderBy: { sequence: 'desc' };
     }) => Promise<{ sequence: number } | null>;
-    create: (args: { data: DomainEventCreateInput }) => Promise<{ id: string }>;
+    create: (args: { data: Prisma.DomainEventCreateInput }) => Promise<{
+      id: string;
+    }>;
   };
 }
 
@@ -46,7 +48,7 @@ export class DomainEventsService {
         aggregateType: params.aggregateType,
         aggregateId: params.aggregateId,
         eventType: params.eventType,
-        payload: params.payload,
+        payload: params.payload as Prisma.InputJsonValue,
         actorId: params.actorId,
         actorRole: params.actorRole,
         requestId: params.requestId,
