@@ -7,6 +7,10 @@ import type { RecordEventParams } from './domain-events.types';
  * Using a simplified interface that matches what we need
  */
 interface TransactionClient {
+  $executeRaw: (
+    query: TemplateStringsArray,
+    ...values: unknown[]
+  ) => Promise<number>;
   domainEvent: {
     findFirst: (args: {
       where: { aggregateId: string };
@@ -35,11 +39,15 @@ export class DomainEventsService {
     tx: TransactionClient,
     params: RecordEventParams<T>,
   ): Promise<string> {
+    const lockKey = `${params.aggregateType}:${params.aggregateId}`;
+    await tx.$executeRaw`SELECT pg_advisory_xact_lock(hashtext(${lockKey}))`;
+
     // Get next sequence for aggregate
     const lastEvent = await tx.domainEvent.findFirst({
       where: { aggregateId: params.aggregateId },
       orderBy: { sequence: 'desc' },
     });
+
     const nextSequence = (lastEvent?.sequence ?? 0) + 1;
 
     // Create event
