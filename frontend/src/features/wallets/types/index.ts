@@ -72,7 +72,7 @@ export type AssetPriceResult = NonNullable<
  */
 export type Transaction = NonNullable<
   components['schemas']['TransactionListApiResponseDto']['data']
->[number];
+>['items'][number];
 
 /**
  * Transaction list response (paginated)
