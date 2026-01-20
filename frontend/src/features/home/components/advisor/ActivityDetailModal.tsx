@@ -116,7 +116,9 @@ export function ActivityDetailModal({
               <p className="text-xs text-slate-400 uppercase tracking-wider">
                 Data e Hora
               </p>
-              <p className="text-white">{formatFullDate(activity.occurredAt)}</p>
+              <p className="text-white">
+                {formatFullDate(activity.occurredAt)}
+              </p>
             </div>
           </div>
         </div>
