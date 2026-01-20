@@ -5,7 +5,8 @@ import type { AxiosError } from 'axios';
 import { Pencil, X } from 'lucide-react';
 import { useEditClientForm } from '../hooks/useEditClientForm';
 import { useUpdateClient } from '../api';
-import type { Client } from '../types';
+import { advisionFirmOptions, type Client } from '../types';
+import Select from '@/components/ui/Select';
 
 interface EditClientModalProps {
   isOpen: boolean;
@@ -120,18 +121,33 @@ export default function EditClientModal({
           )}
         </div>
 
-        {/* Client Code */}
-        {/* CPF (read-only) */}
-        <div className="flex flex-col gap-1.5">
-          <label className="text-sm font-medium text-gray-300">
-            Código do cliente
-          </label>
-          <div className="bg-slate-800/50 border border-slate-700 rounded-lg px-4 py-3 text-gray-400">
-            {formData.clientCode}
+        <div className='grid grid-cols-1 md:grid-cols-2 gap-4'>
+          {/* Client Code */}
+          <div className="flex flex-col gap-1.5">
+            <label className="text-sm font-medium text-gray-300">
+              Código do cliente
+            </label>
+            <div className="bg-slate-800/50 border border-slate-700 rounded-lg px-4 py-3 text-gray-400">
+              {formData.clientCode}
+            </div>
+            <span className="text-xs text-gray-500">
+              O código do cliente não pode ser alterado
+            </span>
           </div>
-          <span className="text-xs text-gray-500">
-            O código do cliente não pode ser alterado
-          </span>
+
+          <div className='mb-3 flex flex-col gap-1.5 sm:gap-2'>
+            <label className="text-white text-sm sm:text-sm font-medium" htmlFor="select-example">
+              Assessoria
+            </label>
+            <Select
+              options={Object.entries(advisionFirmOptions).map(([value, label]) => ({ label, value }))}
+              name="advisionFirm"
+              value={formData.advisionFirm}
+              onChange={handleChange}
+              disabled={updateClientMutation.isPending}
+              className='bg-slate-800 border rounded-lg px-4 py-6 text-white placeholder-gray-500 focus:outline-none focus:border-slate-500 focus:ring-1 focus:ring-slate-500 transition-colors'
+            />
+          </div>
         </div>
 
         {/* Footer with buttons */}

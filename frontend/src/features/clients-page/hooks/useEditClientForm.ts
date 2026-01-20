@@ -1,10 +1,11 @@
 import { useState, type ChangeEvent } from 'react';
 import { getFormErrors } from '@/lib/utils';
-import type { Client, UpdateClientInput } from '../types';
+import type { AdvisionFirm, Client, UpdateClientInput } from '../types';
 
 interface EditClientFormData {
   name: string;
   clientCode: string;
+  advisionFirm: AdvisionFirm;
 }
 
 interface UseEditClientFormProps {
@@ -15,6 +16,7 @@ interface UseEditClientFormProps {
 const EMPTY_FORM_DATA: EditClientFormData = {
   name: '',
   clientCode: '',
+  advisionFirm: 'XP',
 };
 
 function getInitialFormData(client: Client | null): EditClientFormData {
@@ -25,6 +27,7 @@ function getInitialFormData(client: Client | null): EditClientFormData {
   return {
     name: client.name,
     clientCode: client.clientCode,
+    advisionFirm: client.advisionFirm,
   };
 }
 
@@ -87,6 +90,7 @@ export function useEditClientForm({
     const updateData: UpdateClientInput = {
       name: formatPostName(formData.name),
       clientCode: formData.clientCode,
+      advisionFirm: formData.advisionFirm,
     };
 
     onSubmit(updateData);

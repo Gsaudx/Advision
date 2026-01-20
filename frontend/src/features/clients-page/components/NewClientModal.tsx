@@ -7,6 +7,7 @@ import { useNewClientModal } from '../hooks/useNewClientModal';
 import { useCreateClient } from '../api';
 import InputCode from '@/components/ui/InputCode';
 import Select from '@/components/ui/Select';
+import { advisionFirmOptions } from '../types';
 
 interface NewClientModalProps {
   isOpen: boolean;
@@ -129,10 +130,14 @@ export default function NewClientModal({
             )}
             <div className='mb-3 flex flex-col gap-1.5 sm:gap-2'>
               <label className="text-white text-sm sm:text-sm font-medium" htmlFor="select-example">
-                Asess
+                Assessoria
               </label>
               <Select
-                options={[{ value: 'teste', label: 'foddase' }]}
+                options={Object.entries(advisionFirmOptions).map(([value, label]) => ({ label, value }))}
+                name="advisionFirm"
+                value={formData.advisionFirm}
+                onChange={handleChange}
+                disabled={createClientMutation.isPending}
                 className='bg-slate-800 border rounded-lg px-4 py-6 text-white placeholder-gray-500 focus:outline-none focus:border-slate-500 focus:ring-1 focus:ring-slate-500 transition-colors'
               />
             </div>

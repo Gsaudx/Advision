@@ -1,10 +1,12 @@
 import { useState, type ChangeEvent } from 'react';
 import { getFormErrors } from '@/lib/utils';
 import type { ClientFormData, CreateClientInput } from '../types';
+import type { AdvisionFirm } from '../types';
 
 const INITIAL_FORM_DATA: ClientFormData = {
   name: '',
   clientCode: '',
+  advisionFirm: 'XP'
 };
 
 interface UseNewClientModalProps {
@@ -81,7 +83,6 @@ export function useNewClientModal({
 
     if (errorList) {
       setErrors(errorList);
-      console.log('errors', errorList);
       return;
     }
 
@@ -90,6 +91,7 @@ export function useNewClientModal({
     const clientData: CreateClientInput = {
       name: formatPostName(formData.name),
       clientCode: formData.clientCode,
+      advisionFirm: formData.advisionFirm,
     };
 
     onSubmit(clientData);

@@ -1,6 +1,6 @@
 import ModalBase from '@/components/layout/ModalBase';
-import { inviteStatusLabels, type Client } from '../types';
-import { Calendar, Pencil, Trash2, X } from 'lucide-react';
+import { advisionFirmOptions, inviteStatusLabels, type Client } from '../types';
+import { Calendar, Landmark, Pencil, Trash2, X } from 'lucide-react';
 import InviteLinkSection from './InviteLinkSection';
 
 interface ClientModalProps {
@@ -108,7 +108,7 @@ export default function ClientModal({
         {/* Contact Information */}
         <div>
           <h3 className="text-sm font-semibold text-gray-400 uppercase tracking-wider mb-4">
-            Informações de Contato
+            Informações do cliente
           </h3>
           <div className="space-y-3">
             {/* <div className="flex items-center gap-3">
@@ -144,6 +144,17 @@ export default function ClientModal({
               </div>
             </div> */}
 
+            <div className="flex items-center gap-3">
+              <div className="w-10 h-10 rounded-lg bg-yellow-500/30 flex items-center justify-center flex-shrink-0">
+                <Landmark size={18} className="text-slate-400" />
+              </div>
+              <div className="min-w-0">
+                <p className="text-xs text-gray-500">Assessoria vinculada</p>
+                <p className="text-white">
+                  {advisionFirmOptions[selectedClient.advisionFirm]}
+                </p>
+              </div>
+            </div>
             <div className="flex items-center gap-3">
               <div className="w-10 h-10 rounded-lg bg-slate-500/20 flex items-center justify-center flex-shrink-0">
                 <Calendar size={18} className="text-slate-400" />

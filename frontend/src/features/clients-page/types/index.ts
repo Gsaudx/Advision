@@ -17,6 +17,11 @@ export type Client = NonNullable<
 export type InviteStatus = Client['inviteStatus'];
 
 /**
+ *  Advision firm associated with the client
+ */
+export type AdvisionFirm = Client['advisionFirm'];
+
+/**
  * Input for creating a new client
  */
 export type CreateClientInput = components['schemas']['CreateClientInputDto'];
@@ -55,6 +60,7 @@ export function isInviteExpired(expiresAt: string | null | undefined): boolean {
 export interface ClientFormData {
   name: string;
   clientCode: string;
+  advisionFirm: AdvisionFirm;
 }
 
 // ============================================================================
@@ -79,4 +85,8 @@ export const inviteStatusColors: Record<InviteStatus, string> = {
   SENT: 'bg-blue-500/20 text-blue-400',
   ACCEPTED: 'bg-green-500/20 text-green-400',
   REJECTED: 'bg-red-500/20 text-red-400',
+};
+
+export const advisionFirmOptions: Record<AdvisionFirm, string> = {
+  XP: 'XP Investimentos',
 };
