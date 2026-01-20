@@ -1,6 +1,7 @@
 import PageTitle from "@/components/layout/PageTitle";
 import { Calendar, DollarSign, Download, Search, TrendingDown, TrendingUp, User } from "lucide-react";
 import { useState } from "react";
+import OperationsStatsCards from "../components/OperationsStatsCards";
 
 export default function OperationsPage() {
     const [searchTerm, setSearchTerm] = useState('');
@@ -73,7 +74,60 @@ export default function OperationsPage() {
             dataVencimento: '2026-01-22',
             status: 'Executada',
             corretora: 'XP Investimentos'
-        }
+        },
+        {
+            id: 5,
+            cliente: 'Carlos Mendes',
+            ativo: 'WEGE3',
+            tipo: 'Compra',
+            quantidade: 80,
+            precoMedio: 45.30,
+            valorTotal: 3624.00,
+            data: '2026-01-17',
+            dataVencimento: '2026-01-22',
+            status: 'Executada',
+            corretora: 'XP Investimentos'
+        },
+        {
+            id: 5,
+            cliente: 'Carlos Mendes',
+            ativo: 'WEGE3',
+            tipo: 'Compra',
+            quantidade: 80,
+            precoMedio: 45.30,
+            valorTotal: 3624.00,
+            data: '2026-01-17',
+            dataVencimento: '2026-01-22',
+            status: 'Executada',
+            corretora: 'XP Investimentos'
+        },
+        {
+            id: 5,
+            cliente: 'Carlos Mendes',
+            ativo: 'WEGE3',
+            tipo: 'Compra',
+            quantidade: 80,
+            precoMedio: 45.30,
+            valorTotal: 3624.00,
+            data: '2026-01-17',
+            dataVencimento: '2026-01-22',
+            status: 'Executada',
+            corretora: 'XP Investimentos'
+        },
+        {
+            id: 5,
+            cliente: 'Carlos Mendes',
+            ativo: 'WEGE3',
+            tipo: 'Compra',
+            quantidade: 80,
+            precoMedio: 45.30,
+            valorTotal: 3624.00,
+            data: '2026-01-17',
+            dataVencimento: '2026-01-22',
+            status: 'Executada',
+            corretora: 'XP Investimentos'
+        },
+
     ];
 
     const filteredOperations = operations.filter(op => {
@@ -95,33 +149,30 @@ export default function OperationsPage() {
                 <div>
                     {/* Cards de Resumo */}
                     <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
-                        <div className="bg-slate-800/50 rounded-lg shadow p-6 border border-[#2a2a2a]">
-                            <div className="flex items-center justify-between mb-2">
-                                <span className="text-gray-400 text-sm">Total de Operações</span>
-                                <DollarSign className="text-blue-600" size={20} />
-                            </div>
-                            <p className="text-2xl font-bold text-white">{operations.length}</p>
-                        </div>
 
-                        <div className="bg-slate-800/50 rounded-lg shadow p-6 border border-[#2a2a2a]">
-                            <div className="flex items-center justify-between mb-2">
-                                <span className="text-gray-400 text-sm">Total Compras</span>
-                                <TrendingUp className="text-green-600" size={20} />
-                            </div>
-                            <p className="text-2xl font-bold text-green-600">
-                                R$ {totalCompras.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}
-                            </p>
-                        </div>
+                        <OperationsStatsCards
+                            title="Total de Operações"
+                            icon={DollarSign}
+                            iconClassName="text-blue-600"
+                            value={operations.length}
+                            money={false}
+                        />
 
-                        <div className="bg-slate-800/50 rounded-lg shadow p-6 border border-[#2a2a2a]">
-                            <div className="flex items-center justify-between mb-2">
-                                <span className="text-gray-400 text-sm">Total Vendas</span>
-                                <TrendingDown className="text-red-600" size={20} />
-                            </div>
-                            <p className="text-2xl font-bold text-red-600">
-                                R$ {totalVendas.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}
-                            </p>
-                        </div>
+                        <OperationsStatsCards
+                            title="Total Compras"
+                            icon={TrendingUp}
+                            iconClassName="text-green-600"
+                            value={totalCompras}
+                            money={true}
+                        />
+
+                        <OperationsStatsCards
+                            title="Total Vendas"
+                            icon={TrendingDown}
+                            iconClassName="text-red-600"
+                            value={totalVendas} money={true}
+                        />
+
                     </div>
 
                     {/* Filtros e Busca */}
@@ -167,20 +218,26 @@ export default function OperationsPage() {
                                 </select>
                             </div>
                         </div>
-
-                        <div className="mt-4 flex justify-end">
-                            <button className="flex items-center gap-2 px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors">
-                                <Download size={18} />
-                                Exportar
-                            </button>
-                        </div>
                     </div>
 
                     {/* Tabela de Operações */}
                     <div className="bg-slate-900/50 rounded-lg shadow overflow-hidden">
-                        <div className="overflow-x-auto">
+                        <div
+                            className={`${filteredOperations.length > 8
+                                ? "overflow-y-auto max-h-[550px]"
+                                : "overflow-x-auto"
+                                }`}
+                            style={filteredOperations.length > 8 ? { minHeight: "500px" } : {}}
+                        >
                             <table className="w-full">
-                                <thead className="bg-slate-800/50 border border-[#2a2a2a]">
+                                <thead
+                                    className={`${filteredOperations.length > 8 ? "bg-slate-800 border border-[#2a2a2a]" : "bg-slate-800/50 border border-[#2a2a2a]"}`}
+                                    style={{
+                                        position: filteredOperations.length > 8 ? "sticky" : undefined,
+                                        top: filteredOperations.length > 8 ? 0 : undefined,
+                                        zIndex: filteredOperations.length > 8 ? 1 : undefined,
+                                    }}
+                                >
                                     <tr>
                                         <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
                                             Cliente
