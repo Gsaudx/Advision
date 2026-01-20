@@ -1,26 +1,10 @@
+import { useState } from 'react';
 import { Loader2, User } from 'lucide-react';
 import { useAuth } from '@/features/auth';
 import { InviteTokenPrompt } from '../components/client/InviteTokenPrompt';
-import { useClientActivity, useClientProfile } from '../api';
-
-/**
- * Format the time difference between now and the given date
- */
-function formatTimeAgo(dateString: string): string {
-  const date = new Date(dateString);
-  const now = new Date();
-  const diffMs = now.getTime() - date.getTime();
-  const diffMinutes = Math.floor(diffMs / (1000 * 60));
-  const diffHours = Math.floor(diffMs / (1000 * 60 * 60));
-  const diffDays = Math.floor(diffMs / (1000 * 60 * 60 * 24));
-
-  if (diffMinutes < 1) return 'Agora';
-  if (diffMinutes < 60) return `Ha ${diffMinutes} min`;
-  if (diffHours < 24) return `Ha ${diffHours} hora${diffHours > 1 ? 's' : ''}`;
-  if (diffDays === 1) return 'Ontem';
-  if (diffDays < 7) return `Ha ${diffDays} dias`;
-  return date.toLocaleDateString('pt-BR');
-}
+import { useClientActivity, useClientProfile, type ActivityItem } from '../api';
+import { ActivityDetailModal } from '../components/advisor/ActivityDetailModal';
+import { formatTimeAgo, getActivityTarget } from '../utils/activity.utils';
 
 export function HomePageClient() {
   const { user, signOut } = useAuth();
@@ -28,6 +12,9 @@ export function HomePageClient() {
   const { data: activities = [], isLoading: isLoadingActivities } =
     useClientActivity(5);
   const { data: profile } = useClientProfile();
+  const [selectedActivity, setSelectedActivity] = useState<ActivityItem | null>(
+    null,
+  );
 
   const handleInviteSuccess = () => {
     window.location.reload();
@@ -105,27 +92,35 @@ export function HomePageClient() {
             </p>
           ) : (
             activities.map((activity) => (
-              <div
+              <button
                 key={activity.id}
-                className="flex items-center justify-between p-3 rounded-lg bg-slate-800/50 hover:bg-slate-800 transition-colors"
+                onClick={() => setSelectedActivity(activity)}
+                className="flex items-center justify-between p-3 rounded-lg bg-slate-800/50 hover:bg-slate-800 transition-colors w-full text-left cursor-pointer"
               >
                 <div className="flex items-center gap-3 min-w-0 flex-1">
                   <div className="w-2 h-2 rounded-full bg-blue-400 flex-shrink-0" />
                   <div className="min-w-0">
-                    <p className="text-sm text-white truncate">{activity.action}</p>
+                    <p className="text-sm text-white truncate">
+                      {activity.action}
+                    </p>
                     <p className="text-xs text-slate-400 truncate">
-                      {activity.walletName || activity.description}
+                      {getActivityTarget(activity)}
                     </p>
                   </div>
                 </div>
                 <span className="text-xs text-slate-500 flex-shrink-0 ml-2">
                   {formatTimeAgo(activity.occurredAt)}
                 </span>
-              </div>
+              </button>
             ))
           )}
         </div>
       </div>
+
+      <ActivityDetailModal
+        activity={selectedActivity}
+        onClose={() => setSelectedActivity(null)}
+      />
     </div>
   );
 }
