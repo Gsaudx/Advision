@@ -90,7 +90,6 @@ describe('ClientsService', () => {
         },
       });
 
-
       expect(result).toEqual({
         id: clientId,
         advisorId,
