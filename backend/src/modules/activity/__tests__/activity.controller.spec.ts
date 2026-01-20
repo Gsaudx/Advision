@@ -122,7 +122,10 @@ describe('ActivityController', () => {
 
       const result = await controller.getAdvisorActivity(mockAdvisorUser);
 
-      expect(service.getAdvisorActivity).toHaveBeenCalledWith('advisor-123', 10);
+      expect(service.getAdvisorActivity).toHaveBeenCalledWith(
+        'advisor-123',
+        10,
+      );
       expect(result).toEqual({
         success: true,
         data: mockActivityList,
@@ -142,7 +145,10 @@ describe('ActivityController', () => {
 
       await controller.getAdvisorActivity(mockAdvisorUser, '100');
 
-      expect(service.getAdvisorActivity).toHaveBeenCalledWith('advisor-123', 50);
+      expect(service.getAdvisorActivity).toHaveBeenCalledWith(
+        'advisor-123',
+        50,
+      );
     });
   });
 
@@ -221,9 +227,12 @@ describe('ActivityController', () => {
 
   describe('getAdvisorActivityHistory', () => {
     it('returns paginated activity with default values', async () => {
-      service.getAdvisorActivityPaginated.mockResolvedValue(mockPaginatedActivity);
+      service.getAdvisorActivityPaginated.mockResolvedValue(
+        mockPaginatedActivity,
+      );
 
-      const result = await controller.getAdvisorActivityHistory(mockAdvisorUser);
+      const result =
+        await controller.getAdvisorActivityHistory(mockAdvisorUser);
 
       expect(service.getAdvisorActivityPaginated).toHaveBeenCalledWith(
         'advisor-123',
@@ -237,7 +246,9 @@ describe('ActivityController', () => {
     });
 
     it('parses page and pageSize correctly', async () => {
-      service.getAdvisorActivityPaginated.mockResolvedValue(mockPaginatedActivity);
+      service.getAdvisorActivityPaginated.mockResolvedValue(
+        mockPaginatedActivity,
+      );
 
       await controller.getAdvisorActivityHistory(mockAdvisorUser, '2', '30');
 
@@ -249,7 +260,9 @@ describe('ActivityController', () => {
     });
 
     it('enforces minimum page of 1', async () => {
-      service.getAdvisorActivityPaginated.mockResolvedValue(mockPaginatedActivity);
+      service.getAdvisorActivityPaginated.mockResolvedValue(
+        mockPaginatedActivity,
+      );
 
       await controller.getAdvisorActivityHistory(mockAdvisorUser, '0', '20');
 
@@ -261,7 +274,9 @@ describe('ActivityController', () => {
     });
 
     it('enforces maximum pageSize of 100', async () => {
-      service.getAdvisorActivityPaginated.mockResolvedValue(mockPaginatedActivity);
+      service.getAdvisorActivityPaginated.mockResolvedValue(
+        mockPaginatedActivity,
+      );
 
       await controller.getAdvisorActivityHistory(mockAdvisorUser, '1', '200');
 
@@ -276,7 +291,9 @@ describe('ActivityController', () => {
   describe('getClientActivityHistory', () => {
     it('returns paginated activity for client', async () => {
       prisma.client.findUnique.mockResolvedValue({ id: 'client-123' });
-      service.getClientActivityPaginated.mockResolvedValue(mockPaginatedActivity);
+      service.getClientActivityPaginated.mockResolvedValue(
+        mockPaginatedActivity,
+      );
 
       const result = await controller.getClientActivityHistory(mockClientUser);
 
@@ -306,7 +323,9 @@ describe('ActivityController', () => {
 
     it('parses page and pageSize correctly', async () => {
       prisma.client.findUnique.mockResolvedValue({ id: 'client-123' });
-      service.getClientActivityPaginated.mockResolvedValue(mockPaginatedActivity);
+      service.getClientActivityPaginated.mockResolvedValue(
+        mockPaginatedActivity,
+      );
 
       await controller.getClientActivityHistory(mockClientUser, '3', '50');
 
@@ -319,7 +338,9 @@ describe('ActivityController', () => {
 
     it('enforces minimum pageSize of 1', async () => {
       prisma.client.findUnique.mockResolvedValue({ id: 'client-123' });
-      service.getClientActivityPaginated.mockResolvedValue(mockPaginatedActivity);
+      service.getClientActivityPaginated.mockResolvedValue(
+        mockPaginatedActivity,
+      );
 
       await controller.getClientActivityHistory(mockClientUser, '1', '0');
 

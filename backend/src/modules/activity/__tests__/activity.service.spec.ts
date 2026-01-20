@@ -269,7 +269,11 @@ describe('ActivityService', () => {
       prisma.domainEvent.count.mockResolvedValue(25);
       prisma.domainEvent.findMany.mockResolvedValue([mockDomainEvent]);
 
-      const result = await service.getAdvisorActivityPaginated(advisorId, 1, 10);
+      const result = await service.getAdvisorActivityPaginated(
+        advisorId,
+        1,
+        10,
+      );
 
       expect(result).toEqual({
         items: expect.arrayContaining([
@@ -307,7 +311,11 @@ describe('ActivityService', () => {
       prisma.domainEvent.count.mockResolvedValue(0);
       prisma.domainEvent.findMany.mockResolvedValue([]);
 
-      const result = await service.getAdvisorActivityPaginated(advisorId, 1, 10);
+      const result = await service.getAdvisorActivityPaginated(
+        advisorId,
+        1,
+        10,
+      );
 
       expect(result).toEqual({
         items: [],
