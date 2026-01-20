@@ -20,7 +20,14 @@ import { RolesGuard } from '@/common/guards';
 import { Roles } from '@/common/decorators';
 import { PrismaService } from '@/shared/prisma/prisma.service';
 import { ActivityService } from '../services';
-import { ActivityListApiResponseDto, type ActivityList } from '../schemas';
+import {
+  ActivityListApiResponseDto,
+  AdvisorMetricsApiResponseDto,
+  ClientProfileApiResponseDto,
+  type ActivityList,
+  type AdvisorMetrics,
+  type ClientProfile,
+} from '../schemas';
 
 @ApiTags('Activity')
 @Controller('activity')
@@ -102,6 +109,54 @@ export class ActivityController {
       client.id,
       parsedLimit,
     );
+    return ApiResponseDto.success(data);
+  }
+
+  @Get('advisor/metrics')
+  @Roles('ADVISOR', 'ADMIN')
+  @ApiOperation({
+    summary: 'Metricas do assessor',
+    description:
+      'Retorna metricas do dashboard do assessor (total de clientes, valor em carteiras).',
+  })
+  @ApiResponse({
+    status: 200,
+    description: 'Metricas do assessor',
+    type: AdvisorMetricsApiResponseDto,
+  })
+  async getAdvisorMetrics(
+    @CurrentUser() user: CurrentUserData,
+  ): Promise<ApiResponseType<AdvisorMetrics>> {
+    const data = await this.activityService.getAdvisorMetrics(user.id);
+    return ApiResponseDto.success(data);
+  }
+
+  @Get('client/profile')
+  @Roles('CLIENT')
+  @ApiOperation({
+    summary: 'Perfil do cliente',
+    description:
+      'Retorna informacoes do perfil do cliente, incluindo nome do assessor.',
+  })
+  @ApiResponse({
+    status: 200,
+    description: 'Perfil do cliente',
+    type: ClientProfileApiResponseDto,
+  })
+  @ApiResponse({
+    status: 404,
+    description: 'Perfil de cliente nao encontrado',
+    type: ApiErrorResponseDto,
+  })
+  async getClientProfile(
+    @CurrentUser() user: CurrentUserData,
+  ): Promise<ApiResponseType<ClientProfile>> {
+    const data = await this.activityService.getClientProfile(user.id);
+
+    if (!data) {
+      throw new NotFoundException('Perfil de cliente nao encontrado');
+    }
+
     return ApiResponseDto.success(data);
   }
 }

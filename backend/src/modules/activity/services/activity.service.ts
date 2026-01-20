@@ -1,6 +1,11 @@
 import { Injectable } from '@nestjs/common';
 import { PrismaService } from '@/shared/prisma/prisma.service';
-import type { ActivityList, ActivityItem } from '../schemas';
+import type {
+  ActivityList,
+  ActivityItem,
+  AdvisorMetrics,
+  ClientProfile,
+} from '../schemas';
 
 /**
  * Human-readable action labels for event types
@@ -177,5 +182,60 @@ export class ActivityService {
         eventType: event.eventType,
       };
     });
+  }
+
+  /**
+   * Get dashboard metrics for an advisor
+   */
+  async getAdvisorMetrics(advisorId: string): Promise<AdvisorMetrics> {
+    // Count clients
+    const clientCount = await this.prisma.client.count({
+      where: { advisorId },
+    });
+
+    // Get all wallets for advisor's clients and sum cash balances
+    const wallets = await this.prisma.wallet.findMany({
+      where: {
+        client: { advisorId },
+      },
+      select: {
+        cashBalance: true,
+      },
+    });
+
+    const totalCashBalance = wallets.reduce(
+      (sum, w) => sum + Number(w.cashBalance),
+      0,
+    );
+
+    return {
+      clientCount,
+      totalWalletValue: totalCashBalance,
+    };
+  }
+
+  /**
+   * Get client profile info including advisor name
+   */
+  async getClientProfile(userId: string): Promise<ClientProfile | null> {
+    const client = await this.prisma.client.findUnique({
+      where: { userId },
+      include: {
+        advisor: {
+          select: { id: true, name: true },
+        },
+      },
+    });
+
+    if (!client) {
+      return null;
+    }
+
+    return {
+      clientId: client.id,
+      clientName: client.name,
+      advisorId: client.advisor.id,
+      advisorName: client.advisor.name,
+    };
   }
 }

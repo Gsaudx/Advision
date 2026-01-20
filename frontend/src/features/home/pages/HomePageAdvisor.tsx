@@ -8,7 +8,20 @@ import {
   UpcomingDueDates,
   type DueDate,
 } from '../components/advisor/UpcomingDueDates';
-import { useAdvisorActivity } from '../api';
+import { useAdvisorActivity, useAdvisorMetrics } from '../api';
+
+/**
+ * Format currency value in a compact way (e.g., R$ 2.4M, R$ 150K)
+ */
+function formatCompactCurrency(value: number): string {
+  if (value >= 1_000_000) {
+    return `R$ ${(value / 1_000_000).toFixed(1).replace('.', ',')}M`;
+  }
+  if (value >= 1_000) {
+    return `R$ ${(value / 1_000).toFixed(1).replace('.', ',')}K`;
+  }
+  return `R$ ${value.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}`;
+}
 
 // TODO: Replace with real data from API (options expiration tracking)
 const mockDueDates: DueDate[] = [
@@ -37,6 +50,10 @@ export function HomePageAdvisor() {
   const userName = user?.name ?? 'Assessor';
   const { data: activities = [], isLoading: isLoadingActivities } =
     useAdvisorActivity(5);
+  const { data: metrics } = useAdvisorMetrics();
+
+  const clientCount = metrics?.clientCount ?? 0;
+  const totalWalletValue = metrics?.totalWalletValue ?? 0;
 
   return (
     <div className="space-y-6">
@@ -46,29 +63,26 @@ export function HomePageAdvisor() {
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
         <StatCard
           label="Total de Clientes"
-          value={42}
+          value={clientCount}
           icon={Users}
-          trend={{ value: 12, isPositive: true }}
           accentColor="blue"
         />
         <StatCard
           label="Valor em Carteiras"
-          value="R$ 2.4M"
+          value={formatCompactCurrency(totalWalletValue)}
           icon={Wallet}
-          trend={{ value: 8, isPositive: true }}
           accentColor="emerald"
         />
         <StatCard
           label="Operacoes Pendentes"
-          value={7}
+          value={0}
           icon={Clock}
           accentColor="amber"
         />
         <StatCard
           label="Opcoes a Vencer"
-          value={15}
+          value={0}
           icon={AlertTriangle}
-          trend={{ value: 3, isPositive: false }}
           accentColor="rose"
         />
       </div>

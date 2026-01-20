@@ -1,7 +1,7 @@
 import { Loader2, User } from 'lucide-react';
 import { useAuth } from '@/features/auth';
 import { InviteTokenPrompt } from '../components/client/InviteTokenPrompt';
-import { useClientActivity } from '../api';
+import { useClientActivity, useClientProfile } from '../api';
 
 /**
  * Format the time difference between now and the given date
@@ -27,6 +27,7 @@ export function HomePageClient() {
   const isLinked = user?.clientProfileId !== null;
   const { data: activities = [], isLoading: isLoadingActivities } =
     useClientActivity(5);
+  const { data: profile } = useClientProfile();
 
   const handleInviteSuccess = () => {
     window.location.reload();
@@ -83,7 +84,9 @@ export function HomePageClient() {
           </div>
           <div>
             <p className="text-sm text-slate-400">Seu assessor</p>
-            <p className="text-lg font-semibold text-white">Assessor vinculado</p>
+            <p className="text-lg font-semibold text-blue-400">
+              {profile?.advisorName ?? 'Carregando...'}
+            </p>
           </div>
         </div>
       </div>
