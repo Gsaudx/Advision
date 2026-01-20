@@ -5,21 +5,23 @@ import {
 } from '@nestjs/common';
 import { PrismaService } from '@/shared/prisma/prisma.service';
 import type { ClientResponse, ClientListResponse } from '../schemas';
-import { InviteStatus } from '../enums';
+import { AdvisionFirm, InviteStatus } from '../enums';
 
 interface CreateClientData {
   name: string;
   clientCode: string;
+  advisionFirm: AdvisionFirm;
 }
 
 interface UpdateClientData {
   name?: string;
   clientCode?: string;
+  advisionFirm?: AdvisionFirm;
 }
 
 @Injectable()
 export class ClientsService {
-  constructor(private readonly prisma: PrismaService) {}
+  constructor(private readonly prisma: PrismaService) { }
 
   private formatClientResponse(client: {
     id: string;
@@ -27,6 +29,7 @@ export class ClientsService {
     userId: string | null;
     name: string;
     clientCode: string;
+    advisionFirm: AdvisionFirm;
     inviteStatus: InviteStatus;
     createdAt: Date;
     updatedAt: Date;
@@ -37,6 +40,7 @@ export class ClientsService {
       userId: client.userId,
       name: client.name,
       clientCode: client.clientCode,
+      advisionFirm: client.advisionFirm,
       inviteStatus: client.inviteStatus,
       createdAt: client.createdAt.toISOString(),
       updatedAt: client.updatedAt.toISOString(),
@@ -50,19 +54,21 @@ export class ClientsService {
     const existingClient = await this.prisma.client.findFirst({
       where: {
         advisorId,
-        clientCode: String(data.clientCode),
+        clientCode: data.clientCode,
+        advisionFirm: data.advisionFirm,
       },
     });
 
     if (existingClient) {
-      throw new ConflictException('Ja existe um cliente com este código');
+      throw new ConflictException('Ja existe um cliente com este código nesta assessoria');
     }
 
     const client = await this.prisma.client.create({
       data: {
         advisorId,
         name: data.name,
-        clientCode: String(data.clientCode),
+        clientCode: data.clientCode,
+        advisionFirm: data.advisionFirm,
       },
     });
 
@@ -96,7 +102,7 @@ export class ClientsService {
     data: UpdateClientData,
   ): Promise<ClientResponse> {
     const client = await this.prisma.client.findFirst({
-      where: { id: clientId, advisorId },
+      where: { id: clientId, advisorId, advisionFirm: data.advisionFirm },
     });
 
     if (!client) {
@@ -108,6 +114,7 @@ export class ClientsService {
       data: {
         name: data.name,
         clientCode: data.clientCode,
+        advisionFirm: data.advisionFirm,
       },
     });
 

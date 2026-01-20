@@ -484,6 +484,8 @@ export interface components {
         CreateClientInputDto: {
             name: string;
             clientCode: string;
+            /** @enum {string} */
+            advisionFirm: "XP";
         };
         ClientApiResponseDto: {
             /** @constant */
@@ -496,6 +498,8 @@ export interface components {
                 userId: string | null;
                 name: string;
                 clientCode: string;
+                /** @enum {string} */
+                advisionFirm: "XP";
                 /** @enum {string} */
                 inviteStatus: "PENDING" | "SENT" | "ACCEPTED" | "REJECTED";
                 createdAt: string;
@@ -515,6 +519,8 @@ export interface components {
                 name: string;
                 clientCode: string;
                 /** @enum {string} */
+                advisionFirm: "XP";
+                /** @enum {string} */
                 inviteStatus: "PENDING" | "SENT" | "ACCEPTED" | "REJECTED";
                 createdAt: string;
                 updatedAt: string;
@@ -524,6 +530,8 @@ export interface components {
         UpdateClientInputDto: {
             name?: string;
             clientCode: string;
+            /** @enum {string} */
+            advisionFirm: "XP";
         };
         CreateWalletInputDto: {
             /** Format: uuid */

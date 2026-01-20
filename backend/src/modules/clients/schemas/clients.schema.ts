@@ -1,7 +1,7 @@
 import { z } from 'zod';
 import { createZodDto } from 'nestjs-zod';
 import { createApiResponseSchema } from '@/common/schemas';
-import { InviteStatus } from '../enums';
+import { AdvisionFirm, InviteStatus } from '../enums';
 
 /**
  * Schema for creating a new client.
@@ -15,10 +15,11 @@ export const CreateClientInputSchema = z.object({
   clientCode: z
     .string()
     .regex(/^\d+$/, 'Codigo do cliente deve conter apenas numeros'),
+  advisionFirm: z.nativeEnum(AdvisionFirm),
 });
 export class CreateClientInputDto extends createZodDto(
   CreateClientInputSchema,
-) {}
+) { }
 
 /**
  * Schema for updating a client.
@@ -33,10 +34,11 @@ export const UpdateClientInputSchema = z.object({
   clientCode: z
     .string()
     .regex(/^\d+$/, 'Codigo do cliente deve conter apenas numeros'),
+  advisionFirm: z.nativeEnum(AdvisionFirm),
 });
 export class UpdateClientInputDto extends createZodDto(
   UpdateClientInputSchema,
-) {}
+) { }
 
 /**
  * Client response schema - what we return from API
@@ -47,6 +49,7 @@ export const ClientResponseSchema = z.object({
   userId: z.string().uuid().nullable(),
   name: z.string(),
   clientCode: z.string(),
+  advisionFirm: z.nativeEnum(AdvisionFirm),
   inviteStatus: z.nativeEnum(InviteStatus),
   createdAt: z.string(),
   updatedAt: z.string(),
@@ -64,8 +67,8 @@ export type ClientListResponse = z.infer<typeof ClientListResponseSchema>;
  */
 export class ClientApiResponseDto extends createZodDto(
   createApiResponseSchema(ClientResponseSchema),
-) {}
+) { }
 
 export class ClientListApiResponseDto extends createZodDto(
   createApiResponseSchema(ClientListResponseSchema),
-) {}
+) { }

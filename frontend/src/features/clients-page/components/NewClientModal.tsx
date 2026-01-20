@@ -6,6 +6,7 @@ import { User, X } from 'lucide-react';
 import { useNewClientModal } from '../hooks/useNewClientModal';
 import { useCreateClient } from '../api';
 import InputCode from '@/components/ui/InputCode';
+import Select from '@/components/ui/Select';
 
 interface NewClientModalProps {
   isOpen: boolean;
@@ -115,7 +116,7 @@ export default function NewClientModal({
               <span className="text-red-500 text-sm">{errors.name}</span>
             )}
           </div>
-          <div>
+          <div className='grid grid-cols-1 md:grid-cols-2 gap-4'>
             <InputCode
               name="clientCode"
               value={formData.clientCode}
@@ -126,6 +127,15 @@ export default function NewClientModal({
             {errors.clientCode && (
               <span className="text-red-500 text-sm">{errors.clientCode}</span>
             )}
+            <div className='mb-3 flex flex-col gap-1.5 sm:gap-2'>
+              <label className="text-white text-sm sm:text-sm font-medium" htmlFor="select-example">
+                Asess
+              </label>
+              <Select
+                options={[{ value: 'teste', label: 'foddase' }]}
+                className='bg-slate-800 border rounded-lg px-4 py-6 text-white placeholder-gray-500 focus:outline-none focus:border-slate-500 focus:ring-1 focus:ring-slate-500 transition-colors'
+              />
+            </div>
           </div>
         </div>
 
