@@ -8,6 +8,17 @@ import {
 } from '@nestjs/common';
 import { Decimal } from 'decimal.js';
 import { PrismaService } from '@/shared/prisma/prisma.service';
+import {
+  DomainEventsService,
+  WalletEvents,
+  type WalletCreatedPayload,
+  type CashDepositedPayload,
+  type CashWithdrawnPayload,
+  type PositionOpenedPayload,
+  type PositionIncreasedPayload,
+  type PositionDecreasedPayload,
+  type PositionClosedPayload,
+} from '@/shared/domain-events';
 import type {
   Wallet,
   Position,
@@ -49,6 +60,7 @@ export class WalletsService {
     private readonly marketData: MarketDataProvider,
     private readonly assetResolver: AssetResolverService,
     private readonly auditService: AuditService,
+    private readonly domainEvents: DomainEventsService,
   ) {}
 
   /**
@@ -292,6 +304,22 @@ export class WalletsService {
         },
       });
 
+      // Domain event: WalletCreated
+      await this.domainEvents.record<WalletCreatedPayload>(tx, {
+        aggregateType: 'WALLET',
+        aggregateId: newWallet.id,
+        eventType: WalletEvents.CREATED,
+        payload: {
+          walletId: newWallet.id,
+          clientId: newWallet.clientId,
+          name: newWallet.name,
+          currency: newWallet.currency,
+          initialCashBalance: Number(newWallet.cashBalance),
+        },
+        actorId: actor.id,
+        actorRole: actor.role,
+      });
+
       return newWallet;
     });
 
@@ -472,6 +500,37 @@ export class WalletsService {
           snapshotAfter: { cashBalance: updatedBalance.toNumber() },
           context: { operation: data.type, amount: data.amount },
         });
+
+        // Domain event: CashDeposited or CashWithdrawn
+        if (data.type === 'DEPOSIT') {
+          await this.domainEvents.record<CashDepositedPayload>(tx, {
+            aggregateType: 'WALLET',
+            aggregateId: walletId,
+            eventType: WalletEvents.CASH_DEPOSITED,
+            payload: {
+              walletId,
+              amount: data.amount,
+              previousBalance: previousBalance.toNumber(),
+              newBalance: updatedBalance.toNumber(),
+            },
+            actorId: actor.id,
+            actorRole: actor.role,
+          });
+        } else {
+          await this.domainEvents.record<CashWithdrawnPayload>(tx, {
+            aggregateType: 'WALLET',
+            aggregateId: walletId,
+            eventType: WalletEvents.CASH_WITHDRAWN,
+            payload: {
+              walletId,
+              amount: data.amount,
+              previousBalance: previousBalance.toNumber(),
+              newBalance: updatedBalance.toNumber(),
+            },
+            actorId: actor.id,
+            actorRole: actor.role,
+          });
+        }
       });
     } catch (error) {
       if (this.isIdempotencyConflict(error)) {
@@ -674,6 +733,46 @@ export class WalletsService {
             cost: totalCost.toNumber(),
           },
         });
+
+        // Domain event: PositionOpened or PositionIncreased
+        if (positionAction === 'CREATE') {
+          await this.domainEvents.record<PositionOpenedPayload>(tx, {
+            aggregateType: 'WALLET',
+            aggregateId: walletId,
+            eventType: WalletEvents.POSITION_OPENED,
+            payload: {
+              walletId,
+              positionId: positionId,
+              ticker: data.ticker,
+              assetId: asset.id,
+              quantity: data.quantity,
+              price: data.price,
+              totalCost: totalCost.toNumber(),
+            },
+            actorId: actor.id,
+            actorRole: actor.role,
+          });
+        } else {
+          await this.domainEvents.record<PositionIncreasedPayload>(tx, {
+            aggregateType: 'WALLET',
+            aggregateId: walletId,
+            eventType: WalletEvents.POSITION_INCREASED,
+            payload: {
+              walletId,
+              positionId: positionId,
+              ticker: data.ticker,
+              assetId: asset.id,
+              addedQuantity: data.quantity,
+              price: data.price,
+              previousQuantity: positionBefore!.quantity,
+              newQuantity: positionAfter.quantity,
+              previousAveragePrice: positionBefore!.averagePrice,
+              newAveragePrice: positionAfter.averagePrice,
+            },
+            actorId: actor.id,
+            actorRole: actor.role,
+          });
+        }
       });
     } catch (error) {
       if (this.isIdempotencyConflict(error)) {
@@ -859,6 +958,45 @@ export class WalletsService {
             proceeds: totalProceeds.toNumber(),
           },
         });
+
+        // Domain event: PositionDecreased or PositionClosed
+        if (positionAction === 'DELETE') {
+          await this.domainEvents.record<PositionClosedPayload>(tx, {
+            aggregateType: 'WALLET',
+            aggregateId: walletId,
+            eventType: WalletEvents.POSITION_CLOSED,
+            payload: {
+              walletId,
+              positionId: positionId,
+              ticker: data.ticker,
+              assetId: asset.id,
+              finalQuantity: data.quantity,
+              price: data.price,
+              totalProceeds: totalProceeds.toNumber(),
+            },
+            actorId: actor.id,
+            actorRole: actor.role,
+          });
+        } else {
+          await this.domainEvents.record<PositionDecreasedPayload>(tx, {
+            aggregateType: 'WALLET',
+            aggregateId: walletId,
+            eventType: WalletEvents.POSITION_DECREASED,
+            payload: {
+              walletId,
+              positionId: positionId,
+              ticker: data.ticker,
+              assetId: asset.id,
+              soldQuantity: data.quantity,
+              price: data.price,
+              previousQuantity: positionBefore!.quantity,
+              newQuantity: positionAfter!.quantity,
+              totalProceeds: totalProceeds.toNumber(),
+            },
+            actorId: actor.id,
+            actorRole: actor.role,
+          });
+        }
       });
     } catch (error) {
       if (this.isIdempotencyConflict(error)) {
