@@ -18,12 +18,6 @@ enum UserRole {
   ADMIN           // System administrator
 }
 
-enum RiskProfile {
-  CONSERVATIVE    // Conservative profile
-  MODERATE        // Moderate profile
-  AGGRESSIVE      // Aggressive profile
-}
-
 enum AssetType {
   STOCK           // Stock (PETR4, VALE3)
   OPTION          // Option (PETRA1, VALEB2)
@@ -89,20 +83,24 @@ model User {
 }
 
 model Client {
-  id              String       @id @default(uuid())
-  advisorId       String       // FK to User (responsible advisor)
-  userId          String?      @unique  // FK to User (linked account)
-  name            String
-  email           String?
-  cpf             String
-  phone           String?
-  riskProfile     RiskProfile  @default(MODERATE)
-  inviteToken     String?      @unique  // Invite token (INV-XXXXXXXX)
-  inviteStatus    InviteStatus @default(PENDING)  // Invite status
-  inviteExpiresAt DateTime?    // Token expiration
-  createdAt       DateTime     @default(now())
-  updatedAt       DateTime     @updatedAt
-  wallets         Wallet[]
+  id           String       @id @default(uuid())
+  advisorId    String
+  userId       String?      @unique
+  name         String
+  clientCode   String
+  inviteToken     String?      @unique
+  inviteStatus    InviteStatus @default(PENDING)
+  inviteExpiresAt DateTime?
+  createdAt    DateTime     @default(now())
+  updatedAt    DateTime     @updatedAt
+
+  advisor User     @relation("AdvisorClients", fields: [advisorId], references: [id], onDelete: Cascade)
+  user    User?    @relation("LinkedUser", fields: [userId], references: [id], onDelete: SetNull)
+  wallets Wallet[]
+
+  @@index([advisorId])
+  @@unique([advisorId, id])
+  @@map("clients")
 }
 
 model Wallet {

@@ -413,7 +413,7 @@ Quality checks run on PRs to main/master:
 | `JWT_EXPIRES_IN`             | JWT expiration time (default: "12h")                     |
 | `COOKIE_SECURE`              | Force secure cookies in production (default: "true")     |
 | `COOKIE_DOMAIN`              | Cookie domain (optional)                                 |
-| `DOMAIN`                     | Caddy hostname (default: tcc-investimentos.duckdns.org)  |
+| `DOMAIN`                     | Caddy hostname (default: advision.duckdns.org)  |
 
 ---
 

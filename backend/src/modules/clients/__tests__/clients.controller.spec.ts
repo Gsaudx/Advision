@@ -3,7 +3,7 @@ jest.mock('@/config/env.config', () => ({}));
 jest.mock('@/config', () => ({
   // constants.ts exports
   AUTH_CONSTANTS: {
-    COOKIE_NAME: 'tcc_auth',
+    COOKIE_NAME: 'advision_auth',
     DEFAULT_EXPIRES_HOURS: 12,
     PASSWORD_MIN_LENGTH: 8,
     PASSWORD_MAX_LENGTH: 100,

@@ -5,7 +5,7 @@
 
 export const AUTH_CONSTANTS = {
   /** Cookie name for JWT authentication */
-  COOKIE_NAME: 'tcc_auth',
+  COOKIE_NAME: 'advision_auth',
   /** Default JWT expiration time in hours */
   DEFAULT_EXPIRES_HOURS: 12,
   /** Minimum password length */

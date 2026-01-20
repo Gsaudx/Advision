@@ -1,4 +1,4 @@
-# TCC Investimentos
+# Advision
 
 B2B SaaS platform for investment advisors. Portfolio management and investment optimization using the Knapsack algorithm (academic research project).
 
@@ -21,8 +21,8 @@ B2B SaaS platform for investment advisors. Portfolio management and investment o
 ### 1. Clone and configure environment
 
 ```bash
-git clone https://github.com/seu-usuario/tcc-investimentos.git
-cd tcc-investimentos
+git clone https://github.com/gsaudx/advision.git
+cd advision
 
 # Create .env file in backend
 cp backend/.env.example backend/.env

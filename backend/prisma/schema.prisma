@@ -66,6 +66,12 @@ enum InviteStatus {
   REJECTED
 }
 
+enum AuditAction {
+  CREATE
+  UPDATE
+  DELETE
+}
+
 // ============================================================================
 // MODELS
 // ============================================================================
@@ -112,6 +118,7 @@ model Wallet {
   clientId    String
   name        String
   description String?
+  currency    String   @default("BRL") @db.VarChar(3)
   cashBalance Decimal  @default(0) @db.Decimal(18, 2)
   createdAt   DateTime @default(now())
   updatedAt   DateTime @updatedAt
@@ -132,6 +139,7 @@ model Asset {
   name      String
   type      AssetType
   sector    String?
+  market    String    @default("B3") @db.VarChar(10)
   createdAt DateTime  @default(now())
   updatedAt DateTime  @updatedAt
 
@@ -179,20 +187,22 @@ model Position {
 }
 
 model Transaction {
-  id         String          @id @default(uuid())
-  walletId   String
-  assetId    String?
-  type       TransactionType
-  quantity   Decimal?        @db.Decimal(18, 8)
-  price      Decimal?        @db.Decimal(18, 2)
-  totalValue Decimal         @db.Decimal(18, 2)
-  executedAt DateTime
-  notes      String?
-  createdAt  DateTime        @default(now())
+  id             String          @id @default(uuid())
+  walletId       String
+  assetId        String?
+  type           TransactionType
+  quantity       Decimal?        @db.Decimal(18, 8)
+  price          Decimal?        @db.Decimal(18, 2)
+  totalValue     Decimal         @db.Decimal(18, 2)
+  executedAt     DateTime
+  notes          String?
+  idempotencyKey String?
+  createdAt      DateTime        @default(now())
 
   wallet Wallet @relation(fields: [walletId], references: [id], onDelete: Cascade)
   asset  Asset? @relation(fields: [assetId], references: [id])
 
+  @@unique([walletId, idempotencyKey])
   @@index([walletId])
   @@index([assetId])
   @@index([executedAt])
@@ -230,4 +240,22 @@ model RebalanceLog {
 
   @@index([walletId])
   @@map("rebalance_logs")
+}
+
+model AuditLog {
+  id             String      @id @default(uuid())
+  tableName      String
+  recordId       String
+  action         AuditAction
+  actorId        String?
+  actorRole      String?
+  snapshotBefore Json?
+  snapshotAfter  Json?
+  context        Json?
+  createdAt      DateTime    @default(now())
+
+  @@index([tableName, recordId])
+  @@index([actorId])
+  @@index([createdAt])
+  @@map("audit_logs")
 }

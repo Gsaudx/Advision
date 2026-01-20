@@ -19,7 +19,7 @@ interface UpdateClientData {
 
 @Injectable()
 export class ClientsService {
-  constructor(private readonly prisma: PrismaService) { }
+  constructor(private readonly prisma: PrismaService) {}
 
   private formatClientResponse(client: {
     id: string;

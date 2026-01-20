@@ -204,6 +204,170 @@ export interface paths {
     patch?: never;
     trace?: never;
   };
+  '/wallets': {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    /**
+     * Listar carteiras
+     * @description Lista todas as carteiras acessiveis pelo usuario. Opcionalmente filtra por cliente.
+     */
+    get: operations['WalletsController_findAll'];
+    put?: never;
+    /**
+     * Criar nova carteira
+     * @description Cria uma nova carteira para um cliente.
+     */
+    post: operations['WalletsController_create'];
+    delete?: never;
+    options?: never;
+    head?: never;
+    patch?: never;
+    trace?: never;
+  };
+  '/wallets/assets/search': {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    /**
+     * Buscar ativos
+     * @description Busca ativos por ticker ou nome para autocomplete. Retorna apenas acoes brasileiras.
+     */
+    get: operations['WalletsController_searchAssets'];
+    put?: never;
+    post?: never;
+    delete?: never;
+    options?: never;
+    head?: never;
+    patch?: never;
+    trace?: never;
+  };
+  '/wallets/assets/{ticker}/price': {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    /**
+     * Obter preco do ativo
+     * @description Retorna o preco atual de mercado de um ativo.
+     */
+    get: operations['WalletsController_getAssetPrice'];
+    put?: never;
+    post?: never;
+    delete?: never;
+    options?: never;
+    head?: never;
+    patch?: never;
+    trace?: never;
+  };
+  '/wallets/{id}': {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    /**
+     * Dashboard da carteira
+     * @description Retorna a carteira com posicoes e precos atuais de mercado.
+     */
+    get: operations['WalletsController_findOne'];
+    put?: never;
+    post?: never;
+    delete?: never;
+    options?: never;
+    head?: never;
+    patch?: never;
+    trace?: never;
+  };
+  '/wallets/{id}/transactions': {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    /**
+     * Historico de transacoes
+     * @description Retorna o historico de todas as transacoes da carteira (compras, vendas, depositos, saques).
+     */
+    get: operations['WalletsController_getTransactions'];
+    put?: never;
+    post?: never;
+    delete?: never;
+    options?: never;
+    head?: never;
+    patch?: never;
+    trace?: never;
+  };
+  '/wallets/{id}/cash': {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    get?: never;
+    put?: never;
+    /**
+     * Operacao de caixa
+     * @description Realiza deposito ou saque na carteira.
+     */
+    post: operations['WalletsController_cashOperation'];
+    delete?: never;
+    options?: never;
+    head?: never;
+    patch?: never;
+    trace?: never;
+  };
+  '/wallets/{id}/trade/buy': {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    get?: never;
+    put?: never;
+    /**
+     * Comprar ativo
+     * @description Executa uma ordem de compra de um ativo.
+     */
+    post: operations['WalletsController_buy'];
+    delete?: never;
+    options?: never;
+    head?: never;
+    patch?: never;
+    trace?: never;
+  };
+  '/wallets/{id}/trade/sell': {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    get?: never;
+    put?: never;
+    /**
+     * Vender ativo
+     * @description Executa uma ordem de venda de um ativo.
+     */
+    post: operations['WalletsController_sell'];
+    delete?: never;
+    options?: never;
+    head?: never;
+    patch?: never;
+    trace?: never;
+  };
 }
 export type webhooks = Record<string, never>;
 export interface components {
@@ -360,6 +524,136 @@ export interface components {
     UpdateClientInputDto: {
       name?: string;
       clientCode: string;
+    };
+    CreateWalletInputDto: {
+      /** Format: uuid */
+      clientId: string;
+      name: string;
+      description?: string;
+      /** @default BRL */
+      currency: string;
+      initialCashBalance?: number;
+    };
+    WalletApiResponseDto: {
+      /** @constant */
+      success: true;
+      data?: {
+        /** Format: uuid */
+        id: string;
+        /** Format: uuid */
+        clientId: string;
+        name: string;
+        description: string | null;
+        currency: string;
+        cashBalance: number;
+        createdAt: string;
+        updatedAt: string;
+        positions: {
+          /** Format: uuid */
+          id: string;
+          /** Format: uuid */
+          assetId: string;
+          ticker: string;
+          name: string;
+          /** @enum {string} */
+          type: 'STOCK' | 'OPTION';
+          quantity: number;
+          averagePrice: number;
+          currentPrice?: number;
+          totalCost: number;
+          currentValue?: number;
+          profitLoss?: number;
+          profitLossPercent?: number;
+        }[];
+        totalPositionsValue: number;
+        totalValue: number;
+      };
+      message?: string;
+    };
+    WalletListApiResponseDto: {
+      /** @constant */
+      success: true;
+      data?: {
+        /** Format: uuid */
+        id: string;
+        /** Format: uuid */
+        clientId: string;
+        name: string;
+        description: string | null;
+        currency: string;
+        cashBalance: number;
+        createdAt: string;
+        updatedAt: string;
+      }[];
+      message?: string;
+    };
+    AssetSearchApiResponseDto: {
+      /** @constant */
+      success: true;
+      data?: {
+        ticker: string;
+        name: string;
+        type: string;
+        exchange: string;
+      }[];
+      message?: string;
+    };
+    AssetPriceApiResponseDto: {
+      /** @constant */
+      success: true;
+      data?: {
+        ticker: string;
+        price: number;
+        name?: string;
+        type?: string;
+      };
+      message?: string;
+    };
+    TransactionListApiResponseDto: {
+      /** @constant */
+      success: true;
+      data?: {
+        items: {
+          /** Format: uuid */
+          id: string;
+          /** Format: uuid */
+          walletId: string;
+          assetId: string | null;
+          /** @enum {string} */
+          type:
+            | 'BUY'
+            | 'SELL'
+            | 'DIVIDEND'
+            | 'SPLIT'
+            | 'SUBSCRIPTION'
+            | 'DEPOSIT'
+            | 'WITHDRAWAL';
+          quantity: number | null;
+          price: number | null;
+          totalValue: number;
+          executedAt: string;
+          ticker: string | null;
+          createdAt: string;
+        }[];
+        nextCursor: string | null;
+      };
+      message?: string;
+    };
+    CashOperationInputDto: {
+      /** @enum {string} */
+      type: 'DEPOSIT' | 'WITHDRAWAL';
+      amount: number;
+      /** Format: date-time */
+      date: string;
+      idempotencyKey: string;
+    };
+    TradeInputDto: {
+      ticker: string;
+      quantity: number;
+      price: number;
+      /** Format: date-time */
+      date: string;
+      idempotencyKey: string;
     };
   };
   responses: never;
@@ -841,6 +1135,404 @@ export interface operations {
       };
       /** @description Cliente nao encontrado */
       404: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/json': components['schemas']['ApiErrorResponseDto'];
+        };
+      };
+    };
+  };
+  WalletsController_findAll: {
+    parameters: {
+      query?: {
+        /** @description Filtrar por ID do cliente */
+        clientId?: string;
+      };
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    requestBody?: never;
+    responses: {
+      /** @description Lista de carteiras */
+      200: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/json': components['schemas']['WalletListApiResponseDto'];
+        };
+      };
+    };
+  };
+  WalletsController_create: {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    requestBody: {
+      content: {
+        'application/json': components['schemas']['CreateWalletInputDto'];
+      };
+    };
+    responses: {
+      /** @description Carteira criada com sucesso */
+      201: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/json': components['schemas']['WalletApiResponseDto'];
+        };
+      };
+      /** @description Dados invalidos */
+      400: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/json': components['schemas']['ApiErrorResponseDto'];
+        };
+      };
+      /** @description Sem permissao para criar carteira para este cliente */
+      403: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/json': components['schemas']['ApiErrorResponseDto'];
+        };
+      };
+    };
+  };
+  WalletsController_searchAssets: {
+    parameters: {
+      query: {
+        /** @description Termo de busca (ticker ou nome) */
+        q: string;
+        /** @description Numero maximo de resultados (padrao: 10) */
+        limit?: string;
+      };
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    requestBody?: never;
+    responses: {
+      /** @description Lista de ativos encontrados */
+      200: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/json': components['schemas']['AssetSearchApiResponseDto'];
+        };
+      };
+    };
+  };
+  WalletsController_getAssetPrice: {
+    parameters: {
+      query?: never;
+      header?: never;
+      path: {
+        /** @description Ticker do ativo (ex: PETR4) */
+        ticker: string;
+      };
+      cookie?: never;
+    };
+    requestBody?: never;
+    responses: {
+      /** @description Preco atual do ativo */
+      200: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/json': components['schemas']['AssetPriceApiResponseDto'];
+        };
+      };
+      /** @description Ativo nao encontrado */
+      404: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/json': components['schemas']['ApiErrorResponseDto'];
+        };
+      };
+    };
+  };
+  WalletsController_findOne: {
+    parameters: {
+      query?: never;
+      header?: never;
+      path: {
+        /** @description ID da carteira */
+        id: string;
+      };
+      cookie?: never;
+    };
+    requestBody?: never;
+    responses: {
+      /** @description Dashboard da carteira */
+      200: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/json': components['schemas']['WalletApiResponseDto'];
+        };
+      };
+      /** @description Sem permissao para acessar esta carteira */
+      403: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/json': components['schemas']['ApiErrorResponseDto'];
+        };
+      };
+      /** @description Carteira nao encontrada */
+      404: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/json': components['schemas']['ApiErrorResponseDto'];
+        };
+      };
+    };
+  };
+  WalletsController_getTransactions: {
+    parameters: {
+      query?: {
+        /** @description Numero maximo de registros (padrao: 50, maximo: 100) */
+        limit?: string;
+        /** @description ID da transacao para paginacao por cursor */
+        cursor?: string;
+      };
+      header?: never;
+      path: {
+        /** @description ID da carteira */
+        id: string;
+      };
+      cookie?: never;
+    };
+    requestBody?: never;
+    responses: {
+      /** @description Lista de transacoes */
+      200: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/json': components['schemas']['TransactionListApiResponseDto'];
+        };
+      };
+      /** @description Cursor invalido */
+      400: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/json': components['schemas']['ApiErrorResponseDto'];
+        };
+      };
+      /** @description Sem permissao para acessar esta carteira */
+      403: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/json': components['schemas']['ApiErrorResponseDto'];
+        };
+      };
+      /** @description Carteira nao encontrada */
+      404: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/json': components['schemas']['ApiErrorResponseDto'];
+        };
+      };
+    };
+  };
+  WalletsController_cashOperation: {
+    parameters: {
+      query?: never;
+      header?: never;
+      path: {
+        /** @description ID da carteira */
+        id: string;
+      };
+      cookie?: never;
+    };
+    requestBody: {
+      content: {
+        'application/json': components['schemas']['CashOperationInputDto'];
+      };
+    };
+    responses: {
+      /** @description Operacao realizada com sucesso */
+      200: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/json': components['schemas']['WalletApiResponseDto'];
+        };
+      };
+      /** @description Saldo insuficiente ou dados invalidos */
+      400: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/json': components['schemas']['ApiErrorResponseDto'];
+        };
+      };
+      /** @description Sem permissao para operar esta carteira */
+      403: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/json': components['schemas']['ApiErrorResponseDto'];
+        };
+      };
+      /** @description Operacao duplicada (idempotencyKey ja utilizada) */
+      409: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/json': components['schemas']['ApiErrorResponseDto'];
+        };
+      };
+    };
+  };
+  WalletsController_buy: {
+    parameters: {
+      query?: never;
+      header?: never;
+      path: {
+        /** @description ID da carteira */
+        id: string;
+      };
+      cookie?: never;
+    };
+    requestBody: {
+      content: {
+        'application/json': components['schemas']['TradeInputDto'];
+      };
+    };
+    responses: {
+      /** @description Compra realizada com sucesso */
+      200: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/json': components['schemas']['WalletApiResponseDto'];
+        };
+      };
+      /** @description Saldo insuficiente ou dados invalidos */
+      400: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/json': components['schemas']['ApiErrorResponseDto'];
+        };
+      };
+      /** @description Sem permissao para operar esta carteira */
+      403: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/json': components['schemas']['ApiErrorResponseDto'];
+        };
+      };
+      /** @description Ativo nao encontrado */
+      404: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/json': components['schemas']['ApiErrorResponseDto'];
+        };
+      };
+      /** @description Operacao duplicada (idempotencyKey ja utilizada) */
+      409: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/json': components['schemas']['ApiErrorResponseDto'];
+        };
+      };
+    };
+  };
+  WalletsController_sell: {
+    parameters: {
+      query?: never;
+      header?: never;
+      path: {
+        /** @description ID da carteira */
+        id: string;
+      };
+      cookie?: never;
+    };
+    requestBody: {
+      content: {
+        'application/json': components['schemas']['TradeInputDto'];
+      };
+    };
+    responses: {
+      /** @description Venda realizada com sucesso */
+      200: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/json': components['schemas']['WalletApiResponseDto'];
+        };
+      };
+      /** @description Quantidade insuficiente ou dados invalidos */
+      400: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/json': components['schemas']['ApiErrorResponseDto'];
+        };
+      };
+      /** @description Sem permissao para operar esta carteira */
+      403: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/json': components['schemas']['ApiErrorResponseDto'];
+        };
+      };
+      /** @description Posicao nao encontrada */
+      404: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/json': components['schemas']['ApiErrorResponseDto'];
+        };
+      };
+      /** @description Operacao duplicada (idempotencyKey ja utilizada) */
+      409: {
         headers: {
           [name: string]: unknown;
         };

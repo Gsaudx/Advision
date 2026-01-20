@@ -24,7 +24,7 @@ jobs:
       with:
         context: ./backend
         push: true
-        tags: ${{ secrets.DOCKERHUB_USERNAME }}/tcc-backend:latest
+        tags: ${{ secrets.DOCKERHUB_USERNAME }}/advision-backend:latest
 
   # ------------------------------------------------------------------
   # BACKEND DEPLOY: Update EC2 (Only runs if build succeeds)
@@ -62,7 +62,7 @@ jobs:
           echo "JWT_EXPIRES_IN=${{ secrets.JWT_EXPIRES_IN || '12h' }}" >> .env
           echo "COOKIE_SECURE=${{ secrets.COOKIE_SECURE || 'true' }}" >> .env
           echo "COOKIE_DOMAIN=${{ secrets.COOKIE_DOMAIN }}" >> .env
-          echo "DOMAIN=${{ secrets.DOMAIN || 'tcc-investimentos.duckdns.org' }}" >> .env
+          echo "DOMAIN=${{ secrets.DOMAIN || 'advision-investimentos.duckdns.org' }}" >> .env
           echo "NODE_ENV=production" >> .env
           
           # Pull new image and restart

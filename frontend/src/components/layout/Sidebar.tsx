@@ -2,6 +2,7 @@ import { Link, useLocation } from 'react-router-dom';
 import {
   LayoutDashboard,
   Users,
+  Wallet,
   ChevronLeft,
   ChevronRight,
 } from 'lucide-react';
@@ -16,10 +17,12 @@ interface NavItem {
 const advisorNavItems: NavItem[] = [
   { name: 'Dashboard', href: '/advisor/home', icon: LayoutDashboard },
   { name: 'Clientes', href: '/clients', icon: Users },
+  { name: 'Carteiras', href: '/wallets', icon: Wallet },
 ];
 
 const clientNavItems: NavItem[] = [
   { name: 'Inicio', href: '/client/home', icon: LayoutDashboard },
+  { name: 'Carteiras', href: '/wallets', icon: Wallet },
 ];
 
 interface SidebarProps {

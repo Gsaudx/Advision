@@ -1,7 +1,7 @@
 services:
   backend:
-    image: ${DOCKERHUB_USERNAME}/tcc-backend:latest
-    container_name: tcc_backend
+    image: ${DOCKERHUB_USERNAME}/advision-backend:latest
+    container_name: advision_backend
     restart: unless-stopped
     environment:
       DATABASE_URL: ${DATABASE_URL}
@@ -13,11 +13,11 @@ services:
       NODE_ENV: ${NODE_ENV:-production}
       PORT: 3000
     networks:
-      - tcc_network
+      - advision_network
 
   caddy:
     image: caddy:2-alpine
-    container_name: tcc_caddy
+    container_name: advision_caddy
     restart: unless-stopped
     environment:
       DOMAIN: ${DOMAIN}
@@ -31,10 +31,10 @@ services:
     depends_on:
       - backend
     networks:
-      - tcc_network
+      - advision_network
 
 networks:
-  tcc_network:
+  advision_network:
     driver: bridge
 
 volumes:

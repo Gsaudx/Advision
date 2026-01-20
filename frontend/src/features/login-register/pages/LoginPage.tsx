@@ -4,6 +4,7 @@ import ButtonSubmit from '@/components/ui/ButtonSubmit';
 import InputEmail from '@/components/ui/InputEmail';
 import InputPassword from '@/components/ui/InputPassword';
 import { useAuth } from '@/features/auth';
+import fullLogo from '@/assets/logos/Advision_logo_2.png';
 
 export default function LoginPage() {
   const navigate = useNavigate();
@@ -78,12 +79,10 @@ export default function LoginPage() {
 
           {/* Branding Section - Hidden on mobile, shown on lg+ */}
           <div className="hidden lg:flex lg:w-72 xl:w-80 bg-slate-950 rounded-r-3xl p-8 flex-col justify-center items-center">
-            <h1 className="text-2xl xl:text-3xl font-bold text-white text-center">
-              TCC INVESTIMENTO
-            </h1>
-            <div className="mt-8 text-slate-400 text-center text-sm">
-              {/* TODO: Add branding image or illustration */}
-            </div>
+            <img src={fullLogo} alt="Advision" className="h-12 w-auto" />
+            <p className="mt-6 text-slate-400 text-center text-sm">
+              Gestao inteligente de carteiras e clientes.
+            </p>
           </div>
         </div>
       </div>
