@@ -2,6 +2,7 @@ import PageTitle from "@/components/layout/PageTitle";
 import { Calendar, DollarSign, Search, TrendingDown, TrendingUp, User } from "lucide-react";
 import { useState } from "react";
 import OperationsStatsCards from "../components/OperationsStatsCards";
+import InputDate from "@/components/ui/InputDate";
 
 export default function OperationsPage() {
     const [searchTerm, setSearchTerm] = useState('');
@@ -218,6 +219,9 @@ export default function OperationsPage() {
                                 </select>
                             </div>
                             {/* Filtro Data Execução */}
+                            <div>
+                                <InputDate />
+                            </div>
                             <div>
                                 <input
                                     type="date"
