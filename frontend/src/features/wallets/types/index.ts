@@ -62,6 +62,21 @@ export type AssetPriceResult = NonNullable<
   components['schemas']['AssetPriceApiResponseDto']['data']
 >;
 
+/**
+ * Option details result from OpLab API
+ */
+export interface OptionDetailsResult {
+  ticker: string;
+  strike: number;
+  expirationDate: string;
+  type: 'CALL' | 'PUT';
+  impliedVolatility?: number;
+  delta?: number;
+  gamma?: number;
+  theta?: number;
+  vega?: number;
+}
+
 // ============================================================================
 // Transaction types
 // ============================================================================

@@ -11,6 +11,7 @@ import {
   Wallet,
   History,
   LayoutGrid,
+  LineChart,
 } from 'lucide-react';
 import { formatCurrency, formatDateTime } from '@/lib/formatters';
 import { LoadingSpinner } from '@/components/ui/LoadingSpinner';
@@ -20,9 +21,15 @@ import { PositionTable } from './PositionTable';
 import { TransactionTimeline } from './TransactionTimeline';
 import { CashOperationModal } from './CashOperationModal';
 import { TradeModal } from './TradeModal';
+import {
+  useOptionPositions,
+  OptionTradeModal,
+  OptionPositionCard,
+} from '@/features/derivatives';
 import type { TradeType, CashOperationType, Position } from '../types';
 
-type TabType = 'positions' | 'history';
+type OptionTradeType = 'BUY' | 'SELL';
+type TabType = 'positions' | 'options' | 'history';
 
 interface WalletDashboardProps {
   isOpen: boolean;
@@ -54,10 +61,23 @@ export function WalletDashboard({
   const { data: transactions, isLoading: isLoadingTransactions } =
     useTransactions(walletId, isOpen);
 
+  // Option positions
+  const {
+    data: optionPositionsData,
+    isLoading: isLoadingOptions,
+    isFetching: isFetchingOptions,
+  } = useOptionPositions(walletId);
+
+  // Use dataUpdatedAt as reference time for option expiry calculations (avoids impure render)
+  const currentTime = dataUpdatedAt || 0;
+
   const [activeTab, setActiveTab] = useState<TabType>('positions');
   const [showCashModal, setShowCashModal] = useState(false);
   const [showTradeModal, setShowTradeModal] = useState(false);
+  const [showOptionTradeModal, setShowOptionTradeModal] = useState(false);
   const [tradeType, setTradeType] = useState<TradeType>('BUY');
+  const [optionTradeType, setOptionTradeType] =
+    useState<OptionTradeType>('BUY');
   const [cashOperationType, setCashOperationType] =
     useState<CashOperationType>('DEPOSIT');
   const [preselectedTicker, setPreselectedTicker] = useState<
@@ -77,6 +97,21 @@ export function WalletDashboard({
   const handleOpenCashOperation = (type: CashOperationType) => {
     setCashOperationType(type);
     setShowCashModal(true);
+  };
+
+  const handleOpenOptionTrade = (type: OptionTradeType) => {
+    setOptionTradeType(type);
+    setShowOptionTradeModal(true);
+  };
+
+  const handleCloseOptionPosition = (positionId: string) => {
+    // For now, just log - could open a close modal
+    console.log('Close option position:', positionId);
+  };
+
+  const handleExerciseOption = (positionId: string) => {
+    // For now, just log - could open an exercise modal
+    console.log('Exercise option:', positionId);
   };
 
   if (!isOpen) return null;
@@ -210,19 +245,35 @@ export function WalletDashboard({
                     <ArrowUpRight className="w-4 h-4" />
                     Sacar
                   </button>
+                  <div className="w-px h-8 bg-slate-700" />
                   <button
                     onClick={() => handleOpenTrade('BUY')}
                     className="px-4 py-2 bg-blue-600/20 text-blue-400 rounded-lg hover:bg-blue-600/30 transition-colors flex items-center gap-2"
                   >
                     <ShoppingCart className="w-4 h-4" />
-                    Comprar
+                    Comprar Acao
                   </button>
                   <button
                     onClick={() => handleOpenTrade('SELL')}
                     className="px-4 py-2 bg-orange-600/20 text-orange-400 rounded-lg hover:bg-orange-600/30 transition-colors flex items-center gap-2"
                   >
                     <DollarSign className="w-4 h-4" />
-                    Vender
+                    Vender Acao
+                  </button>
+                  <div className="w-px h-8 bg-slate-700" />
+                  <button
+                    onClick={() => handleOpenOptionTrade('BUY')}
+                    className="px-4 py-2 bg-purple-600/20 text-purple-400 rounded-lg hover:bg-purple-600/30 transition-colors flex items-center gap-2"
+                  >
+                    <LineChart className="w-4 h-4" />
+                    Comprar Opcao
+                  </button>
+                  <button
+                    onClick={() => handleOpenOptionTrade('SELL')}
+                    className="px-4 py-2 bg-pink-600/20 text-pink-400 rounded-lg hover:bg-pink-600/30 transition-colors flex items-center gap-2"
+                  >
+                    <LineChart className="w-4 h-4" />
+                    Vender Opcao
                   </button>
                 </div>
               )}
@@ -239,7 +290,24 @@ export function WalletDashboard({
                     }`}
                   >
                     <LayoutGrid className="w-4 h-4" />
-                    Posicoes
+                    Acoes
+                  </button>
+                  <button
+                    onClick={() => setActiveTab('options')}
+                    className={`flex items-center gap-2 px-4 py-2 rounded-md text-sm font-medium transition-colors ${
+                      activeTab === 'options'
+                        ? 'bg-slate-700 text-white'
+                        : 'text-gray-400 hover:text-white'
+                    }`}
+                  >
+                    <LineChart className="w-4 h-4" />
+                    Opcoes
+                    {optionPositionsData?.positions &&
+                      optionPositionsData.positions.length > 0 && (
+                        <span className="ml-1 px-1.5 py-0.5 text-xs bg-purple-600/30 text-purple-400 rounded">
+                          {optionPositionsData.positions.length}
+                        </span>
+                      )}
                   </button>
                   <button
                     onClick={() => setActiveTab('history')}
@@ -255,7 +323,7 @@ export function WalletDashboard({
                 </div>
 
                 {/* Tab Content */}
-                {activeTab === 'positions' ? (
+                {activeTab === 'positions' && (
                   <PositionTable
                     positions={wallet.positions}
                     currency={wallet.currency}
@@ -263,7 +331,108 @@ export function WalletDashboard({
                     onSellClick={handleSellPosition}
                     isLoading={isRefreshing}
                   />
-                ) : (
+                )}
+                {activeTab === 'options' && (
+                  <div>
+                    {isLoadingOptions ? (
+                      <div className="flex items-center justify-center py-8">
+                        <LoadingSpinner size="md" />
+                      </div>
+                    ) : optionPositionsData?.positions &&
+                      optionPositionsData.positions.length > 0 ? (
+                      <div className="space-y-4">
+                        {/* Options Summary */}
+                        <div className="grid grid-cols-3 gap-4 p-4 bg-slate-800/50 rounded-lg">
+                          <div>
+                            <span className="text-sm text-gray-500">
+                              Premio Pago
+                            </span>
+                            <p className="text-lg font-semibold text-red-400">
+                              {formatCurrency(
+                                optionPositionsData.totalPremiumPaid,
+                                wallet.currency,
+                              )}
+                            </p>
+                          </div>
+                          <div>
+                            <span className="text-sm text-gray-500">
+                              Premio Recebido
+                            </span>
+                            <p className="text-lg font-semibold text-emerald-400">
+                              {formatCurrency(
+                                optionPositionsData.totalPremiumReceived,
+                                wallet.currency,
+                              )}
+                            </p>
+                          </div>
+                          <div>
+                            <span className="text-sm text-gray-500">
+                              Premio Liquido
+                            </span>
+                            <p
+                              className={`text-lg font-semibold ${
+                                optionPositionsData.netPremium >= 0
+                                  ? 'text-emerald-400'
+                                  : 'text-red-400'
+                              }`}
+                            >
+                              {formatCurrency(
+                                optionPositionsData.netPremium,
+                                wallet.currency,
+                              )}
+                            </p>
+                          </div>
+                        </div>
+
+                        {/* Option Positions Grid */}
+                        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                          {optionPositionsData.positions.map((position) => (
+                            <OptionPositionCard
+                              key={position.id}
+                              position={position}
+                              currentTime={currentTime}
+                              onClose={
+                                canTrade ? handleCloseOptionPosition : undefined
+                              }
+                              onExercise={
+                                canTrade ? handleExerciseOption : undefined
+                              }
+                            />
+                          ))}
+                        </div>
+                      </div>
+                    ) : (
+                      <div className="text-center py-12">
+                        <LineChart className="w-12 h-12 text-gray-600 mx-auto mb-3" />
+                        <p className="text-gray-400 mb-4">
+                          Nenhuma posicao em opcoes
+                        </p>
+                        {canTrade && (
+                          <div className="flex justify-center gap-3">
+                            <button
+                              onClick={() => handleOpenOptionTrade('BUY')}
+                              className="px-4 py-2 bg-purple-600/20 text-purple-400 rounded-lg hover:bg-purple-600/30 transition-colors"
+                            >
+                              Comprar Opcao
+                            </button>
+                            <button
+                              onClick={() => handleOpenOptionTrade('SELL')}
+                              className="px-4 py-2 bg-pink-600/20 text-pink-400 rounded-lg hover:bg-pink-600/30 transition-colors"
+                            >
+                              Vender Opcao
+                            </button>
+                          </div>
+                        )}
+                      </div>
+                    )}
+                    {isFetchingOptions && !isLoadingOptions && (
+                      <div className="absolute inset-0 bg-slate-900/50 flex items-center justify-center">
+                        <LoadingSpinner size="sm" />
+                      </div>
+                    )}
+                  </div>
+                )}
+                {activeTab === 'history' && (
                   <TransactionTimeline
                     transactions={transactions?.items ?? []}
                     currency={wallet.currency}
@@ -304,6 +473,18 @@ export function WalletDashboard({
           positions={wallet.positions}
           currency={wallet.currency}
           preselectedTicker={preselectedTicker}
+        />
+      )}
+
+      {/* Option Trade Modal */}
+      {wallet && (
+        <OptionTradeModal
+          isOpen={showOptionTradeModal}
+          onClose={() => setShowOptionTradeModal(false)}
+          tradeType={optionTradeType}
+          walletId={walletId}
+          walletName={wallet.name}
+          currentBalance={wallet.cashBalance}
         />
       )}
     </>

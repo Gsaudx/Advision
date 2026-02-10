@@ -3,14 +3,13 @@ import {
   ForbiddenException,
   ConflictException,
   BadRequestException,
-  NotFoundException,
 } from '@nestjs/common';
 import { WalletsService } from '../services/wallets.service';
+import { WalletAccessService } from '../services/wallet-access.service';
 
 // Use Prisma-compatible Decimal mock (simply a number that works with Decimal.js)
 // Decimal.js accepts numbers directly, so we use numbers for cashBalance
 const mockDecimal = (value: number) => value;
-import { AssetResolverService } from '../services/asset-resolver.service';
 import { AuditService } from '../services/audit.service';
 import { PrismaService } from '@/shared/prisma/prisma.service';
 import { DomainEventsService } from '@/shared/domain-events';
@@ -57,14 +56,17 @@ describe('WalletsService', () => {
   let marketData: {
     getBatchPrices: jest.Mock;
   };
-  let assetResolver: {
-    ensureAssetExists: jest.Mock;
-  };
   let auditService: {
     log: jest.Mock;
   };
   let domainEventsService: {
     record: jest.Mock;
+  };
+  let walletAccessService: {
+    verifyWalletAccess: jest.Mock;
+    verifyClientAccess: jest.Mock;
+    isIdempotencyConflict: jest.Mock;
+    isPositionConflict: jest.Mock;
   };
 
   const advisorUser: CurrentUserData = {
@@ -167,10 +169,6 @@ describe('WalletsService', () => {
       getBatchPrices: jest.fn(),
     };
 
-    assetResolver = {
-      ensureAssetExists: jest.fn(),
-    };
-
     auditService = {
       log: jest.fn(),
     };
@@ -179,14 +177,21 @@ describe('WalletsService', () => {
       record: jest.fn().mockResolvedValue('event-123'),
     };
 
+    walletAccessService = {
+      verifyWalletAccess: jest.fn().mockResolvedValue(baseWallet),
+      verifyClientAccess: jest.fn().mockResolvedValue(undefined),
+      isIdempotencyConflict: jest.fn().mockReturnValue(false),
+      isPositionConflict: jest.fn().mockReturnValue(false),
+    };
+
     const module: TestingModule = await Test.createTestingModule({
       providers: [
         WalletsService,
         { provide: PrismaService, useValue: prisma },
         { provide: 'MARKET_DATA_PROVIDER', useValue: marketData },
-        { provide: AssetResolverService, useValue: assetResolver },
         { provide: AuditService, useValue: auditService },
         { provide: DomainEventsService, useValue: domainEventsService },
+        { provide: WalletAccessService, useValue: walletAccessService },
       ],
     }).compile();
 
@@ -252,7 +257,9 @@ describe('WalletsService', () => {
     });
 
     it('throws ForbiddenException when client not owned by advisor', async () => {
-      prisma.client.findFirst.mockResolvedValue(null);
+      walletAccessService.verifyClientAccess.mockRejectedValue(
+        new ForbiddenException('Cliente nao encontrado ou sem permissao'),
+      );
 
       await expect(
         service.create(
@@ -328,7 +335,9 @@ describe('WalletsService', () => {
     });
 
     it('throws ForbiddenException for unlinked CLIENT', async () => {
-      prisma.wallet.findFirst.mockResolvedValue(null);
+      walletAccessService.verifyWalletAccess.mockRejectedValue(
+        new ForbiddenException('Carteira nao encontrada ou sem permissao'),
+      );
 
       await expect(
         service.getDashboard('wallet-123', clientUser),
@@ -445,6 +454,7 @@ describe('WalletsService', () => {
     it('translates idempotency unique constraint to ConflictException', async () => {
       prisma.transaction.findUnique.mockResolvedValue(null);
       prisma.wallet.findFirst.mockResolvedValue(baseWallet);
+      walletAccessService.isIdempotencyConflict.mockReturnValue(true);
       prisma.$transaction.mockRejectedValueOnce({
         code: 'P2002',
         meta: { target: ['walletId', 'idempotencyKey'] },
@@ -462,235 +472,6 @@ describe('WalletsService', () => {
           advisorUser,
         ),
       ).rejects.toBeInstanceOf(ConflictException);
-    });
-  });
-
-  describe('buy', () => {
-    it('calculates weighted average correctly for existing position', async () => {
-      prisma.transaction.findUnique.mockResolvedValue(null);
-      prisma.wallet.findFirst.mockResolvedValue(baseWallet);
-      prisma.wallet.findUnique.mockResolvedValue(baseWallet);
-      assetResolver.ensureAssetExists.mockResolvedValue(baseAsset);
-      prisma.position.findUnique.mockResolvedValue(basePosition);
-      prisma.position.findMany.mockResolvedValue([basePosition]);
-      marketData.getBatchPrices.mockResolvedValue({ PETR4: 35 });
-
-      await service.buy(
-        'wallet-123',
-        {
-          ticker: 'PETR4',
-          quantity: 100,
-          price: 40,
-          date: '2024-01-15T10:00:00.000Z',
-          idempotencyKey: 'buy-123',
-        },
-        advisorUser,
-      );
-
-      // Existing: 100 shares @ 30 = 3000
-      // New: 100 shares @ 40 = 4000
-      // Total: 200 shares, avg = 7000/200 = 35
-      const updateCall = prisma.position.updateMany.mock.calls[0][0];
-      expect(updateCall.data.quantity).toBe(200);
-      expect(updateCall.data.averagePrice).toBe(35);
-    });
-
-    it('creates new position when none exists', async () => {
-      prisma.transaction.findUnique.mockResolvedValue(null);
-      prisma.wallet.findFirst.mockResolvedValue(baseWallet);
-      prisma.wallet.findUnique.mockResolvedValue(baseWallet);
-      assetResolver.ensureAssetExists.mockResolvedValue(baseAsset);
-      prisma.position.findUnique.mockResolvedValue(null);
-      prisma.position.create.mockResolvedValue(basePosition);
-      prisma.position.findMany.mockResolvedValue([basePosition]);
-      marketData.getBatchPrices.mockResolvedValue({ PETR4: 35 });
-
-      await service.buy(
-        'wallet-123',
-        {
-          ticker: 'PETR4',
-          quantity: 100,
-          price: 30,
-          date: '2024-01-15T10:00:00.000Z',
-          idempotencyKey: 'buy-new',
-        },
-        advisorUser,
-      );
-
-      const createCall = prisma.position.create.mock.calls[0][0];
-      expect(createCall.data.quantity).toBe(100);
-      expect(createCall.data.averagePrice).toBe(30);
-    });
-
-    it('rejects when insufficient cash', async () => {
-      prisma.transaction.findUnique.mockResolvedValue(null);
-      prisma.wallet.findFirst.mockResolvedValue(baseWallet);
-      prisma.wallet.findUnique.mockResolvedValue({
-        ...baseWallet,
-        cashBalance: mockDecimal(100),
-      });
-      prisma.position.findUnique.mockResolvedValue(basePosition);
-      prisma.position.updateMany.mockResolvedValue({ count: 1 });
-      prisma.wallet.updateMany.mockResolvedValue({ count: 0 });
-      assetResolver.ensureAssetExists.mockResolvedValue(baseAsset);
-
-      await expect(
-        service.buy(
-          'wallet-123',
-          {
-            ticker: 'PETR4',
-            quantity: 100,
-            price: 30,
-            date: '2024-01-15T10:00:00.000Z',
-            idempotencyKey: 'buy-fail',
-          },
-          advisorUser,
-        ),
-      ).rejects.toBeInstanceOf(BadRequestException);
-    });
-
-    it('rejects duplicate idempotencyKey', async () => {
-      prisma.wallet.findFirst.mockResolvedValue(baseWallet);
-      prisma.transaction.findUnique.mockResolvedValue({ id: 'existing' });
-
-      await expect(
-        service.buy(
-          'wallet-123',
-          {
-            ticker: 'PETR4',
-            quantity: 100,
-            price: 30,
-            date: '2024-01-15T10:00:00.000Z',
-            idempotencyKey: 'dup-key',
-          },
-          advisorUser,
-        ),
-      ).rejects.toBeInstanceOf(ConflictException);
-    });
-  });
-
-  describe('sell', () => {
-    it('updates position and adds cash', async () => {
-      prisma.transaction.findUnique.mockResolvedValue(null);
-      prisma.wallet.findFirst.mockResolvedValue(baseWallet);
-      prisma.wallet.findUnique.mockResolvedValue(baseWallet);
-      prisma.asset.findUnique.mockResolvedValue(baseAsset);
-      prisma.position.findUnique.mockResolvedValue(basePosition);
-      prisma.position.findMany.mockResolvedValue([]);
-      marketData.getBatchPrices.mockResolvedValue({});
-
-      await service.sell(
-        'wallet-123',
-        {
-          ticker: 'PETR4',
-          quantity: 50,
-          price: 40,
-          date: '2024-01-15T10:00:00.000Z',
-          idempotencyKey: 'sell-123',
-        },
-        advisorUser,
-      );
-
-      expect(prisma.position.updateMany).toHaveBeenCalledWith(
-        expect.objectContaining({
-          data: { quantity: 50 },
-        }),
-      );
-      expect(prisma.wallet.update).toHaveBeenCalledWith(
-        expect.objectContaining({
-          data: { cashBalance: { increment: 2000 } }, // 50 * 40
-        }),
-      );
-    });
-
-    it('deletes position when fully sold', async () => {
-      prisma.transaction.findUnique.mockResolvedValue(null);
-      prisma.wallet.findFirst.mockResolvedValue(baseWallet);
-      prisma.wallet.findUnique.mockResolvedValue(baseWallet);
-      prisma.asset.findUnique.mockResolvedValue(baseAsset);
-      prisma.position.findUnique.mockResolvedValue(basePosition);
-      prisma.position.findMany.mockResolvedValue([]);
-      marketData.getBatchPrices.mockResolvedValue({});
-
-      await service.sell(
-        'wallet-123',
-        {
-          ticker: 'PETR4',
-          quantity: 100,
-          price: 40,
-          date: '2024-01-15T10:00:00.000Z',
-          idempotencyKey: 'sell-all',
-        },
-        advisorUser,
-      );
-
-      expect(prisma.position.delete).toHaveBeenCalledWith({
-        where: { id: 'position-123' },
-      });
-    });
-
-    it('rejects when position quantity insufficient', async () => {
-      prisma.transaction.findUnique.mockResolvedValue(null);
-      prisma.wallet.findFirst.mockResolvedValue(baseWallet);
-      prisma.wallet.findUnique.mockResolvedValue(baseWallet);
-      prisma.asset.findUnique.mockResolvedValue(baseAsset);
-      prisma.position.findUnique.mockResolvedValue(basePosition);
-
-      await expect(
-        service.sell(
-          'wallet-123',
-          {
-            ticker: 'PETR4',
-            quantity: 200,
-            price: 40,
-            date: '2024-01-15T10:00:00.000Z',
-            idempotencyKey: 'sell-fail',
-          },
-          advisorUser,
-        ),
-      ).rejects.toBeInstanceOf(BadRequestException);
-    });
-
-    it('rejects when no position exists', async () => {
-      prisma.transaction.findUnique.mockResolvedValue(null);
-      prisma.wallet.findFirst.mockResolvedValue(baseWallet);
-      prisma.wallet.findUnique.mockResolvedValue(baseWallet);
-      prisma.asset.findUnique.mockResolvedValue(baseAsset);
-      prisma.position.findUnique.mockResolvedValue(null);
-
-      await expect(
-        service.sell(
-          'wallet-123',
-          {
-            ticker: 'PETR4',
-            quantity: 50,
-            price: 40,
-            date: '2024-01-15T10:00:00.000Z',
-            idempotencyKey: 'sell-no-pos',
-          },
-          advisorUser,
-        ),
-      ).rejects.toBeInstanceOf(BadRequestException);
-    });
-
-    it('rejects when asset not found', async () => {
-      prisma.transaction.findUnique.mockResolvedValue(null);
-      prisma.wallet.findFirst.mockResolvedValue(baseWallet);
-      prisma.asset.findUnique.mockResolvedValue(null);
-
-      await expect(
-        service.sell(
-          'wallet-123',
-          {
-            ticker: 'UNKNOWN',
-            quantity: 50,
-            price: 40,
-            date: '2024-01-15T10:00:00.000Z',
-            idempotencyKey: 'sell-unknown',
-          },
-          advisorUser,
-        ),
-      ).rejects.toBeInstanceOf(NotFoundException);
     });
   });
 
@@ -748,7 +529,9 @@ describe('WalletsService', () => {
     });
 
     it('unlinked CLIENT cannot access wallets', async () => {
-      prisma.wallet.findFirst.mockResolvedValue(null);
+      walletAccessService.verifyWalletAccess.mockRejectedValue(
+        new ForbiddenException('Carteira nao encontrada ou sem permissao'),
+      );
 
       await expect(
         service.getDashboard('wallet-123', {

@@ -36,6 +36,20 @@ export const OptimizationEvents = {
 } as const;
 
 /**
+ * Event type constants for Derivatives aggregate
+ */
+export const DerivativesEvents = {
+  OPTION_BOUGHT: 'OptionBought',
+  OPTION_SOLD: 'OptionSold',
+  OPTION_POSITION_CLOSED: 'OptionPositionClosed',
+  STRATEGY_EXECUTED: 'StrategyExecuted',
+  STRATEGY_FAILED: 'StrategyFailed',
+  OPTION_EXERCISED: 'OptionExercised',
+  OPTION_ASSIGNED: 'OptionAssigned',
+  OPTION_EXPIRED: 'OptionExpired',
+} as const;
+
+/**
  * Union type of all wallet event types
  */
 export type WalletEventType = (typeof WalletEvents)[keyof typeof WalletEvents];
@@ -50,6 +64,12 @@ export type ClientEventType = (typeof ClientEvents)[keyof typeof ClientEvents];
  */
 export type OptimizationEventType =
   (typeof OptimizationEvents)[keyof typeof OptimizationEvents];
+
+/**
+ * Union type of all derivatives event types
+ */
+export type DerivativesEventType =
+  (typeof DerivativesEvents)[keyof typeof DerivativesEvents];
 
 /**
  * Parameters for recording a domain event
@@ -217,4 +237,132 @@ export interface ClientDeletedPayload {
 export interface InviteRevokedPayload {
   clientId: string;
   advisorId: string;
+}
+
+// ============================================================================
+// DERIVATIVES EVENT PAYLOADS
+// ============================================================================
+
+/**
+ * Payload for OptionBought event
+ */
+export interface OptionBoughtPayload {
+  walletId: string;
+  positionId: string;
+  ticker: string;
+  assetId: string;
+  contracts: number;
+  premium: number;
+  totalCost: number;
+  optionType: 'CALL' | 'PUT';
+  strikePrice: number;
+  expirationDate: string;
+}
+
+/**
+ * Payload for OptionSold event
+ */
+export interface OptionSoldPayload {
+  walletId: string;
+  positionId: string;
+  ticker: string;
+  assetId: string;
+  contracts: number;
+  premium: number;
+  totalPremium: number;
+  optionType: 'CALL' | 'PUT';
+  strikePrice: number;
+  expirationDate: string;
+  covered: boolean;
+  collateralBlocked: number;
+}
+
+/**
+ * Payload for OptionPositionClosed event
+ */
+export interface OptionPositionClosedPayload {
+  walletId: string;
+  positionId: string;
+  ticker: string;
+  assetId: string;
+  contractsClosed: number;
+  premium: number;
+  totalValue: number;
+  wasShort: boolean;
+  remainingContracts: number;
+}
+
+/**
+ * Payload for StrategyExecuted event
+ */
+export interface StrategyExecutedPayload {
+  structuredOperationId: string;
+  walletId: string;
+  strategyType: string;
+  legsCount: number;
+  netPremium: number;
+  isDebitStrategy: boolean;
+  marginRequired: number;
+  correlationId: string;
+}
+
+/**
+ * Payload for StrategyFailed event
+ */
+export interface StrategyFailedPayload {
+  structuredOperationId: string;
+  walletId: string;
+  strategyType: string;
+  reason: string;
+  correlationId: string;
+}
+
+/**
+ * Payload for OptionExercised event
+ */
+export interface OptionExercisedPayload {
+  lifecycleId: string;
+  walletId: string;
+  positionId: string;
+  optionTicker: string;
+  underlyingTicker: string;
+  optionType: 'CALL' | 'PUT';
+  contracts: number;
+  underlyingQuantity: number;
+  strikePrice: number;
+  totalCost: number;
+}
+
+/**
+ * Payload for OptionAssigned event
+ */
+export interface OptionAssignedPayload {
+  lifecycleId: string;
+  walletId: string;
+  positionId: string;
+  optionTicker: string;
+  underlyingTicker: string;
+  optionType: 'CALL' | 'PUT';
+  contracts: number;
+  underlyingQuantity: number;
+  strikePrice: number;
+  settlementAmount: number;
+  collateralReleased: number;
+}
+
+/**
+ * Payload for OptionExpired event
+ */
+export interface OptionExpiredPayload {
+  lifecycleId: string;
+  walletId: string;
+  positionId: string;
+  optionTicker: string;
+  underlyingTicker: string;
+  optionType: 'CALL' | 'PUT';
+  contracts: number;
+  wasShort: boolean;
+  wasInTheMoney: boolean;
+  strikePrice: number;
+  collateralReleased: number;
 }

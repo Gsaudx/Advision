@@ -47,6 +47,9 @@ enum TransactionType {
   SUBSCRIPTION
   DEPOSIT
   WITHDRAWAL
+  OPTION_EXERCISE
+  OPTION_ASSIGNMENT
+  OPTION_EXPIRY
 }
 
 enum OptimizationAlgorithm {
@@ -79,6 +82,47 @@ enum AggregateType {
   TRANSACTION
   OPTIMIZATION
   USER
+  STRUCTURED_OPERATION
+  OPTION_LIFECYCLE
+}
+
+enum OperationLegType {
+  BUY_CALL
+  SELL_CALL
+  BUY_PUT
+  SELL_PUT
+  BUY_STOCK
+  SELL_STOCK
+}
+
+enum StrategyType {
+  SINGLE_OPTION
+  STRADDLE
+  STRANGLE
+  BULL_CALL_SPREAD
+  BEAR_PUT_SPREAD
+  COVERED_CALL
+  PROTECTIVE_PUT
+  COLLAR
+  CUSTOM
+}
+
+enum OperationStatus {
+  PENDING
+  EXECUTED
+  FAILED
+  EXPIRED
+  EXERCISED
+  ASSIGNED
+}
+
+enum OptionLifecycleEvent {
+  OPENED
+  EXERCISED
+  ASSIGNED
+  EXPIRED_ITM
+  EXPIRED_OTM
+  CLOSED
 }
 
 // ============================================================================
@@ -123,20 +167,22 @@ model Client {
 }
 
 model Wallet {
-  id          String   @id @default(uuid())
-  clientId    String
-  name        String
-  description String?
-  currency    String   @default("BRL") @db.VarChar(3)
-  cashBalance Decimal  @default(0) @db.Decimal(18, 2)
-  createdAt   DateTime @default(now())
-  updatedAt   DateTime @updatedAt
+  id                String   @id @default(uuid())
+  clientId          String
+  name              String
+  description       String?
+  currency          String   @default("BRL") @db.VarChar(3)
+  cashBalance       Decimal  @default(0) @db.Decimal(18, 2)
+  blockedCollateral Decimal  @default(0) @db.Decimal(18, 2)
+  createdAt         DateTime @default(now())
+  updatedAt         DateTime @updatedAt
 
-  client           Client            @relation(fields: [clientId], references: [id], onDelete: Cascade)
-  positions        Position[]
-  transactions     Transaction[]
-  optimizationRuns OptimizationRun[]
-  rebalanceLogs    RebalanceLog[]
+  client                Client                @relation(fields: [clientId], references: [id], onDelete: Cascade)
+  positions             Position[]
+  transactions          Transaction[]
+  optimizationRuns      OptimizationRun[]
+  rebalanceLogs         RebalanceLog[]
+  structuredOperations  StructuredOperation[]
 
   @@index([clientId])
   @@map("wallets")
@@ -156,6 +202,7 @@ model Asset {
   underlyingOptions  OptionDetail[] @relation("UnderlyingAsset")
   positions          Position[]
   transactions       Transaction[]
+  operationLegs      OperationLeg[]
 
   @@map("assets")
 }
@@ -178,16 +225,18 @@ model OptionDetail {
 }
 
 model Position {
-  id           String   @id @default(uuid())
-  walletId     String
-  assetId      String
-  quantity     Decimal  @db.Decimal(18, 8)
-  averagePrice Decimal  @db.Decimal(18, 2)
-  createdAt    DateTime @default(now())
-  updatedAt    DateTime @updatedAt
+  id                String   @id @default(uuid())
+  walletId          String
+  assetId           String
+  quantity          Decimal  @db.Decimal(18, 8)
+  averagePrice      Decimal  @db.Decimal(18, 2)
+  collateralBlocked Decimal? @db.Decimal(18, 2)
+  createdAt         DateTime @default(now())
+  updatedAt         DateTime @updatedAt
 
-  wallet Wallet @relation(fields: [walletId], references: [id], onDelete: Cascade)
-  asset  Asset  @relation(fields: [assetId], references: [id])
+  wallet          Wallet            @relation(fields: [walletId], references: [id], onDelete: Cascade)
+  asset           Asset             @relation(fields: [assetId], references: [id])
+  lifecycleEvents OptionLifecycle[]
 
   @@unique([walletId, assetId])
   @@index([walletId])
@@ -208,8 +257,10 @@ model Transaction {
   idempotencyKey String?
   createdAt      DateTime        @default(now())
 
-  wallet Wallet @relation(fields: [walletId], references: [id], onDelete: Cascade)
-  asset  Asset? @relation(fields: [assetId], references: [id])
+  wallet         Wallet           @relation(fields: [walletId], references: [id], onDelete: Cascade)
+  asset          Asset?           @relation(fields: [assetId], references: [id])
+  operationLeg   OperationLeg?
+  lifecycleEvent OptionLifecycle?
 
   @@unique([walletId, idempotencyKey])
   @@index([walletId])
@@ -288,4 +339,77 @@ model DomainEvent {
   @@index([occurredAt])
   @@index([correlationId])
   @@map("domain_events")
+}
+
+// ============================================================================
+// DERIVATIVES & STRUCTURED OPERATIONS
+// ============================================================================
+
+model StructuredOperation {
+  id             String          @id @default(uuid())
+  walletId       String
+  strategyType   StrategyType
+  status         OperationStatus @default(PENDING)
+  totalPremium   Decimal         @db.Decimal(18, 2)
+  executedAt     DateTime?
+  expirationDate DateTime?       @db.Date
+  notes          String?
+  idempotencyKey String?
+  correlationId  String?         @db.VarChar(36)
+  createdAt      DateTime        @default(now())
+  updatedAt      DateTime        @updatedAt
+
+  wallet          Wallet            @relation(fields: [walletId], references: [id], onDelete: Cascade)
+  legs            OperationLeg[]
+  lifecycleEvents OptionLifecycle[]
+
+  @@unique([walletId, idempotencyKey])
+  @@index([walletId])
+  @@index([status])
+  @@index([expirationDate])
+  @@map("structured_operations")
+}
+
+model OperationLeg {
+  id                    String           @id @default(uuid())
+  structuredOperationId String
+  legOrder              Int
+  legType               OperationLegType
+  assetId               String
+  quantity              Decimal          @db.Decimal(18, 8)
+  price                 Decimal          @db.Decimal(18, 2)
+  totalValue            Decimal          @db.Decimal(18, 2)
+  transactionId         String?          @unique
+  status                OperationStatus  @default(PENDING)
+  executedAt            DateTime?
+  createdAt             DateTime         @default(now())
+
+  structuredOperation StructuredOperation @relation(fields: [structuredOperationId], references: [id], onDelete: Cascade)
+  asset               Asset               @relation(fields: [assetId], references: [id])
+  transaction         Transaction?        @relation(fields: [transactionId], references: [id])
+
+  @@index([structuredOperationId])
+  @@index([assetId])
+  @@map("operation_legs")
+}
+
+model OptionLifecycle {
+  id                     String               @id @default(uuid())
+  structuredOperationId  String?
+  positionId             String
+  event                  OptionLifecycleEvent
+  underlyingQuantity     Decimal?             @db.Decimal(18, 8)
+  strikePrice            Decimal?             @db.Decimal(18, 2)
+  settlementAmount       Decimal?             @db.Decimal(18, 2)
+  resultingTransactionId String?              @unique
+  occurredAt             DateTime             @default(now())
+  notes                  String?
+
+  structuredOperation  StructuredOperation? @relation(fields: [structuredOperationId], references: [id])
+  position             Position             @relation(fields: [positionId], references: [id])
+  resultingTransaction Transaction?         @relation(fields: [resultingTransactionId], references: [id])
+
+  @@index([positionId])
+  @@index([structuredOperationId])
+  @@map("option_lifecycle")
 }

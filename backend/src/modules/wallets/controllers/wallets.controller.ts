@@ -21,8 +21,8 @@ import type { ApiResponse as ApiResponseType } from '@/common/schemas';
 import { CurrentUser, type CurrentUserData } from '@/common/decorators';
 import { RolesGuard } from '@/common/guards';
 import { Roles } from '@/common/decorators';
-import { WalletsService } from '../services';
-import { YahooMarketService } from '../providers/yahoo-market.service';
+import { WalletsService, TradingService } from '../services';
+import { CompositeMarketService } from '../providers/composite-market.service';
 import {
   CreateWalletInputDto,
   CashOperationInputDto,
@@ -48,7 +48,8 @@ import type {
 export class WalletsController {
   constructor(
     private readonly walletsService: WalletsService,
-    private readonly marketService: YahooMarketService,
+    private readonly tradingService: TradingService,
+    private readonly marketService: CompositeMarketService,
   ) {}
 
   @Post()
@@ -110,7 +111,7 @@ export class WalletsController {
   @ApiOperation({
     summary: 'Buscar ativos',
     description:
-      'Busca ativos por ticker ou nome para autocomplete. Retorna apenas acoes brasileiras.',
+      'Busca ativos por ticker ou nome para autocomplete. Inclui acoes e opcoes brasileiras.',
   })
   @ApiQuery({
     name: 'q',
@@ -122,6 +123,11 @@ export class WalletsController {
     required: false,
     description: 'Numero maximo de resultados (padrao: 10)',
   })
+  @ApiQuery({
+    name: 'includeOptions',
+    required: false,
+    description: 'Incluir series de opcoes nos resultados (padrao: false)',
+  })
   @ApiResponse({
     status: 200,
     description: 'Lista de ativos encontrados',
@@ -130,6 +136,7 @@ export class WalletsController {
   async searchAssets(
     @Query('q') query: string,
     @Query('limit') limit?: string,
+    @Query('includeOptions') includeOptions?: string,
   ): Promise<ApiResponseType<AssetSearchResponse>> {
     const DEFAULT_LIMIT = 10;
     const MAX_LIMIT = 50;
@@ -142,7 +149,138 @@ export class WalletsController {
       }
     }
 
-    const data = await this.marketService.search(query, maxResults);
+    const shouldIncludeOptions = includeOptions === 'true';
+
+    // Search both market providers and local database in parallel
+    const [marketResults, localResults] = await Promise.all([
+      this.marketService.search(query, maxResults, shouldIncludeOptions),
+      this.walletsService.searchLocalAssets(query, maxResults),
+    ]);
+
+    // Merge results, prioritizing local database (which has our saved assets)
+    // Use a Map to deduplicate by ticker
+    const resultMap = new Map<
+      string,
+      { ticker: string; name: string; type: string; exchange: string }
+    >();
+
+    // Add local results first (priority)
+    for (const asset of localResults) {
+      resultMap.set(asset.ticker, asset);
+    }
+
+    // Add market results if not already present
+    for (const asset of marketResults) {
+      if (!resultMap.has(asset.ticker)) {
+        resultMap.set(asset.ticker, asset);
+      }
+    }
+
+    // Convert to array and limit
+    const data = Array.from(resultMap.values()).slice(0, maxResults);
+    return ApiResponseDto.success(data);
+  }
+
+  @Get('options/search')
+  @Roles('ADVISOR', 'ADMIN')
+  @ApiOperation({
+    summary: 'Buscar opcoes',
+    description:
+      'Busca series de opcoes para um ativo subjacente. Retorna opcoes disponiveis para negociacao.',
+  })
+  @ApiQuery({
+    name: 'underlying',
+    required: true,
+    description: 'Ticker do ativo subjacente (ex: PETR4)',
+  })
+  @ApiQuery({
+    name: 'type',
+    required: false,
+    description: 'Tipo de opcao (CALL ou PUT)',
+    enum: ['CALL', 'PUT'],
+  })
+  @ApiQuery({
+    name: 'limit',
+    required: false,
+    description: 'Numero maximo de resultados (padrao: 20)',
+  })
+  @ApiResponse({
+    status: 200,
+    description: 'Lista de opcoes encontradas',
+    type: AssetSearchApiResponseDto,
+  })
+  async searchOptions(
+    @Query('underlying') underlying: string,
+    @Query('type') optionType?: 'CALL' | 'PUT',
+    @Query('limit') limit?: string,
+  ): Promise<ApiResponseType<AssetSearchResponse>> {
+    const DEFAULT_LIMIT = 20;
+    const MAX_LIMIT = 50;
+
+    let maxResults = DEFAULT_LIMIT;
+    if (limit) {
+      const parsed = parseInt(limit, 10);
+      if (!Number.isNaN(parsed) && parsed > 0) {
+        maxResults = Math.min(parsed, MAX_LIMIT);
+      }
+    }
+
+    const data = await this.marketService.searchOptions(
+      underlying,
+      optionType,
+      maxResults,
+    );
+    return ApiResponseDto.success(data);
+  }
+
+  @Get('options/:ticker/details')
+  @Roles('ADVISOR', 'ADMIN')
+  @ApiOperation({
+    summary: 'Detalhes da opcao',
+    description:
+      'Retorna informacoes detalhadas de uma opcao, incluindo gregas (delta, gamma, theta, vega).',
+  })
+  @ApiParam({ name: 'ticker', description: 'Ticker da opcao (ex: PETRA240)' })
+  @ApiResponse({
+    status: 200,
+    description: 'Detalhes da opcao',
+  })
+  @ApiResponse({
+    status: 404,
+    description: 'Opcao nao encontrada',
+    type: ApiErrorResponseDto,
+  })
+  async getOptionDetails(@Param('ticker') ticker: string): Promise<
+    ApiResponseType<{
+      ticker: string;
+      strike: number;
+      expirationDate: string;
+      type: 'CALL' | 'PUT';
+      impliedVolatility?: number;
+      delta?: number;
+      gamma?: number;
+      theta?: number;
+      vega?: number;
+    } | null>
+  > {
+    const details = await this.marketService.getOptionDetails(ticker);
+
+    if (!details) {
+      return ApiResponseDto.success(null);
+    }
+
+    const data = {
+      ticker: details.symbol,
+      strike: details.strike,
+      expirationDate: details.due_date,
+      type: details.type,
+      impliedVolatility: details.implied_volatility,
+      delta: details.delta,
+      gamma: details.gamma,
+      theta: details.theta,
+      vega: details.vega,
+    };
+
     return ApiResponseDto.success(data);
   }
 
@@ -345,7 +483,8 @@ export class WalletsController {
     @Body() body: TradeInputDto,
     @CurrentUser() user: CurrentUserData,
   ): Promise<ApiResponseType<WalletResponse>> {
-    const data = await this.walletsService.buy(id, body, user);
+    await this.tradingService.buy(id, body, user);
+    const data = await this.walletsService.getDashboard(id, user);
     return ApiResponseDto.success(data, 'Compra realizada com sucesso');
   }
 
@@ -386,7 +525,8 @@ export class WalletsController {
     @Body() body: TradeInputDto,
     @CurrentUser() user: CurrentUserData,
   ): Promise<ApiResponseType<WalletResponse>> {
-    const data = await this.walletsService.sell(id, body, user);
+    await this.tradingService.sell(id, body, user);
+    const data = await this.walletsService.getDashboard(id, user);
     return ApiResponseDto.success(data, 'Venda realizada com sucesso');
   }
 }

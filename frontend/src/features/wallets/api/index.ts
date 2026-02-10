@@ -11,3 +11,8 @@ export {
   assetQueryKeys,
 } from './useAssetSearch';
 export { useTransactions, transactionQueryKeys } from './useTransactions';
+export {
+  useOptionsSearch,
+  useOptionDetails,
+  optionsQueryKeys,
+} from './useOptionsSearch';

@@ -8,6 +8,7 @@ import type {
   AssetSearchResult,
   AssetPriceResult,
   TransactionList,
+  OptionDetailsResult,
 } from '../types';
 
 interface ApiResponse<T> {
@@ -92,6 +93,30 @@ export const walletsApi = {
     const response = await api.get<ApiResponse<TransactionList>>(
       `/wallets/${walletId}/transactions`,
       { params },
+    );
+    return response.data.data;
+  },
+
+  searchOptions: async (
+    underlying: string,
+    optionType?: 'CALL' | 'PUT',
+    limit?: number,
+  ): Promise<AssetSearchResult[]> => {
+    const params: Record<string, string> = { underlying };
+    if (optionType) params.type = optionType;
+    if (limit) params.limit = String(limit);
+    const response = await api.get<ApiResponse<AssetSearchResult[]>>(
+      '/wallets/options/search',
+      { params },
+    );
+    return response.data.data;
+  },
+
+  getOptionDetails: async (
+    ticker: string,
+  ): Promise<OptionDetailsResult | null> => {
+    const response = await api.get<ApiResponse<OptionDetailsResult | null>>(
+      `/wallets/options/${ticker}/details`,
     );
     return response.data.data;
   },

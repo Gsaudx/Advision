@@ -1,7 +1,8 @@
 import { Test, TestingModule } from '@nestjs/testing';
 import { WalletsController } from '../controllers/wallets.controller';
 import { WalletsService } from '../services/wallets.service';
-import { YahooMarketService } from '../providers';
+import { TradingService } from '../services/trading.service';
+import { CompositeMarketService } from '../providers';
 
 describe('WalletsController', () => {
   let controller: WalletsController;
@@ -34,12 +35,22 @@ describe('WalletsController', () => {
     totalValue: 10000,
   };
 
+  let tradingService: {
+    buy: jest.Mock;
+    sell: jest.Mock;
+  };
+
   beforeEach(async () => {
     walletsService = {
       create: jest.fn(),
       findAll: jest.fn(),
       getDashboard: jest.fn(),
       cashOperation: jest.fn(),
+      buy: jest.fn(),
+      sell: jest.fn(),
+    };
+
+    tradingService = {
       buy: jest.fn(),
       sell: jest.fn(),
     };
@@ -52,8 +63,22 @@ describe('WalletsController', () => {
           useValue: walletsService,
         },
         {
-          provide: YahooMarketService,
-          useValue: {},
+          provide: TradingService,
+          useValue: tradingService,
+        },
+        {
+          provide: CompositeMarketService,
+          useValue: {
+            search: jest.fn().mockResolvedValue([]),
+            searchOptions: jest.fn().mockResolvedValue([]),
+            getOptionDetails: jest.fn().mockResolvedValue(null),
+            getPrice: jest.fn().mockResolvedValue(35.5),
+            getMetadata: jest.fn().mockResolvedValue({
+              ticker: 'PETR4',
+              type: 'STOCK',
+              name: 'Petrobras PN',
+            }),
+          },
         },
       ],
     }).compile();
@@ -162,7 +187,8 @@ describe('WalletsController', () => {
 
   describe('buy', () => {
     it('executes buy trade and returns success response', async () => {
-      walletsService.buy.mockResolvedValue(mockWalletResponse);
+      tradingService.buy.mockResolvedValue(undefined);
+      walletsService.getDashboard.mockResolvedValue(mockWalletResponse);
 
       const result = await controller.buy(
         'wallet-123',
@@ -178,7 +204,7 @@ describe('WalletsController', () => {
 
       expect(result.success).toBe(true);
       expect(result.message).toBe('Compra realizada com sucesso');
-      expect(walletsService.buy).toHaveBeenCalledWith(
+      expect(tradingService.buy).toHaveBeenCalledWith(
         'wallet-123',
         expect.objectContaining({ ticker: 'PETR4' }),
         advisorUser,
@@ -188,7 +214,8 @@ describe('WalletsController', () => {
 
   describe('sell', () => {
     it('executes sell trade and returns success response', async () => {
-      walletsService.sell.mockResolvedValue(mockWalletResponse);
+      tradingService.sell.mockResolvedValue(undefined);
+      walletsService.getDashboard.mockResolvedValue(mockWalletResponse);
 
       const result = await controller.sell(
         'wallet-123',
@@ -204,7 +231,7 @@ describe('WalletsController', () => {
 
       expect(result.success).toBe(true);
       expect(result.message).toBe('Venda realizada com sucesso');
-      expect(walletsService.sell).toHaveBeenCalledWith(
+      expect(tradingService.sell).toHaveBeenCalledWith(
         'wallet-123',
         expect.objectContaining({ ticker: 'PETR4' }),
         advisorUser,

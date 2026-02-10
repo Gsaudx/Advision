@@ -1,6 +1,7 @@
 import { z } from 'zod';
 import { createZodDto } from 'nestjs-zod';
 import { createApiResponseSchema } from '@/common/schemas';
+import { TransactionType, AssetType } from '@/generated/prisma/enums';
 
 // ============================================================================
 // INPUT SCHEMAS
@@ -79,15 +80,7 @@ export const TransactionResponseSchema = z.object({
   id: z.string().uuid(),
   walletId: z.string().uuid(),
   assetId: z.string().uuid().nullable(),
-  type: z.enum([
-    'BUY',
-    'SELL',
-    'DIVIDEND',
-    'SPLIT',
-    'SUBSCRIPTION',
-    'DEPOSIT',
-    'WITHDRAWAL',
-  ]),
+  type: z.nativeEnum(TransactionType),
   quantity: z.number().nullable(),
   price: z.number().nullable(),
   totalValue: z.number(),
@@ -105,7 +98,7 @@ export const PositionResponseSchema = z.object({
   assetId: z.string().uuid(),
   ticker: z.string(),
   name: z.string(),
-  type: z.enum(['STOCK', 'OPTION']),
+  type: z.nativeEnum(AssetType),
   quantity: z.number(),
   averagePrice: z.number(),
   currentPrice: z.number().optional(),
