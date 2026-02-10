@@ -1,7 +1,6 @@
 import {
   Injectable,
   NotFoundException,
-  ForbiddenException,
   ConflictException,
   BadRequestException,
   Inject,
@@ -15,16 +14,12 @@ import {
   type OptionAssignedPayload,
   type OptionExpiredPayload,
 } from '@/shared/domain-events';
-import type {
-  Wallet,
-  Position,
-  Asset,
-  OptionDetail,
-} from '@/generated/prisma/client';
+import type { Position, Asset, OptionDetail } from '@/generated/prisma/client';
 import { OptionLifecycleEvent } from '@/generated/prisma/enums';
 import type { CurrentUserData } from '@/common/decorators';
-import { AuditService } from '@/modules/wallets/services';
+import { AuditService, WalletAccessService } from '@/modules/wallets/services';
 import { MarketDataProvider } from '@/modules/wallets/providers';
+import { CONTRACT_SIZE } from '../constants';
 import type {
   ExerciseOptionInput,
   AssignmentInput,
@@ -36,10 +31,6 @@ import type {
   UpcomingExpiration,
 } from '../schemas';
 
-type WalletWithClient = Wallet & {
-  client: { advisorId: string; userId: string | null };
-};
-
 type PositionWithOptionDetail = Position & {
   asset: Asset & {
     optionDetail:
@@ -50,8 +41,6 @@ type PositionWithOptionDetail = Position & {
   };
 };
 
-const CONTRACT_SIZE = 100;
-
 @Injectable()
 export class OptionLifecycleService {
   constructor(
@@ -60,28 +49,8 @@ export class OptionLifecycleService {
     private readonly marketData: MarketDataProvider,
     private readonly auditService: AuditService,
     private readonly domainEvents: DomainEventsService,
+    private readonly walletAccess: WalletAccessService,
   ) {}
-
-  private async verifyWalletAccess(
-    walletId: string,
-    actor: CurrentUserData,
-  ): Promise<WalletWithClient> {
-    const wallet = await this.prisma.wallet.findFirst({
-      where: {
-        id: walletId,
-        client: {
-          OR: [{ advisorId: actor.id }, { userId: actor.id }],
-        },
-      },
-      include: { client: true },
-    });
-
-    if (!wallet) {
-      throw new ForbiddenException('Carteira nao encontrada ou sem permissao');
-    }
-
-    return wallet;
-  }
 
   private async getOptionPosition(
     walletId: string,
@@ -111,23 +80,6 @@ export class OptionLifecycleService {
     return position as PositionWithOptionDetail;
   }
 
-  private isIdempotencyConflict(error: unknown): boolean {
-    if (!error || typeof error !== 'object' || !('code' in error)) {
-      return false;
-    }
-
-    if ((error as { code?: string }).code !== 'P2002') {
-      return false;
-    }
-
-    const target = (error as { meta?: { target?: string | string[] } }).meta
-      ?.target;
-    if (!target) return false;
-
-    const targets = Array.isArray(target) ? target : [target];
-    return targets.includes('idempotencyKey');
-  }
-
   /**
    * Exercise a long option position
    * - CALL exercise: Buy underlying shares at strike price
@@ -139,7 +91,7 @@ export class OptionLifecycleService {
     data: ExerciseOptionInput,
     actor: CurrentUserData,
   ): Promise<ExerciseResultResponse> {
-    await this.verifyWalletAccess(walletId, actor);
+    await this.walletAccess.verifyWalletAccess(walletId, actor);
     const position = await this.getOptionPosition(walletId, positionId);
 
     const currentQty = Number(position.quantity);
@@ -358,7 +310,7 @@ export class OptionLifecycleService {
         };
       });
     } catch (error) {
-      if (this.isIdempotencyConflict(error)) {
+      if (this.walletAccess.isIdempotencyConflict(error)) {
         throw new ConflictException('Operacao duplicada');
       }
       throw error;
@@ -378,7 +330,7 @@ export class OptionLifecycleService {
     data: AssignmentInput,
     actor: CurrentUserData,
   ): Promise<AssignmentResultResponse> {
-    await this.verifyWalletAccess(walletId, actor);
+    await this.walletAccess.verifyWalletAccess(walletId, actor);
     const position = await this.getOptionPosition(walletId, positionId);
 
     const currentQty = Number(position.quantity);
@@ -607,7 +559,7 @@ export class OptionLifecycleService {
         };
       });
     } catch (error) {
-      if (this.isIdempotencyConflict(error)) {
+      if (this.walletAccess.isIdempotencyConflict(error)) {
         throw new ConflictException('Operacao duplicada');
       }
       throw error;
@@ -627,7 +579,7 @@ export class OptionLifecycleService {
     data: ExpireOptionInput,
     actor: CurrentUserData,
   ): Promise<ExpirationResultResponse> {
-    await this.verifyWalletAccess(walletId, actor);
+    await this.walletAccess.verifyWalletAccess(walletId, actor);
     const position = await this.getOptionPosition(walletId, positionId);
 
     const optionDetail = position.asset.optionDetail!;
@@ -736,7 +688,7 @@ export class OptionLifecycleService {
         };
       });
     } catch (error) {
-      if (this.isIdempotencyConflict(error)) {
+      if (this.walletAccess.isIdempotencyConflict(error)) {
         throw new ConflictException('Operacao duplicada');
       }
       throw error;
@@ -753,7 +705,7 @@ export class OptionLifecycleService {
     daysAhead: number,
     actor: CurrentUserData,
   ): Promise<UpcomingExpirationsResponse> {
-    await this.verifyWalletAccess(walletId, actor);
+    await this.walletAccess.verifyWalletAccess(walletId, actor);
 
     const today = new Date();
     today.setHours(0, 0, 0, 0);

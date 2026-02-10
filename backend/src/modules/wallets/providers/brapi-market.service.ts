@@ -1,5 +1,9 @@
 import { Injectable, Logger, NotFoundException } from '@nestjs/common';
-import { MarketDataProvider, AssetMetadata } from './market-data.provider';
+import {
+  MarketDataProvider,
+  AssetMetadata,
+  MARKET_CACHE_TTL_MS,
+} from './market-data.provider';
 import type { AssetSearchResult } from './yahoo-market.service';
 
 interface CacheEntry {
@@ -52,7 +56,6 @@ interface BrapiAvailableResponse {
   stocks: string[];
 }
 
-const CACHE_TTL_MS = 60 * 1000; // 60 seconds
 const BRAPI_BASE_URL = 'https://brapi.dev/api';
 
 /**
@@ -175,12 +178,12 @@ export class BrapiMarketService extends MarketDataProvider {
    */
   private isCacheValid(entry: CacheEntry | undefined): boolean {
     if (!entry) return false;
-    return Date.now() - entry.timestamp < CACHE_TTL_MS;
+    return Date.now() - entry.timestamp < MARKET_CACHE_TTL_MS;
   }
 
   private pruneCache(now = Date.now()): void {
     for (const [ticker, entry] of this.priceCache.entries()) {
-      if (now - entry.timestamp >= CACHE_TTL_MS) {
+      if (now - entry.timestamp >= MARKET_CACHE_TTL_MS) {
         this.priceCache.delete(ticker);
       }
     }
@@ -216,7 +219,7 @@ export class BrapiMarketService extends MarketDataProvider {
       const response = await fetch(url);
 
       if (!response.ok) {
-        throw new NotFoundException(`Preco nao encontrado para ${ticker}`);
+        throw new NotFoundException(`Preço não encontrado para ${ticker}`);
       }
 
       const data = (await response.json()) as BrapiQuoteResponse;
@@ -226,7 +229,7 @@ export class BrapiMarketService extends MarketDataProvider {
         data.results.length === 0 ||
         data.results[0].regularMarketPrice === undefined
       ) {
-        throw new NotFoundException(`Preco nao encontrado para ${ticker}`);
+        throw new NotFoundException(`Preço não encontrado para ${ticker}`);
       }
 
       const price = data.results[0].regularMarketPrice;
@@ -239,9 +242,9 @@ export class BrapiMarketService extends MarketDataProvider {
       return price;
     } catch (error) {
       this.logger.error(
-        `Erro ao buscar preco para ${ticker}: ${(error as Error).message}`,
+        `Erro ao buscar preço para ${ticker}: ${(error as Error).message}`,
       );
-      throw new NotFoundException(`Preco nao encontrado para ${ticker}`);
+      throw new NotFoundException(`Preço não encontrado para ${ticker}`);
     }
   }
 
@@ -411,7 +414,7 @@ export class BrapiMarketService extends MarketDataProvider {
       }
     } catch (error) {
       this.logger.error(
-        `Erro ao buscar precos em lote: ${(error as Error).message}`,
+        `Erro ao buscar preços em lote: ${(error as Error).message}`,
       );
       // Return whatever we have from cache
     }

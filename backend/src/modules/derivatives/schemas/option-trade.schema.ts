@@ -17,18 +17,18 @@ import {
 export const BuyOptionInputSchema = z.object({
   ticker: z
     .string()
-    .min(1, 'Ticker obrigatorio')
-    .max(20, 'Ticker deve ter no maximo 20 caracteres')
+    .min(1, 'Ticker obrigatório')
+    .max(20, 'Ticker deve ter no máximo 20 caracteres')
     .toUpperCase(),
   quantity: z
     .number()
     .positive('Quantidade de contratos deve ser positiva')
-    .int('Quantidade deve ser um numero inteiro de contratos'),
-  premium: z.number().positive('Premio deve ser positivo'),
+    .int('Quantidade deve ser um número inteiro de contratos'),
+  premium: z.number().positive('Prêmio deve ser positivo'),
   date: z
     .string()
-    .datetime({ message: 'Data invalida (formato ISO esperado)' }),
-  idempotencyKey: z.string().min(1, 'Chave de idempotencia obrigatoria'),
+    .datetime({ message: 'Data inválida (formato ISO esperado)' }),
+  idempotencyKey: z.string().min(1, 'Chave de idempotência obrigatória'),
 });
 export class BuyOptionInputDto extends createZodDto(BuyOptionInputSchema) {}
 export type BuyOptionInput = z.infer<typeof BuyOptionInputSchema>;
@@ -39,19 +39,19 @@ export type BuyOptionInput = z.infer<typeof BuyOptionInputSchema>;
 export const SellOptionInputSchema = z.object({
   ticker: z
     .string()
-    .min(1, 'Ticker obrigatorio')
-    .max(20, 'Ticker deve ter no maximo 20 caracteres')
+    .min(1, 'Ticker obrigatório')
+    .max(20, 'Ticker deve ter no máximo 20 caracteres')
     .toUpperCase(),
   quantity: z
     .number()
     .positive('Quantidade de contratos deve ser positiva')
-    .int('Quantidade deve ser um numero inteiro de contratos'),
-  premium: z.number().positive('Premio deve ser positivo'),
+    .int('Quantidade deve ser um número inteiro de contratos'),
+  premium: z.number().positive('Prêmio deve ser positivo'),
   date: z
     .string()
-    .datetime({ message: 'Data invalida (formato ISO esperado)' }),
+    .datetime({ message: 'Data inválida (formato ISO esperado)' }),
   covered: z.boolean().default(false),
-  idempotencyKey: z.string().min(1, 'Chave de idempotencia obrigatoria'),
+  idempotencyKey: z.string().min(1, 'Chave de idempotência obrigatória'),
 });
 export class SellOptionInputDto extends createZodDto(SellOptionInputSchema) {}
 export type SellOptionInput = z.infer<typeof SellOptionInputSchema>;
@@ -63,13 +63,13 @@ export const CloseOptionInputSchema = z.object({
   quantity: z
     .number()
     .positive('Quantidade de contratos deve ser positiva')
-    .int('Quantidade deve ser um numero inteiro de contratos')
+    .int('Quantidade deve ser um número inteiro de contratos')
     .optional(),
-  premium: z.number().positive('Premio deve ser positivo'),
+  premium: z.number().positive('Prêmio deve ser positivo'),
   date: z
     .string()
-    .datetime({ message: 'Data invalida (formato ISO esperado)' }),
-  idempotencyKey: z.string().min(1, 'Chave de idempotencia obrigatoria'),
+    .datetime({ message: 'Data inválida (formato ISO esperado)' }),
+  idempotencyKey: z.string().min(1, 'Chave de idempotência obrigatória'),
 });
 export class CloseOptionInputDto extends createZodDto(CloseOptionInputSchema) {}
 export type CloseOptionInput = z.infer<typeof CloseOptionInputSchema>;

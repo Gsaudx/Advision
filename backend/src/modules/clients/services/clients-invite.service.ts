@@ -41,16 +41,16 @@ export class ClientsInviteService {
 
     if (client.advisorId !== advisorId) {
       throw new ForbiddenException(
-        'Voce nao tem permissao para convidar este cliente',
+        'Você não tem permissão para convidar este cliente',
       );
     }
 
     if (client.userId) {
-      throw new ConflictException('Cliente ja possui uma conta vinculada');
+      throw new ConflictException('Cliente já possui uma conta vinculada');
     }
 
     if (client.inviteStatus === InviteStatus.ACCEPTED) {
-      throw new ConflictException('Convite ja foi aceito');
+      throw new ConflictException('Convite já foi aceito');
     }
 
     const inviteExpiresAt = new Date();
@@ -134,7 +134,7 @@ export class ClientsInviteService {
 
     if (client.advisorId !== advisorId) {
       throw new ForbiddenException(
-        'Voce nao tem permissao para visualizar este cliente',
+        'Você não tem permissão para visualizar este cliente',
       );
     }
 
@@ -164,7 +164,7 @@ export class ClientsInviteService {
 
       if (existingLink) {
         throw new ConflictException(
-          'Voce ja esta vinculado a um perfil de cliente',
+          'Você já está vinculado a um perfil de cliente',
         );
       }
 
@@ -192,11 +192,11 @@ export class ClientsInviteService {
         });
 
         if (!client) {
-          throw new BadRequestException('Token de convite invalido');
+          throw new BadRequestException('Token de convite inválido');
         }
 
         if (client.inviteStatus === InviteStatus.ACCEPTED) {
-          throw new ConflictException('Este convite ja foi utilizado');
+          throw new ConflictException('Este convite já foi utilizado');
         }
 
         if (client.inviteStatus !== InviteStatus.SENT) {
@@ -257,13 +257,13 @@ export class ClientsInviteService {
 
     if (client.advisorId !== advisorId) {
       throw new ForbiddenException(
-        'Voce nao tem permissao para revogar este convite',
+        'Você não tem permissão para revogar este convite',
       );
     }
 
     if (client.inviteStatus === InviteStatus.ACCEPTED) {
       throw new ConflictException(
-        'Nao e possivel revogar um convite ja aceito',
+        'Não é possível revogar um convite já aceito',
       );
     }
 

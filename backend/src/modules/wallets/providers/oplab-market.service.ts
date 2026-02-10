@@ -1,5 +1,9 @@
 import { Injectable, Logger, NotFoundException } from '@nestjs/common';
-import { MarketDataProvider, AssetMetadata } from './market-data.provider';
+import {
+  MarketDataProvider,
+  AssetMetadata,
+  MARKET_CACHE_TTL_MS,
+} from './market-data.provider';
 import type { AssetSearchResult } from './yahoo-market.service';
 
 interface CacheEntry<T> {
@@ -125,7 +129,6 @@ interface OpLabInstrumentResponse {
   data: OpLabInstrument;
 }
 
-const CACHE_TTL_MS = 60 * 1000; // 60 seconds
 const SERIES_CACHE_TTL_MS = 5 * 60 * 1000; // 5 minutes for option series
 const OPLAB_BASE_URL = 'https://api.oplab.com.br/v3';
 
@@ -170,7 +173,7 @@ export class OpLabMarketService extends MarketDataProvider {
    */
   private isCacheValid<T>(
     entry: CacheEntry<T> | undefined,
-    ttl = CACHE_TTL_MS,
+    ttl = MARKET_CACHE_TTL_MS,
   ): boolean {
     if (!entry) return false;
     return Date.now() - entry.timestamp < ttl;
@@ -181,7 +184,7 @@ export class OpLabMarketService extends MarketDataProvider {
    */
   private pruneCache(now = Date.now()): void {
     for (const [ticker, entry] of this.priceCache.entries()) {
-      if (now - entry.timestamp >= CACHE_TTL_MS) {
+      if (now - entry.timestamp >= MARKET_CACHE_TTL_MS) {
         this.priceCache.delete(ticker);
       }
     }
@@ -243,14 +246,14 @@ export class OpLabMarketService extends MarketDataProvider {
       });
 
       if (!quotes || quotes.length === 0) {
-        throw new NotFoundException(`Preco nao encontrado para ${ticker}`);
+        throw new NotFoundException(`Preço não encontrado para ${ticker}`);
       }
 
       const quote = quotes[0];
       const price = quote.close ?? quote.bid ?? quote.ask;
 
       if (price === undefined || price === null) {
-        throw new NotFoundException(`Preco nao encontrado para ${ticker}`);
+        throw new NotFoundException(`Preço não encontrado para ${ticker}`);
       }
 
       this.priceCache.set(upperTicker, {
@@ -264,7 +267,7 @@ export class OpLabMarketService extends MarketDataProvider {
       this.logger.error(
         `Erro ao buscar preco para ${ticker}: ${(error as Error).message}`,
       );
-      throw new NotFoundException(`Preco nao encontrado para ${ticker}`);
+      throw new NotFoundException(`Preço não encontrado para ${ticker}`);
     }
   }
 

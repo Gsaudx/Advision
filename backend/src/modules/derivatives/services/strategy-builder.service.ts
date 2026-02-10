@@ -2,13 +2,12 @@ import { Injectable, BadRequestException } from '@nestjs/common';
 import { Decimal } from 'decimal.js';
 import { PrismaService } from '@/shared/prisma/prisma.service';
 import { StrategyType, OperationLegType } from '@/generated/prisma/enums';
+import { CONTRACT_SIZE } from '../constants';
 import type {
   OperationLegInput,
   StrategyRiskProfile,
   StrategyPreviewResponse,
 } from '../schemas';
-
-const CONTRACT_SIZE = 100;
 
 interface BuiltStrategy {
   strategyType: StrategyType;
@@ -157,12 +156,12 @@ export class StrategyBuilderService {
       case StrategyType.SINGLE_OPTION:
       case StrategyType.CUSTOM:
         throw new BadRequestException(
-          `Estrategia ${strategyType} requer definicao manual das pernas`,
+          `Estratégia ${strategyType} requer definição manual das pernas`,
         );
 
       default:
         throw new BadRequestException(
-          `Estrategia desconhecida: ${strategyType}`,
+          `Estratégia desconhecida: ${strategyType}`,
         );
     }
 
@@ -182,11 +181,11 @@ export class StrategyBuilderService {
     const errors: string[] = [];
 
     if (legs.length === 0) {
-      errors.push('Estrategia deve ter pelo menos uma perna');
+      errors.push('Estratégia deve ter pelo menos uma perna');
     }
 
     if (legs.length > 4) {
-      errors.push('Estrategia pode ter no maximo 4 pernas');
+      errors.push('Estratégia pode ter no máximo 4 pernas');
     }
 
     const tickers = [...new Set(legs.map((l) => l.ticker))];

@@ -8,7 +8,11 @@ import { Test, TestingModule } from '@nestjs/testing';
 import { DerivativesService } from '../services/derivatives.service';
 import { PrismaService } from '@/shared/prisma/prisma.service';
 import { DomainEventsService } from '@/shared/domain-events';
-import { AssetResolverService, AuditService } from '@/modules/wallets/services';
+import {
+  AssetResolverService,
+  AuditService,
+  WalletAccessService,
+} from '@/modules/wallets/services';
 import { MarketDataProvider } from '@/modules/wallets/providers';
 
 describe('DerivativesService', () => {
@@ -36,6 +40,10 @@ describe('DerivativesService', () => {
   let assetResolver: { ensureAssetExists: jest.Mock };
   let auditService: { log: jest.Mock };
   let domainEvents: { record: jest.Mock };
+  let walletAccess: {
+    verifyWalletAccess: jest.Mock;
+    isIdempotencyConflict: jest.Mock;
+  };
 
   const advisorUser = {
     id: 'advisor-123',
@@ -105,6 +113,10 @@ describe('DerivativesService', () => {
     assetResolver = { ensureAssetExists: jest.fn() };
     auditService = { log: jest.fn() };
     domainEvents = { record: jest.fn() };
+    walletAccess = {
+      verifyWalletAccess: jest.fn(),
+      isIdempotencyConflict: jest.fn().mockReturnValue(false),
+    };
 
     const module: TestingModule = await Test.createTestingModule({
       providers: [
@@ -114,6 +126,7 @@ describe('DerivativesService', () => {
         { provide: AssetResolverService, useValue: assetResolver },
         { provide: AuditService, useValue: auditService },
         { provide: DomainEventsService, useValue: domainEvents },
+        { provide: WalletAccessService, useValue: walletAccess },
       ],
     }).compile();
 
@@ -130,7 +143,7 @@ describe('DerivativesService', () => {
     };
 
     it('buys options and creates new position', async () => {
-      prisma.wallet.findFirst.mockResolvedValue(mockWallet);
+      walletAccess.verifyWalletAccess.mockResolvedValue(mockWallet);
       prisma.transaction.findUnique.mockResolvedValue(null);
       assetResolver.ensureAssetExists.mockResolvedValue(mockOptionAsset);
       prisma.optionDetail.findUnique.mockResolvedValue(mockOptionDetail);
@@ -169,7 +182,7 @@ describe('DerivativesService', () => {
     });
 
     it('averages price when adding to existing long position', async () => {
-      prisma.wallet.findFirst.mockResolvedValue(mockWallet);
+      walletAccess.verifyWalletAccess.mockResolvedValue(mockWallet);
       prisma.transaction.findUnique.mockResolvedValue(null);
       assetResolver.ensureAssetExists.mockResolvedValue(mockOptionAsset);
       prisma.optionDetail.findUnique.mockResolvedValue(mockOptionDetail);
@@ -211,7 +224,7 @@ describe('DerivativesService', () => {
     });
 
     it('reduces short position when buying', async () => {
-      prisma.wallet.findFirst.mockResolvedValue(mockWallet);
+      walletAccess.verifyWalletAccess.mockResolvedValue(mockWallet);
       prisma.transaction.findUnique.mockResolvedValue(null);
       assetResolver.ensureAssetExists.mockResolvedValue(mockOptionAsset);
       prisma.optionDetail.findUnique.mockResolvedValue(mockOptionDetail);
@@ -249,7 +262,9 @@ describe('DerivativesService', () => {
     });
 
     it('throws ForbiddenException when wallet not accessible', async () => {
-      prisma.wallet.findFirst.mockResolvedValue(null);
+      walletAccess.verifyWalletAccess.mockRejectedValue(
+        new ForbiddenException(),
+      );
 
       await expect(
         service.buyOption('wallet-123', buyInput, advisorUser),
@@ -257,7 +272,7 @@ describe('DerivativesService', () => {
     });
 
     it('throws ConflictException on duplicate idempotencyKey', async () => {
-      prisma.wallet.findFirst.mockResolvedValue(mockWallet);
+      walletAccess.verifyWalletAccess.mockResolvedValue(mockWallet);
       prisma.transaction.findUnique.mockResolvedValue({ id: 'existing-tx' });
 
       await expect(
@@ -266,7 +281,7 @@ describe('DerivativesService', () => {
     });
 
     it('throws BadRequestException when ticker is not an option', async () => {
-      prisma.wallet.findFirst.mockResolvedValue(mockWallet);
+      walletAccess.verifyWalletAccess.mockResolvedValue(mockWallet);
       prisma.transaction.findUnique.mockResolvedValue(null);
       assetResolver.ensureAssetExists.mockResolvedValue(mockStockAsset);
 
@@ -276,7 +291,7 @@ describe('DerivativesService', () => {
     });
 
     it('throws BadRequestException on insufficient cash', async () => {
-      prisma.wallet.findFirst.mockResolvedValue(mockWallet);
+      walletAccess.verifyWalletAccess.mockResolvedValue(mockWallet);
       prisma.transaction.findUnique.mockResolvedValue(null);
       assetResolver.ensureAssetExists.mockResolvedValue(mockOptionAsset);
       prisma.optionDetail.findUnique.mockResolvedValue(mockOptionDetail);
@@ -309,7 +324,7 @@ describe('DerivativesService', () => {
     };
 
     it('sells options and creates short position', async () => {
-      prisma.wallet.findFirst.mockResolvedValue(mockWallet);
+      walletAccess.verifyWalletAccess.mockResolvedValue(mockWallet);
       prisma.transaction.findUnique.mockResolvedValue(null);
       assetResolver.ensureAssetExists.mockResolvedValue(mockOptionAsset);
       prisma.optionDetail.findUnique.mockResolvedValue(mockOptionDetail);
@@ -347,7 +362,7 @@ describe('DerivativesService', () => {
         data: expect.objectContaining({
           quantity: -10,
           averagePrice: 1.5,
-          collateralBlocked: null,
+          collateralBlocked: 0,
         }),
       });
     });
@@ -358,7 +373,7 @@ describe('DerivativesService', () => {
         optionType: 'PUT',
       };
 
-      prisma.wallet.findFirst.mockResolvedValue(mockWallet);
+      walletAccess.verifyWalletAccess.mockResolvedValue(mockWallet);
       prisma.transaction.findUnique.mockResolvedValue(null);
       assetResolver.ensureAssetExists.mockResolvedValue(mockOptionAsset);
       prisma.optionDetail.findUnique.mockResolvedValue(putOptionDetail);
@@ -393,7 +408,7 @@ describe('DerivativesService', () => {
     it('validates covered call has sufficient underlying shares', async () => {
       const coveredSellInput = { ...sellInput, covered: true };
 
-      prisma.wallet.findFirst.mockResolvedValue(mockWallet);
+      walletAccess.verifyWalletAccess.mockResolvedValue(mockWallet);
       prisma.transaction.findUnique.mockResolvedValue(null);
       assetResolver.ensureAssetExists.mockResolvedValue(mockOptionAsset);
       prisma.optionDetail.findUnique.mockResolvedValue(mockOptionDetail);
@@ -432,7 +447,7 @@ describe('DerivativesService', () => {
         blockedCollateral: 0,
       };
 
-      prisma.wallet.findFirst.mockResolvedValue(lowBalanceWallet);
+      walletAccess.verifyWalletAccess.mockResolvedValue(lowBalanceWallet);
       prisma.transaction.findUnique.mockResolvedValue(null);
       assetResolver.ensureAssetExists.mockResolvedValue(mockOptionAsset);
       prisma.optionDetail.findUnique.mockResolvedValue(putOptionDetail);
@@ -492,7 +507,7 @@ describe('DerivativesService', () => {
     };
 
     it('closes long position partially and adds cash', async () => {
-      prisma.wallet.findFirst.mockResolvedValue(mockWallet);
+      walletAccess.verifyWalletAccess.mockResolvedValue(mockWallet);
       prisma.transaction.findUnique.mockResolvedValue(null);
       prisma.position.findFirst.mockResolvedValue(mockLongPosition);
 
@@ -538,7 +553,7 @@ describe('DerivativesService', () => {
     });
 
     it('closes short position and releases collateral proportionally', async () => {
-      prisma.wallet.findFirst.mockResolvedValue(mockWallet);
+      walletAccess.verifyWalletAccess.mockResolvedValue(mockWallet);
       prisma.transaction.findUnique.mockResolvedValue(null);
       prisma.position.findFirst.mockResolvedValue(mockShortPosition);
 
@@ -581,7 +596,7 @@ describe('DerivativesService', () => {
 
     it('deletes position when fully closed', async () => {
       const fullCloseInput = { ...closeInput, quantity: 10 };
-      prisma.wallet.findFirst.mockResolvedValue(mockWallet);
+      walletAccess.verifyWalletAccess.mockResolvedValue(mockWallet);
       prisma.transaction.findUnique.mockResolvedValue(null);
       prisma.position.findFirst.mockResolvedValue(mockLongPosition);
 
@@ -614,7 +629,7 @@ describe('DerivativesService', () => {
     });
 
     it('throws NotFoundException when position not found', async () => {
-      prisma.wallet.findFirst.mockResolvedValue(mockWallet);
+      walletAccess.verifyWalletAccess.mockResolvedValue(mockWallet);
       prisma.transaction.findUnique.mockResolvedValue(null);
       prisma.position.findFirst.mockResolvedValue(null);
 
@@ -630,7 +645,7 @@ describe('DerivativesService', () => {
 
     it('throws BadRequestException when closing more than position size', async () => {
       const tooMuchInput = { ...closeInput, quantity: 20 };
-      prisma.wallet.findFirst.mockResolvedValue(mockWallet);
+      walletAccess.verifyWalletAccess.mockResolvedValue(mockWallet);
       prisma.transaction.findUnique.mockResolvedValue(null);
       prisma.position.findFirst.mockResolvedValue(mockLongPosition);
 
@@ -692,7 +707,7 @@ describe('DerivativesService', () => {
         },
       ];
 
-      prisma.wallet.findFirst.mockResolvedValue(mockWallet);
+      walletAccess.verifyWalletAccess.mockResolvedValue(mockWallet);
       prisma.position.findMany.mockResolvedValue(positions);
       marketData.getBatchPrices.mockResolvedValue({
         PETRA240: 2.0,
@@ -726,7 +741,7 @@ describe('DerivativesService', () => {
     });
 
     it('returns empty array when no option positions', async () => {
-      prisma.wallet.findFirst.mockResolvedValue(mockWallet);
+      walletAccess.verifyWalletAccess.mockResolvedValue(mockWallet);
       prisma.position.findMany.mockResolvedValue([]);
 
       const result = await service.getOptionPositions(

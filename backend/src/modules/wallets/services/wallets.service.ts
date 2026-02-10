@@ -147,8 +147,8 @@ export class WalletsService {
           clientId: data.clientId,
           name: data.name,
           description: data.description,
-          currency: data.currency || 'BRL',
-          cashBalance: data.initialCashBalance || 0,
+          currency: data.currency ?? 'BRL',
+          cashBalance: data.initialCashBalance ?? 0,
         },
       });
 
@@ -313,7 +313,7 @@ export class WalletsService {
     });
 
     if (existing) {
-      throw new ConflictException('Operacao duplicada');
+      throw new ConflictException('Operação duplicada');
     }
 
     try {
@@ -418,7 +418,7 @@ export class WalletsService {
       });
     } catch (error) {
       if (this.walletAccess.isIdempotencyConflict(error)) {
-        throw new ConflictException('Operacao duplicada');
+        throw new ConflictException('Operação duplicada');
       }
       throw error;
     }
@@ -445,7 +445,7 @@ export class WalletsService {
         where: { id: cursor, walletId },
       });
       if (!cursorTransaction) {
-        throw new BadRequestException('Cursor invalido');
+        throw new BadRequestException('Cursor inválido');
       }
     }
 

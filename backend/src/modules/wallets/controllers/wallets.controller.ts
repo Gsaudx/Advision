@@ -70,7 +70,7 @@ export class WalletsController {
   })
   @ApiResponse({
     status: 403,
-    description: 'Sem permissao para criar carteira para este cliente',
+    description: 'Sem permissão para criar carteira para este cliente',
     type: ApiErrorResponseDto,
   })
   async create(
@@ -247,7 +247,7 @@ export class WalletsController {
   })
   @ApiResponse({
     status: 404,
-    description: 'Opcao nao encontrada',
+    description: 'Opcao não encontrada',
     type: ApiErrorResponseDto,
   })
   async getOptionDetails(@Param('ticker') ticker: string): Promise<
@@ -287,18 +287,18 @@ export class WalletsController {
   @Get('assets/:ticker/price')
   @Roles('ADVISOR', 'ADMIN')
   @ApiOperation({
-    summary: 'Obter preco do ativo',
-    description: 'Retorna o preco atual de mercado de um ativo.',
+    summary: 'Obter preço do ativo',
+    description: 'Retorna o preço atual de mercado de um ativo.',
   })
   @ApiParam({ name: 'ticker', description: 'Ticker do ativo (ex: PETR4)' })
   @ApiResponse({
     status: 200,
-    description: 'Preco atual do ativo',
+    description: 'Preço atual do ativo',
     type: AssetPriceApiResponseDto,
   })
   @ApiResponse({
     status: 404,
-    description: 'Ativo nao encontrado',
+    description: 'Ativo não encontrado',
     type: ApiErrorResponseDto,
   })
   async getAssetPrice(
@@ -323,7 +323,7 @@ export class WalletsController {
   @Roles('ADVISOR', 'ADMIN', 'CLIENT')
   @ApiOperation({
     summary: 'Dashboard da carteira',
-    description: 'Retorna a carteira com posicoes e precos atuais de mercado.',
+    description: 'Retorna a carteira com posições e preços atuais de mercado.',
   })
   @ApiParam({ name: 'id', description: 'ID da carteira' })
   @ApiResponse({
@@ -333,12 +333,12 @@ export class WalletsController {
   })
   @ApiResponse({
     status: 403,
-    description: 'Sem permissao para acessar esta carteira',
+    description: 'Sem permissão para acessar esta carteira',
     type: ApiErrorResponseDto,
   })
   @ApiResponse({
     status: 404,
-    description: 'Carteira nao encontrada',
+    description: 'Carteira não encontrada',
     type: ApiErrorResponseDto,
   })
   async findOne(
@@ -379,12 +379,12 @@ export class WalletsController {
   })
   @ApiResponse({
     status: 403,
-    description: 'Sem permissao para acessar esta carteira',
+    description: 'Sem permissão para acessar esta carteira',
     type: ApiErrorResponseDto,
   })
   @ApiResponse({
     status: 404,
-    description: 'Carteira nao encontrada',
+    description: 'Carteira não encontrada',
     type: ApiErrorResponseDto,
   })
   async getTransactions(
@@ -409,28 +409,28 @@ export class WalletsController {
   @Post(':id/cash')
   @Roles('ADVISOR', 'ADMIN')
   @ApiOperation({
-    summary: 'Operacao de caixa',
-    description: 'Realiza deposito ou saque na carteira.',
+    summary: 'Operação de caixa',
+    description: 'Realiza depósito ou saque na carteira.',
   })
   @ApiParam({ name: 'id', description: 'ID da carteira' })
   @ApiResponse({
     status: 200,
-    description: 'Operacao realizada com sucesso',
+    description: 'Operação realizada com sucesso',
     type: WalletApiResponseDto,
   })
   @ApiResponse({
     status: 400,
-    description: 'Saldo insuficiente ou dados invalidos',
+    description: 'Saldo insuficiente ou dados inválidos',
     type: ApiErrorResponseDto,
   })
   @ApiResponse({
     status: 403,
-    description: 'Sem permissao para operar esta carteira',
+    description: 'Sem permissão para operar esta carteira',
     type: ApiErrorResponseDto,
   })
   @ApiResponse({
     status: 409,
-    description: 'Operacao duplicada (idempotencyKey ja utilizada)',
+    description: 'Operação duplicada (idempotencyKey já utilizada)',
     type: ApiErrorResponseDto,
   })
   async cashOperation(
@@ -441,7 +441,7 @@ export class WalletsController {
     const data = await this.walletsService.cashOperation(id, body, user);
     const message =
       body.type === 'DEPOSIT'
-        ? 'Deposito realizado com sucesso'
+        ? 'Depósito realizado com sucesso'
         : 'Saque realizado com sucesso';
     return ApiResponseDto.success(data, message);
   }
@@ -460,22 +460,22 @@ export class WalletsController {
   })
   @ApiResponse({
     status: 400,
-    description: 'Saldo insuficiente ou dados invalidos',
+    description: 'Saldo insuficiente ou dados inválidos',
     type: ApiErrorResponseDto,
   })
   @ApiResponse({
     status: 403,
-    description: 'Sem permissao para operar esta carteira',
+    description: 'Sem permissão para operar esta carteira',
     type: ApiErrorResponseDto,
   })
   @ApiResponse({
     status: 404,
-    description: 'Ativo nao encontrado',
+    description: 'Ativo não encontrado',
     type: ApiErrorResponseDto,
   })
   @ApiResponse({
     status: 409,
-    description: 'Operacao duplicada (idempotencyKey ja utilizada)',
+    description: 'Operação duplicada (idempotencyKey já utilizada)',
     type: ApiErrorResponseDto,
   })
   async buy(
@@ -502,22 +502,22 @@ export class WalletsController {
   })
   @ApiResponse({
     status: 400,
-    description: 'Quantidade insuficiente ou dados invalidos',
+    description: 'Quantidade insuficiente ou dados inválidos',
     type: ApiErrorResponseDto,
   })
   @ApiResponse({
     status: 403,
-    description: 'Sem permissao para operar esta carteira',
+    description: 'Sem permissão para operar esta carteira',
     type: ApiErrorResponseDto,
   })
   @ApiResponse({
     status: 404,
-    description: 'Posicao nao encontrada',
+    description: 'Posicao não encontrada',
     type: ApiErrorResponseDto,
   })
   @ApiResponse({
     status: 409,
-    description: 'Operacao duplicada (idempotencyKey ja utilizada)',
+    description: 'Operação duplicada (idempotencyKey já utilizada)',
     type: ApiErrorResponseDto,
   })
   async sell(

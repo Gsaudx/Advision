@@ -1,22 +1,15 @@
 import { useState, useEffect } from 'react';
 import ModalBase from '@/components/layout/ModalBase';
 import { LoadingSpinner } from '@/components/ui/LoadingSpinner';
-import type { AxiosError } from 'axios';
 import { TrendingUp, TrendingDown, X, RefreshCw, Info } from 'lucide-react';
 import { useBuyOption, useSellOption } from '../api';
 import { formatCurrency, generateIdempotencyKey } from '../../types';
-import type { OptionType } from '../../types';
 import { OptionTickerAutocomplete } from './OptionTickerAutocomplete';
 import { useAssetPrice, useOptionDetails } from '@/features/wallets/api';
-import type { AssetSearchResult } from '@/features/wallets/types';
+import { getApiErrorMessage } from '@/lib/api-error';
+import type { OptionSearchResult } from '../../types';
 
 type TradeType = 'BUY' | 'SELL';
-
-interface OptionSearchResult extends AssetSearchResult {
-  strike?: number;
-  expirationDate?: string;
-  optionType?: OptionType;
-}
 
 interface OptionTradeModalProps {
   isOpen: boolean;
@@ -26,26 +19,6 @@ interface OptionTradeModalProps {
   walletName: string;
   currentBalance: number;
   currency?: string;
-}
-
-type ApiErrorResponse = {
-  message?: string;
-  errors?: string[];
-};
-
-function getApiErrorMessage(error: unknown): string {
-  const axiosError = error as AxiosError<ApiErrorResponse> | undefined;
-  const responseData = axiosError?.response?.data;
-
-  if (responseData?.message) {
-    return responseData.message;
-  }
-
-  if (responseData?.errors?.length) {
-    return responseData.errors[0] ?? 'Erro ao realizar operacao.';
-  }
-
-  return 'Erro ao realizar operacao. Tente novamente.';
 }
 
 const CONTRACT_SIZE = 100;
@@ -161,7 +134,7 @@ export function OptionTradeModal({
     const newErrors: Record<string, string> = {};
 
     if (!formData.ticker.trim()) {
-      newErrors.ticker = 'Ticker e obrigatorio';
+      newErrors.ticker = 'Ticker é obrigatório';
     }
 
     const quantity = parseInt(formData.quantity, 10);
@@ -171,11 +144,11 @@ export function OptionTradeModal({
 
     const premium = parseFloat(formData.premium);
     if (!formData.premium || isNaN(premium) || premium <= 0) {
-      newErrors.premium = 'Premio deve ser positivo';
+      newErrors.premium = 'Prêmio deve ser positivo';
     }
 
     if (!formData.date) {
-      newErrors.date = 'Data e obrigatoria';
+      newErrors.date = 'Data é obrigatória';
     }
 
     setErrors(newErrors);
@@ -503,7 +476,7 @@ export function OptionTradeModal({
             </span>
           </div>
           <div className="flex justify-between border-t border-slate-700 pt-2">
-            <span className="text-sm text-gray-500">Saldo Apos Operacao</span>
+            <span className="text-sm text-gray-500">Saldo Após Operação</span>
             <span
               className={`text-sm font-semibold ${balanceAfter >= 0 ? 'text-white' : 'text-red-400'}`}
             >

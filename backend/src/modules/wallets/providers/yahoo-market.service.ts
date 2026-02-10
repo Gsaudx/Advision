@@ -1,6 +1,10 @@
 import { Injectable, Logger, NotFoundException } from '@nestjs/common';
 import YahooFinance from 'yahoo-finance2';
-import { MarketDataProvider, AssetMetadata } from './market-data.provider';
+import {
+  MarketDataProvider,
+  AssetMetadata,
+  MARKET_CACHE_TTL_MS,
+} from './market-data.provider';
 
 interface CacheEntry {
   value: number;
@@ -42,8 +46,6 @@ interface YahooSearchResult {
   quotes: YahooSearchQuote[];
 }
 
-const CACHE_TTL_MS = 60 * 1000; // 60 seconds
-
 @Injectable()
 export class YahooMarketService extends MarketDataProvider {
   private readonly logger = new Logger(YahooMarketService.name);
@@ -70,12 +72,12 @@ export class YahooMarketService extends MarketDataProvider {
    */
   private isCacheValid(entry: CacheEntry | undefined): boolean {
     if (!entry) return false;
-    return Date.now() - entry.timestamp < CACHE_TTL_MS;
+    return Date.now() - entry.timestamp < MARKET_CACHE_TTL_MS;
   }
 
   private pruneCache(now = Date.now()): void {
     for (const [ticker, entry] of this.priceCache.entries()) {
-      if (now - entry.timestamp >= CACHE_TTL_MS) {
+      if (now - entry.timestamp >= MARKET_CACHE_TTL_MS) {
         this.priceCache.delete(ticker);
       }
     }
@@ -97,7 +99,7 @@ export class YahooMarketService extends MarketDataProvider {
       )) as YahooQuote;
 
       if (!quote || quote.regularMarketPrice === undefined) {
-        throw new NotFoundException(`Preco nao encontrado para ${ticker}`);
+        throw new NotFoundException(`Preço não encontrado para ${ticker}`);
       }
 
       const price = quote.regularMarketPrice;
@@ -112,7 +114,7 @@ export class YahooMarketService extends MarketDataProvider {
       this.logger.error(
         `Erro ao buscar preco para ${ticker}: ${(error as Error).message}`,
       );
-      throw new NotFoundException(`Preco nao encontrado para ${ticker}`);
+      throw new NotFoundException(`Preço não encontrado para ${ticker}`);
     }
   }
 

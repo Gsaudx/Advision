@@ -163,7 +163,7 @@ describe('WalletsController', () => {
       );
 
       expect(result.success).toBe(true);
-      expect(result.message).toBe('Deposito realizado com sucesso');
+      expect(result.message).toBe('Depósito realizado com sucesso');
     });
 
     it('performs withdrawal and returns success message', async () => {

@@ -71,7 +71,7 @@ export function ActivityDetailModal({
             </div>
             <div>
               <p className="text-xs text-slate-400 uppercase tracking-wider">
-                Descricao
+                Descrição
               </p>
               <p className="text-white">{activity.description}</p>
             </div>

@@ -26,7 +26,7 @@ export default function Select({
   disabled,
   className,
   searchPlaceholder = 'Buscar...',
-  emptyMessage = 'Nenhuma opcao encontrada',
+  emptyMessage = 'Nenhuma opção encontrada',
   dropdownClassName,
 }: SelectProps) {
   const [isOpen, setIsOpen] = useState(false);
@@ -121,7 +121,7 @@ export default function Select({
         aria-expanded={isOpen}
       >
         <span className="truncate">
-          {selectedOption?.label ?? 'Selecione uma opcao'}
+          {selectedOption?.label ?? 'Selecione uma opção'}
         </span>
         <ChevronDown
           className={cn(

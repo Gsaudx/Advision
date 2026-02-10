@@ -78,7 +78,7 @@ export class TradingService {
     });
 
     if (existing) {
-      throw new ConflictException('Operacao duplicada');
+      throw new ConflictException('Operação duplicada');
     }
 
     // Resolve asset OUTSIDE transaction (may call external API)
@@ -165,7 +165,7 @@ export class TradingService {
               continue;
             }
             throw new ConflictException(
-              'Operacao concorrente, tente novamente',
+              'Operação concorrente, tente novamente',
             );
           }
 
@@ -278,7 +278,7 @@ export class TradingService {
       });
     } catch (error) {
       if (this.walletAccess.isIdempotencyConflict(error)) {
-        throw new ConflictException('Operacao duplicada');
+        throw new ConflictException('Operação duplicada');
       }
       throw error;
     }
@@ -306,7 +306,7 @@ export class TradingService {
     });
 
     if (existing) {
-      throw new ConflictException('Operacao duplicada');
+      throw new ConflictException('Operação duplicada');
     }
 
     // Resolve asset - must exist for sell
@@ -349,11 +349,11 @@ export class TradingService {
           if (!existingPosition) {
             if (attempt > 0) {
               throw new ConflictException(
-                'Operacao concorrente, tente novamente',
+                'Operação concorrente, tente novamente',
               );
             }
             throw new BadRequestException(
-              `Nenhuma posicao encontrada para ${data.ticker}`,
+              `Nenhuma posição encontrada para ${data.ticker}`,
             );
           }
 
@@ -382,7 +382,7 @@ export class TradingService {
               continue;
             }
             throw new ConflictException(
-              'Operacao concorrente, tente novamente',
+              'Operação concorrente, tente novamente',
             );
           }
 
@@ -493,7 +493,7 @@ export class TradingService {
       });
     } catch (error) {
       if (this.walletAccess.isIdempotencyConflict(error)) {
-        throw new ConflictException('Operacao duplicada');
+        throw new ConflictException('Operação duplicada');
       }
       throw error;
     }

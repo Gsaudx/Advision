@@ -18,14 +18,14 @@ export const OperationLegInputSchema = z.object({
   legType: z.nativeEnum(OperationLegType),
   ticker: z
     .string()
-    .min(1, 'Ticker obrigatorio')
-    .max(20, 'Ticker deve ter no maximo 20 caracteres')
+    .min(1, 'Ticker obrigatório')
+    .max(20, 'Ticker deve ter no máximo 20 caracteres')
     .toUpperCase(),
   quantity: z
     .number()
     .positive('Quantidade deve ser positiva')
-    .int('Quantidade deve ser um numero inteiro'),
-  price: z.number().positive('Preco/premio deve ser positivo'),
+    .int('Quantidade deve ser um número inteiro'),
+  price: z.number().positive('Preço/prêmio deve ser positivo'),
 });
 export type OperationLegInput = z.infer<typeof OperationLegInputSchema>;
 
@@ -37,13 +37,13 @@ export const ExecuteStrategyInputSchema = z.object({
   underlyingTicker: z.string().optional(),
   legs: z
     .array(OperationLegInputSchema)
-    .min(1, 'Pelo menos uma perna obrigatoria')
-    .max(4, 'Maximo de 4 pernas permitido'),
+    .min(1, 'Pelo menos uma perna obrigatória')
+    .max(4, 'Máximo de 4 pernas permitido'),
   executedAt: z
     .string()
-    .datetime({ message: 'Data invalida (formato ISO esperado)' }),
+    .datetime({ message: 'Data inválida (formato ISO esperado)' }),
   notes: z.string().max(500).optional(),
-  idempotencyKey: z.string().min(1, 'Chave de idempotencia obrigatoria'),
+  idempotencyKey: z.string().min(1, 'Chave de idempotência obrigatória'),
 });
 export class ExecuteStrategyInputDto extends createZodDto(
   ExecuteStrategyInputSchema,

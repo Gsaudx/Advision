@@ -109,7 +109,7 @@ describe('ActivityService', () => {
       expect(result).toHaveLength(1);
       expect(result[0]).toEqual({
         id: 'event-123',
-        action: 'Deposito realizado',
+        action: 'Depósito realizado',
         description: 'Deposito de R$ 1.000,00',
         clientName: 'Test Client',
         walletName: 'Main Wallet',
@@ -169,7 +169,7 @@ describe('ActivityService', () => {
       expect(result).toHaveLength(1);
       expect(result[0]).toEqual({
         id: 'event-123',
-        action: 'Deposito realizado',
+        action: 'Depósito realizado',
         description: 'Deposito de R$ 1.000,00',
         clientName: 'Test Client',
         walletName: 'Main Wallet',
@@ -279,7 +279,7 @@ describe('ActivityService', () => {
         items: expect.arrayContaining([
           expect.objectContaining({
             id: 'event-123',
-            action: 'Deposito realizado',
+            action: 'Depósito realizado',
           }),
         ]),
         total: 25,

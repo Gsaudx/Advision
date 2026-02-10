@@ -1,4 +1,9 @@
 /**
+ * Cache TTL for market data (shared across all providers)
+ */
+export const MARKET_CACHE_TTL_MS = 60 * 1000; // 60 seconds
+
+/**
  * Asset metadata returned by the market data provider
  */
 export interface AssetMetadata {

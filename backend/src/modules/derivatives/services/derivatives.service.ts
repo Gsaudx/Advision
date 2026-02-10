@@ -1,7 +1,6 @@
 import {
   Injectable,
   NotFoundException,
-  ForbiddenException,
   ConflictException,
   BadRequestException,
   Inject,
@@ -15,10 +14,15 @@ import {
   type OptionSoldPayload,
   type OptionPositionClosedPayload,
 } from '@/shared/domain-events';
-import type { Wallet, Position, Asset } from '@/generated/prisma/client';
+import type { Position, Asset } from '@/generated/prisma/client';
 import type { CurrentUserData } from '@/common/decorators';
-import { AssetResolverService, AuditService } from '@/modules/wallets/services';
+import {
+  AssetResolverService,
+  AuditService,
+  WalletAccessService,
+} from '@/modules/wallets/services';
 import { MarketDataProvider } from '@/modules/wallets/providers';
+import { CONTRACT_SIZE } from '../constants';
 import type {
   BuyOptionInput,
   SellOptionInput,
@@ -27,10 +31,6 @@ import type {
   OptionPositionListResponse,
   OptionTradeResultResponse,
 } from '../schemas';
-
-type WalletWithClient = Wallet & {
-  client: { advisorId: string; userId: string | null };
-};
 
 type PositionWithAssetAndOption = Position & {
   asset: Asset & {
@@ -44,8 +44,6 @@ type PositionWithAssetAndOption = Position & {
   };
 };
 
-const CONTRACT_SIZE = 100;
-
 @Injectable()
 export class DerivativesService {
   constructor(
@@ -55,48 +53,8 @@ export class DerivativesService {
     private readonly assetResolver: AssetResolverService,
     private readonly auditService: AuditService,
     private readonly domainEvents: DomainEventsService,
+    private readonly walletAccess: WalletAccessService,
   ) {}
-
-  private async verifyWalletAccess(
-    walletId: string,
-    actor: CurrentUserData,
-  ): Promise<WalletWithClient> {
-    const wallet = await this.prisma.wallet.findFirst({
-      where: {
-        id: walletId,
-        client: {
-          OR: [{ advisorId: actor.id }, { userId: actor.id }],
-        },
-      },
-      include: { client: true },
-    });
-
-    if (!wallet) {
-      throw new ForbiddenException('Carteira nao encontrada ou sem permissao');
-    }
-
-    return wallet;
-  }
-
-  private isIdempotencyConflict(error: unknown): boolean {
-    if (!error || typeof error !== 'object' || !('code' in error)) {
-      return false;
-    }
-
-    if ((error as { code?: string }).code !== 'P2002') {
-      return false;
-    }
-
-    const target = (error as { meta?: { target?: string | string[] } }).meta
-      ?.target;
-    if (!target) return false;
-
-    const targets = Array.isArray(target) ? target : [target];
-    return (
-      targets.includes('walletId_idempotencyKey') ||
-      (targets.includes('walletId') && targets.includes('idempotencyKey'))
-    );
-  }
 
   private formatOptionPosition(
     position: PositionWithAssetAndOption,
@@ -157,7 +115,7 @@ export class DerivativesService {
     data: BuyOptionInput,
     actor: CurrentUserData,
   ): Promise<OptionTradeResultResponse> {
-    await this.verifyWalletAccess(walletId, actor);
+    await this.walletAccess.verifyWalletAccess(walletId, actor);
 
     const existing = await this.prisma.transaction.findUnique({
       where: {
@@ -309,7 +267,7 @@ export class DerivativesService {
         };
       });
     } catch (error) {
-      if (this.isIdempotencyConflict(error)) {
+      if (this.walletAccess.isIdempotencyConflict(error)) {
         throw new ConflictException('Operacao duplicada');
       }
       throw error;
@@ -328,7 +286,7 @@ export class DerivativesService {
     data: SellOptionInput,
     actor: CurrentUserData,
   ): Promise<OptionTradeResultResponse> {
-    await this.verifyWalletAccess(walletId, actor);
+    await this.walletAccess.verifyWalletAccess(walletId, actor);
 
     const existing = await this.prisma.transaction.findUnique({
       where: {
@@ -439,7 +397,7 @@ export class DerivativesService {
               assetId: asset.id,
               quantity: -data.quantity,
               averagePrice: data.premium,
-              collateralBlocked: requiredCollateral.toNumber() || null,
+              collateralBlocked: requiredCollateral.toNumber() ?? null,
             },
           });
           positionId = newPosition.id;
@@ -465,7 +423,7 @@ export class DerivativesService {
             const newAvg =
               (totalPremiumPrev + data.quantity * data.premium) / absNew;
             const existingCollateral = Number(
-              existingPosition.collateralBlocked || 0,
+              existingPosition.collateralBlocked ?? 0,
             );
             await tx.position.update({
               where: { id: existingPosition.id },
@@ -540,7 +498,7 @@ export class DerivativesService {
         };
       });
     } catch (error) {
-      if (this.isIdempotencyConflict(error)) {
+      if (this.walletAccess.isIdempotencyConflict(error)) {
         throw new ConflictException('Operacao duplicada');
       }
       throw error;
@@ -558,7 +516,7 @@ export class DerivativesService {
     data: CloseOptionInput,
     actor: CurrentUserData,
   ): Promise<OptionTradeResultResponse> {
-    await this.verifyWalletAccess(walletId, actor);
+    await this.walletAccess.verifyWalletAccess(walletId, actor);
 
     const existing = await this.prisma.transaction.findUnique({
       where: {
@@ -720,7 +678,7 @@ export class DerivativesService {
         };
       });
     } catch (error) {
-      if (this.isIdempotencyConflict(error)) {
+      if (this.walletAccess.isIdempotencyConflict(error)) {
         throw new ConflictException('Operacao duplicada');
       }
       throw error;
@@ -736,7 +694,7 @@ export class DerivativesService {
     walletId: string,
     actor: CurrentUserData,
   ): Promise<OptionPositionListResponse> {
-    await this.verifyWalletAccess(walletId, actor);
+    await this.walletAccess.verifyWalletAccess(walletId, actor);
 
     const positions = await this.prisma.position.findMany({
       where: {

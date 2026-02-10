@@ -2,35 +2,15 @@ import ModalBase from '@/components/layout/ModalBase';
 import InputName from '@/components/ui/InputName';
 import Select from '@/components/ui/Select';
 import { LoadingSpinner } from '@/components/ui/LoadingSpinner';
-import type { AxiosError } from 'axios';
 import { Wallet, X } from 'lucide-react';
 import { useNewWalletForm } from '../hooks';
 import { useCreateWallet } from '../api';
 import { useClients } from '@/features/clients-page';
+import { getApiErrorMessage } from '@/lib/api-error';
 
 interface NewWalletModalProps {
   isOpen: boolean;
   onClose: () => void;
-}
-
-type ApiErrorResponse = {
-  message?: string;
-  errors?: string[];
-};
-
-function getApiErrorMessage(error: unknown): string {
-  const axiosError = error as AxiosError<ApiErrorResponse> | undefined;
-  const responseData = axiosError?.response?.data;
-
-  if (responseData?.message) {
-    return responseData.message;
-  }
-
-  if (responseData?.errors?.length) {
-    return responseData.errors[0] ?? 'Erro ao criar carteira.';
-  }
-
-  return 'Erro ao criar carteira. Tente novamente.';
 }
 
 export function NewWalletModal({ isOpen, onClose }: NewWalletModalProps) {
@@ -151,7 +131,7 @@ export function NewWalletModal({ isOpen, onClose }: NewWalletModalProps) {
             htmlFor="description"
             className="text-sm font-medium text-gray-300"
           >
-            Descricao (opcional)
+            Descrição (opcional)
           </label>
           <textarea
             id="description"
@@ -196,7 +176,7 @@ export function NewWalletModal({ isOpen, onClose }: NewWalletModalProps) {
               htmlFor="initialCashBalance"
               className="text-sm font-medium text-gray-300"
             >
-              Deposito Inicial (opcional)
+              Depósito Inicial (opcional)
             </label>
             <div className="relative">
               <span className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-500">

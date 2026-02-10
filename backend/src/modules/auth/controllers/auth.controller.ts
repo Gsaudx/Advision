@@ -59,7 +59,7 @@ export class AuthController {
 
   @Post('register')
   @ApiOperation({
-    summary: 'Registrar novo usuario',
+    summary: 'Registrar novo usuário',
     description:
       'Cria uma nova conta na plataforma. Define um cookie HttpOnly com o token JWT.',
   })
@@ -86,9 +86,9 @@ export class AuthController {
   @HttpCode(HttpStatus.OK)
   @UseGuards(LocalAuthGuard)
   @ApiOperation({
-    summary: 'Autenticar usuario',
+    summary: 'Autenticar usuário',
     description:
-      'Autentica o usuario e define um cookie HttpOnly com o token JWT.',
+      'Autentica o usuário e define um cookie HttpOnly com o token JWT.',
   })
   @ApiResponse({
     status: 200,
@@ -97,7 +97,7 @@ export class AuthController {
   })
   @ApiResponse({
     status: 401,
-    description: 'Credenciais invalidas',
+    description: 'Credenciais inválidas',
     type: ApiErrorResponseDto,
   })
   login(
@@ -113,8 +113,8 @@ export class AuthController {
   @Post('logout')
   @HttpCode(HttpStatus.OK)
   @ApiOperation({
-    summary: 'Encerrar sessao',
-    description: 'Remove o cookie de autenticacao.',
+    summary: 'Encerrar sessão',
+    description: 'Remove o cookie de autenticação.',
   })
   @ApiResponse({
     status: 200,
@@ -130,8 +130,8 @@ export class AuthController {
   @Get('me')
   @UseGuards(AuthGuard('jwt'))
   @ApiOperation({
-    summary: 'Obter perfil do usuario',
-    description: 'Retorna os dados do usuario autenticado via cookie.',
+    summary: 'Obter perfil do usuário',
+    description: 'Retorna os dados do usuário autenticado via cookie.',
   })
   @ApiResponse({
     status: 200,
@@ -140,7 +140,7 @@ export class AuthController {
   })
   @ApiResponse({
     status: 401,
-    description: 'Cookie invalido ou expirado',
+    description: 'Cookie inválido ou expirado',
     type: ApiErrorResponseDto,
   })
   async getProfile(

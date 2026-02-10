@@ -1,3 +1,5 @@
+import type { AssetSearchResult } from '@/features/wallets/types';
+
 // ============================================================================
 // OPTION TYPES
 // ============================================================================
@@ -38,6 +40,16 @@ export type StrategyType =
   | 'PROTECTIVE_PUT'
   | 'COLLAR'
   | 'CUSTOM';
+
+// ============================================================================
+// OPTION SEARCH TYPES
+// ============================================================================
+
+export interface OptionSearchResult extends AssetSearchResult {
+  strike?: number;
+  expirationDate?: string;
+  optionType?: OptionType;
+}
 
 // ============================================================================
 // OPTION POSITION TYPES

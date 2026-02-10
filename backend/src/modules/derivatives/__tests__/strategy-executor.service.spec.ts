@@ -10,7 +10,11 @@ import { StrategyExecutorService } from '../services/strategy-executor.service';
 import { StrategyBuilderService } from '../services/strategy-builder.service';
 import { PrismaService } from '@/shared/prisma/prisma.service';
 import { DomainEventsService } from '@/shared/domain-events';
-import { AssetResolverService, AuditService } from '@/modules/wallets/services';
+import {
+  AssetResolverService,
+  AuditService,
+  WalletAccessService,
+} from '@/modules/wallets/services';
 import {
   StrategyType,
   OperationLegType,
@@ -42,6 +46,10 @@ describe('StrategyExecutorService', () => {
   let assetResolver: { ensureAssetExists: jest.Mock };
   let auditService: { log: jest.Mock };
   let domainEvents: { record: jest.Mock };
+  let walletAccess: {
+    verifyWalletAccess: jest.Mock;
+    isIdempotencyConflict: jest.Mock;
+  };
   let strategyBuilder: {
     validateCustomStrategy: jest.Mock;
     calculateNetPremium: jest.Mock;
@@ -125,6 +133,10 @@ describe('StrategyExecutorService', () => {
     assetResolver = { ensureAssetExists: jest.fn() };
     auditService = { log: jest.fn() };
     domainEvents = { record: jest.fn() };
+    walletAccess = {
+      verifyWalletAccess: jest.fn(),
+      isIdempotencyConflict: jest.fn().mockReturnValue(false),
+    };
     strategyBuilder = {
       validateCustomStrategy: jest.fn(),
       calculateNetPremium: jest.fn(),
@@ -138,6 +150,7 @@ describe('StrategyExecutorService', () => {
         { provide: AuditService, useValue: auditService },
         { provide: DomainEventsService, useValue: domainEvents },
         { provide: StrategyBuilderService, useValue: strategyBuilder },
+        { provide: WalletAccessService, useValue: walletAccess },
       ],
     }).compile();
 
@@ -160,7 +173,7 @@ describe('StrategyExecutorService', () => {
     };
 
     beforeEach(() => {
-      prisma.wallet.findFirst.mockResolvedValue(mockWallet);
+      walletAccess.verifyWalletAccess.mockResolvedValue(mockWallet);
       prisma.structuredOperation.findUnique.mockResolvedValue(null);
       strategyBuilder.validateCustomStrategy.mockResolvedValue({
         isValid: true,
@@ -280,7 +293,7 @@ describe('StrategyExecutorService', () => {
     });
 
     it('throws ForbiddenException when wallet not accessible', async () => {
-      prisma.wallet.findFirst.mockResolvedValue(null);
+      walletAccess.verifyWalletAccess.mockRejectedValue(new ForbiddenException());
 
       await expect(
         service.executeStrategy('wallet-123', basicInput, mockActor),
@@ -492,6 +505,7 @@ describe('StrategyExecutorService', () => {
     });
 
     it('throws ConflictException on Prisma idempotency error', async () => {
+      walletAccess.isIdempotencyConflict.mockReturnValue(true);
       prisma.$transaction.mockRejectedValue({
         code: 'P2002',
         meta: { target: ['walletId', 'idempotencyKey'] },
@@ -532,7 +546,7 @@ describe('StrategyExecutorService', () => {
     };
 
     beforeEach(() => {
-      prisma.wallet.findFirst.mockResolvedValue(mockWallet);
+      walletAccess.verifyWalletAccess.mockResolvedValue(mockWallet);
     });
 
     it('returns list of strategies for wallet', async () => {
@@ -591,7 +605,7 @@ describe('StrategyExecutorService', () => {
     });
 
     it('throws ForbiddenException when wallet not accessible', async () => {
-      prisma.wallet.findFirst.mockResolvedValue(null);
+      walletAccess.verifyWalletAccess.mockRejectedValue(new ForbiddenException());
 
       await expect(
         service.getStrategies('wallet-123', mockActor),
@@ -648,7 +662,7 @@ describe('StrategyExecutorService', () => {
     };
 
     beforeEach(() => {
-      prisma.wallet.findFirst.mockResolvedValue(mockWallet);
+      walletAccess.verifyWalletAccess.mockResolvedValue(mockWallet);
     });
 
     it('returns single strategy by id', async () => {
@@ -675,7 +689,7 @@ describe('StrategyExecutorService', () => {
     });
 
     it('throws ForbiddenException when wallet not accessible', async () => {
-      prisma.wallet.findFirst.mockResolvedValue(null);
+      walletAccess.verifyWalletAccess.mockRejectedValue(new ForbiddenException());
 
       await expect(
         service.getStrategy('wallet-123', 'op-123', mockActor),

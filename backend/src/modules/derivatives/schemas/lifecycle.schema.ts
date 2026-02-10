@@ -14,10 +14,10 @@ export const ExerciseOptionInputSchema = z.object({
   quantity: z
     .number()
     .positive('Quantidade de contratos deve ser positiva')
-    .int('Quantidade deve ser um numero inteiro de contratos')
+    .int('Quantidade deve ser um número inteiro de contratos')
     .optional(),
   notes: z.string().max(500).optional(),
-  idempotencyKey: z.string().min(1, 'Chave de idempotencia obrigatoria'),
+  idempotencyKey: z.string().min(1, 'Chave de idempotência obrigatória'),
 });
 export class ExerciseOptionInputDto extends createZodDto(
   ExerciseOptionInputSchema,
@@ -31,9 +31,9 @@ export const AssignmentInputSchema = z.object({
   quantity: z
     .number()
     .positive('Quantidade de contratos deve ser positiva')
-    .int('Quantidade deve ser um numero inteiro de contratos'),
+    .int('Quantidade deve ser um número inteiro de contratos'),
   notes: z.string().max(500).optional(),
-  idempotencyKey: z.string().min(1, 'Chave de idempotencia obrigatoria'),
+  idempotencyKey: z.string().min(1, 'Chave de idempotência obrigatória'),
 });
 export class AssignmentInputDto extends createZodDto(AssignmentInputSchema) {}
 export type AssignmentInput = z.infer<typeof AssignmentInputSchema>;
@@ -43,7 +43,7 @@ export type AssignmentInput = z.infer<typeof AssignmentInputSchema>;
  */
 export const ExpireOptionInputSchema = z.object({
   notes: z.string().max(500).optional(),
-  idempotencyKey: z.string().min(1, 'Chave de idempotencia obrigatoria'),
+  idempotencyKey: z.string().min(1, 'Chave de idempotência obrigatória'),
 });
 export class ExpireOptionInputDto extends createZodDto(
   ExpireOptionInputSchema,

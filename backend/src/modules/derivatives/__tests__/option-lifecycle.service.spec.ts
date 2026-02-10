@@ -8,7 +8,7 @@ import { Test, TestingModule } from '@nestjs/testing';
 import { OptionLifecycleService } from '../services/option-lifecycle.service';
 import { PrismaService } from '@/shared/prisma/prisma.service';
 import { DomainEventsService } from '@/shared/domain-events';
-import { AuditService } from '@/modules/wallets/services';
+import { AuditService, WalletAccessService } from '@/modules/wallets/services';
 
 describe('OptionLifecycleService', () => {
   let service: OptionLifecycleService;
@@ -34,6 +34,10 @@ describe('OptionLifecycleService', () => {
   let marketData: { getBatchPrices: jest.Mock };
   let auditService: { log: jest.Mock };
   let domainEvents: { record: jest.Mock };
+  let walletAccess: {
+    verifyWalletAccess: jest.Mock;
+    isIdempotencyConflict: jest.Mock;
+  };
 
   const mockActor = {
     id: 'advisor-123',
@@ -163,6 +167,10 @@ describe('OptionLifecycleService', () => {
 
     auditService = { log: jest.fn() };
     domainEvents = { record: jest.fn() };
+    walletAccess = {
+      verifyWalletAccess: jest.fn(),
+      isIdempotencyConflict: jest.fn().mockReturnValue(false),
+    };
 
     const module: TestingModule = await Test.createTestingModule({
       providers: [
@@ -171,6 +179,7 @@ describe('OptionLifecycleService', () => {
         { provide: 'MARKET_DATA_PROVIDER', useValue: marketData },
         { provide: AuditService, useValue: auditService },
         { provide: DomainEventsService, useValue: domainEvents },
+        { provide: WalletAccessService, useValue: walletAccess },
       ],
     }).compile();
 
@@ -180,7 +189,7 @@ describe('OptionLifecycleService', () => {
   describe('exerciseOption', () => {
     describe('CALL exercise', () => {
       it('exercises long CALL position and buys underlying shares', async () => {
-        prisma.wallet.findFirst.mockResolvedValue(mockWallet);
+        walletAccess.verifyWalletAccess.mockResolvedValue(mockWallet);
         prisma.position.findFirst.mockResolvedValue(mockLongCallPosition);
         prisma.wallet.findUnique.mockResolvedValue(mockWallet);
         prisma.wallet.updateMany.mockResolvedValue({ count: 1 });
@@ -214,7 +223,7 @@ describe('OptionLifecycleService', () => {
       });
 
       it('exercises partial CALL position', async () => {
-        prisma.wallet.findFirst.mockResolvedValue(mockWallet);
+        walletAccess.verifyWalletAccess.mockResolvedValue(mockWallet);
         prisma.position.findFirst.mockResolvedValue(mockLongCallPosition);
         prisma.wallet.findUnique.mockResolvedValue(mockWallet);
         prisma.wallet.updateMany.mockResolvedValue({ count: 1 });
@@ -244,7 +253,7 @@ describe('OptionLifecycleService', () => {
       });
 
       it('updates existing underlying position when exercising CALL', async () => {
-        prisma.wallet.findFirst.mockResolvedValue(mockWallet);
+        walletAccess.verifyWalletAccess.mockResolvedValue(mockWallet);
         prisma.position.findFirst.mockResolvedValue(mockLongCallPosition);
         prisma.wallet.findUnique.mockResolvedValue(mockWallet);
         prisma.wallet.updateMany.mockResolvedValue({ count: 1 });
@@ -270,7 +279,7 @@ describe('OptionLifecycleService', () => {
       });
 
       it('throws BadRequestException when insufficient cash for CALL exercise', async () => {
-        prisma.wallet.findFirst.mockResolvedValue(mockWallet);
+        walletAccess.verifyWalletAccess.mockResolvedValue(mockWallet);
         prisma.position.findFirst.mockResolvedValue(mockLongCallPosition);
         prisma.wallet.findUnique.mockResolvedValue(mockWallet);
         prisma.wallet.updateMany.mockResolvedValue({ count: 0 });
@@ -288,7 +297,7 @@ describe('OptionLifecycleService', () => {
 
     describe('PUT exercise', () => {
       it('exercises long PUT position and sells underlying shares', async () => {
-        prisma.wallet.findFirst.mockResolvedValue(mockWallet);
+        walletAccess.verifyWalletAccess.mockResolvedValue(mockWallet);
         prisma.position.findFirst.mockResolvedValue(mockLongPutPosition);
         prisma.wallet.findUnique.mockResolvedValue(mockWallet);
         prisma.position.findUnique.mockResolvedValue(mockUnderlyingPosition);
@@ -316,7 +325,7 @@ describe('OptionLifecycleService', () => {
           ...mockUnderlyingPosition,
           quantity: 1000,
         };
-        prisma.wallet.findFirst.mockResolvedValue(mockWallet);
+        walletAccess.verifyWalletAccess.mockResolvedValue(mockWallet);
         prisma.position.findFirst.mockResolvedValue(mockLongPutPosition);
         prisma.wallet.findUnique.mockResolvedValue(mockWallet);
         prisma.position.findUnique.mockResolvedValue(smallUnderlyingPosition);
@@ -338,7 +347,7 @@ describe('OptionLifecycleService', () => {
       });
 
       it('throws BadRequestException when insufficient underlying for PUT exercise', async () => {
-        prisma.wallet.findFirst.mockResolvedValue(mockWallet);
+        walletAccess.verifyWalletAccess.mockResolvedValue(mockWallet);
         prisma.position.findFirst.mockResolvedValue(mockLongPutPosition);
         prisma.wallet.findUnique.mockResolvedValue(mockWallet);
         prisma.position.findUnique.mockResolvedValue(null);
@@ -356,7 +365,7 @@ describe('OptionLifecycleService', () => {
 
     describe('validation', () => {
       it('throws ForbiddenException when wallet not found or no permission', async () => {
-        prisma.wallet.findFirst.mockResolvedValue(null);
+        walletAccess.verifyWalletAccess.mockRejectedValue(new ForbiddenException());
 
         await expect(
           service.exerciseOption(
@@ -369,7 +378,7 @@ describe('OptionLifecycleService', () => {
       });
 
       it('throws NotFoundException when position not found', async () => {
-        prisma.wallet.findFirst.mockResolvedValue(mockWallet);
+        walletAccess.verifyWalletAccess.mockResolvedValue(mockWallet);
         prisma.position.findFirst.mockResolvedValue(null);
 
         await expect(
@@ -387,7 +396,7 @@ describe('OptionLifecycleService', () => {
           ...mockLongCallPosition,
           asset: { ...mockStockAsset, optionDetail: null },
         };
-        prisma.wallet.findFirst.mockResolvedValue(mockWallet);
+        walletAccess.verifyWalletAccess.mockResolvedValue(mockWallet);
         prisma.position.findFirst.mockResolvedValue(stockPosition);
 
         await expect(
@@ -401,7 +410,7 @@ describe('OptionLifecycleService', () => {
       });
 
       it('throws BadRequestException when trying to exercise short position', async () => {
-        prisma.wallet.findFirst.mockResolvedValue(mockWallet);
+        walletAccess.verifyWalletAccess.mockResolvedValue(mockWallet);
         prisma.position.findFirst.mockResolvedValue(mockShortCallPosition);
 
         await expect(
@@ -415,7 +424,7 @@ describe('OptionLifecycleService', () => {
       });
 
       it('throws BadRequestException when quantity exceeds position', async () => {
-        prisma.wallet.findFirst.mockResolvedValue(mockWallet);
+        walletAccess.verifyWalletAccess.mockResolvedValue(mockWallet);
         prisma.position.findFirst.mockResolvedValue(mockLongCallPosition);
 
         await expect(
@@ -440,7 +449,7 @@ describe('OptionLifecycleService', () => {
             },
           },
         };
-        prisma.wallet.findFirst.mockResolvedValue(mockWallet);
+        walletAccess.verifyWalletAccess.mockResolvedValue(mockWallet);
         prisma.position.findFirst.mockResolvedValue(europeanOption);
 
         await expect(
@@ -454,7 +463,8 @@ describe('OptionLifecycleService', () => {
       });
 
       it('throws ConflictException on duplicate idempotency key', async () => {
-        prisma.wallet.findFirst.mockResolvedValue(mockWallet);
+        walletAccess.verifyWalletAccess.mockResolvedValue(mockWallet);
+        walletAccess.isIdempotencyConflict.mockReturnValue(true);
         prisma.position.findFirst.mockResolvedValue(mockLongCallPosition);
         prisma.$transaction.mockRejectedValue({
           code: 'P2002',
@@ -476,7 +486,7 @@ describe('OptionLifecycleService', () => {
   describe('handleAssignment', () => {
     describe('CALL assignment', () => {
       it('handles short CALL assignment - delivers shares', async () => {
-        prisma.wallet.findFirst.mockResolvedValue(mockWallet);
+        walletAccess.verifyWalletAccess.mockResolvedValue(mockWallet);
         prisma.position.findFirst.mockResolvedValue(mockShortCallPosition);
         prisma.wallet.findUnique.mockResolvedValue(mockWallet);
         prisma.position.findUnique.mockResolvedValue(mockUnderlyingPosition);
@@ -500,7 +510,7 @@ describe('OptionLifecycleService', () => {
       });
 
       it('throws BadRequestException when insufficient shares for CALL assignment', async () => {
-        prisma.wallet.findFirst.mockResolvedValue(mockWallet);
+        walletAccess.verifyWalletAccess.mockResolvedValue(mockWallet);
         prisma.position.findFirst.mockResolvedValue(mockShortCallPosition);
         prisma.wallet.findUnique.mockResolvedValue(mockWallet);
         prisma.position.findUnique.mockResolvedValue(null);
@@ -518,7 +528,7 @@ describe('OptionLifecycleService', () => {
 
     describe('PUT assignment', () => {
       it('handles short PUT assignment - buys shares and releases collateral', async () => {
-        prisma.wallet.findFirst.mockResolvedValue(mockWallet);
+        walletAccess.verifyWalletAccess.mockResolvedValue(mockWallet);
         prisma.position.findFirst.mockResolvedValue(mockShortPutPosition);
         prisma.wallet.findUnique.mockResolvedValue(mockWallet);
         prisma.wallet.updateMany.mockResolvedValue({ count: 1 });
@@ -543,7 +553,7 @@ describe('OptionLifecycleService', () => {
       });
 
       it('throws BadRequestException when insufficient cash for PUT assignment', async () => {
-        prisma.wallet.findFirst.mockResolvedValue(mockWallet);
+        walletAccess.verifyWalletAccess.mockResolvedValue(mockWallet);
         prisma.position.findFirst.mockResolvedValue(mockShortPutPosition);
         prisma.wallet.findUnique.mockResolvedValue(mockWallet);
         prisma.wallet.updateMany.mockResolvedValue({ count: 0 });
@@ -561,7 +571,7 @@ describe('OptionLifecycleService', () => {
 
     describe('validation', () => {
       it('throws BadRequestException when trying to assign long position', async () => {
-        prisma.wallet.findFirst.mockResolvedValue(mockWallet);
+        walletAccess.verifyWalletAccess.mockResolvedValue(mockWallet);
         prisma.position.findFirst.mockResolvedValue(mockLongCallPosition);
 
         await expect(
@@ -575,7 +585,7 @@ describe('OptionLifecycleService', () => {
       });
 
       it('throws BadRequestException when assignment quantity exceeds position', async () => {
-        prisma.wallet.findFirst.mockResolvedValue(mockWallet);
+        walletAccess.verifyWalletAccess.mockResolvedValue(mockWallet);
         prisma.position.findFirst.mockResolvedValue(mockShortCallPosition);
 
         await expect(
@@ -589,7 +599,8 @@ describe('OptionLifecycleService', () => {
       });
 
       it('throws ConflictException on duplicate idempotency key', async () => {
-        prisma.wallet.findFirst.mockResolvedValue(mockWallet);
+        walletAccess.verifyWalletAccess.mockResolvedValue(mockWallet);
+        walletAccess.isIdempotencyConflict.mockReturnValue(true);
         prisma.position.findFirst.mockResolvedValue(mockShortCallPosition);
         prisma.$transaction.mockRejectedValue({
           code: 'P2002',
@@ -634,7 +645,7 @@ describe('OptionLifecycleService', () => {
     };
 
     it('processes OTM expiration correctly', async () => {
-      prisma.wallet.findFirst.mockResolvedValue(mockWallet);
+      walletAccess.verifyWalletAccess.mockResolvedValue(mockWallet);
       prisma.position.findFirst.mockResolvedValue(expiredPosition);
       marketData.getBatchPrices.mockResolvedValue({ PETR4: 20 });
       prisma.position.delete.mockResolvedValue({});
@@ -653,7 +664,7 @@ describe('OptionLifecycleService', () => {
     });
 
     it('processes ITM expiration correctly for CALL', async () => {
-      prisma.wallet.findFirst.mockResolvedValue(mockWallet);
+      walletAccess.verifyWalletAccess.mockResolvedValue(mockWallet);
       prisma.position.findFirst.mockResolvedValue(expiredPosition);
       marketData.getBatchPrices.mockResolvedValue({ PETR4: 30 });
       prisma.position.delete.mockResolvedValue({});
@@ -681,7 +692,7 @@ describe('OptionLifecycleService', () => {
           },
         },
       };
-      prisma.wallet.findFirst.mockResolvedValue(mockWallet);
+      walletAccess.verifyWalletAccess.mockResolvedValue(mockWallet);
       prisma.position.findFirst.mockResolvedValue(expiredPutPosition);
       marketData.getBatchPrices.mockResolvedValue({ PETR4: 20 });
       prisma.position.delete.mockResolvedValue({});
@@ -699,7 +710,7 @@ describe('OptionLifecycleService', () => {
     });
 
     it('releases collateral for short position expiration', async () => {
-      prisma.wallet.findFirst.mockResolvedValue(mockWallet);
+      walletAccess.verifyWalletAccess.mockResolvedValue(mockWallet);
       prisma.position.findFirst.mockResolvedValue(expiredShortPosition);
       marketData.getBatchPrices.mockResolvedValue({ PETR4: 30 });
       prisma.wallet.update.mockResolvedValue(mockWallet);
@@ -732,7 +743,7 @@ describe('OptionLifecycleService', () => {
           },
         },
       };
-      prisma.wallet.findFirst.mockResolvedValue(mockWallet);
+      walletAccess.verifyWalletAccess.mockResolvedValue(mockWallet);
       prisma.position.findFirst.mockResolvedValue(futureOptionPosition);
       marketData.getBatchPrices.mockResolvedValue({ PETR4: 25 });
 
@@ -747,7 +758,8 @@ describe('OptionLifecycleService', () => {
     });
 
     it('throws ConflictException on duplicate operation', async () => {
-      prisma.wallet.findFirst.mockResolvedValue(mockWallet);
+      walletAccess.verifyWalletAccess.mockResolvedValue(mockWallet);
+      walletAccess.isIdempotencyConflict.mockReturnValue(true);
       prisma.position.findFirst.mockResolvedValue(expiredPosition);
       marketData.getBatchPrices.mockResolvedValue({ PETR4: 25 });
       prisma.$transaction.mockRejectedValue({
@@ -782,7 +794,7 @@ describe('OptionLifecycleService', () => {
         },
       };
 
-      prisma.wallet.findFirst.mockResolvedValue(mockWallet);
+      walletAccess.verifyWalletAccess.mockResolvedValue(mockWallet);
       prisma.position.findMany.mockResolvedValue([upcomingPosition]);
       marketData.getBatchPrices.mockResolvedValue({ PETR4: 25 });
 
@@ -813,7 +825,7 @@ describe('OptionLifecycleService', () => {
         },
       };
 
-      prisma.wallet.findFirst.mockResolvedValue(mockWallet);
+      walletAccess.verifyWalletAccess.mockResolvedValue(mockWallet);
       prisma.position.findMany.mockResolvedValue([position]);
       marketData.getBatchPrices.mockResolvedValue({ PETR4: 30 });
 
@@ -841,7 +853,7 @@ describe('OptionLifecycleService', () => {
         },
       };
 
-      prisma.wallet.findFirst.mockResolvedValue(mockWallet);
+      walletAccess.verifyWalletAccess.mockResolvedValue(mockWallet);
       prisma.position.findMany.mockResolvedValue([position]);
       marketData.getBatchPrices.mockResolvedValue({ PETR4: 30 });
 
@@ -869,7 +881,7 @@ describe('OptionLifecycleService', () => {
         },
       };
 
-      prisma.wallet.findFirst.mockResolvedValue(mockWallet);
+      walletAccess.verifyWalletAccess.mockResolvedValue(mockWallet);
       prisma.position.findMany.mockResolvedValue([position]);
       marketData.getBatchPrices.mockResolvedValue({ PETR4: 24.1 });
 
@@ -897,7 +909,7 @@ describe('OptionLifecycleService', () => {
         },
       };
 
-      prisma.wallet.findFirst.mockResolvedValue(mockWallet);
+      walletAccess.verifyWalletAccess.mockResolvedValue(mockWallet);
       prisma.position.findMany.mockResolvedValue([shortPosition]);
       marketData.getBatchPrices.mockResolvedValue({ PETR4: 25 });
 
@@ -912,7 +924,7 @@ describe('OptionLifecycleService', () => {
     });
 
     it('returns empty array when no positions expiring', async () => {
-      prisma.wallet.findFirst.mockResolvedValue(mockWallet);
+      walletAccess.verifyWalletAccess.mockResolvedValue(mockWallet);
       prisma.position.findMany.mockResolvedValue([]);
 
       const result = await service.getUpcomingExpirations(
@@ -926,7 +938,7 @@ describe('OptionLifecycleService', () => {
     });
 
     it('throws ForbiddenException when wallet not accessible', async () => {
-      prisma.wallet.findFirst.mockResolvedValue(null);
+      walletAccess.verifyWalletAccess.mockRejectedValue(new ForbiddenException());
 
       await expect(
         service.getUpcomingExpirations('wallet-123', 30, mockActor),

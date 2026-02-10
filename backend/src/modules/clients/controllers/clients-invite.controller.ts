@@ -51,7 +51,7 @@ export class ClientsInviteController {
   })
   @ApiResponse({
     status: 404,
-    description: 'Cliente nao encontrado',
+    description: 'Cliente não encontrado',
     type: ApiErrorResponseDto,
   })
   @ApiResponse({
@@ -61,7 +61,7 @@ export class ClientsInviteController {
   })
   @ApiResponse({
     status: 409,
-    description: 'Cliente ja possui conta vinculada',
+    description: 'Cliente já possui conta vinculada',
     type: ApiErrorResponseDto,
   })
   async generateInvite(
@@ -90,7 +90,7 @@ export class ClientsInviteController {
   })
   @ApiResponse({
     status: 404,
-    description: 'Cliente nao encontrado',
+    description: 'Cliente não encontrado',
     type: ApiErrorResponseDto,
   })
   async getInviteStatus(
@@ -111,7 +111,7 @@ export class ClientsInviteController {
   @ApiOperation({
     summary: 'Revogar convite',
     description:
-      'Revoga um convite pendente. O token sera invalidado e o cliente nao podera mais usa-lo.',
+      'Revoga um convite pendente. O token será invalidado e o cliente não poderá mais usá-lo.',
   })
   @ApiResponse({
     status: 200,
@@ -119,12 +119,12 @@ export class ClientsInviteController {
   })
   @ApiResponse({
     status: 404,
-    description: 'Cliente nao encontrado',
+    description: 'Cliente não encontrado',
     type: ApiErrorResponseDto,
   })
   @ApiResponse({
     status: 409,
-    description: 'Convite ja foi aceito',
+    description: 'Convite já foi aceito',
     type: ApiErrorResponseDto,
   })
   async revokeInvite(
@@ -142,7 +142,7 @@ export class ClientsInviteController {
   @ApiOperation({
     summary: 'Aceitar convite',
     description:
-      'Aceita um convite e vincula a conta do usuario autenticado ao perfil de cliente. Apenas usuarios com role CLIENT podem aceitar convites.',
+      'Aceita um convite e vincula a conta do usuário autenticado ao perfil de cliente. Apenas usuários com role CLIENT podem aceitar convites.',
   })
   @ApiResponse({
     status: 200,
@@ -151,17 +151,17 @@ export class ClientsInviteController {
   })
   @ApiResponse({
     status: 400,
-    description: 'Convite invalido ou expirado',
+    description: 'Convite inválido ou expirado',
     type: ApiErrorResponseDto,
   })
   @ApiResponse({
     status: 403,
-    description: 'Apenas usuarios com role CLIENT podem aceitar convites',
+    description: 'Apenas usuários com role CLIENT podem aceitar convites',
     type: ApiErrorResponseDto,
   })
   @ApiResponse({
     status: 409,
-    description: 'Usuario ja vinculado a outro cliente',
+    description: 'Usuário já vinculado a outro cliente',
     type: ApiErrorResponseDto,
   })
   async acceptInvite(

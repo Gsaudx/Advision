@@ -52,7 +52,7 @@ export class ClientsController {
   })
   @ApiResponse({
     status: 400,
-    description: 'Dados invalidos',
+    description: 'Dados inválidos',
     type: ApiErrorResponseDto,
   })
   @ApiResponse({

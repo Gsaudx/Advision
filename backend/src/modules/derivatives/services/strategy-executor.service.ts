@@ -1,7 +1,6 @@
 import {
   Injectable,
   NotFoundException,
-  ForbiddenException,
   ConflictException,
   BadRequestException,
 } from '@nestjs/common';
@@ -12,23 +11,21 @@ import {
   DerivativesEvents,
   type StrategyExecutedPayload,
 } from '@/shared/domain-events';
-import type { Wallet } from '@/generated/prisma/client';
 import { OperationLegType, OperationStatus } from '@/generated/prisma/enums';
 import type { CurrentUserData } from '@/common/decorators';
-import { AssetResolverService, AuditService } from '@/modules/wallets/services';
+import {
+  AssetResolverService,
+  AuditService,
+  WalletAccessService,
+} from '@/modules/wallets/services';
 import { StrategyBuilderService } from './strategy-builder.service';
+import { CONTRACT_SIZE } from '../constants';
 import type {
   ExecuteStrategyInput,
   StructuredOperationResponse,
   StructuredOperationListResponse,
   OperationLegResponse,
 } from '../schemas';
-
-type WalletWithClient = Wallet & {
-  client: { advisorId: string; userId: string | null };
-};
-
-const CONTRACT_SIZE = 100;
 
 @Injectable()
 export class StrategyExecutorService {
@@ -38,48 +35,8 @@ export class StrategyExecutorService {
     private readonly auditService: AuditService,
     private readonly domainEvents: DomainEventsService,
     private readonly strategyBuilder: StrategyBuilderService,
+    private readonly walletAccess: WalletAccessService,
   ) {}
-
-  private async verifyWalletAccess(
-    walletId: string,
-    actor: CurrentUserData,
-  ): Promise<WalletWithClient> {
-    const wallet = await this.prisma.wallet.findFirst({
-      where: {
-        id: walletId,
-        client: {
-          OR: [{ advisorId: actor.id }, { userId: actor.id }],
-        },
-      },
-      include: { client: true },
-    });
-
-    if (!wallet) {
-      throw new ForbiddenException('Carteira nao encontrada ou sem permissao');
-    }
-
-    return wallet;
-  }
-
-  private isIdempotencyConflict(error: unknown): boolean {
-    if (!error || typeof error !== 'object' || !('code' in error)) {
-      return false;
-    }
-
-    if ((error as { code?: string }).code !== 'P2002') {
-      return false;
-    }
-
-    const target = (error as { meta?: { target?: string | string[] } }).meta
-      ?.target;
-    if (!target) return false;
-
-    const targets = Array.isArray(target) ? target : [target];
-    return (
-      targets.includes('walletId_idempotencyKey') ||
-      (targets.includes('walletId') && targets.includes('idempotencyKey'))
-    );
-  }
 
   private formatOperationLeg(leg: {
     id: string;
@@ -116,7 +73,7 @@ export class StrategyExecutorService {
     data: ExecuteStrategyInput,
     actor: CurrentUserData,
   ): Promise<StructuredOperationResponse> {
-    await this.verifyWalletAccess(walletId, actor);
+    await this.walletAccess.verifyWalletAccess(walletId, actor);
 
     const existingOp = await this.prisma.structuredOperation.findUnique({
       where: {
@@ -128,7 +85,7 @@ export class StrategyExecutorService {
     });
 
     if (existingOp) {
-      throw new ConflictException('Operacao duplicada');
+      throw new ConflictException('Operação duplicada');
     }
 
     const validation = await this.strategyBuilder.validateCustomStrategy(
@@ -136,7 +93,7 @@ export class StrategyExecutorService {
     );
     if (!validation.isValid) {
       throw new BadRequestException(
-        `Estrategia invalida: ${validation.errors.join(', ')}`,
+        `Estratégia inválida: ${validation.errors.join(', ')}`,
       );
     }
 
@@ -482,8 +439,8 @@ export class StrategyExecutorService {
         },
       );
     } catch (error) {
-      if (this.isIdempotencyConflict(error)) {
-        throw new ConflictException('Operacao duplicada');
+      if (this.walletAccess.isIdempotencyConflict(error)) {
+        throw new ConflictException('Operação duplicada');
       }
       throw error;
     }
@@ -518,7 +475,7 @@ export class StrategyExecutorService {
     limit = 50,
     cursor?: string,
   ): Promise<StructuredOperationListResponse> {
-    await this.verifyWalletAccess(walletId, actor);
+    await this.walletAccess.verifyWalletAccess(walletId, actor);
 
     const take = Math.min(Math.max(limit, 1), 100);
 
@@ -581,7 +538,7 @@ export class StrategyExecutorService {
     operationId: string,
     actor: CurrentUserData,
   ): Promise<StructuredOperationResponse> {
-    await this.verifyWalletAccess(walletId, actor);
+    await this.walletAccess.verifyWalletAccess(walletId, actor);
 
     const operation = await this.prisma.structuredOperation.findFirst({
       where: { id: operationId, walletId },

@@ -1,36 +1,16 @@
 import ModalBase from '@/components/layout/ModalBase';
 import InputName from '@/components/ui/InputName';
 import { LoadingSpinner } from '@/components/ui/LoadingSpinner';
-import type { AxiosError } from 'axios';
 import { Pencil, X } from 'lucide-react';
 import { useEditClientForm } from '../hooks/useEditClientForm';
 import { useUpdateClient } from '../api';
+import { getApiErrorMessage } from '@/lib/api-error';
 import type { Client } from '../types';
 
 interface EditClientModalProps {
   isOpen: boolean;
   onClose: () => void;
   client: Client | null;
-}
-
-type ApiErrorResponse = {
-  message?: string;
-  errors?: string[];
-};
-
-function getApiErrorMessage(error: unknown): string {
-  const axiosError = error as AxiosError<ApiErrorResponse> | undefined;
-  const responseData = axiosError?.response?.data;
-
-  if (responseData?.message) {
-    return responseData.message;
-  }
-
-  if (responseData?.errors?.length) {
-    return responseData.errors[0] ?? 'Erro ao atualizar cliente.';
-  }
-
-  return 'Erro ao atualizar cliente. Tente novamente.';
 }
 
 export default function EditClientModal({

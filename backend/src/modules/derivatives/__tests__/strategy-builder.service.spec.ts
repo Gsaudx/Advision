@@ -264,12 +264,12 @@ describe('StrategyBuilderService', () => {
       it('throws BadRequestException for SINGLE_OPTION', () => {
         expect(() =>
           service.buildStrategy(StrategyType.SINGLE_OPTION, {}),
-        ).toThrow('requer definicao manual das pernas');
+        ).toThrow('requer definição manual das pernas');
       });
 
       it('throws BadRequestException for CUSTOM', () => {
         expect(() => service.buildStrategy(StrategyType.CUSTOM, {})).toThrow(
-          'requer definicao manual das pernas',
+          'requer definição manual das pernas',
         );
       });
     });
@@ -297,7 +297,7 @@ describe('StrategyBuilderService', () => {
 
       expect(result.isValid).toBe(false);
       expect(result.errors).toContain(
-        'Estrategia deve ter pelo menos uma perna',
+        'Estratégia deve ter pelo menos uma perna',
       );
     });
 
@@ -314,7 +314,7 @@ describe('StrategyBuilderService', () => {
       const result = await service.validateCustomStrategy(legs);
 
       expect(result.isValid).toBe(false);
-      expect(result.errors).toContain('Estrategia pode ter no maximo 4 pernas');
+      expect(result.errors).toContain('Estratégia pode ter no máximo 4 pernas');
     });
 
     it('returns error for unknown asset', async () => {

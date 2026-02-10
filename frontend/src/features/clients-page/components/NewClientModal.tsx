@@ -1,37 +1,17 @@
 import ModalBase from '@/components/layout/ModalBase';
 import InputName from '@/components/ui/InputName';
 import { LoadingSpinner } from '@/components/ui/LoadingSpinner';
-import type { AxiosError } from 'axios';
 import { User, X } from 'lucide-react';
 import { useNewClientModal } from '../hooks/useNewClientModal';
 import { useCreateClient } from '../api';
 import InputCode from '@/components/ui/InputCode';
+import { getApiErrorMessage } from '@/lib/api-error';
 
 interface NewClientModalProps {
   isOpen: boolean;
   onClose: () => void;
   title?: string;
   size?: 'sm' | 'md' | 'lg' | 'xl' | 'xxl';
-}
-
-type ApiErrorResponse = {
-  message?: string;
-  errors?: string[];
-};
-
-function getApiErrorMessage(error: unknown): string {
-  const axiosError = error as AxiosError<ApiErrorResponse> | undefined;
-  const responseData = axiosError?.response?.data;
-
-  if (responseData?.message) {
-    return responseData.message;
-  }
-
-  if (responseData?.errors?.length) {
-    return responseData.errors[0] ?? 'Erro ao cadastrar cliente.';
-  }
-
-  return 'Erro ao cadastrar cliente. Tente novamente.';
 }
 
 export default function NewClientModal({

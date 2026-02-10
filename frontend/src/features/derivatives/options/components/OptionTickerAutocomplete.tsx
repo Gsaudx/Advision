@@ -4,14 +4,8 @@ import type {
   AssetSearchResult,
   OptionDetailsResult,
 } from '@/features/wallets/types';
-import type { OptionType } from '../../types';
+import type { OptionSearchResult, OptionType } from '../../types';
 import { ChevronDown, Search, X } from 'lucide-react';
-
-interface OptionSearchResult extends AssetSearchResult {
-  strike?: number;
-  expirationDate?: string;
-  optionType?: OptionType;
-}
 
 interface OptionTickerAutocompleteProps {
   value: string;
@@ -174,7 +168,7 @@ export function OptionTickerAutocomplete({
   return (
     <div ref={containerRef} className="relative">
       <label className="block text-sm font-medium text-zinc-300 mb-1">
-        Ticker da Opcao
+        Ticker da Opção
       </label>
 
       {/* Step indicator and controls */}
@@ -190,7 +184,7 @@ export function OptionTickerAutocomplete({
             {selectedUnderlying}
           </button>
           <span className="text-zinc-500 text-xs">/</span>
-          <span className="text-xs text-zinc-400">Selecione a opcao</span>
+          <span className="text-xs text-zinc-400">Selecione a opção</span>
         </div>
       )}
 
@@ -223,7 +217,7 @@ export function OptionTickerAutocomplete({
             value={value}
             readOnly
             onClick={() => setIsOpen(true)}
-            placeholder="Clique para selecionar uma opcao"
+            placeholder="Clique para selecionar uma opção"
             disabled={disabled}
             className={`w-full px-3 py-2 bg-zinc-800 border rounded-md text-white placeholder-zinc-500 cursor-pointer focus:outline-none focus:ring-2 focus:ring-blue-500 ${
               error ? 'border-red-500' : 'border-zinc-700'
@@ -329,11 +323,11 @@ export function OptionTickerAutocomplete({
               <div className="overflow-y-auto max-h-60">
                 {isLoadingOptions ? (
                   <div className="px-4 py-3 text-zinc-400 text-sm">
-                    Buscando opcoes...
+                    Buscando opções...
                   </div>
                 ) : enrichedOptions.length === 0 ? (
                   <div className="px-4 py-3 text-zinc-400 text-sm">
-                    Nenhuma opcao encontrada para {selectedUnderlying}
+                    Nenhuma opção encontrada para {selectedUnderlying}
                   </div>
                 ) : (
                   <ul className="py-1">

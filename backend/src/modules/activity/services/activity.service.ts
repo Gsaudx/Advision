@@ -14,12 +14,12 @@ import type {
 const EVENT_LABELS: Record<string, string> = {
   // Wallet events
   WalletCreated: 'Nova carteira criada',
-  CashDeposited: 'Deposito realizado',
+  CashDeposited: 'Depósito realizado',
   CashWithdrawn: 'Saque realizado',
-  PositionOpened: 'Nova posicao aberta',
-  PositionIncreased: 'Posicao aumentada',
-  PositionDecreased: 'Posicao reduzida',
-  PositionClosed: 'Posicao encerrada',
+  PositionOpened: 'Nova posição aberta',
+  PositionIncreased: 'Posição aumentada',
+  PositionDecreased: 'Posição reduzida',
+  PositionClosed: 'Posição encerrada',
   // Client events
   ClientCreated: 'Cliente cadastrado',
   ClientUpdated: 'Cliente atualizado',
