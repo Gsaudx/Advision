@@ -15,6 +15,7 @@ import {
   type OptionPositionClosedPayload,
 } from '@/shared/domain-events';
 import type { Position, Asset } from '@/generated/prisma/client';
+import { OptionLifecycleEvent } from '@/generated/prisma/enums';
 import type { CurrentUserData } from '@/common/decorators';
 import {
   AssetResolverService,
@@ -603,6 +604,32 @@ export class DerivativesService {
           ? currentQty + quantityToClose
           : currentQty - quantityToClose;
 
+        const transaction = await tx.transaction.create({
+          data: {
+            walletId,
+            assetId: position.assetId,
+            type: isShort ? 'BUY' : 'SELL',
+            quantity: quantityToClose,
+            price: data.premium,
+            totalValue: totalValue.toNumber(),
+            executedAt: new Date(data.date),
+            idempotencyKey: data.idempotencyKey,
+          },
+        });
+
+        await tx.optionLifecycle.create({
+          data: {
+            positionId: position.id,
+            event: OptionLifecycleEvent.CLOSED,
+            strikePrice: position.asset.optionDetail
+              ? Number(position.asset.optionDetail.strikePrice)
+              : null,
+            settlementAmount: totalValue.toNumber(),
+            resultingTransactionId: transaction.id,
+            notes: `Posicao ${isShort ? 'vendida' : 'comprada'} fechada: ${quantityToClose} contratos a ${data.premium}`,
+          },
+        });
+
         if (newQty === 0) {
           await tx.position.delete({ where: { id: position.id } });
         } else {
@@ -621,19 +648,6 @@ export class DerivativesService {
             },
           });
         }
-
-        const transaction = await tx.transaction.create({
-          data: {
-            walletId,
-            assetId: position.assetId,
-            type: isShort ? 'BUY' : 'SELL',
-            quantity: quantityToClose,
-            price: data.premium,
-            totalValue: totalValue.toNumber(),
-            executedAt: new Date(data.date),
-            idempotencyKey: data.idempotencyKey,
-          },
-        });
 
         await this.auditService.log(tx, {
           tableName: 'positions',

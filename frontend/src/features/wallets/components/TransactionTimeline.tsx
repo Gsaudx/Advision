@@ -7,6 +7,11 @@ import {
   Layers,
   Ticket,
   Clock,
+  Target,
+  ShieldAlert,
+  Hourglass,
+  CircleDollarSign,
+  FileText,
 } from 'lucide-react';
 import { formatCurrency } from '@/lib/formatters';
 import type { Transaction, TransactionType } from '../types';
@@ -18,18 +23,17 @@ interface TransactionTimelineProps {
   isLoading?: boolean;
 }
 
+type TransactionStyle = {
+  icon: React.ElementType;
+  bgColor: string;
+  iconColor: string;
+  borderColor: string;
+  valuePrefix: '+' | '-' | '';
+  valueColor: string;
+};
+
 // Transaction type configuration
-const transactionConfig: Record<
-  TransactionType,
-  {
-    icon: React.ElementType;
-    bgColor: string;
-    iconColor: string;
-    borderColor: string;
-    valuePrefix: '+' | '-' | '';
-    valueColor: string;
-  }
-> = {
+const transactionConfig: Record<TransactionType, TransactionStyle> = {
   BUY: {
     icon: ShoppingCart,
     bgColor: 'bg-blue-500/20',
@@ -86,7 +90,60 @@ const transactionConfig: Record<
     valuePrefix: '-',
     valueColor: 'text-red-400',
   },
+  OPTION_EXERCISE: {
+    icon: Target,
+    bgColor: 'bg-violet-500/20',
+    iconColor: 'text-violet-400',
+    borderColor: 'border-violet-500/30',
+    valuePrefix: '-',
+    valueColor: 'text-red-400',
+  },
+  OPTION_ASSIGNMENT: {
+    icon: ShieldAlert,
+    bgColor: 'bg-amber-500/20',
+    iconColor: 'text-amber-400',
+    borderColor: 'border-amber-500/30',
+    valuePrefix: '',
+    valueColor: 'text-amber-400',
+  },
+  OPTION_EXPIRY: {
+    icon: Hourglass,
+    bgColor: 'bg-slate-500/20',
+    iconColor: 'text-slate-400',
+    borderColor: 'border-slate-500/30',
+    valuePrefix: '',
+    valueColor: 'text-slate-400',
+  },
 };
+
+// Override styles for option BUY/SELL (distinct from stock trades)
+const optionBuyConfig: TransactionStyle = {
+  icon: FileText,
+  bgColor: 'bg-violet-500/20',
+  iconColor: 'text-violet-400',
+  borderColor: 'border-violet-500/30',
+  valuePrefix: '-',
+  valueColor: 'text-red-400',
+};
+
+const optionSellConfig: TransactionStyle = {
+  icon: CircleDollarSign,
+  bgColor: 'bg-fuchsia-500/20',
+  iconColor: 'text-fuchsia-400',
+  borderColor: 'border-fuchsia-500/30',
+  valuePrefix: '+',
+  valueColor: 'text-emerald-400',
+};
+
+function getTransactionStyle(transaction: Transaction): TransactionStyle {
+  const txType = transaction.type as TransactionType;
+  const isOption = (transaction as Record<string, unknown>).assetType === 'OPTION';
+
+  if (isOption && txType === 'BUY') return optionBuyConfig;
+  if (isOption && txType === 'SELL') return optionSellConfig;
+
+  return transactionConfig[txType];
+}
 
 function formatRelativeDate(dateString: string): string {
   const date = new Date(dateString);
@@ -159,9 +216,10 @@ function TransactionItem({
   currency: string;
   isLast: boolean;
 }) {
-  const config = transactionConfig[transaction.type as TransactionType];
+  const config = getTransactionStyle(transaction);
   const Icon = config.icon;
 
+  const isOption = (transaction as Record<string, unknown>).assetType === 'OPTION';
   const isTrade = transaction.type === 'BUY' || transaction.type === 'SELL';
 
   return (
@@ -186,7 +244,11 @@ function TransactionItem({
             <div>
               <div className="flex items-center gap-2">
                 <span className={`font-semibold ${config.iconColor}`}>
-                  {transactionTypeLabels[transaction.type as TransactionType]}
+                  {isOption && transaction.type === 'BUY'
+                    ? 'Compra de Opcao'
+                    : isOption && transaction.type === 'SELL'
+                      ? 'Venda de Opcao'
+                      : transactionTypeLabels[transaction.type as TransactionType]}
                 </span>
                 {transaction.ticker && (
                   <span className="px-2 py-0.5 bg-slate-700 rounded text-xs font-medium text-white">
@@ -211,11 +273,15 @@ function TransactionItem({
           {isTrade && transaction.quantity && transaction.price && (
             <div className="mt-3 pt-3 border-t border-slate-700/50 grid grid-cols-2 gap-4 text-sm">
               <div>
-                <span className="text-gray-500">Quantidade</span>
+                <span className="text-gray-500">
+                  {isOption ? 'Contratos' : 'Quantidade'}
+                </span>
                 <p className="text-white font-medium">{transaction.quantity}</p>
               </div>
               <div>
-                <span className="text-gray-500">Preco unitario</span>
+                <span className="text-gray-500">
+                  {isOption ? 'Premio' : 'Preco unitario'}
+                </span>
                 <p className="text-white font-medium">
                   {formatCurrency(transaction.price, currency)}
                 </p>

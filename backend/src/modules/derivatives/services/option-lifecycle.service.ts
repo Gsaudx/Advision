@@ -229,7 +229,7 @@ export class OptionLifecycleService {
           data: {
             walletId,
             assetId: optionDetail.underlyingAssetId,
-            type: optionDetail.optionType === 'CALL' ? 'BUY' : 'SELL',
+            type: 'OPTION_EXERCISE',
             quantity: underlyingQuantity,
             price: strikePrice,
             totalValue: totalCost,
@@ -237,16 +237,6 @@ export class OptionLifecycleService {
             idempotencyKey: data.idempotencyKey,
           },
         });
-
-        const newOptionQty = currentQty - quantityToExercise;
-        if (newOptionQty === 0) {
-          await tx.position.delete({ where: { id: position.id } });
-        } else {
-          await tx.position.update({
-            where: { id: position.id },
-            data: { quantity: newOptionQty },
-          });
-        }
 
         const lifecycle = await tx.optionLifecycle.create({
           data: {
@@ -259,6 +249,16 @@ export class OptionLifecycleService {
             notes: data.notes,
           },
         });
+
+        const newOptionQty = currentQty - quantityToExercise;
+        if (newOptionQty === 0) {
+          await tx.position.delete({ where: { id: position.id } });
+        } else {
+          await tx.position.update({
+            where: { id: position.id },
+            data: { quantity: newOptionQty },
+          });
+        }
 
         const updatedWallet = await tx.wallet.findUnique({
           where: { id: walletId },
@@ -278,8 +278,8 @@ export class OptionLifecycleService {
         });
 
         await this.domainEvents.record<OptionExercisedPayload>(tx, {
-          aggregateType: 'OPTION_LIFECYCLE',
-          aggregateId: lifecycle.id,
+          aggregateType: 'WALLET',
+          aggregateId: walletId,
           eventType: DerivativesEvents.OPTION_EXERCISED,
           payload: {
             lifecycleId: lifecycle.id,
@@ -466,15 +466,24 @@ export class OptionLifecycleService {
           data: {
             walletId,
             assetId: optionDetail.underlyingAssetId,
-            type:
-              optionDetail.optionType === 'CALL'
-                ? 'OPTION_ASSIGNMENT'
-                : 'OPTION_ASSIGNMENT',
+            type: 'OPTION_ASSIGNMENT',
             quantity: underlyingQuantity,
             price: strikePrice,
             totalValue: settlementAmount,
             executedAt: new Date(),
             idempotencyKey: data.idempotencyKey,
+          },
+        });
+
+        const lifecycle = await tx.optionLifecycle.create({
+          data: {
+            positionId: position.id,
+            event: OptionLifecycleEvent.ASSIGNED,
+            underlyingQuantity,
+            strikePrice,
+            settlementAmount,
+            resultingTransactionId: transaction.id,
+            notes: data.notes,
           },
         });
 
@@ -495,18 +504,6 @@ export class OptionLifecycleService {
           });
         }
 
-        const lifecycle = await tx.optionLifecycle.create({
-          data: {
-            positionId: position.id,
-            event: OptionLifecycleEvent.ASSIGNED,
-            underlyingQuantity,
-            strikePrice,
-            settlementAmount,
-            resultingTransactionId: transaction.id,
-            notes: data.notes,
-          },
-        });
-
         const updatedWallet = await tx.wallet.findUnique({
           where: { id: walletId },
         });
@@ -525,8 +522,8 @@ export class OptionLifecycleService {
         });
 
         await this.domainEvents.record<OptionAssignedPayload>(tx, {
-          aggregateType: 'OPTION_LIFECYCLE',
-          aggregateId: lifecycle.id,
+          aggregateType: 'WALLET',
+          aggregateId: walletId,
           eventType: DerivativesEvents.OPTION_ASSIGNED,
           payload: {
             lifecycleId: lifecycle.id,
@@ -591,7 +588,7 @@ export class OptionLifecycleService {
 
     if (today < expiryDate) {
       throw new BadRequestException(
-        `Opcao ainda nao venceu. Vencimento: ${expiryDate.toISOString().split('T')[0]}`,
+        `Opcao ainda nao venceu. Vencimento: ${expiryDate.toLocaleDateString('pt-BR')}`,
       );
     }
 
@@ -629,7 +626,18 @@ export class OptionLifecycleService {
           });
         }
 
-        await tx.position.delete({ where: { id: position.id } });
+        const transaction = await tx.transaction.create({
+          data: {
+            walletId,
+            assetId: position.assetId,
+            type: 'OPTION_EXPIRY',
+            quantity: absQty,
+            price: 0,
+            totalValue: 0,
+            executedAt: new Date(),
+            idempotencyKey: data.idempotencyKey,
+          },
+        });
 
         const lifecycle = await tx.optionLifecycle.create({
           data: {
@@ -638,9 +646,12 @@ export class OptionLifecycleService {
               ? OptionLifecycleEvent.EXPIRED_ITM
               : OptionLifecycleEvent.EXPIRED_OTM,
             strikePrice: Number(optionDetail.strikePrice),
+            resultingTransactionId: transaction.id,
             notes: data.notes,
           },
         });
+
+        await tx.position.delete({ where: { id: position.id } });
 
         await this.auditService.log(tx, {
           tableName: 'option_lifecycle',
@@ -656,8 +667,8 @@ export class OptionLifecycleService {
         });
 
         await this.domainEvents.record<OptionExpiredPayload>(tx, {
-          aggregateType: 'OPTION_LIFECYCLE',
-          aggregateId: lifecycle.id,
+          aggregateType: 'WALLET',
+          aggregateId: walletId,
           eventType: DerivativesEvents.OPTION_EXPIRED,
           payload: {
             lifecycleId: lifecycle.id,

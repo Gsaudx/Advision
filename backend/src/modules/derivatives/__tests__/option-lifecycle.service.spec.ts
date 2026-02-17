@@ -365,7 +365,9 @@ describe('OptionLifecycleService', () => {
 
     describe('validation', () => {
       it('throws ForbiddenException when wallet not found or no permission', async () => {
-        walletAccess.verifyWalletAccess.mockRejectedValue(new ForbiddenException());
+        walletAccess.verifyWalletAccess.mockRejectedValue(
+          new ForbiddenException(),
+        );
 
         await expect(
           service.exerciseOption(
@@ -648,6 +650,7 @@ describe('OptionLifecycleService', () => {
       walletAccess.verifyWalletAccess.mockResolvedValue(mockWallet);
       prisma.position.findFirst.mockResolvedValue(expiredPosition);
       marketData.getBatchPrices.mockResolvedValue({ PETR4: 20 });
+      prisma.transaction.create.mockResolvedValue({ id: 'tx-expire-123' });
       prisma.position.delete.mockResolvedValue({});
       prisma.optionLifecycle.create.mockResolvedValue({ id: 'lifecycle-123' });
 
@@ -667,6 +670,7 @@ describe('OptionLifecycleService', () => {
       walletAccess.verifyWalletAccess.mockResolvedValue(mockWallet);
       prisma.position.findFirst.mockResolvedValue(expiredPosition);
       marketData.getBatchPrices.mockResolvedValue({ PETR4: 30 });
+      prisma.transaction.create.mockResolvedValue({ id: 'tx-expire-123' });
       prisma.position.delete.mockResolvedValue({});
       prisma.optionLifecycle.create.mockResolvedValue({ id: 'lifecycle-123' });
 
@@ -695,6 +699,7 @@ describe('OptionLifecycleService', () => {
       walletAccess.verifyWalletAccess.mockResolvedValue(mockWallet);
       prisma.position.findFirst.mockResolvedValue(expiredPutPosition);
       marketData.getBatchPrices.mockResolvedValue({ PETR4: 20 });
+      prisma.transaction.create.mockResolvedValue({ id: 'tx-expire-123' });
       prisma.position.delete.mockResolvedValue({});
       prisma.optionLifecycle.create.mockResolvedValue({ id: 'lifecycle-123' });
 
@@ -714,6 +719,7 @@ describe('OptionLifecycleService', () => {
       prisma.position.findFirst.mockResolvedValue(expiredShortPosition);
       marketData.getBatchPrices.mockResolvedValue({ PETR4: 30 });
       prisma.wallet.update.mockResolvedValue(mockWallet);
+      prisma.transaction.create.mockResolvedValue({ id: 'tx-expire-123' });
       prisma.position.delete.mockResolvedValue({});
       prisma.optionLifecycle.create.mockResolvedValue({ id: 'lifecycle-123' });
 
@@ -938,7 +944,9 @@ describe('OptionLifecycleService', () => {
     });
 
     it('throws ForbiddenException when wallet not accessible', async () => {
-      walletAccess.verifyWalletAccess.mockRejectedValue(new ForbiddenException());
+      walletAccess.verifyWalletAccess.mockRejectedValue(
+        new ForbiddenException(),
+      );
 
       await expect(
         service.getUpcomingExpirations('wallet-123', 30, mockActor),

@@ -86,6 +86,7 @@ export const TransactionResponseSchema = z.object({
   totalValue: z.number(),
   executedAt: z.string(),
   ticker: z.string().nullable(),
+  assetType: z.nativeEnum(AssetType).nullable(),
   createdAt: z.string(),
 });
 export type TransactionResponse = z.infer<typeof TransactionResponseSchema>;

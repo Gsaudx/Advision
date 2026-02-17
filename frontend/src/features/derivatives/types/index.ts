@@ -1,7 +1,18 @@
 import type { AssetSearchResult } from '@/features/wallets/types';
 
+// Re-export shared utilities (single source for the whole app)
+export { generateIdempotencyKey } from '@/lib/utils';
+export {
+  formatCurrency,
+  formatPercent,
+  formatDate,
+  getTodayISOString as getTodayISO,
+} from '@/lib/formatters';
+
 // ============================================================================
 // OPTION TYPES
+// Note: These types mirror backend DTOs. Once api.d.ts is regenerated with
+// derivatives endpoints, migrate to: type X = components['schemas']['XDto']
 // ============================================================================
 
 export type OptionType = 'CALL' | 'PUT';
@@ -273,7 +284,7 @@ export interface UpcomingExpirationsResponse {
 }
 
 // ============================================================================
-// FORM DATA TYPES
+// FORM DATA TYPES (frontend-specific)
 // ============================================================================
 
 export interface OptionTradeFormData {
@@ -352,34 +363,3 @@ export const moneynessColors: Record<Moneyness, string> = {
   ATM: 'text-yellow-400',
   OTM: 'text-red-400',
 };
-
-// ============================================================================
-// HELPER FUNCTIONS
-// ============================================================================
-
-export function generateIdempotencyKey(): string {
-  return crypto.randomUUID();
-}
-
-export function getTodayISO(): string {
-  return new Date().toISOString();
-}
-
-export function formatCurrency(value: number): string {
-  return new Intl.NumberFormat('pt-BR', {
-    style: 'currency',
-    currency: 'BRL',
-  }).format(value);
-}
-
-export function formatPercent(value: number): string {
-  return new Intl.NumberFormat('pt-BR', {
-    style: 'percent',
-    minimumFractionDigits: 2,
-    maximumFractionDigits: 2,
-  }).format(value / 100);
-}
-
-export function formatDate(date: string): string {
-  return new Date(date).toLocaleDateString('pt-BR');
-}

@@ -522,6 +522,9 @@ describe('DerivativesService', () => {
         transaction: {
           create: jest.fn().mockResolvedValue({ id: 'tx-123' }),
         },
+        optionLifecycle: {
+          create: jest.fn().mockResolvedValue({ id: 'lifecycle-123' }),
+        },
       };
 
       prisma.$transaction.mockImplementation(async (callback) =>
@@ -568,6 +571,9 @@ describe('DerivativesService', () => {
         transaction: {
           create: jest.fn().mockResolvedValue({ id: 'tx-123' }),
         },
+        optionLifecycle: {
+          create: jest.fn().mockResolvedValue({ id: 'lifecycle-123' }),
+        },
       };
 
       prisma.$transaction.mockImplementation(async (callback) =>
@@ -609,6 +615,9 @@ describe('DerivativesService', () => {
         },
         transaction: {
           create: jest.fn().mockResolvedValue({ id: 'tx-123' }),
+        },
+        optionLifecycle: {
+          create: jest.fn().mockResolvedValue({ id: 'lifecycle-123' }),
         },
       };
 

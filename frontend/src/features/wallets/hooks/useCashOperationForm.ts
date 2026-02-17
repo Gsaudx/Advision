@@ -11,7 +11,7 @@ import type {
   CashOperationInput,
   CashOperationType,
 } from '../types';
-import { generateIdempotencyKey } from '../types';
+import { generateIdempotencyKey } from '@/lib/utils';
 
 interface UseCashOperationFormProps {
   currentBalance: number;

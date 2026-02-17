@@ -1,19 +1,19 @@
 import { useMutation, useQueryClient } from '@tanstack/react-query';
 import { derivativesApi } from '../../options/api/derivatives.api';
-import type { ExerciseOptionInput } from '../../types';
+import type { AssignmentInput } from '../../types';
 
-interface ExerciseParams {
+interface AssignmentParams {
   walletId: string;
   positionId: string;
-  data: ExerciseOptionInput;
+  data: AssignmentInput;
 }
 
-export function useExerciseOption() {
+export function useHandleAssignment() {
   const queryClient = useQueryClient();
 
   return useMutation({
-    mutationFn: ({ walletId, positionId, data }: ExerciseParams) =>
-      derivativesApi.exerciseOption(walletId, positionId, data),
+    mutationFn: ({ walletId, positionId, data }: AssignmentParams) =>
+      derivativesApi.handleAssignment(walletId, positionId, data),
     onSuccess: (_, { walletId }) => {
       queryClient.invalidateQueries({ queryKey: ['wallets'] });
       queryClient.invalidateQueries({ queryKey: ['wallet', walletId] });

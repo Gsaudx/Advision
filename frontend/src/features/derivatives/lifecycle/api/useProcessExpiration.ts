@@ -1,19 +1,19 @@
 import { useMutation, useQueryClient } from '@tanstack/react-query';
 import { derivativesApi } from '../../options/api/derivatives.api';
-import type { ExerciseOptionInput } from '../../types';
+import type { ExpireOptionInput } from '../../types';
 
-interface ExerciseParams {
+interface ExpireParams {
   walletId: string;
   positionId: string;
-  data: ExerciseOptionInput;
+  data: ExpireOptionInput;
 }
 
-export function useExerciseOption() {
+export function useProcessExpiration() {
   const queryClient = useQueryClient();
 
   return useMutation({
-    mutationFn: ({ walletId, positionId, data }: ExerciseParams) =>
-      derivativesApi.exerciseOption(walletId, positionId, data),
+    mutationFn: ({ walletId, positionId, data }: ExpireParams) =>
+      derivativesApi.processExpiration(walletId, positionId, data),
     onSuccess: (_, { walletId }) => {
       queryClient.invalidateQueries({ queryKey: ['wallets'] });
       queryClient.invalidateQueries({ queryKey: ['wallet', walletId] });
@@ -21,7 +21,6 @@ export function useExerciseOption() {
         queryKey: ['option-positions', walletId],
       });
       queryClient.invalidateQueries({ queryKey: ['expirations', walletId] });
-      queryClient.invalidateQueries({ queryKey: ['transactions', walletId] });
     },
   });
 }

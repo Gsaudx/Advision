@@ -28,6 +28,14 @@ const EVENT_LABELS: Record<string, string> = {
   InviteAccepted: 'Convite aceito',
   InviteRevoked: 'Convite revogado',
   UserLinked: 'Usuario vinculado',
+  // Derivatives events
+  OptionBought: 'Opcao comprada',
+  OptionSold: 'Opcao vendida',
+  OptionPositionClosed: 'Posicao de opcao encerrada',
+  OptionExercised: 'Opcao exercida',
+  OptionAssigned: 'Opcao atribuida',
+  OptionExpired: 'Opcao expirada',
+  StrategyExecuted: 'Estrategia executada',
   // Optimization events
   OptimizationRunCreated: 'Otimizacao iniciada',
   OptimizationRunAccepted: 'Otimizacao aceita',
@@ -67,6 +75,20 @@ function getDescription(eventType: string, payload: unknown): string {
       return 'Convite aceito pelo cliente';
     case 'InviteRevoked':
       return 'Convite de acesso revogado';
+    case 'OptionBought':
+      return `Compra de ${String(p.contracts)} contratos ${String(p.ticker)}`;
+    case 'OptionSold':
+      return `Venda de ${String(p.contracts)} contratos ${String(p.ticker)}`;
+    case 'OptionPositionClosed':
+      return `Encerramento de ${String(p.contractsClosed)} contratos ${String(p.ticker)}`;
+    case 'OptionExercised':
+      return `Exercicio de ${String(p.contracts)} contratos ${String(p.optionTicker)}`;
+    case 'OptionAssigned':
+      return `Assignment de ${String(p.contracts)} contratos ${String(p.optionTicker)}`;
+    case 'OptionExpired':
+      return `Vencimento de ${String(p.contracts)} contratos ${String(p.optionTicker)}`;
+    case 'StrategyExecuted':
+      return `Estrategia ${String(p.strategyType)} executada`;
     default:
       return EVENT_LABELS[eventType] || eventType;
   }

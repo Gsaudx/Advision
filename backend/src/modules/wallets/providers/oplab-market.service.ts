@@ -672,7 +672,10 @@ export class OpLabMarketService extends MarketDataProvider {
       >(`/market/options/details/${ticker.toUpperCase()}`);
 
       // Handle both response formats
-      if ('data' in response && (response as { data: OpLabOptionSeries }).data?.symbol) {
+      if (
+        'data' in response &&
+        (response as { data: OpLabOptionSeries }).data?.symbol
+      ) {
         return (response as { data: OpLabOptionSeries }).data;
       }
       return response as OpLabOptionSeries;

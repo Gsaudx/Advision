@@ -124,6 +124,7 @@ export class WalletsService {
       totalValue: Number(tx.totalValue),
       executedAt: tx.executedAt.toISOString(),
       ticker: tx.asset?.ticker ?? null,
+      assetType: tx.asset?.type ?? null,
       createdAt: tx.createdAt.toISOString(),
     };
   }

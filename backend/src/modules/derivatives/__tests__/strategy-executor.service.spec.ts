@@ -293,7 +293,9 @@ describe('StrategyExecutorService', () => {
     });
 
     it('throws ForbiddenException when wallet not accessible', async () => {
-      walletAccess.verifyWalletAccess.mockRejectedValue(new ForbiddenException());
+      walletAccess.verifyWalletAccess.mockRejectedValue(
+        new ForbiddenException(),
+      );
 
       await expect(
         service.executeStrategy('wallet-123', basicInput, mockActor),
@@ -605,7 +607,9 @@ describe('StrategyExecutorService', () => {
     });
 
     it('throws ForbiddenException when wallet not accessible', async () => {
-      walletAccess.verifyWalletAccess.mockRejectedValue(new ForbiddenException());
+      walletAccess.verifyWalletAccess.mockRejectedValue(
+        new ForbiddenException(),
+      );
 
       await expect(
         service.getStrategies('wallet-123', mockActor),
@@ -689,7 +693,9 @@ describe('StrategyExecutorService', () => {
     });
 
     it('throws ForbiddenException when wallet not accessible', async () => {
-      walletAccess.verifyWalletAccess.mockRejectedValue(new ForbiddenException());
+      walletAccess.verifyWalletAccess.mockRejectedValue(
+        new ForbiddenException(),
+      );
 
       await expect(
         service.getStrategy('wallet-123', 'op-123', mockActor),

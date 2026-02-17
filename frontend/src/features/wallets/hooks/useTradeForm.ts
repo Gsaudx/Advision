@@ -2,7 +2,7 @@ import { useState, useMemo, type ChangeEvent } from 'react';
 import { getFormErrors } from '@/lib/utils';
 import { getLocalDateTimeString, localToISO } from '@/lib/formatters';
 import type { TradeFormData, TradeInput, TradeType, Position } from '../types';
-import { generateIdempotencyKey } from '../types';
+import { generateIdempotencyKey } from '@/lib/utils';
 
 interface UseTradeFormProps {
   tradeType: TradeType;

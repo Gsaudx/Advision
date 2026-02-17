@@ -396,7 +396,7 @@ model OperationLeg {
 model OptionLifecycle {
   id                     String               @id @default(uuid())
   structuredOperationId  String?
-  positionId             String
+  positionId             String?
   event                  OptionLifecycleEvent
   underlyingQuantity     Decimal?             @db.Decimal(18, 8)
   strikePrice            Decimal?             @db.Decimal(18, 2)
@@ -406,7 +406,7 @@ model OptionLifecycle {
   notes                  String?
 
   structuredOperation  StructuredOperation? @relation(fields: [structuredOperationId], references: [id])
-  position             Position             @relation(fields: [positionId], references: [id])
+  position             Position?            @relation(fields: [positionId], references: [id], onDelete: SetNull)
   resultingTransaction Transaction?         @relation(fields: [resultingTransactionId], references: [id])
 
   @@index([positionId])

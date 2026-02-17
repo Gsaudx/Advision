@@ -1,5 +1,5 @@
 import { Calendar, TrendingUp, TrendingDown } from 'lucide-react';
-import type { OptionPosition } from '../../types';
+import type { OptionPosition, Moneyness } from '../../types';
 import {
   formatCurrency,
   formatPercent,
@@ -12,6 +12,8 @@ interface OptionPositionCardProps {
   position: OptionPosition;
   onClose?: (positionId: string) => void;
   onExercise?: (positionId: string) => void;
+  onAssignment?: (positionId: string) => void;
+  onExpire?: (positionId: string) => void;
   /** Current timestamp for calculating days until expiry - pass from parent to ensure pure render */
   currentTime: number;
 }
@@ -20,6 +22,8 @@ export function OptionPositionCard({
   position,
   onClose,
   onExercise,
+  onAssignment,
+  onExpire,
   currentTime,
 }: OptionPositionCardProps) {
   const isProfit = (position.profitLoss ?? 0) >= 0;
@@ -29,9 +33,11 @@ export function OptionPositionCard({
   );
 
   const isExpiringSoon = daysUntilExpiry <= 7;
+  const isExpired = daysUntilExpiry <= 0;
+  const isAmerican = position.optionDetail.exerciseType === 'AMERICAN';
 
   // Determine moneyness based on available price data
-  let moneyness: 'ITM' | 'ATM' | 'OTM' | null = null;
+  let moneyness: Moneyness | null = null;
   if (position.currentPrice !== undefined) {
     const diff = Math.abs(
       position.currentPrice - position.optionDetail.strikePrice,
@@ -52,6 +58,18 @@ export function OptionPositionCard({
           : 'OTM';
     }
   }
+
+  // Exercise: long positions only
+  // American options can be exercised anytime, European only at expiry
+  const canExercise =
+    !position.isShort && (isAmerican || isExpired);
+
+  // Assignment: short positions (can happen anytime for American, at expiry for European)
+  const canBeAssigned =
+    position.isShort && (isAmerican || isExpired);
+
+  // Expiration: any position that has expired
+  const canExpire = isExpired;
 
   return (
     <div className="bg-slate-800 rounded-lg p-4 border border-slate-700 hover:border-slate-600 transition-colors">
@@ -132,7 +150,7 @@ export function OptionPositionCard({
           {daysUntilExpiry > 0 && (
             <span className="ml-1">({daysUntilExpiry} dias)</span>
           )}
-          {daysUntilExpiry <= 0 && (
+          {isExpired && (
             <span className="ml-1 font-bold">(VENCIDO)</span>
           )}
         </span>
@@ -179,7 +197,7 @@ export function OptionPositionCard({
       </div>
 
       {/* Actions */}
-      {(onClose || onExercise) && (
+      {(onClose || onExercise || onAssignment || onExpire) && (
         <div className="flex gap-2 mt-4 pt-3 border-t border-slate-700">
           {onClose && (
             <button
@@ -189,12 +207,28 @@ export function OptionPositionCard({
               Fechar Posicao
             </button>
           )}
-          {onExercise && !position.isShort && daysUntilExpiry <= 0 && (
+          {onExercise && canExercise && (
             <button
               onClick={() => onExercise(position.id)}
-              className="flex-1 px-3 py-2 text-sm font-medium rounded-lg bg-blue-600 text-white hover:bg-blue-700 transition-colors"
+              className="flex-1 px-3 py-2 text-sm font-medium rounded-lg bg-indigo-600 text-white hover:bg-indigo-700 transition-colors"
             >
               Exercer
+            </button>
+          )}
+          {onAssignment && canBeAssigned && (
+            <button
+              onClick={() => onAssignment(position.id)}
+              className="flex-1 px-3 py-2 text-sm font-medium rounded-lg bg-amber-600 text-white hover:bg-amber-700 transition-colors"
+            >
+              Atribuicao
+            </button>
+          )}
+          {onExpire && canExpire && (
+            <button
+              onClick={() => onExpire(position.id)}
+              className="flex-1 px-3 py-2 text-sm font-medium rounded-lg bg-gray-600 text-white hover:bg-gray-700 transition-colors"
+            >
+              Vencimento
             </button>
           )}
         </div>

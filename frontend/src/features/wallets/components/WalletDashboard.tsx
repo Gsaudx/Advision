@@ -25,11 +25,18 @@ import {
   useOptionPositions,
   OptionTradeModal,
   OptionPositionCard,
+  CloseOptionModal,
+  ExerciseOptionModal,
+  AssignmentModal,
+  ExpirationModal,
+  UpcomingExpirationsWidget,
 } from '@/features/derivatives';
+import type { OptionPosition } from '@/features/derivatives';
 import type { TradeType, CashOperationType, Position } from '../types';
 
 type OptionTradeType = 'BUY' | 'SELL';
 type TabType = 'positions' | 'options' | 'history';
+type LifecycleAction = 'close' | 'exercise' | 'assignment' | 'expiration';
 
 interface WalletDashboardProps {
   isOpen: boolean;
@@ -84,6 +91,10 @@ export function WalletDashboard({
     string | undefined
   >(undefined);
 
+  // Lifecycle modal state
+  const [lifecycleAction, setLifecycleAction] = useState<LifecycleAction | null>(null);
+  const [selectedPosition, setSelectedPosition] = useState<OptionPosition | null>(null);
+
   const handleOpenTrade = (type: TradeType, ticker?: string) => {
     setTradeType(type);
     setPreselectedTicker(ticker);
@@ -104,15 +115,34 @@ export function WalletDashboard({
     setShowOptionTradeModal(true);
   };
 
-  const handleCloseOptionPosition = (positionId: string) => {
-    // For now, just log - could open a close modal
-    console.log('Close option position:', positionId);
+  const findOptionPosition = (positionId: string): OptionPosition | undefined => {
+    return optionPositionsData?.positions.find((p) => p.id === positionId);
   };
 
-  const handleExerciseOption = (positionId: string) => {
-    // For now, just log - could open an exercise modal
-    console.log('Exercise option:', positionId);
+  const openLifecycleModal = (action: LifecycleAction, positionId: string) => {
+    const position = findOptionPosition(positionId);
+    if (position) {
+      setSelectedPosition(position);
+      setLifecycleAction(action);
+    }
   };
+
+  const closeLifecycleModal = () => {
+    setLifecycleAction(null);
+    setSelectedPosition(null);
+  };
+
+  const handleCloseOptionPosition = (positionId: string) =>
+    openLifecycleModal('close', positionId);
+
+  const handleExerciseOption = (positionId: string) =>
+    openLifecycleModal('exercise', positionId);
+
+  const handleAssignmentOption = (positionId: string) =>
+    openLifecycleModal('assignment', positionId);
+
+  const handleExpireOption = (positionId: string) =>
+    openLifecycleModal('expiration', positionId);
 
   if (!isOpen) return null;
 
@@ -278,6 +308,17 @@ export function WalletDashboard({
                 </div>
               )}
 
+              {/* Upcoming Expirations Widget */}
+              {optionPositionsData?.positions &&
+                optionPositionsData.positions.length > 0 && (
+                  <UpcomingExpirationsWidget
+                    walletId={walletId}
+                    onExercise={canTrade ? handleExerciseOption : undefined}
+                    onExpire={canTrade ? handleExpireOption : undefined}
+                    onAssignment={canTrade ? handleAssignmentOption : undefined}
+                  />
+                )}
+
               {/* Tabs */}
               <div>
                 <div className="flex items-center gap-1 p-1 bg-slate-800 rounded-lg w-fit mb-4">
@@ -397,6 +438,12 @@ export function WalletDashboard({
                               onExercise={
                                 canTrade ? handleExerciseOption : undefined
                               }
+                              onAssignment={
+                                canTrade ? handleAssignmentOption : undefined
+                              }
+                              onExpire={
+                                canTrade ? handleExpireOption : undefined
+                              }
                             />
                           ))}
                         </div>
@@ -485,6 +532,40 @@ export function WalletDashboard({
           walletId={walletId}
           walletName={wallet.name}
           currentBalance={wallet.cashBalance}
+        />
+      )}
+
+      {/* Lifecycle Modals */}
+      {selectedPosition && lifecycleAction === 'close' && (
+        <CloseOptionModal
+          isOpen
+          onClose={closeLifecycleModal}
+          position={selectedPosition}
+          walletId={walletId}
+        />
+      )}
+      {selectedPosition && lifecycleAction === 'exercise' && (
+        <ExerciseOptionModal
+          isOpen
+          onClose={closeLifecycleModal}
+          position={selectedPosition}
+          walletId={walletId}
+        />
+      )}
+      {selectedPosition && lifecycleAction === 'assignment' && (
+        <AssignmentModal
+          isOpen
+          onClose={closeLifecycleModal}
+          position={selectedPosition}
+          walletId={walletId}
+        />
+      )}
+      {selectedPosition && lifecycleAction === 'expiration' && (
+        <ExpirationModal
+          isOpen
+          onClose={closeLifecycleModal}
+          position={selectedPosition}
+          walletId={walletId}
         />
       )}
     </>
