@@ -262,7 +262,7 @@ export class WalletsService {
     const wallet = await this.walletAccess.verifyWalletAccess(walletId, actor);
 
     const positions = await this.prisma.position.findMany({
-      where: { walletId },
+      where: { walletId, quantity: { not: 0 } },
       include: { asset: true },
     });
 

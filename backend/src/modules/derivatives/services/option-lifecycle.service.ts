@@ -726,6 +726,7 @@ export class OptionLifecycleService {
     const positions = await this.prisma.position.findMany({
       where: {
         walletId,
+        quantity: { not: 0 },
         asset: {
           type: 'OPTION',
           optionDetail: {
