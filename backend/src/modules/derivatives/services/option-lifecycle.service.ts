@@ -109,7 +109,7 @@ export class OptionLifecycleService {
       const expiryDate = new Date(optionDetail.expirationDate);
       expiryDate.setHours(0, 0, 0, 0);
 
-      if (today < expiryDate) {
+      if (today.getTime() !== expiryDate.getTime()) {
         throw new BadRequestException(
           'Opcoes europeias so podem ser exercidas no vencimento',
         );
@@ -140,6 +140,16 @@ export class OptionLifecycleService {
         let underlyingPositionId: string | null = null;
 
         if (optionDetail.optionType === 'CALL') {
+          const availableCash = new Decimal(wallet.cashBalance).minus(
+            wallet.blockedCollateral,
+          );
+
+          if (availableCash.lt(totalCost)) {
+            throw new BadRequestException(
+              `Saldo insuficiente para exercer CALL. Necessario: ${totalCost.toFixed(2)}`,
+            );
+          }
+
           const cashUpdateResult = await tx.wallet.updateMany({
             where: { id: walletId, cashBalance: { gte: totalCost } },
             data: { cashBalance: { decrement: totalCost } },
@@ -405,6 +415,16 @@ export class OptionLifecycleService {
 
           underlyingPositionId = existingUnderlyingPosition.id;
         } else {
+          const availableCash = new Decimal(wallet.cashBalance).minus(
+            wallet.blockedCollateral,
+          );
+
+          if (availableCash.lt(settlementAmount)) {
+            throw new BadRequestException(
+              `Saldo insuficiente para assignment de PUT. Necessario: ${settlementAmount.toFixed(2)}`,
+            );
+          }
+
           const cashUpdateResult = await tx.wallet.updateMany({
             where: { id: walletId, cashBalance: { gte: settlementAmount } },
             data: { cashBalance: { decrement: settlementAmount } },

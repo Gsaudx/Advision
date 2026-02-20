@@ -9,6 +9,7 @@ interface TickerAutocompleteProps {
   error?: string;
   disabled?: boolean;
   placeholder?: string;
+  hideLabel?: boolean;
 }
 
 export function TickerAutocomplete({
@@ -18,6 +19,7 @@ export function TickerAutocomplete({
   error,
   disabled,
   placeholder = 'Digite o ticker (ex: PETR4)',
+  hideLabel = false,
 }: TickerAutocompleteProps) {
   const [isOpen, setIsOpen] = useState(false);
   const [searchQuery, setSearchQuery] = useState('');
@@ -74,9 +76,11 @@ export function TickerAutocomplete({
 
   return (
     <div ref={containerRef} className="relative">
-      <label className="block text-sm font-medium text-zinc-300 mb-1">
-        Ticker
-      </label>
+      {!hideLabel && (
+        <label className="block text-sm font-medium text-zinc-300 mb-1">
+          Ticker
+        </label>
+      )}
       <input
         ref={inputRef}
         type="text"

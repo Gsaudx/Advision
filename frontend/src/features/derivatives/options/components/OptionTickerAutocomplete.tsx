@@ -5,7 +5,7 @@ import type {
   OptionDetailsResult,
 } from '@/features/wallets/types';
 import type { OptionSearchResult, OptionType } from '../../types';
-import { ChevronDown, Search, X } from 'lucide-react';
+import { Search, X } from 'lucide-react';
 
 interface OptionTickerAutocompleteProps {
   value: string;
@@ -17,6 +17,7 @@ interface OptionTickerAutocompleteProps {
   error?: string;
   disabled?: boolean;
   placeholder?: string;
+  hideLabel?: boolean;
 }
 
 type SearchStep = 'underlying' | 'option';
@@ -28,9 +29,13 @@ export function OptionTickerAutocomplete({
   error,
   disabled,
   placeholder = 'Selecione o ativo subjacente',
+  hideLabel = false,
 }: OptionTickerAutocompleteProps) {
   const [isOpen, setIsOpen] = useState(false);
-  const [searchStep, setSearchStep] = useState<SearchStep>('underlying');
+  // Initialize step based on whether a value already exists
+  const [searchStep, setSearchStep] = useState<SearchStep>(
+    value ? 'option' : 'underlying',
+  );
   const [underlyingQuery, setUnderlyingQuery] = useState('');
   const [selectedUnderlying, setSelectedUnderlying] = useState<string | null>(
     null,
@@ -167,9 +172,11 @@ export function OptionTickerAutocomplete({
 
   return (
     <div ref={containerRef} className="relative">
-      <label className="block text-sm font-medium text-zinc-300 mb-1">
-        Ticker da Opção
-      </label>
+      {!hideLabel && (
+        <label className="block text-sm font-medium text-zinc-300 mb-1">
+          Ticker da Opção
+        </label>
+      )}
 
       {/* Step indicator and controls */}
       {searchStep === 'option' && selectedUnderlying && (
@@ -211,22 +218,30 @@ export function OptionTickerAutocomplete({
           />
         </div>
       ) : (
-        <div className="relative">
+        <div className="relative flex items-center gap-1">
           <input
             type="text"
             value={value}
             readOnly
-            onClick={() => setIsOpen(true)}
-            placeholder="Clique para selecionar uma opção"
+            onClick={() =>
+              selectedUnderlying ? setIsOpen(true) : handleBackToUnderlying()
+            }
+            placeholder="Clique para selecionar"
             disabled={disabled}
             className={`w-full px-3 py-2 bg-zinc-800 border rounded-md text-white placeholder-zinc-500 cursor-pointer focus:outline-none focus:ring-2 focus:ring-blue-500 ${
               error ? 'border-red-500' : 'border-zinc-700'
             } ${disabled ? 'opacity-50 cursor-not-allowed' : ''}`}
           />
-          <ChevronDown
-            className="absolute right-3 top-1/2 -translate-y-1/2 text-zinc-500"
-            size={16}
-          />
+          {value && (
+            <button
+              type="button"
+              onClick={handleBackToUnderlying}
+              disabled={disabled}
+              className="absolute right-2 text-zinc-500 hover:text-zinc-300 transition-colors disabled:opacity-50"
+            >
+              <X size={14} />
+            </button>
+          )}
         </div>
       )}
 
@@ -358,11 +373,14 @@ export function OptionTickerAutocomplete({
                             <div className="flex items-center gap-2 text-xs text-zinc-500">
                               {option.expirationDate && (
                                 <span>
-                                  Exp: {formatExpirationDate(option.expirationDate)}
+                                  Exp:{' '}
+                                  {formatExpirationDate(option.expirationDate)}
                                 </span>
                               )}
                               {option.strike && (
-                                <span>Strike: R${option.strike.toFixed(2)}</span>
+                                <span>
+                                  Strike: R${option.strike.toFixed(2)}
+                                </span>
                               )}
                             </div>
                           </div>

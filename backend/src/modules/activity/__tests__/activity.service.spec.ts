@@ -17,6 +17,13 @@ describe('ActivityService', () => {
       findMany: jest.Mock;
       count: jest.Mock;
     };
+    structuredOperation: {
+      count: jest.Mock;
+    };
+    position: {
+      count: jest.Mock;
+      findMany: jest.Mock;
+    };
   };
 
   const advisorId = 'advisor-123';
@@ -69,6 +76,13 @@ describe('ActivityService', () => {
       domainEvent: {
         findMany: jest.fn(),
         count: jest.fn(),
+      },
+      structuredOperation: {
+        count: jest.fn(),
+      },
+      position: {
+        count: jest.fn(),
+        findMany: jest.fn(),
       },
     };
 
@@ -194,15 +208,19 @@ describe('ActivityService', () => {
     it('returns correct metrics for advisor', async () => {
       prisma.client.count.mockResolvedValue(5);
       prisma.wallet.findMany.mockResolvedValue([
-        { cashBalance: 1000 },
-        { cashBalance: 2500.5 },
+        { id: 'w1', cashBalance: 1000 },
+        { id: 'w2', cashBalance: 2500.5 },
       ]);
+      prisma.structuredOperation.count.mockResolvedValue(3);
+      prisma.position.count.mockResolvedValue(2);
 
       const result = await service.getAdvisorMetrics(advisorId);
 
       expect(result).toEqual({
         clientCount: 5,
         totalWalletValue: 3500.5,
+        pendingOperationsCount: 3,
+        expiringOptionsCount: 2,
       });
 
       expect(prisma.client.count).toHaveBeenCalledWith({
@@ -219,6 +237,8 @@ describe('ActivityService', () => {
       expect(result).toEqual({
         clientCount: 0,
         totalWalletValue: 0,
+        pendingOperationsCount: 0,
+        expiringOptionsCount: 0,
       });
     });
   });

@@ -22,6 +22,28 @@ export interface PaginatedActivity {
 export interface AdvisorMetrics {
   clientCount: number;
   totalWalletValue: number;
+  pendingOperationsCount: number;
+  expiringOptionsCount: number;
+}
+
+export interface AdvisorExpiration {
+  positionId: string;
+  ticker: string;
+  optionType: 'CALL' | 'PUT';
+  strikePrice: number;
+  expirationDate: string;
+  daysUntilExpiry: number;
+  quantity: number;
+  isShort: boolean;
+  walletName: string;
+  clientName: string;
+  moneyness?: 'ITM' | 'ATM' | 'OTM';
+  status: 'Proximo' | 'Em dia' | 'Vencido';
+}
+
+export interface AdvisorExpirationsList {
+  expirations: AdvisorExpiration[];
+  total: number;
 }
 
 export interface ClientProfile {
@@ -82,6 +104,15 @@ export const activityApi = {
   getClientProfile: async (): Promise<ClientProfile> => {
     const response = await api.get<ApiResponse<ClientProfile>>(
       '/activity/client/profile',
+    );
+    return response.data.data;
+  },
+
+  getAdvisorExpirations: async (
+    daysAhead = 30,
+  ): Promise<AdvisorExpirationsList> => {
+    const response = await api.get<ApiResponse<AdvisorExpirationsList>>(
+      `/activity/advisor/expirations?daysAhead=${daysAhead}`,
     );
     return response.data.data;
   },

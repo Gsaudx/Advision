@@ -66,9 +66,10 @@ export function OptionTradeModal({
     ? getApiErrorMessage(activeMutation.error)
     : null;
 
-  // Auto-fill premium when price data is loaded
+  // Auto-fill premium when price data is loaded (syncing API data to form state)
   useEffect(() => {
-    if (priceData?.price !== undefined && priceData?.price !== null && !isPremiumManual) {
+    if (priceData?.price != null && !isPremiumManual) {
+      // eslint-disable-next-line react-hooks/set-state-in-effect -- syncing API query data to form state
       setFormData((prev) => ({
         ...prev,
         premium: priceData.price.toFixed(2),
@@ -445,19 +446,30 @@ export function OptionTradeModal({
 
         {/* Covered option (only for SELL) */}
         {!isBuy && (
-          <div className="flex items-center gap-3 p-3 bg-slate-800 rounded-lg">
-            <input
-              id="covered"
-              name="covered"
-              type="checkbox"
-              checked={formData.covered}
-              onChange={handleChange}
-              disabled={activeMutation.isPending}
-              className="w-4 h-4 rounded border-slate-600 bg-slate-700 text-blue-600 focus:ring-blue-500"
-            />
-            <label htmlFor="covered" className="text-sm text-gray-300">
-              Opcao coberta (possuo o ativo subjacente)
-            </label>
+          <div className="space-y-2">
+            <div className="flex items-center gap-3 p-3 bg-slate-800 rounded-lg">
+              <input
+                id="covered"
+                name="covered"
+                type="checkbox"
+                checked={formData.covered}
+                onChange={handleChange}
+                disabled={activeMutation.isPending}
+                className="w-4 h-4 rounded border-slate-600 bg-slate-700 text-blue-600 focus:ring-blue-500"
+              />
+              <label htmlFor="covered" className="text-sm text-gray-300">
+                Opcao coberta (possuo o ativo subjacente)
+              </label>
+            </div>
+            {formData.covered && (
+              <div className="p-2.5 bg-blue-500/10 border border-blue-500/20 rounded-lg">
+                <p className="text-blue-400 text-xs">
+                  Covered call requer que voce possua as acoes do ativo
+                  subjacente na carteira. O sistema validara a quantidade no
+                  momento da execucao.
+                </p>
+              </div>
+            )}
           </div>
         )}
 

@@ -161,6 +161,14 @@ export class DerivativesService {
           throw new NotFoundException('Carteira nao encontrada');
         }
 
+        const availableCash = new Decimal(wallet.cashBalance).minus(
+          wallet.blockedCollateral,
+        );
+
+        if (availableCash.lt(totalCost)) {
+          throw new BadRequestException('Saldo insuficiente');
+        }
+
         const cashUpdateResult = await tx.wallet.updateMany({
           where: { id: walletId, cashBalance: { gte: totalCost.toNumber() } },
           data: { cashBalance: { decrement: totalCost.toNumber() } },
@@ -565,6 +573,24 @@ export class DerivativesService {
     try {
       result = await this.prisma.$transaction(async (tx) => {
         if (isShort) {
+          const wallet = await tx.wallet.findUnique({
+            where: { id: walletId },
+          });
+
+          if (!wallet) {
+            throw new NotFoundException('Carteira nao encontrada');
+          }
+
+          const availableCash = new Decimal(wallet.cashBalance).minus(
+            wallet.blockedCollateral,
+          );
+
+          if (availableCash.lt(totalValue)) {
+            throw new BadRequestException(
+              'Saldo insuficiente para fechar posicao',
+            );
+          }
+
           const cashUpdateResult = await tx.wallet.updateMany({
             where: {
               id: walletId,

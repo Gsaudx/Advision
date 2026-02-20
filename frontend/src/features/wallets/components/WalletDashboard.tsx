@@ -11,6 +11,7 @@ import {
   Wallet,
   History,
   LayoutGrid,
+  Layers,
   LineChart,
 } from 'lucide-react';
 import { formatCurrency, formatDateTime } from '@/lib/formatters';
@@ -30,12 +31,14 @@ import {
   AssignmentModal,
   ExpirationModal,
   UpcomingExpirationsWidget,
+  StrategyBuilderModal,
+  StrategyHistoryList,
 } from '@/features/derivatives';
 import type { OptionPosition } from '@/features/derivatives';
 import type { TradeType, CashOperationType, Position } from '../types';
 
 type OptionTradeType = 'BUY' | 'SELL';
-type TabType = 'positions' | 'options' | 'history';
+type TabType = 'positions' | 'options' | 'strategies' | 'history';
 type LifecycleAction = 'close' | 'exercise' | 'assignment' | 'expiration';
 
 interface WalletDashboardProps {
@@ -82,6 +85,7 @@ export function WalletDashboard({
   const [showCashModal, setShowCashModal] = useState(false);
   const [showTradeModal, setShowTradeModal] = useState(false);
   const [showOptionTradeModal, setShowOptionTradeModal] = useState(false);
+  const [showStrategyModal, setShowStrategyModal] = useState(false);
   const [tradeType, setTradeType] = useState<TradeType>('BUY');
   const [optionTradeType, setOptionTradeType] =
     useState<OptionTradeType>('BUY');
@@ -305,6 +309,14 @@ export function WalletDashboard({
                     <LineChart className="w-4 h-4" />
                     Vender Opcao
                   </button>
+                  <div className="w-px h-8 bg-slate-700" />
+                  <button
+                    onClick={() => setShowStrategyModal(true)}
+                    className="px-4 py-2 bg-cyan-600/20 text-cyan-400 rounded-lg hover:bg-cyan-600/30 transition-colors flex items-center gap-2"
+                  >
+                    <LayoutGrid className="w-4 h-4" />
+                    Estrategia
+                  </button>
                 </div>
               )}
 
@@ -349,6 +361,17 @@ export function WalletDashboard({
                           {optionPositionsData.positions.length}
                         </span>
                       )}
+                  </button>
+                  <button
+                    onClick={() => setActiveTab('strategies')}
+                    className={`flex items-center gap-2 px-4 py-2 rounded-md text-sm font-medium transition-colors ${
+                      activeTab === 'strategies'
+                        ? 'bg-slate-700 text-white'
+                        : 'text-gray-400 hover:text-white'
+                    }`}
+                  >
+                    <Layers className="w-4 h-4" />
+                    Estrategias
                   </button>
                   <button
                     onClick={() => setActiveTab('history')}
@@ -479,6 +502,9 @@ export function WalletDashboard({
                     )}
                   </div>
                 )}
+                {activeTab === 'strategies' && (
+                  <StrategyHistoryList walletId={walletId} />
+                )}
                 {activeTab === 'history' && (
                   <TransactionTimeline
                     transactions={transactions?.items ?? []}
@@ -542,6 +568,7 @@ export function WalletDashboard({
           onClose={closeLifecycleModal}
           position={selectedPosition}
           walletId={walletId}
+          walletCashBalance={wallet?.cashBalance}
         />
       )}
       {selectedPosition && lifecycleAction === 'exercise' && (
@@ -566,6 +593,16 @@ export function WalletDashboard({
           onClose={closeLifecycleModal}
           position={selectedPosition}
           walletId={walletId}
+        />
+      )}
+
+      {/* Strategy Builder Modal */}
+      {wallet && (
+        <StrategyBuilderModal
+          isOpen={showStrategyModal}
+          onClose={() => setShowStrategyModal(false)}
+          walletId={walletId}
+          walletName={wallet.name}
         />
       )}
     </>

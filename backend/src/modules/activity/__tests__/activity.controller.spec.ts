@@ -68,6 +68,8 @@ const mockPaginatedActivity = {
 const mockAdvisorMetrics = {
   clientCount: 5,
   totalWalletValue: 10000,
+  pendingOperationsCount: 3,
+  expiringOptionsCount: 2,
 };
 
 const mockClientProfile = {
@@ -94,6 +96,7 @@ describe('ActivityController', () => {
       getClientProfile: jest.fn(),
       getAdvisorActivityPaginated: jest.fn(),
       getClientActivityPaginated: jest.fn(),
+      getAdvisorExpirations: jest.fn(),
     };
 
     prisma = {

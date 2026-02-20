@@ -23,10 +23,12 @@ import { ActivityService } from '../services';
 import {
   ActivityListApiResponseDto,
   AdvisorMetricsApiResponseDto,
+  AdvisorExpirationsApiResponseDto,
   ClientProfileApiResponseDto,
   PaginatedActivityApiResponseDto,
   type ActivityList,
   type AdvisorMetrics,
+  type AdvisorExpirationsList,
   type ClientProfile,
   type PaginatedActivity,
 } from '../schemas';
@@ -130,6 +132,38 @@ export class ActivityController {
     @CurrentUser() user: CurrentUserData,
   ): Promise<ApiResponseType<AdvisorMetrics>> {
     const data = await this.activityService.getAdvisorMetrics(user.id);
+    return ApiResponseDto.success(data);
+  }
+
+  @Get('advisor/expirations')
+  @Roles('ADVISOR', 'ADMIN')
+  @ApiOperation({
+    summary: 'Vencimentos de opcoes do assessor',
+    description:
+      'Retorna os vencimentos de opcoes proximos de todos os clientes do assessor.',
+  })
+  @ApiQuery({
+    name: 'daysAhead',
+    required: false,
+    type: Number,
+    description: 'Dias a frente para buscar vencimentos (padrao: 30)',
+  })
+  @ApiResponse({
+    status: 200,
+    description: 'Lista de vencimentos de opcoes',
+    type: AdvisorExpirationsApiResponseDto,
+  })
+  async getAdvisorExpirations(
+    @CurrentUser() user: CurrentUserData,
+    @Query('daysAhead') daysAhead?: string,
+  ): Promise<ApiResponseType<AdvisorExpirationsList>> {
+    const parsedDaysAhead = daysAhead
+      ? Math.min(Math.max(parseInt(daysAhead, 10), 1), 365)
+      : 30;
+    const data = await this.activityService.getAdvisorExpirations(
+      user.id,
+      parsedDaysAhead,
+    );
     return ApiResponseDto.success(data);
   }
 

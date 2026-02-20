@@ -1,5 +1,5 @@
-import { useState } from 'react';
-import { Zap, X } from 'lucide-react';
+import { useState, useMemo } from 'react';
+import { Zap, X, AlertTriangle } from 'lucide-react';
 import ModalBase from '@/components/layout/ModalBase';
 import { LoadingSpinner } from '@/components/ui/LoadingSpinner';
 import { getApiErrorMessage } from '@/lib/api-error';
@@ -37,6 +37,16 @@ export function ExerciseOptionModal({
   const totalCost = underlyingQuantity * position.optionDetail.strikePrice;
 
   const isCall = position.optionDetail.optionType === 'CALL';
+  const isEuropean = position.optionDetail.exerciseType === 'EUROPEAN';
+
+  const europeanBlocked = useMemo(() => {
+    if (!isEuropean) return false;
+    const today = new Date();
+    today.setHours(0, 0, 0, 0);
+    const expiry = new Date(position.optionDetail.expirationDate);
+    expiry.setHours(0, 0, 0, 0);
+    return today.getTime() !== expiry.getTime();
+  }, [isEuropean, position.optionDetail.expirationDate]);
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
@@ -103,6 +113,16 @@ export function ExerciseOptionModal({
         {apiErrorMessage && (
           <div className="p-3 bg-red-500/10 border border-red-500/20 rounded-lg">
             <p className="text-red-400 text-sm">{apiErrorMessage}</p>
+          </div>
+        )}
+
+        {europeanBlocked && (
+          <div className="p-3 bg-amber-500/10 border border-amber-500/20 rounded-lg flex items-start gap-2">
+            <AlertTriangle size={16} className="text-amber-400 mt-0.5 shrink-0" />
+            <p className="text-amber-400 text-sm">
+              Opcoes europeias so podem ser exercidas na data de vencimento
+              ({new Date(position.optionDetail.expirationDate).toLocaleDateString('pt-BR')}).
+            </p>
           </div>
         )}
 
@@ -209,7 +229,7 @@ export function ExerciseOptionModal({
           </button>
           <button
             type="submit"
-            disabled={exerciseMutation.isPending}
+            disabled={exerciseMutation.isPending || europeanBlocked}
             className="px-5 py-2.5 bg-indigo-600 text-white rounded-lg hover:bg-indigo-700 transition-colors font-medium disabled:opacity-50 flex items-center gap-2"
           >
             {exerciseMutation.isPending ? (

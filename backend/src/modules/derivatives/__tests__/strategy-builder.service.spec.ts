@@ -2,6 +2,7 @@ import { BadRequestException } from '@nestjs/common';
 import { Test, TestingModule } from '@nestjs/testing';
 import { StrategyBuilderService } from '../services/strategy-builder.service';
 import { PrismaService } from '@/shared/prisma/prisma.service';
+import { AssetResolverService } from '@/modules/wallets/services';
 import { StrategyType, OperationLegType } from '@/generated/prisma/enums';
 
 describe('StrategyBuilderService', () => {
@@ -9,6 +10,7 @@ describe('StrategyBuilderService', () => {
   let prisma: {
     asset: { findUnique: jest.Mock };
   };
+  let assetResolver: { ensureAssetExists: jest.Mock };
 
   const mockCallAsset = {
     id: 'asset-call-123',
@@ -47,10 +49,17 @@ describe('StrategyBuilderService', () => {
       asset: { findUnique: jest.fn() },
     };
 
+    assetResolver = {
+      ensureAssetExists: jest
+        .fn()
+        .mockResolvedValue({ id: 'resolved', ticker: 'RESOLVED' }),
+    };
+
     const module: TestingModule = await Test.createTestingModule({
       providers: [
         StrategyBuilderService,
         { provide: PrismaService, useValue: prisma },
+        { provide: AssetResolverService, useValue: assetResolver },
       ],
     }).compile();
 
@@ -309,7 +318,12 @@ describe('StrategyBuilderService', () => {
         ticker: 'PETRA240',
         quantity: 1,
         price: 1,
-      });
+      }) as {
+        legType: OperationLegType;
+        ticker: string;
+        quantity: number;
+        price: number;
+      }[];
 
       const result = await service.validateCustomStrategy(legs);
 

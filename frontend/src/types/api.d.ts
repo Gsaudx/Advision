@@ -4,1542 +4,2859 @@
  */
 
 export interface paths {
-  '/health': {
-    parameters: {
-      query?: never;
-      header?: never;
-      path?: never;
-      cookie?: never;
+    "/health": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * Verifica status da API
+         * @description Retorna o status da aplicacao e a conexao com o banco de dados. Use este endpoint para monitoramento e health checks de infraestrutura.
+         */
+        get: operations["HealthController_check"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
     };
-    /**
-     * Verifica status da API
-     * @description Retorna o status da aplicacao e a conexao com o banco de dados. Use este endpoint para monitoramento e health checks de infraestrutura.
-     */
-    get: operations['HealthController_check'];
-    put?: never;
-    post?: never;
-    delete?: never;
-    options?: never;
-    head?: never;
-    patch?: never;
-    trace?: never;
-  };
-  '/auth/register': {
-    parameters: {
-      query?: never;
-      header?: never;
-      path?: never;
-      cookie?: never;
+    "/auth/register": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * Registrar novo usuário
+         * @description Cria uma nova conta na plataforma. Define um cookie HttpOnly com o token JWT.
+         */
+        post: operations["AuthController_register"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
     };
-    get?: never;
-    put?: never;
-    /**
-     * Registrar novo usuario
-     * @description Cria uma nova conta na plataforma. Define um cookie HttpOnly com o token JWT.
-     */
-    post: operations['AuthController_register'];
-    delete?: never;
-    options?: never;
-    head?: never;
-    patch?: never;
-    trace?: never;
-  };
-  '/auth/login': {
-    parameters: {
-      query?: never;
-      header?: never;
-      path?: never;
-      cookie?: never;
+    "/auth/login": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * Autenticar usuário
+         * @description Autentica o usuário e define um cookie HttpOnly com o token JWT.
+         */
+        post: operations["AuthController_login"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
     };
-    get?: never;
-    put?: never;
-    /**
-     * Autenticar usuario
-     * @description Autentica o usuario e define um cookie HttpOnly com o token JWT.
-     */
-    post: operations['AuthController_login'];
-    delete?: never;
-    options?: never;
-    head?: never;
-    patch?: never;
-    trace?: never;
-  };
-  '/auth/logout': {
-    parameters: {
-      query?: never;
-      header?: never;
-      path?: never;
-      cookie?: never;
+    "/auth/logout": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * Encerrar sessão
+         * @description Remove o cookie de autenticação.
+         */
+        post: operations["AuthController_logout"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
     };
-    get?: never;
-    put?: never;
-    /**
-     * Encerrar sessao
-     * @description Remove o cookie de autenticacao.
-     */
-    post: operations['AuthController_logout'];
-    delete?: never;
-    options?: never;
-    head?: never;
-    patch?: never;
-    trace?: never;
-  };
-  '/auth/me': {
-    parameters: {
-      query?: never;
-      header?: never;
-      path?: never;
-      cookie?: never;
+    "/auth/me": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * Obter perfil do usuário
+         * @description Retorna os dados do usuário autenticado via cookie.
+         */
+        get: operations["AuthController_getProfile"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
     };
-    /**
-     * Obter perfil do usuario
-     * @description Retorna os dados do usuario autenticado via cookie.
-     */
-    get: operations['AuthController_getProfile'];
-    put?: never;
-    post?: never;
-    delete?: never;
-    options?: never;
-    head?: never;
-    patch?: never;
-    trace?: never;
-  };
-  '/clients/{id}/invite': {
-    parameters: {
-      query?: never;
-      header?: never;
-      path?: never;
-      cookie?: never;
+    "/clients/{id}/invite": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * Consultar status do convite
+         * @description Retorna o status atual do convite de um cliente. Permite ao assessor verificar o token e sua validade.
+         */
+        get: operations["ClientsInviteController_getInviteStatus"];
+        put?: never;
+        /**
+         * Gerar convite para cliente
+         * @description Gera um token de convite para que o cliente possa vincular sua conta. Apenas assessores podem gerar convites.
+         */
+        post: operations["ClientsInviteController_generateInvite"];
+        /**
+         * Revogar convite
+         * @description Revoga um convite pendente. O token será invalidado e o cliente não poderá mais usá-lo.
+         */
+        delete: operations["ClientsInviteController_revokeInvite"];
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
     };
-    /**
-     * Consultar status do convite
-     * @description Retorna o status atual do convite de um cliente. Permite ao assessor verificar o token e sua validade.
-     */
-    get: operations['ClientsInviteController_getInviteStatus'];
-    put?: never;
-    /**
-     * Gerar convite para cliente
-     * @description Gera um token de convite para que o cliente possa vincular sua conta. Apenas assessores podem gerar convites.
-     */
-    post: operations['ClientsInviteController_generateInvite'];
-    /**
-     * Revogar convite
-     * @description Revoga um convite pendente. O token sera invalidado e o cliente nao podera mais usa-lo.
-     */
-    delete: operations['ClientsInviteController_revokeInvite'];
-    options?: never;
-    head?: never;
-    patch?: never;
-    trace?: never;
-  };
-  '/clients/invite/accept': {
-    parameters: {
-      query?: never;
-      header?: never;
-      path?: never;
-      cookie?: never;
+    "/clients/invite/accept": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * Aceitar convite
+         * @description Aceita um convite e vincula a conta do usuário autenticado ao perfil de cliente. Apenas usuários com role CLIENT podem aceitar convites.
+         */
+        post: operations["ClientsInviteController_acceptInvite"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
     };
-    get?: never;
-    put?: never;
-    /**
-     * Aceitar convite
-     * @description Aceita um convite e vincula a conta do usuario autenticado ao perfil de cliente. Apenas usuarios com role CLIENT podem aceitar convites.
-     */
-    post: operations['ClientsInviteController_acceptInvite'];
-    delete?: never;
-    options?: never;
-    head?: never;
-    patch?: never;
-    trace?: never;
-  };
-  '/clients': {
-    parameters: {
-      query?: never;
-      header?: never;
-      path?: never;
-      cookie?: never;
+    "/clients": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * Listar clientes
+         * @description Retorna todos os clientes do assessor autenticado.
+         */
+        get: operations["ClientsController_findAll"];
+        put?: never;
+        /**
+         * Criar novo cliente
+         * @description Cadastra um novo cliente vinculado ao assessor autenticado.
+         */
+        post: operations["ClientsController_create"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
     };
-    /**
-     * Listar clientes
-     * @description Retorna todos os clientes do assessor autenticado.
-     */
-    get: operations['ClientsController_findAll'];
-    put?: never;
-    /**
-     * Criar novo cliente
-     * @description Cadastra um novo cliente vinculado ao assessor autenticado.
-     */
-    post: operations['ClientsController_create'];
-    delete?: never;
-    options?: never;
-    head?: never;
-    patch?: never;
-    trace?: never;
-  };
-  '/clients/{id}': {
-    parameters: {
-      query?: never;
-      header?: never;
-      path?: never;
-      cookie?: never;
+    "/clients/{id}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * Buscar cliente
+         * @description Retorna os dados de um cliente especifico.
+         */
+        get: operations["ClientsController_findOne"];
+        /**
+         * Atualizar cliente
+         * @description Atualiza os dados de um cliente existente.
+         */
+        put: operations["ClientsController_update"];
+        post?: never;
+        /**
+         * Excluir cliente
+         * @description Remove um cliente do sistema.
+         */
+        delete: operations["ClientsController_delete"];
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
     };
-    /**
-     * Buscar cliente
-     * @description Retorna os dados de um cliente especifico.
-     */
-    get: operations['ClientsController_findOne'];
-    /**
-     * Atualizar cliente
-     * @description Atualiza os dados de um cliente existente.
-     */
-    put: operations['ClientsController_update'];
-    post?: never;
-    /**
-     * Excluir cliente
-     * @description Remove um cliente do sistema.
-     */
-    delete: operations['ClientsController_delete'];
-    options?: never;
-    head?: never;
-    patch?: never;
-    trace?: never;
-  };
-  '/wallets': {
-    parameters: {
-      query?: never;
-      header?: never;
-      path?: never;
-      cookie?: never;
+    "/wallets": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * Listar carteiras
+         * @description Lista todas as carteiras acessiveis pelo usuario. Opcionalmente filtra por cliente.
+         */
+        get: operations["WalletsController_findAll"];
+        put?: never;
+        /**
+         * Criar nova carteira
+         * @description Cria uma nova carteira para um cliente.
+         */
+        post: operations["WalletsController_create"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
     };
-    /**
-     * Listar carteiras
-     * @description Lista todas as carteiras acessiveis pelo usuario. Opcionalmente filtra por cliente.
-     */
-    get: operations['WalletsController_findAll'];
-    put?: never;
-    /**
-     * Criar nova carteira
-     * @description Cria uma nova carteira para um cliente.
-     */
-    post: operations['WalletsController_create'];
-    delete?: never;
-    options?: never;
-    head?: never;
-    patch?: never;
-    trace?: never;
-  };
-  '/wallets/assets/search': {
-    parameters: {
-      query?: never;
-      header?: never;
-      path?: never;
-      cookie?: never;
+    "/wallets/assets/search": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * Buscar ativos
+         * @description Busca ativos por ticker ou nome para autocomplete. Inclui acoes e opcoes brasileiras.
+         */
+        get: operations["WalletsController_searchAssets"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
     };
-    /**
-     * Buscar ativos
-     * @description Busca ativos por ticker ou nome para autocomplete. Retorna apenas acoes brasileiras.
-     */
-    get: operations['WalletsController_searchAssets'];
-    put?: never;
-    post?: never;
-    delete?: never;
-    options?: never;
-    head?: never;
-    patch?: never;
-    trace?: never;
-  };
-  '/wallets/assets/{ticker}/price': {
-    parameters: {
-      query?: never;
-      header?: never;
-      path?: never;
-      cookie?: never;
+    "/wallets/options/search": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * Buscar opcoes
+         * @description Busca series de opcoes para um ativo subjacente. Retorna opcoes disponiveis para negociacao.
+         */
+        get: operations["WalletsController_searchOptions"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
     };
-    /**
-     * Obter preco do ativo
-     * @description Retorna o preco atual de mercado de um ativo.
-     */
-    get: operations['WalletsController_getAssetPrice'];
-    put?: never;
-    post?: never;
-    delete?: never;
-    options?: never;
-    head?: never;
-    patch?: never;
-    trace?: never;
-  };
-  '/wallets/{id}': {
-    parameters: {
-      query?: never;
-      header?: never;
-      path?: never;
-      cookie?: never;
+    "/wallets/options/{ticker}/details": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * Detalhes da opcao
+         * @description Retorna informacoes detalhadas de uma opcao, incluindo gregas (delta, gamma, theta, vega).
+         */
+        get: operations["WalletsController_getOptionDetails"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
     };
-    /**
-     * Dashboard da carteira
-     * @description Retorna a carteira com posicoes e precos atuais de mercado.
-     */
-    get: operations['WalletsController_findOne'];
-    put?: never;
-    post?: never;
-    delete?: never;
-    options?: never;
-    head?: never;
-    patch?: never;
-    trace?: never;
-  };
-  '/wallets/{id}/transactions': {
-    parameters: {
-      query?: never;
-      header?: never;
-      path?: never;
-      cookie?: never;
+    "/wallets/assets/{ticker}/price": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * Obter preço do ativo
+         * @description Retorna o preço atual de mercado de um ativo.
+         */
+        get: operations["WalletsController_getAssetPrice"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
     };
-    /**
-     * Historico de transacoes
-     * @description Retorna o historico de todas as transacoes da carteira (compras, vendas, depositos, saques).
-     */
-    get: operations['WalletsController_getTransactions'];
-    put?: never;
-    post?: never;
-    delete?: never;
-    options?: never;
-    head?: never;
-    patch?: never;
-    trace?: never;
-  };
-  '/wallets/{id}/cash': {
-    parameters: {
-      query?: never;
-      header?: never;
-      path?: never;
-      cookie?: never;
+    "/wallets/{id}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * Dashboard da carteira
+         * @description Retorna a carteira com posições e preços atuais de mercado.
+         */
+        get: operations["WalletsController_findOne"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
     };
-    get?: never;
-    put?: never;
-    /**
-     * Operacao de caixa
-     * @description Realiza deposito ou saque na carteira.
-     */
-    post: operations['WalletsController_cashOperation'];
-    delete?: never;
-    options?: never;
-    head?: never;
-    patch?: never;
-    trace?: never;
-  };
-  '/wallets/{id}/trade/buy': {
-    parameters: {
-      query?: never;
-      header?: never;
-      path?: never;
-      cookie?: never;
+    "/wallets/{id}/transactions": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * Historico de transacoes
+         * @description Retorna o historico de todas as transacoes da carteira (compras, vendas, depositos, saques).
+         */
+        get: operations["WalletsController_getTransactions"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
     };
-    get?: never;
-    put?: never;
-    /**
-     * Comprar ativo
-     * @description Executa uma ordem de compra de um ativo.
-     */
-    post: operations['WalletsController_buy'];
-    delete?: never;
-    options?: never;
-    head?: never;
-    patch?: never;
-    trace?: never;
-  };
-  '/wallets/{id}/trade/sell': {
-    parameters: {
-      query?: never;
-      header?: never;
-      path?: never;
-      cookie?: never;
+    "/wallets/{id}/cash": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * Operação de caixa
+         * @description Realiza depósito ou saque na carteira.
+         */
+        post: operations["WalletsController_cashOperation"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
     };
-    get?: never;
-    put?: never;
-    /**
-     * Vender ativo
-     * @description Executa uma ordem de venda de um ativo.
-     */
-    post: operations['WalletsController_sell'];
-    delete?: never;
-    options?: never;
-    head?: never;
-    patch?: never;
-    trace?: never;
-  };
+    "/wallets/{id}/trade/buy": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * Comprar ativo
+         * @description Executa uma ordem de compra de um ativo.
+         */
+        post: operations["WalletsController_buy"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/wallets/{id}/trade/sell": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * Vender ativo
+         * @description Executa uma ordem de venda de um ativo.
+         */
+        post: operations["WalletsController_sell"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/activity/advisor": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * Atividade recente do assessor
+         * @description Retorna as atividades recentes de todos os clientes do assessor.
+         */
+        get: operations["ActivityController_getAdvisorActivity"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/activity/client": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * Atividade recente do cliente
+         * @description Retorna as atividades recentes do cliente autenticado.
+         */
+        get: operations["ActivityController_getClientActivity"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/activity/advisor/metrics": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * Metricas do assessor
+         * @description Retorna metricas do dashboard do assessor (total de clientes, valor em carteiras).
+         */
+        get: operations["ActivityController_getAdvisorMetrics"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/activity/advisor/expirations": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * Vencimentos de opcoes do assessor
+         * @description Retorna os vencimentos de opcoes proximos de todos os clientes do assessor.
+         */
+        get: operations["ActivityController_getAdvisorExpirations"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/activity/client/profile": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * Perfil do cliente
+         * @description Retorna informacoes do perfil do cliente, incluindo nome do assessor.
+         */
+        get: operations["ActivityController_getClientProfile"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/activity/advisor/history": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * Historico de atividades do assessor (paginado)
+         * @description Retorna o historico completo de atividades de todos os clientes do assessor com paginacao.
+         */
+        get: operations["ActivityController_getAdvisorActivityHistory"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/activity/client/history": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * Historico de atividades do cliente (paginado)
+         * @description Retorna o historico completo de atividades do cliente autenticado com paginacao.
+         */
+        get: operations["ActivityController_getClientActivityHistory"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/wallets/{walletId}/options": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** List all option positions for a wallet */
+        get: operations["DerivativesController_getOptionPositions"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/wallets/{walletId}/options/buy": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Buy an option (open long position) */
+        post: operations["DerivativesController_buyOption"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/wallets/{walletId}/options/sell": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Sell/Write an option (open short position) */
+        post: operations["DerivativesController_sellOption"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/wallets/{walletId}/options/{positionId}/close": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Close an option position */
+        post: operations["DerivativesController_closeOption"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/wallets/{walletId}/strategies": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** List all structured operations for a wallet */
+        get: operations["StrategiesController_getStrategies"];
+        put?: never;
+        /** Execute a multi-leg strategy */
+        post: operations["StrategiesController_executeStrategy"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/wallets/{walletId}/strategies/{operationId}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Get a structured operation by ID */
+        get: operations["StrategiesController_getStrategy"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/wallets/{walletId}/strategies/preview": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Preview a strategy before execution */
+        post: operations["StrategiesController_previewStrategy"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/wallets/{walletId}/expirations": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Get upcoming option expirations */
+        get: operations["LifecycleController_getUpcomingExpirations"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/wallets/{walletId}/options/{positionId}/exercise": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Exercise a long option position */
+        post: operations["LifecycleController_exerciseOption"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/wallets/{walletId}/options/{positionId}/assignment": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Record an assignment on a short option position */
+        post: operations["LifecycleController_handleAssignment"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/wallets/{walletId}/options/{positionId}/expire": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Process option expiration */
+        post: operations["LifecycleController_processExpiration"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
 }
 export type webhooks = Record<string, never>;
 export interface components {
-  schemas: {
-    HealthApiResponseDto: {
-      /**
-       * @description Indica se a requisicao foi bem-sucedida
-       * @constant
-       */
-      success: true;
-      /** @description Dados de saude da aplicacao */
-      data: {
-        /**
-         * @description Status geral da aplicacao
-         * @enum {string}
-         */
-        status: 'ok' | 'error';
-        /**
-         * @description Status da conexao com o banco de dados
-         * @enum {string}
-         */
-        database: 'connected' | 'disconnected';
-        /** @description Data/hora da verificacao (ISO 8601) */
-        timestamp?: string;
-        /** @description Ambiente de execucao */
-        environment?: string;
-        /** @description Mensagem de erro (apenas quando status = error) */
-        error?: string;
-      };
-      /** @description Mensagem descritiva (opcional) */
-      message?: string;
+    schemas: {
+        HealthApiResponseDto: {
+            /**
+             * @description Indica se a requisicao foi bem-sucedida
+             * @enum {boolean}
+             */
+            success: true;
+            /** @description Dados de saude da aplicacao */
+            data: {
+                /**
+                 * @description Status geral da aplicacao
+                 * @enum {string}
+                 */
+                status: "ok" | "error";
+                /**
+                 * @description Status da conexao com o banco de dados
+                 * @enum {string}
+                 */
+                database: "connected" | "disconnected";
+                /** @description Data/hora da verificacao (ISO 8601) */
+                timestamp?: string;
+                /** @description Ambiente de execucao */
+                environment?: string;
+                /** @description Mensagem de erro (apenas quando status = error) */
+                error?: string;
+            };
+            /** @description Mensagem descritiva (opcional) */
+            message?: string;
+        };
+        ApiErrorResponseDto: {
+            /**
+             * @description Indica que houve erro
+             * @constant
+             */
+            success: false;
+            /** @description Codigo HTTP do erro */
+            statusCode: number;
+            /** @description Mensagem de erro */
+            message: string;
+            /** @description Detalhes do erro (validacao, etc.) */
+            errors?: string[];
+            /** @description Timestamp do erro */
+            timestamp: string;
+            /** @description Caminho da requisicao */
+            path?: string;
+        };
+        RegisterDto: {
+            name: string;
+            /** Format: email */
+            email: string;
+            password: string;
+            /**
+             * @default ADVISOR
+             * @enum {string}
+             */
+            role: "ADVISOR" | "CLIENT" | "ADMIN";
+            cpfCnpj?: string;
+            phone?: string;
+        };
+        UserProfileApiResponseDto: {
+            /** @enum {boolean} */
+            success: true;
+            data?: {
+                /** Format: uuid */
+                id: string;
+                email: string;
+                name: string;
+                /** @enum {string} */
+                role: "ADVISOR" | "CLIENT" | "ADMIN";
+                cpfCnpj: string | null;
+                phone: string | null;
+                /** Format: uuid */
+                clientProfileId: string | null;
+                createdAt: string;
+            };
+            message?: string;
+        };
+        LoginDto: {
+            /** Format: email */
+            email: string;
+            password: string;
+        };
+        InviteApiResponseDto: {
+            /** @enum {boolean} */
+            success: true;
+            data?: {
+                /** Format: uuid */
+                clientId: string;
+                clientName: string;
+                inviteToken: string;
+                /** @enum {string} */
+                inviteStatus: "PENDING" | "SENT" | "ACCEPTED" | "REJECTED";
+                inviteExpiresAt: string;
+            };
+            message?: string;
+        };
+        AcceptInviteDto: {
+            token: string;
+        };
+        AcceptInviteApiResponseDto: {
+            /** @enum {boolean} */
+            success: true;
+            data?: {
+                /** Format: uuid */
+                clientId: string;
+                clientName: string;
+                advisorName: string;
+                message: string;
+            };
+            message?: string;
+        };
+        CreateClientInputDto: {
+            name: string;
+            clientCode: string;
+        };
+        ClientApiResponseDto: {
+            /** @enum {boolean} */
+            success: true;
+            data?: {
+                /** Format: uuid */
+                id: string;
+                /** Format: uuid */
+                advisorId: string;
+                /** Format: uuid */
+                userId: string | null;
+                name: string;
+                clientCode: string;
+                /** @enum {string} */
+                inviteStatus: "PENDING" | "SENT" | "ACCEPTED" | "REJECTED";
+                createdAt: string;
+                updatedAt: string;
+            };
+            message?: string;
+        };
+        ClientListApiResponseDto: {
+            /** @enum {boolean} */
+            success: true;
+            data?: {
+                /** Format: uuid */
+                id: string;
+                /** Format: uuid */
+                advisorId: string;
+                /** Format: uuid */
+                userId: string | null;
+                name: string;
+                clientCode: string;
+                /** @enum {string} */
+                inviteStatus: "PENDING" | "SENT" | "ACCEPTED" | "REJECTED";
+                createdAt: string;
+                updatedAt: string;
+            }[];
+            message?: string;
+        };
+        UpdateClientInputDto: {
+            name?: string;
+            clientCode: string;
+        };
+        CreateWalletInputDto: {
+            /** Format: uuid */
+            clientId: string;
+            name: string;
+            description?: string;
+            /** @default BRL */
+            currency: string;
+            initialCashBalance?: number;
+        };
+        WalletApiResponseDto: {
+            /** @enum {boolean} */
+            success: true;
+            data?: {
+                /** Format: uuid */
+                id: string;
+                /** Format: uuid */
+                clientId: string;
+                name: string;
+                description: string | null;
+                currency: string;
+                cashBalance: number;
+                createdAt: string;
+                updatedAt: string;
+                positions: {
+                    /** Format: uuid */
+                    id: string;
+                    /** Format: uuid */
+                    assetId: string;
+                    ticker: string;
+                    name: string;
+                    /** @enum {string} */
+                    type: "STOCK" | "OPTION";
+                    quantity: number;
+                    averagePrice: number;
+                    currentPrice?: number;
+                    totalCost: number;
+                    currentValue?: number;
+                    profitLoss?: number;
+                    profitLossPercent?: number;
+                    collateralBlocked?: number | null;
+                }[];
+                totalPositionsValue: number;
+                totalValue: number;
+            };
+            message?: string;
+        };
+        WalletListApiResponseDto: {
+            /** @enum {boolean} */
+            success: true;
+            data?: {
+                /** Format: uuid */
+                id: string;
+                /** Format: uuid */
+                clientId: string;
+                name: string;
+                description: string | null;
+                currency: string;
+                cashBalance: number;
+                createdAt: string;
+                updatedAt: string;
+            }[];
+            message?: string;
+        };
+        AssetSearchApiResponseDto: {
+            /** @enum {boolean} */
+            success: true;
+            data?: {
+                ticker: string;
+                name: string;
+                type: string;
+                exchange: string;
+                strike?: number;
+                expirationDate?: string;
+                /** @enum {string} */
+                optionType?: "CALL" | "PUT";
+            }[];
+            message?: string;
+        };
+        AssetPriceApiResponseDto: {
+            /** @enum {boolean} */
+            success: true;
+            data?: {
+                ticker: string;
+                price: number;
+                name?: string;
+                type?: string;
+            };
+            message?: string;
+        };
+        TransactionListApiResponseDto: {
+            /** @enum {boolean} */
+            success: true;
+            data?: {
+                items: {
+                    /** Format: uuid */
+                    id: string;
+                    /** Format: uuid */
+                    walletId: string;
+                    /** Format: uuid */
+                    assetId: string | null;
+                    /** @enum {string} */
+                    type: "BUY" | "SELL" | "DIVIDEND" | "SPLIT" | "SUBSCRIPTION" | "DEPOSIT" | "WITHDRAWAL" | "OPTION_EXERCISE" | "OPTION_ASSIGNMENT" | "OPTION_EXPIRY";
+                    quantity: number | null;
+                    price: number | null;
+                    totalValue: number;
+                    executedAt: string;
+                    ticker: string | null;
+                    /** @enum {string|null} */
+                    assetType: "STOCK" | "OPTION" | null;
+                    createdAt: string;
+                }[];
+                /** Format: uuid */
+                nextCursor: string | null;
+            };
+            message?: string;
+        };
+        CashOperationInputDto: {
+            /** @enum {string} */
+            type: "DEPOSIT" | "WITHDRAWAL";
+            amount: number;
+            /** Format: date-time */
+            date: string;
+            idempotencyKey: string;
+        };
+        TradeInputDto: {
+            ticker: string;
+            quantity: number;
+            price: number;
+            /** Format: date-time */
+            date: string;
+            idempotencyKey: string;
+        };
+        ActivityListApiResponseDto: {
+            /** @enum {boolean} */
+            success: true;
+            data?: {
+                /** Format: uuid */
+                id: string;
+                action: string;
+                description: string;
+                clientName: string | null;
+                walletName: string | null;
+                /** Format: date-time */
+                occurredAt: string;
+                aggregateType: string;
+                eventType: string;
+            }[];
+            message?: string;
+        };
+        AdvisorMetricsApiResponseDto: {
+            /** @enum {boolean} */
+            success: true;
+            data?: {
+                clientCount: number;
+                totalWalletValue: number;
+                pendingOperationsCount: number;
+                expiringOptionsCount: number;
+            };
+            message?: string;
+        };
+        AdvisorExpirationsApiResponseDto: {
+            /** @enum {boolean} */
+            success: true;
+            data?: {
+                expirations: {
+                    /** Format: uuid */
+                    positionId: string;
+                    ticker: string;
+                    /** @enum {string} */
+                    optionType: "CALL" | "PUT";
+                    strikePrice: number;
+                    expirationDate: string;
+                    daysUntilExpiry: number;
+                    quantity: number;
+                    isShort: boolean;
+                    walletName: string;
+                    clientName: string;
+                    /** @enum {string} */
+                    moneyness?: "ITM" | "ATM" | "OTM";
+                    /** @enum {string} */
+                    status: "Proximo" | "Em dia" | "Vencido";
+                }[];
+                total: number;
+            };
+            message?: string;
+        };
+        ClientProfileApiResponseDto: {
+            /** @enum {boolean} */
+            success: true;
+            data?: {
+                /** Format: uuid */
+                clientId: string;
+                clientName: string;
+                /** Format: uuid */
+                advisorId: string;
+                advisorName: string;
+            };
+            message?: string;
+        };
+        PaginatedActivityApiResponseDto: {
+            /** @enum {boolean} */
+            success: true;
+            data?: {
+                items: {
+                    /** Format: uuid */
+                    id: string;
+                    action: string;
+                    description: string;
+                    clientName: string | null;
+                    walletName: string | null;
+                    /** Format: date-time */
+                    occurredAt: string;
+                    aggregateType: string;
+                    eventType: string;
+                }[];
+                total: number;
+                page: number;
+                pageSize: number;
+                totalPages: number;
+            };
+            message?: string;
+        };
+        OptionPositionListApiResponseDto: {
+            /** @enum {boolean} */
+            success: true;
+            data?: {
+                positions: {
+                    /** Format: uuid */
+                    id: string;
+                    /** Format: uuid */
+                    walletId: string;
+                    /** Format: uuid */
+                    assetId: string;
+                    ticker: string;
+                    name: string;
+                    quantity: number;
+                    averagePrice: number;
+                    totalCost: number;
+                    currentPrice?: number;
+                    currentValue?: number;
+                    profitLoss?: number;
+                    profitLossPercent?: number;
+                    isShort: boolean;
+                    collateralBlocked?: number;
+                    optionDetail: {
+                        /** @enum {string} */
+                        optionType: "CALL" | "PUT";
+                        /** @enum {string} */
+                        exerciseType: "AMERICAN" | "EUROPEAN";
+                        strikePrice: number;
+                        expirationDate: string;
+                        underlyingTicker: string;
+                    };
+                }[];
+                totalPremiumPaid: number;
+                totalPremiumReceived: number;
+                netPremium: number;
+            };
+            message?: string;
+        };
+        BuyOptionInputDto: {
+            ticker: string;
+            quantity: number;
+            premium: number;
+            /** Format: date-time */
+            date: string;
+            idempotencyKey: string;
+        };
+        OptionTradeResultApiResponseDto: {
+            /** @enum {boolean} */
+            success: true;
+            data?: {
+                /** Format: uuid */
+                positionId: string;
+                /** Format: uuid */
+                transactionId: string;
+                ticker: string;
+                quantity: number;
+                premium: number;
+                totalValue: number;
+                /** @enum {string} */
+                status: "PENDING" | "EXECUTED" | "FAILED" | "EXPIRED" | "EXERCISED" | "ASSIGNED";
+            };
+            message?: string;
+        };
+        SellOptionInputDto: {
+            ticker: string;
+            quantity: number;
+            premium: number;
+            /** Format: date-time */
+            date: string;
+            /** @default false */
+            covered: boolean;
+            idempotencyKey: string;
+        };
+        CloseOptionInputDto: {
+            quantity?: number;
+            premium: number;
+            /** Format: date-time */
+            date: string;
+            idempotencyKey: string;
+        };
+        StructuredOperationListApiResponseDto: {
+            /** @enum {boolean} */
+            success: true;
+            data?: {
+                items: {
+                    /** Format: uuid */
+                    id: string;
+                    /** Format: uuid */
+                    walletId: string;
+                    /** @enum {string} */
+                    strategyType: "SINGLE_OPTION" | "STRADDLE" | "STRANGLE" | "BULL_CALL_SPREAD" | "BEAR_PUT_SPREAD" | "COVERED_CALL" | "PROTECTIVE_PUT" | "COLLAR" | "CUSTOM";
+                    /** @enum {string} */
+                    status: "PENDING" | "EXECUTED" | "FAILED" | "EXPIRED" | "EXERCISED" | "ASSIGNED";
+                    totalPremium: number;
+                    netDebitCredit: number;
+                    executedAt: string | null;
+                    expirationDate: string | null;
+                    notes: string | null;
+                    legs: {
+                        /** Format: uuid */
+                        id: string;
+                        legOrder: number;
+                        /** @enum {string} */
+                        legType: "BUY_CALL" | "SELL_CALL" | "BUY_PUT" | "SELL_PUT" | "BUY_STOCK" | "SELL_STOCK";
+                        ticker: string;
+                        /** Format: uuid */
+                        assetId: string;
+                        quantity: number;
+                        price: number;
+                        totalValue: number;
+                        /** @enum {string} */
+                        status: "PENDING" | "EXECUTED" | "FAILED" | "EXPIRED" | "EXERCISED" | "ASSIGNED";
+                        /** Format: uuid */
+                        transactionId: string | null;
+                        executedAt: string | null;
+                    }[];
+                    createdAt: string;
+                    updatedAt: string;
+                }[];
+                /** Format: uuid */
+                nextCursor: string | null;
+            };
+            message?: string;
+        };
+        StructuredOperationApiResponseDto: {
+            /** @enum {boolean} */
+            success: true;
+            data?: {
+                /** Format: uuid */
+                id: string;
+                /** Format: uuid */
+                walletId: string;
+                /** @enum {string} */
+                strategyType: "SINGLE_OPTION" | "STRADDLE" | "STRANGLE" | "BULL_CALL_SPREAD" | "BEAR_PUT_SPREAD" | "COVERED_CALL" | "PROTECTIVE_PUT" | "COLLAR" | "CUSTOM";
+                /** @enum {string} */
+                status: "PENDING" | "EXECUTED" | "FAILED" | "EXPIRED" | "EXERCISED" | "ASSIGNED";
+                totalPremium: number;
+                netDebitCredit: number;
+                executedAt: string | null;
+                expirationDate: string | null;
+                notes: string | null;
+                legs: {
+                    /** Format: uuid */
+                    id: string;
+                    legOrder: number;
+                    /** @enum {string} */
+                    legType: "BUY_CALL" | "SELL_CALL" | "BUY_PUT" | "SELL_PUT" | "BUY_STOCK" | "SELL_STOCK";
+                    ticker: string;
+                    /** Format: uuid */
+                    assetId: string;
+                    quantity: number;
+                    price: number;
+                    totalValue: number;
+                    /** @enum {string} */
+                    status: "PENDING" | "EXECUTED" | "FAILED" | "EXPIRED" | "EXERCISED" | "ASSIGNED";
+                    /** Format: uuid */
+                    transactionId: string | null;
+                    executedAt: string | null;
+                }[];
+                createdAt: string;
+                updatedAt: string;
+            };
+            message?: string;
+        };
+        ExecuteStrategyInputDto: {
+            /** @enum {string} */
+            strategyType: "SINGLE_OPTION" | "STRADDLE" | "STRANGLE" | "BULL_CALL_SPREAD" | "BEAR_PUT_SPREAD" | "COVERED_CALL" | "PROTECTIVE_PUT" | "COLLAR" | "CUSTOM";
+            underlyingTicker?: string;
+            legs: {
+                /** @enum {string} */
+                legType: "BUY_CALL" | "SELL_CALL" | "BUY_PUT" | "SELL_PUT" | "BUY_STOCK" | "SELL_STOCK";
+                ticker: string;
+                quantity: number;
+                price: number;
+            }[];
+            /** Format: date-time */
+            executedAt: string;
+            notes?: string;
+            idempotencyKey: string;
+        };
+        StrategyPreviewApiResponseDto: {
+            /** @enum {boolean} */
+            success: true;
+            data?: {
+                /** @enum {string} */
+                strategyType: "SINGLE_OPTION" | "STRADDLE" | "STRANGLE" | "BULL_CALL_SPREAD" | "BEAR_PUT_SPREAD" | "COVERED_CALL" | "PROTECTIVE_PUT" | "COLLAR" | "CUSTOM";
+                legs: {
+                    /** @enum {string} */
+                    legType: "BUY_CALL" | "SELL_CALL" | "BUY_PUT" | "SELL_PUT" | "BUY_STOCK" | "SELL_STOCK";
+                    ticker: string;
+                    quantity: number;
+                    price: number;
+                }[];
+                riskProfile: {
+                    maxLoss: number | null;
+                    maxGain: number | null;
+                    breakEvenPoints: number[];
+                    netPremium: number;
+                    marginRequired: number;
+                    isDebitStrategy: boolean;
+                };
+                totalCost: number;
+                isValid: boolean;
+                validationErrors: string[];
+            };
+            message?: string;
+        };
+        UpcomingExpirationsApiResponseDto: {
+            /** @enum {boolean} */
+            success: true;
+            data?: {
+                expirations: {
+                    /** Format: uuid */
+                    positionId: string;
+                    ticker: string;
+                    /** @enum {string} */
+                    optionType: "CALL" | "PUT";
+                    strikePrice: number;
+                    expirationDate: string;
+                    daysUntilExpiry: number;
+                    quantity: number;
+                    isShort: boolean;
+                    underlyingTicker: string;
+                    currentUnderlyingPrice?: number;
+                    /** @enum {string} */
+                    moneyness?: "ITM" | "ATM" | "OTM";
+                }[];
+                totalPositionsExpiring: number;
+            };
+            message?: string;
+        };
+        ExerciseOptionInputDto: {
+            quantity?: number;
+            notes?: string;
+            idempotencyKey: string;
+        };
+        ExerciseResultApiResponseDto: {
+            /** @enum {boolean} */
+            success: true;
+            data?: {
+                /** Format: uuid */
+                lifecycleId: string;
+                /** @enum {string} */
+                event: "OPENED" | "EXERCISED" | "ASSIGNED" | "EXPIRED_ITM" | "EXPIRED_OTM" | "CLOSED";
+                /** Format: uuid */
+                optionPositionId: string;
+                /** Format: uuid */
+                underlyingPositionId: string | null;
+                underlyingTicker: string;
+                underlyingQuantity: number;
+                strikePrice: number;
+                totalCost: number;
+                cashBalanceAfter: number;
+            };
+            message?: string;
+        };
+        AssignmentInputDto: {
+            quantity: number;
+            notes?: string;
+            idempotencyKey: string;
+        };
+        AssignmentResultApiResponseDto: {
+            /** @enum {boolean} */
+            success: true;
+            data?: {
+                /** Format: uuid */
+                lifecycleId: string;
+                /** @enum {string} */
+                event: "OPENED" | "EXERCISED" | "ASSIGNED" | "EXPIRED_ITM" | "EXPIRED_OTM" | "CLOSED";
+                /** Format: uuid */
+                optionPositionId: string;
+                /** Format: uuid */
+                underlyingPositionId: string | null;
+                underlyingTicker: string;
+                underlyingQuantity: number;
+                strikePrice: number;
+                settlementAmount: number;
+                cashBalanceAfter: number;
+                collateralReleased: number;
+            };
+            message?: string;
+        };
+        ExpireOptionInputDto: {
+            notes?: string;
+            idempotencyKey: string;
+        };
+        ExpirationResultApiResponseDto: {
+            /** @enum {boolean} */
+            success: true;
+            data?: {
+                /** Format: uuid */
+                lifecycleId: string;
+                /** @enum {string} */
+                event: "OPENED" | "EXERCISED" | "ASSIGNED" | "EXPIRED_ITM" | "EXPIRED_OTM" | "CLOSED";
+                /** Format: uuid */
+                positionId: string;
+                ticker: string;
+                wasInTheMoney: boolean;
+                collateralReleased: number;
+            };
+            message?: string;
+        };
     };
-    ApiErrorResponseDto: {
-      /**
-       * @description Indica que houve erro
-       * @constant
-       */
-      success: false;
-      /** @description Codigo HTTP do erro */
-      statusCode: number;
-      /** @description Mensagem de erro */
-      message: string;
-      /** @description Detalhes do erro (validacao, etc.) */
-      errors?: string[];
-      /** @description Timestamp do erro */
-      timestamp: string;
-      /** @description Caminho da requisicao */
-      path?: string;
-    };
-    RegisterDto: {
-      name: string;
-      /** Format: email */
-      email: string;
-      password: string;
-      /**
-       * @default ADVISOR
-       * @enum {string}
-       */
-      role: 'ADVISOR' | 'CLIENT';
-      cpfCnpj?: string;
-      phone?: string;
-    };
-    UserProfileApiResponseDto: {
-      /** @constant */
-      success: true;
-      data?: {
-        /** Format: uuid */
-        id: string;
-        email: string;
-        name: string;
-        /** @enum {string} */
-        role: 'ADVISOR' | 'CLIENT' | 'ADMIN';
-        cpfCnpj: string | null;
-        phone: string | null;
-        clientProfileId: string | null;
-        createdAt: string;
-      };
-      message?: string;
-    };
-    LoginDto: {
-      /** Format: email */
-      email: string;
-      password: string;
-    };
-    InviteApiResponseDto: {
-      /** @constant */
-      success: true;
-      data?: {
-        /** Format: uuid */
-        clientId: string;
-        clientName: string;
-        inviteToken: string;
-        /** @enum {string} */
-        inviteStatus: 'PENDING' | 'SENT' | 'ACCEPTED' | 'REJECTED';
-        inviteExpiresAt: string;
-      };
-      message?: string;
-    };
-    AcceptInviteDto: {
-      token: string;
-    };
-    AcceptInviteApiResponseDto: {
-      /** @constant */
-      success: true;
-      data?: {
-        /** Format: uuid */
-        clientId: string;
-        clientName: string;
-        advisorName: string;
-        message: string;
-      };
-      message?: string;
-    };
-    CreateClientInputDto: {
-      name: string;
-      clientCode: string;
-    };
-    ClientApiResponseDto: {
-      /** @constant */
-      success: true;
-      data?: {
-        /** Format: uuid */
-        id: string;
-        /** Format: uuid */
-        advisorId: string;
-        userId: string | null;
-        name: string;
-        clientCode: string;
-        /** @enum {string} */
-        inviteStatus: 'PENDING' | 'SENT' | 'ACCEPTED' | 'REJECTED';
-        createdAt: string;
-        updatedAt: string;
-      };
-      message?: string;
-    };
-    ClientListApiResponseDto: {
-      /** @constant */
-      success: true;
-      data?: {
-        /** Format: uuid */
-        id: string;
-        /** Format: uuid */
-        advisorId: string;
-        userId: string | null;
-        name: string;
-        clientCode: string;
-        /** @enum {string} */
-        inviteStatus: 'PENDING' | 'SENT' | 'ACCEPTED' | 'REJECTED';
-        createdAt: string;
-        updatedAt: string;
-      }[];
-      message?: string;
-    };
-    UpdateClientInputDto: {
-      name?: string;
-      clientCode: string;
-    };
-    CreateWalletInputDto: {
-      /** Format: uuid */
-      clientId: string;
-      name: string;
-      description?: string;
-      /** @default BRL */
-      currency: string;
-      initialCashBalance?: number;
-    };
-    WalletApiResponseDto: {
-      /** @constant */
-      success: true;
-      data?: {
-        /** Format: uuid */
-        id: string;
-        /** Format: uuid */
-        clientId: string;
-        name: string;
-        description: string | null;
-        currency: string;
-        cashBalance: number;
-        createdAt: string;
-        updatedAt: string;
-        positions: {
-          /** Format: uuid */
-          id: string;
-          /** Format: uuid */
-          assetId: string;
-          ticker: string;
-          name: string;
-          /** @enum {string} */
-          type: 'STOCK' | 'OPTION';
-          quantity: number;
-          averagePrice: number;
-          currentPrice?: number;
-          totalCost: number;
-          currentValue?: number;
-          profitLoss?: number;
-          profitLossPercent?: number;
-        }[];
-        totalPositionsValue: number;
-        totalValue: number;
-      };
-      message?: string;
-    };
-    WalletListApiResponseDto: {
-      /** @constant */
-      success: true;
-      data?: {
-        /** Format: uuid */
-        id: string;
-        /** Format: uuid */
-        clientId: string;
-        name: string;
-        description: string | null;
-        currency: string;
-        cashBalance: number;
-        createdAt: string;
-        updatedAt: string;
-      }[];
-      message?: string;
-    };
-    AssetSearchApiResponseDto: {
-      /** @constant */
-      success: true;
-      data?: {
-        ticker: string;
-        name: string;
-        type: string;
-        exchange: string;
-      }[];
-      message?: string;
-    };
-    AssetPriceApiResponseDto: {
-      /** @constant */
-      success: true;
-      data?: {
-        ticker: string;
-        price: number;
-        name?: string;
-        type?: string;
-      };
-      message?: string;
-    };
-    TransactionListApiResponseDto: {
-      /** @constant */
-      success: true;
-      data?: {
-        items: {
-          /** Format: uuid */
-          id: string;
-          /** Format: uuid */
-          walletId: string;
-          assetId: string | null;
-          /** @enum {string} */
-          type:
-            | 'BUY'
-            | 'SELL'
-            | 'DIVIDEND'
-            | 'SPLIT'
-            | 'SUBSCRIPTION'
-            | 'DEPOSIT'
-            | 'WITHDRAWAL';
-          quantity: number | null;
-          price: number | null;
-          totalValue: number;
-          executedAt: string;
-          ticker: string | null;
-          createdAt: string;
-        }[];
-        nextCursor: string | null;
-      };
-      message?: string;
-    };
-    CashOperationInputDto: {
-      /** @enum {string} */
-      type: 'DEPOSIT' | 'WITHDRAWAL';
-      amount: number;
-      /** Format: date-time */
-      date: string;
-      idempotencyKey: string;
-    };
-    TradeInputDto: {
-      ticker: string;
-      quantity: number;
-      price: number;
-      /** Format: date-time */
-      date: string;
-      idempotencyKey: string;
-    };
-  };
-  responses: never;
-  parameters: never;
-  requestBodies: never;
-  headers: never;
-  pathItems: never;
+    responses: never;
+    parameters: never;
+    requestBodies: never;
+    headers: never;
+    pathItems: never;
 }
 export type $defs = Record<string, never>;
 export interface operations {
-  HealthController_check: {
-    parameters: {
-      query?: never;
-      header?: never;
-      path?: never;
-      cookie?: never;
+    HealthController_check: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Sistema operacional */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HealthApiResponseDto"];
+                };
+            };
+            /** @description Token JWT inválido ou ausente */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ApiErrorResponseDto"];
+                };
+            };
+            /** @description Sistema com falha (banco desconectado) */
+            503: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ApiErrorResponseDto"];
+                };
+            };
+        };
     };
-    requestBody?: never;
-    responses: {
-      /** @description Sistema operacional */
-      200: {
-        headers: {
-          [name: string]: unknown;
+    AuthController_register: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
         };
-        content: {
-          'application/json': components['schemas']['HealthApiResponseDto'];
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["RegisterDto"];
+            };
         };
-      };
-      /** @description Token JWT invalido ou ausente */
-      401: {
-        headers: {
-          [name: string]: unknown;
+        responses: {
+            /** @description Assessor registrado com sucesso */
+            201: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["UserProfileApiResponseDto"];
+                };
+            };
+            /** @description Email ja cadastrado */
+            409: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ApiErrorResponseDto"];
+                };
+            };
         };
-        content: {
-          'application/json': components['schemas']['ApiErrorResponseDto'];
-        };
-      };
-      /** @description Sistema com falha (banco desconectado) */
-      503: {
-        headers: {
-          [name: string]: unknown;
-        };
-        content: {
-          'application/json': components['schemas']['ApiErrorResponseDto'];
-        };
-      };
     };
-  };
-  AuthController_register: {
-    parameters: {
-      query?: never;
-      header?: never;
-      path?: never;
-      cookie?: never;
+    AuthController_login: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["LoginDto"];
+            };
+        };
+        responses: {
+            /** @description Login realizado com sucesso */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["UserProfileApiResponseDto"];
+                };
+            };
+            /** @description Credenciais inválidas */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ApiErrorResponseDto"];
+                };
+            };
+        };
     };
-    requestBody: {
-      content: {
-        'application/json': components['schemas']['RegisterDto'];
-      };
+    AuthController_logout: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Logout realizado com sucesso */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+        };
     };
-    responses: {
-      /** @description Assessor registrado com sucesso */
-      201: {
-        headers: {
-          [name: string]: unknown;
+    AuthController_getProfile: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
         };
-        content: {
-          'application/json': components['schemas']['UserProfileApiResponseDto'];
+        requestBody?: never;
+        responses: {
+            /** @description Perfil retornado com sucesso */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["UserProfileApiResponseDto"];
+                };
+            };
+            /** @description Cookie inválido ou expirado */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ApiErrorResponseDto"];
+                };
+            };
         };
-      };
-      /** @description Email ja cadastrado */
-      409: {
-        headers: {
-          [name: string]: unknown;
-        };
-        content: {
-          'application/json': components['schemas']['ApiErrorResponseDto'];
-        };
-      };
     };
-  };
-  AuthController_login: {
-    parameters: {
-      query?: never;
-      header?: never;
-      path?: never;
-      cookie?: never;
+    ClientsInviteController_getInviteStatus: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Status do convite retornado */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["InviteApiResponseDto"];
+                };
+            };
+            /** @description Cliente não encontrado */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ApiErrorResponseDto"];
+                };
+            };
+        };
     };
-    requestBody: {
-      content: {
-        'application/json': components['schemas']['LoginDto'];
-      };
+    ClientsInviteController_generateInvite: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Convite gerado com sucesso */
+            201: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["InviteApiResponseDto"];
+                };
+            };
+            /** @description Sem permissao para convidar este cliente */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ApiErrorResponseDto"];
+                };
+            };
+            /** @description Cliente não encontrado */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ApiErrorResponseDto"];
+                };
+            };
+            /** @description Cliente já possui conta vinculada */
+            409: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ApiErrorResponseDto"];
+                };
+            };
+        };
     };
-    responses: {
-      /** @description Login realizado com sucesso */
-      200: {
-        headers: {
-          [name: string]: unknown;
+    ClientsInviteController_revokeInvite: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                id: string;
+            };
+            cookie?: never;
         };
-        content: {
-          'application/json': components['schemas']['UserProfileApiResponseDto'];
+        requestBody?: never;
+        responses: {
+            /** @description Convite revogado com sucesso */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            /** @description Cliente não encontrado */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ApiErrorResponseDto"];
+                };
+            };
+            /** @description Convite já foi aceito */
+            409: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ApiErrorResponseDto"];
+                };
+            };
         };
-      };
-      /** @description Credenciais invalidas */
-      401: {
-        headers: {
-          [name: string]: unknown;
-        };
-        content: {
-          'application/json': components['schemas']['ApiErrorResponseDto'];
-        };
-      };
     };
-  };
-  AuthController_logout: {
-    parameters: {
-      query?: never;
-      header?: never;
-      path?: never;
-      cookie?: never;
+    ClientsInviteController_acceptInvite: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["AcceptInviteDto"];
+            };
+        };
+        responses: {
+            /** @description Conta vinculada com sucesso */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["AcceptInviteApiResponseDto"];
+                };
+            };
+            /** @description Convite inválido ou expirado */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ApiErrorResponseDto"];
+                };
+            };
+            /** @description Apenas usuários com role CLIENT podem aceitar convites */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ApiErrorResponseDto"];
+                };
+            };
+            /** @description Usuário já vinculado a outro cliente */
+            409: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ApiErrorResponseDto"];
+                };
+            };
+        };
     };
-    requestBody?: never;
-    responses: {
-      /** @description Logout realizado com sucesso */
-      200: {
-        headers: {
-          [name: string]: unknown;
+    ClientsController_findAll: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
         };
-        content?: never;
-      };
+        requestBody?: never;
+        responses: {
+            /** @description Lista de clientes */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ClientListApiResponseDto"];
+                };
+            };
+        };
     };
-  };
-  AuthController_getProfile: {
-    parameters: {
-      query?: never;
-      header?: never;
-      path?: never;
-      cookie?: never;
+    ClientsController_create: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["CreateClientInputDto"];
+            };
+        };
+        responses: {
+            /** @description Cliente criado com sucesso */
+            201: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ClientApiResponseDto"];
+                };
+            };
+            /** @description Dados inválidos */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ApiErrorResponseDto"];
+                };
+            };
+            /** @description Cliente com este CPF ja existe */
+            409: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ApiErrorResponseDto"];
+                };
+            };
+        };
     };
-    requestBody?: never;
-    responses: {
-      /** @description Perfil retornado com sucesso */
-      200: {
-        headers: {
-          [name: string]: unknown;
+    ClientsController_findOne: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                /** @description ID do cliente */
+                id: string;
+            };
+            cookie?: never;
         };
-        content: {
-          'application/json': components['schemas']['UserProfileApiResponseDto'];
+        requestBody?: never;
+        responses: {
+            /** @description Dados do cliente */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ClientApiResponseDto"];
+                };
+            };
+            /** @description Cliente nao encontrado */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ApiErrorResponseDto"];
+                };
+            };
         };
-      };
-      /** @description Cookie invalido ou expirado */
-      401: {
-        headers: {
-          [name: string]: unknown;
-        };
-        content: {
-          'application/json': components['schemas']['ApiErrorResponseDto'];
-        };
-      };
     };
-  };
-  ClientsInviteController_getInviteStatus: {
-    parameters: {
-      query?: never;
-      header?: never;
-      path: {
-        id: string;
-      };
-      cookie?: never;
+    ClientsController_update: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                /** @description ID do cliente */
+                id: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["UpdateClientInputDto"];
+            };
+        };
+        responses: {
+            /** @description Cliente atualizado com sucesso */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ClientApiResponseDto"];
+                };
+            };
+            /** @description Cliente nao encontrado */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ApiErrorResponseDto"];
+                };
+            };
+        };
     };
-    requestBody?: never;
-    responses: {
-      /** @description Status do convite retornado */
-      200: {
-        headers: {
-          [name: string]: unknown;
+    ClientsController_delete: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                /** @description ID do cliente */
+                id: string;
+            };
+            cookie?: never;
         };
-        content: {
-          'application/json': components['schemas']['InviteApiResponseDto'];
+        requestBody?: never;
+        responses: {
+            /** @description Cliente excluido com sucesso */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            /** @description Cliente nao encontrado */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ApiErrorResponseDto"];
+                };
+            };
         };
-      };
-      /** @description Cliente nao encontrado */
-      404: {
-        headers: {
-          [name: string]: unknown;
-        };
-        content: {
-          'application/json': components['schemas']['ApiErrorResponseDto'];
-        };
-      };
     };
-  };
-  ClientsInviteController_generateInvite: {
-    parameters: {
-      query?: never;
-      header?: never;
-      path: {
-        id: string;
-      };
-      cookie?: never;
+    WalletsController_findAll: {
+        parameters: {
+            query?: {
+                /** @description Filtrar por ID do cliente */
+                clientId?: string;
+            };
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Lista de carteiras */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["WalletListApiResponseDto"];
+                };
+            };
+        };
     };
-    requestBody?: never;
-    responses: {
-      /** @description Convite gerado com sucesso */
-      201: {
-        headers: {
-          [name: string]: unknown;
+    WalletsController_create: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
         };
-        content: {
-          'application/json': components['schemas']['InviteApiResponseDto'];
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["CreateWalletInputDto"];
+            };
         };
-      };
-      /** @description Sem permissao para convidar este cliente */
-      403: {
-        headers: {
-          [name: string]: unknown;
+        responses: {
+            /** @description Carteira criada com sucesso */
+            201: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["WalletApiResponseDto"];
+                };
+            };
+            /** @description Dados invalidos */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ApiErrorResponseDto"];
+                };
+            };
+            /** @description Sem permissão para criar carteira para este cliente */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ApiErrorResponseDto"];
+                };
+            };
         };
-        content: {
-          'application/json': components['schemas']['ApiErrorResponseDto'];
-        };
-      };
-      /** @description Cliente nao encontrado */
-      404: {
-        headers: {
-          [name: string]: unknown;
-        };
-        content: {
-          'application/json': components['schemas']['ApiErrorResponseDto'];
-        };
-      };
-      /** @description Cliente ja possui conta vinculada */
-      409: {
-        headers: {
-          [name: string]: unknown;
-        };
-        content: {
-          'application/json': components['schemas']['ApiErrorResponseDto'];
-        };
-      };
     };
-  };
-  ClientsInviteController_revokeInvite: {
-    parameters: {
-      query?: never;
-      header?: never;
-      path: {
-        id: string;
-      };
-      cookie?: never;
+    WalletsController_searchAssets: {
+        parameters: {
+            query: {
+                /** @description Termo de busca (ticker ou nome) */
+                q: string;
+                /** @description Numero maximo de resultados (padrao: 10) */
+                limit?: string;
+                /** @description Incluir series de opcoes nos resultados (padrao: false) */
+                includeOptions?: string;
+            };
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Lista de ativos encontrados */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["AssetSearchApiResponseDto"];
+                };
+            };
+        };
     };
-    requestBody?: never;
-    responses: {
-      /** @description Convite revogado com sucesso */
-      200: {
-        headers: {
-          [name: string]: unknown;
+    WalletsController_searchOptions: {
+        parameters: {
+            query: {
+                /** @description Ticker do ativo subjacente (ex: PETR4) */
+                underlying: string;
+                /** @description Tipo de opcao (CALL ou PUT) */
+                type?: "CALL" | "PUT";
+                /** @description Numero maximo de resultados (padrao: 20) */
+                limit?: string;
+            };
+            header?: never;
+            path?: never;
+            cookie?: never;
         };
-        content?: never;
-      };
-      /** @description Cliente nao encontrado */
-      404: {
-        headers: {
-          [name: string]: unknown;
+        requestBody?: never;
+        responses: {
+            /** @description Lista de opcoes encontradas */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["AssetSearchApiResponseDto"];
+                };
+            };
         };
-        content: {
-          'application/json': components['schemas']['ApiErrorResponseDto'];
-        };
-      };
-      /** @description Convite ja foi aceito */
-      409: {
-        headers: {
-          [name: string]: unknown;
-        };
-        content: {
-          'application/json': components['schemas']['ApiErrorResponseDto'];
-        };
-      };
     };
-  };
-  ClientsInviteController_acceptInvite: {
-    parameters: {
-      query?: never;
-      header?: never;
-      path?: never;
-      cookie?: never;
+    WalletsController_getOptionDetails: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                /** @description Ticker da opcao (ex: PETRA240) */
+                ticker: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Detalhes da opcao */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            /** @description Opcao não encontrada */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ApiErrorResponseDto"];
+                };
+            };
+        };
     };
-    requestBody: {
-      content: {
-        'application/json': components['schemas']['AcceptInviteDto'];
-      };
+    WalletsController_getAssetPrice: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                /** @description Ticker do ativo (ex: PETR4) */
+                ticker: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Preço atual do ativo */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["AssetPriceApiResponseDto"];
+                };
+            };
+            /** @description Ativo não encontrado */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ApiErrorResponseDto"];
+                };
+            };
+        };
     };
-    responses: {
-      /** @description Conta vinculada com sucesso */
-      200: {
-        headers: {
-          [name: string]: unknown;
+    WalletsController_findOne: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                /** @description ID da carteira */
+                id: string;
+            };
+            cookie?: never;
         };
-        content: {
-          'application/json': components['schemas']['AcceptInviteApiResponseDto'];
+        requestBody?: never;
+        responses: {
+            /** @description Dashboard da carteira */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["WalletApiResponseDto"];
+                };
+            };
+            /** @description Sem permissão para acessar esta carteira */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ApiErrorResponseDto"];
+                };
+            };
+            /** @description Carteira não encontrada */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ApiErrorResponseDto"];
+                };
+            };
         };
-      };
-      /** @description Convite invalido ou expirado */
-      400: {
-        headers: {
-          [name: string]: unknown;
-        };
-        content: {
-          'application/json': components['schemas']['ApiErrorResponseDto'];
-        };
-      };
-      /** @description Apenas usuarios com role CLIENT podem aceitar convites */
-      403: {
-        headers: {
-          [name: string]: unknown;
-        };
-        content: {
-          'application/json': components['schemas']['ApiErrorResponseDto'];
-        };
-      };
-      /** @description Usuario ja vinculado a outro cliente */
-      409: {
-        headers: {
-          [name: string]: unknown;
-        };
-        content: {
-          'application/json': components['schemas']['ApiErrorResponseDto'];
-        };
-      };
     };
-  };
-  ClientsController_findAll: {
-    parameters: {
-      query?: never;
-      header?: never;
-      path?: never;
-      cookie?: never;
+    WalletsController_getTransactions: {
+        parameters: {
+            query?: {
+                /** @description Numero maximo de registros (padrao: 50, maximo: 100) */
+                limit?: string;
+                /** @description ID da transacao para paginacao por cursor */
+                cursor?: string;
+            };
+            header?: never;
+            path: {
+                /** @description ID da carteira */
+                id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Lista de transacoes */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["TransactionListApiResponseDto"];
+                };
+            };
+            /** @description Cursor invalido */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ApiErrorResponseDto"];
+                };
+            };
+            /** @description Sem permissão para acessar esta carteira */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ApiErrorResponseDto"];
+                };
+            };
+            /** @description Carteira não encontrada */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ApiErrorResponseDto"];
+                };
+            };
+        };
     };
-    requestBody?: never;
-    responses: {
-      /** @description Lista de clientes */
-      200: {
-        headers: {
-          [name: string]: unknown;
+    WalletsController_cashOperation: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                /** @description ID da carteira */
+                id: string;
+            };
+            cookie?: never;
         };
-        content: {
-          'application/json': components['schemas']['ClientListApiResponseDto'];
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["CashOperationInputDto"];
+            };
         };
-      };
+        responses: {
+            /** @description Operação realizada com sucesso */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["WalletApiResponseDto"];
+                };
+            };
+            /** @description Saldo insuficiente ou dados inválidos */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ApiErrorResponseDto"];
+                };
+            };
+            /** @description Sem permissão para operar esta carteira */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ApiErrorResponseDto"];
+                };
+            };
+            /** @description Operação duplicada (idempotencyKey já utilizada) */
+            409: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ApiErrorResponseDto"];
+                };
+            };
+        };
     };
-  };
-  ClientsController_create: {
-    parameters: {
-      query?: never;
-      header?: never;
-      path?: never;
-      cookie?: never;
+    WalletsController_buy: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                /** @description ID da carteira */
+                id: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["TradeInputDto"];
+            };
+        };
+        responses: {
+            /** @description Compra realizada com sucesso */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["WalletApiResponseDto"];
+                };
+            };
+            /** @description Saldo insuficiente ou dados inválidos */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ApiErrorResponseDto"];
+                };
+            };
+            /** @description Sem permissão para operar esta carteira */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ApiErrorResponseDto"];
+                };
+            };
+            /** @description Ativo não encontrado */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ApiErrorResponseDto"];
+                };
+            };
+            /** @description Operação duplicada (idempotencyKey já utilizada) */
+            409: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ApiErrorResponseDto"];
+                };
+            };
+        };
     };
-    requestBody: {
-      content: {
-        'application/json': components['schemas']['CreateClientInputDto'];
-      };
+    WalletsController_sell: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                /** @description ID da carteira */
+                id: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["TradeInputDto"];
+            };
+        };
+        responses: {
+            /** @description Venda realizada com sucesso */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["WalletApiResponseDto"];
+                };
+            };
+            /** @description Quantidade insuficiente ou dados inválidos */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ApiErrorResponseDto"];
+                };
+            };
+            /** @description Sem permissão para operar esta carteira */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ApiErrorResponseDto"];
+                };
+            };
+            /** @description Posicao não encontrada */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ApiErrorResponseDto"];
+                };
+            };
+            /** @description Operação duplicada (idempotencyKey já utilizada) */
+            409: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ApiErrorResponseDto"];
+                };
+            };
+        };
     };
-    responses: {
-      /** @description Cliente criado com sucesso */
-      201: {
-        headers: {
-          [name: string]: unknown;
+    ActivityController_getAdvisorActivity: {
+        parameters: {
+            query?: {
+                /** @description Numero maximo de atividades (padrao: 10) */
+                limit?: number;
+            };
+            header?: never;
+            path?: never;
+            cookie?: never;
         };
-        content: {
-          'application/json': components['schemas']['ClientApiResponseDto'];
+        requestBody?: never;
+        responses: {
+            /** @description Lista de atividades recentes */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ActivityListApiResponseDto"];
+                };
+            };
         };
-      };
-      /** @description Dados invalidos */
-      400: {
-        headers: {
-          [name: string]: unknown;
-        };
-        content: {
-          'application/json': components['schemas']['ApiErrorResponseDto'];
-        };
-      };
-      /** @description Cliente com este CPF ja existe */
-      409: {
-        headers: {
-          [name: string]: unknown;
-        };
-        content: {
-          'application/json': components['schemas']['ApiErrorResponseDto'];
-        };
-      };
     };
-  };
-  ClientsController_findOne: {
-    parameters: {
-      query?: never;
-      header?: never;
-      path: {
-        /** @description ID do cliente */
-        id: string;
-      };
-      cookie?: never;
+    ActivityController_getClientActivity: {
+        parameters: {
+            query?: {
+                /** @description Numero maximo de atividades (padrao: 10) */
+                limit?: number;
+            };
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Lista de atividades recentes */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ActivityListApiResponseDto"];
+                };
+            };
+            /** @description Perfil de cliente nao encontrado */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ApiErrorResponseDto"];
+                };
+            };
+        };
     };
-    requestBody?: never;
-    responses: {
-      /** @description Dados do cliente */
-      200: {
-        headers: {
-          [name: string]: unknown;
+    ActivityController_getAdvisorMetrics: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
         };
-        content: {
-          'application/json': components['schemas']['ClientApiResponseDto'];
+        requestBody?: never;
+        responses: {
+            /** @description Metricas do assessor */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["AdvisorMetricsApiResponseDto"];
+                };
+            };
         };
-      };
-      /** @description Cliente nao encontrado */
-      404: {
-        headers: {
-          [name: string]: unknown;
-        };
-        content: {
-          'application/json': components['schemas']['ApiErrorResponseDto'];
-        };
-      };
     };
-  };
-  ClientsController_update: {
-    parameters: {
-      query?: never;
-      header?: never;
-      path: {
-        /** @description ID do cliente */
-        id: string;
-      };
-      cookie?: never;
+    ActivityController_getAdvisorExpirations: {
+        parameters: {
+            query?: {
+                /** @description Dias a frente para buscar vencimentos (padrao: 30) */
+                daysAhead?: number;
+            };
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Lista de vencimentos de opcoes */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["AdvisorExpirationsApiResponseDto"];
+                };
+            };
+        };
     };
-    requestBody: {
-      content: {
-        'application/json': components['schemas']['UpdateClientInputDto'];
-      };
+    ActivityController_getClientProfile: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Perfil do cliente */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ClientProfileApiResponseDto"];
+                };
+            };
+            /** @description Perfil de cliente nao encontrado */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ApiErrorResponseDto"];
+                };
+            };
+        };
     };
-    responses: {
-      /** @description Cliente atualizado com sucesso */
-      200: {
-        headers: {
-          [name: string]: unknown;
+    ActivityController_getAdvisorActivityHistory: {
+        parameters: {
+            query?: {
+                /** @description Numero da pagina (padrao: 1) */
+                page?: number;
+                /** @description Itens por pagina (padrao: 20, max: 100) */
+                pageSize?: number;
+            };
+            header?: never;
+            path?: never;
+            cookie?: never;
         };
-        content: {
-          'application/json': components['schemas']['ClientApiResponseDto'];
+        requestBody?: never;
+        responses: {
+            /** @description Historico de atividades paginado */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["PaginatedActivityApiResponseDto"];
+                };
+            };
         };
-      };
-      /** @description Cliente nao encontrado */
-      404: {
-        headers: {
-          [name: string]: unknown;
-        };
-        content: {
-          'application/json': components['schemas']['ApiErrorResponseDto'];
-        };
-      };
     };
-  };
-  ClientsController_delete: {
-    parameters: {
-      query?: never;
-      header?: never;
-      path: {
-        /** @description ID do cliente */
-        id: string;
-      };
-      cookie?: never;
+    ActivityController_getClientActivityHistory: {
+        parameters: {
+            query?: {
+                /** @description Numero da pagina (padrao: 1) */
+                page?: number;
+                /** @description Itens por pagina (padrao: 20, max: 100) */
+                pageSize?: number;
+            };
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Historico de atividades paginado */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["PaginatedActivityApiResponseDto"];
+                };
+            };
+            /** @description Perfil de cliente nao encontrado */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ApiErrorResponseDto"];
+                };
+            };
+        };
     };
-    requestBody?: never;
-    responses: {
-      /** @description Cliente excluido com sucesso */
-      200: {
-        headers: {
-          [name: string]: unknown;
+    DerivativesController_getOptionPositions: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                walletId: string;
+            };
+            cookie?: never;
         };
-        content?: never;
-      };
-      /** @description Cliente nao encontrado */
-      404: {
-        headers: {
-          [name: string]: unknown;
+        requestBody?: never;
+        responses: {
+            /** @description Option positions retrieved successfully */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["OptionPositionListApiResponseDto"];
+                };
+            };
         };
-        content: {
-          'application/json': components['schemas']['ApiErrorResponseDto'];
-        };
-      };
     };
-  };
-  WalletsController_findAll: {
-    parameters: {
-      query?: {
-        /** @description Filtrar por ID do cliente */
-        clientId?: string;
-      };
-      header?: never;
-      path?: never;
-      cookie?: never;
+    DerivativesController_buyOption: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                walletId: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["BuyOptionInputDto"];
+            };
+        };
+        responses: {
+            /** @description Option bought successfully */
+            201: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["OptionTradeResultApiResponseDto"];
+                };
+            };
+        };
     };
-    requestBody?: never;
-    responses: {
-      /** @description Lista de carteiras */
-      200: {
-        headers: {
-          [name: string]: unknown;
+    DerivativesController_sellOption: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                walletId: string;
+            };
+            cookie?: never;
         };
-        content: {
-          'application/json': components['schemas']['WalletListApiResponseDto'];
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["SellOptionInputDto"];
+            };
         };
-      };
+        responses: {
+            /** @description Option sold successfully */
+            201: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["OptionTradeResultApiResponseDto"];
+                };
+            };
+        };
     };
-  };
-  WalletsController_create: {
-    parameters: {
-      query?: never;
-      header?: never;
-      path?: never;
-      cookie?: never;
+    DerivativesController_closeOption: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                walletId: string;
+                positionId: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["CloseOptionInputDto"];
+            };
+        };
+        responses: {
+            /** @description Option position closed successfully */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["OptionTradeResultApiResponseDto"];
+                };
+            };
+        };
     };
-    requestBody: {
-      content: {
-        'application/json': components['schemas']['CreateWalletInputDto'];
-      };
+    StrategiesController_getStrategies: {
+        parameters: {
+            query?: {
+                limit?: number;
+                cursor?: string;
+            };
+            header?: never;
+            path: {
+                walletId: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Structured operations retrieved successfully */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["StructuredOperationListApiResponseDto"];
+                };
+            };
+        };
     };
-    responses: {
-      /** @description Carteira criada com sucesso */
-      201: {
-        headers: {
-          [name: string]: unknown;
+    StrategiesController_executeStrategy: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                walletId: string;
+            };
+            cookie?: never;
         };
-        content: {
-          'application/json': components['schemas']['WalletApiResponseDto'];
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["ExecuteStrategyInputDto"];
+            };
         };
-      };
-      /** @description Dados invalidos */
-      400: {
-        headers: {
-          [name: string]: unknown;
+        responses: {
+            /** @description Strategy executed successfully */
+            201: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["StructuredOperationApiResponseDto"];
+                };
+            };
         };
-        content: {
-          'application/json': components['schemas']['ApiErrorResponseDto'];
-        };
-      };
-      /** @description Sem permissao para criar carteira para este cliente */
-      403: {
-        headers: {
-          [name: string]: unknown;
-        };
-        content: {
-          'application/json': components['schemas']['ApiErrorResponseDto'];
-        };
-      };
     };
-  };
-  WalletsController_searchAssets: {
-    parameters: {
-      query: {
-        /** @description Termo de busca (ticker ou nome) */
-        q: string;
-        /** @description Numero maximo de resultados (padrao: 10) */
-        limit?: string;
-      };
-      header?: never;
-      path?: never;
-      cookie?: never;
+    StrategiesController_getStrategy: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                walletId: string;
+                operationId: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Structured operation retrieved successfully */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["StructuredOperationApiResponseDto"];
+                };
+            };
+        };
     };
-    requestBody?: never;
-    responses: {
-      /** @description Lista de ativos encontrados */
-      200: {
-        headers: {
-          [name: string]: unknown;
+    StrategiesController_previewStrategy: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                walletId: string;
+            };
+            cookie?: never;
         };
-        content: {
-          'application/json': components['schemas']['AssetSearchApiResponseDto'];
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["ExecuteStrategyInputDto"];
+            };
         };
-      };
+        responses: {
+            /** @description Strategy preview generated successfully */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["StrategyPreviewApiResponseDto"];
+                };
+            };
+        };
     };
-  };
-  WalletsController_getAssetPrice: {
-    parameters: {
-      query?: never;
-      header?: never;
-      path: {
-        /** @description Ticker do ativo (ex: PETR4) */
-        ticker: string;
-      };
-      cookie?: never;
+    LifecycleController_getUpcomingExpirations: {
+        parameters: {
+            query?: {
+                /** @description Number of days to look ahead (default: 30) */
+                daysAhead?: number;
+            };
+            header?: never;
+            path: {
+                walletId: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Upcoming expirations retrieved successfully */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["UpcomingExpirationsApiResponseDto"];
+                };
+            };
+        };
     };
-    requestBody?: never;
-    responses: {
-      /** @description Preco atual do ativo */
-      200: {
-        headers: {
-          [name: string]: unknown;
+    LifecycleController_exerciseOption: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                walletId: string;
+                positionId: string;
+            };
+            cookie?: never;
         };
-        content: {
-          'application/json': components['schemas']['AssetPriceApiResponseDto'];
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["ExerciseOptionInputDto"];
+            };
         };
-      };
-      /** @description Ativo nao encontrado */
-      404: {
-        headers: {
-          [name: string]: unknown;
+        responses: {
+            /** @description Option exercised successfully */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ExerciseResultApiResponseDto"];
+                };
+            };
         };
-        content: {
-          'application/json': components['schemas']['ApiErrorResponseDto'];
-        };
-      };
     };
-  };
-  WalletsController_findOne: {
-    parameters: {
-      query?: never;
-      header?: never;
-      path: {
-        /** @description ID da carteira */
-        id: string;
-      };
-      cookie?: never;
+    LifecycleController_handleAssignment: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                walletId: string;
+                positionId: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["AssignmentInputDto"];
+            };
+        };
+        responses: {
+            /** @description Assignment recorded successfully */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["AssignmentResultApiResponseDto"];
+                };
+            };
+        };
     };
-    requestBody?: never;
-    responses: {
-      /** @description Dashboard da carteira */
-      200: {
-        headers: {
-          [name: string]: unknown;
+    LifecycleController_processExpiration: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                walletId: string;
+                positionId: string;
+            };
+            cookie?: never;
         };
-        content: {
-          'application/json': components['schemas']['WalletApiResponseDto'];
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["ExpireOptionInputDto"];
+            };
         };
-      };
-      /** @description Sem permissao para acessar esta carteira */
-      403: {
-        headers: {
-          [name: string]: unknown;
+        responses: {
+            /** @description Expiration processed successfully */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ExpirationResultApiResponseDto"];
+                };
+            };
         };
-        content: {
-          'application/json': components['schemas']['ApiErrorResponseDto'];
-        };
-      };
-      /** @description Carteira nao encontrada */
-      404: {
-        headers: {
-          [name: string]: unknown;
-        };
-        content: {
-          'application/json': components['schemas']['ApiErrorResponseDto'];
-        };
-      };
     };
-  };
-  WalletsController_getTransactions: {
-    parameters: {
-      query?: {
-        /** @description Numero maximo de registros (padrao: 50, maximo: 100) */
-        limit?: string;
-        /** @description ID da transacao para paginacao por cursor */
-        cursor?: string;
-      };
-      header?: never;
-      path: {
-        /** @description ID da carteira */
-        id: string;
-      };
-      cookie?: never;
-    };
-    requestBody?: never;
-    responses: {
-      /** @description Lista de transacoes */
-      200: {
-        headers: {
-          [name: string]: unknown;
-        };
-        content: {
-          'application/json': components['schemas']['TransactionListApiResponseDto'];
-        };
-      };
-      /** @description Cursor invalido */
-      400: {
-        headers: {
-          [name: string]: unknown;
-        };
-        content: {
-          'application/json': components['schemas']['ApiErrorResponseDto'];
-        };
-      };
-      /** @description Sem permissao para acessar esta carteira */
-      403: {
-        headers: {
-          [name: string]: unknown;
-        };
-        content: {
-          'application/json': components['schemas']['ApiErrorResponseDto'];
-        };
-      };
-      /** @description Carteira nao encontrada */
-      404: {
-        headers: {
-          [name: string]: unknown;
-        };
-        content: {
-          'application/json': components['schemas']['ApiErrorResponseDto'];
-        };
-      };
-    };
-  };
-  WalletsController_cashOperation: {
-    parameters: {
-      query?: never;
-      header?: never;
-      path: {
-        /** @description ID da carteira */
-        id: string;
-      };
-      cookie?: never;
-    };
-    requestBody: {
-      content: {
-        'application/json': components['schemas']['CashOperationInputDto'];
-      };
-    };
-    responses: {
-      /** @description Operacao realizada com sucesso */
-      200: {
-        headers: {
-          [name: string]: unknown;
-        };
-        content: {
-          'application/json': components['schemas']['WalletApiResponseDto'];
-        };
-      };
-      /** @description Saldo insuficiente ou dados invalidos */
-      400: {
-        headers: {
-          [name: string]: unknown;
-        };
-        content: {
-          'application/json': components['schemas']['ApiErrorResponseDto'];
-        };
-      };
-      /** @description Sem permissao para operar esta carteira */
-      403: {
-        headers: {
-          [name: string]: unknown;
-        };
-        content: {
-          'application/json': components['schemas']['ApiErrorResponseDto'];
-        };
-      };
-      /** @description Operacao duplicada (idempotencyKey ja utilizada) */
-      409: {
-        headers: {
-          [name: string]: unknown;
-        };
-        content: {
-          'application/json': components['schemas']['ApiErrorResponseDto'];
-        };
-      };
-    };
-  };
-  WalletsController_buy: {
-    parameters: {
-      query?: never;
-      header?: never;
-      path: {
-        /** @description ID da carteira */
-        id: string;
-      };
-      cookie?: never;
-    };
-    requestBody: {
-      content: {
-        'application/json': components['schemas']['TradeInputDto'];
-      };
-    };
-    responses: {
-      /** @description Compra realizada com sucesso */
-      200: {
-        headers: {
-          [name: string]: unknown;
-        };
-        content: {
-          'application/json': components['schemas']['WalletApiResponseDto'];
-        };
-      };
-      /** @description Saldo insuficiente ou dados invalidos */
-      400: {
-        headers: {
-          [name: string]: unknown;
-        };
-        content: {
-          'application/json': components['schemas']['ApiErrorResponseDto'];
-        };
-      };
-      /** @description Sem permissao para operar esta carteira */
-      403: {
-        headers: {
-          [name: string]: unknown;
-        };
-        content: {
-          'application/json': components['schemas']['ApiErrorResponseDto'];
-        };
-      };
-      /** @description Ativo nao encontrado */
-      404: {
-        headers: {
-          [name: string]: unknown;
-        };
-        content: {
-          'application/json': components['schemas']['ApiErrorResponseDto'];
-        };
-      };
-      /** @description Operacao duplicada (idempotencyKey ja utilizada) */
-      409: {
-        headers: {
-          [name: string]: unknown;
-        };
-        content: {
-          'application/json': components['schemas']['ApiErrorResponseDto'];
-        };
-      };
-    };
-  };
-  WalletsController_sell: {
-    parameters: {
-      query?: never;
-      header?: never;
-      path: {
-        /** @description ID da carteira */
-        id: string;
-      };
-      cookie?: never;
-    };
-    requestBody: {
-      content: {
-        'application/json': components['schemas']['TradeInputDto'];
-      };
-    };
-    responses: {
-      /** @description Venda realizada com sucesso */
-      200: {
-        headers: {
-          [name: string]: unknown;
-        };
-        content: {
-          'application/json': components['schemas']['WalletApiResponseDto'];
-        };
-      };
-      /** @description Quantidade insuficiente ou dados invalidos */
-      400: {
-        headers: {
-          [name: string]: unknown;
-        };
-        content: {
-          'application/json': components['schemas']['ApiErrorResponseDto'];
-        };
-      };
-      /** @description Sem permissao para operar esta carteira */
-      403: {
-        headers: {
-          [name: string]: unknown;
-        };
-        content: {
-          'application/json': components['schemas']['ApiErrorResponseDto'];
-        };
-      };
-      /** @description Posicao nao encontrada */
-      404: {
-        headers: {
-          [name: string]: unknown;
-        };
-        content: {
-          'application/json': components['schemas']['ApiErrorResponseDto'];
-        };
-      };
-      /** @description Operacao duplicada (idempotencyKey ja utilizada) */
-      409: {
-        headers: {
-          [name: string]: unknown;
-        };
-        content: {
-          'application/json': components['schemas']['ApiErrorResponseDto'];
-        };
-      };
-    };
-  };
 }

@@ -38,6 +38,8 @@ export class ActivityListApiResponseDto extends createZodDto(
 export const advisorMetricsSchema = z.object({
   clientCount: z.number(),
   totalWalletValue: z.number(),
+  pendingOperationsCount: z.number(),
+  expiringOptionsCount: z.number(),
 });
 
 export type AdvisorMetrics = z.infer<typeof advisorMetricsSchema>;
@@ -86,4 +88,43 @@ export type PaginatedActivity = z.infer<typeof paginatedActivitySchema>;
  */
 export class PaginatedActivityApiResponseDto extends createZodDto(
   createApiResponseSchema(paginatedActivitySchema),
+) {}
+
+/**
+ * Advisor expiration item schema
+ */
+export const advisorExpirationSchema = z.object({
+  positionId: z.string().uuid(),
+  ticker: z.string(),
+  optionType: z.enum(['CALL', 'PUT']),
+  strikePrice: z.number(),
+  expirationDate: z.string(),
+  daysUntilExpiry: z.number(),
+  quantity: z.number(),
+  isShort: z.boolean(),
+  walletName: z.string(),
+  clientName: z.string(),
+  moneyness: z.enum(['ITM', 'ATM', 'OTM']).optional(),
+  status: z.enum(['Proximo', 'Em dia', 'Vencido']),
+});
+
+export type AdvisorExpiration = z.infer<typeof advisorExpirationSchema>;
+
+/**
+ * Advisor expirations list schema
+ */
+export const advisorExpirationsListSchema = z.object({
+  expirations: z.array(advisorExpirationSchema),
+  total: z.number(),
+});
+
+export type AdvisorExpirationsList = z.infer<
+  typeof advisorExpirationsListSchema
+>;
+
+/**
+ * Advisor expirations response DTO for Swagger documentation
+ */
+export class AdvisorExpirationsApiResponseDto extends createZodDto(
+  createApiResponseSchema(advisorExpirationsListSchema),
 ) {}

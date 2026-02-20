@@ -1,6 +1,7 @@
 import { Injectable, BadRequestException } from '@nestjs/common';
 import { Decimal } from 'decimal.js';
 import { PrismaService } from '@/shared/prisma/prisma.service';
+import { AssetResolverService } from '@/modules/wallets/services';
 import { StrategyType, OperationLegType } from '@/generated/prisma/enums';
 import { CONTRACT_SIZE } from '../constants';
 import type {
@@ -17,7 +18,10 @@ interface BuiltStrategy {
 
 @Injectable()
 export class StrategyBuilderService {
-  constructor(private readonly prisma: PrismaService) {}
+  constructor(
+    private readonly prisma: PrismaService,
+    private readonly assetResolver: AssetResolverService,
+  ) {}
 
   /**
    * Build a predefined strategy from parameters
@@ -420,6 +424,12 @@ export class StrategyBuilderService {
     strategyType: StrategyType,
     legs: OperationLegInput[],
   ): Promise<StrategyPreviewResponse> {
+    // Resolve assets from market data before validation (auto-create if missing)
+    const tickers = [...new Set(legs.map((l) => l.ticker))];
+    for (const ticker of tickers) {
+      await this.assetResolver.ensureAssetExists(ticker);
+    }
+
     const validation = await this.validateCustomStrategy(legs);
     const riskProfile = await this.getStrategyRiskProfile(strategyType, legs);
     const totalCost = riskProfile.isDebitStrategy

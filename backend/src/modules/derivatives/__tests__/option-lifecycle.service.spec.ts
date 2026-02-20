@@ -464,6 +464,54 @@ describe('OptionLifecycleService', () => {
         ).rejects.toThrow(BadRequestException);
       });
 
+      it('throws BadRequestException when exercising European option after expiry', async () => {
+        const europeanExpired = {
+          ...mockLongCallPosition,
+          asset: {
+            ...mockOptionAsset,
+            optionDetail: {
+              ...mockOptionAsset.optionDetail,
+              exerciseType: 'EUROPEAN',
+              expirationDate: new Date('2020-01-16'),
+            },
+          },
+        };
+        walletAccess.verifyWalletAccess.mockResolvedValue(mockWallet);
+        prisma.position.findFirst.mockResolvedValue(europeanExpired);
+
+        await expect(
+          service.exerciseOption(
+            'wallet-123',
+            'position-123',
+            { idempotencyKey: 'exercise-european-after' },
+            mockActor,
+          ),
+        ).rejects.toThrow(BadRequestException);
+      });
+
+      it('throws BadRequestException when CALL exercise cash is blocked by collateral', async () => {
+        walletAccess.verifyWalletAccess.mockResolvedValue(mockWallet);
+        prisma.position.findFirst.mockResolvedValue(mockLongCallPosition);
+
+        // totalCost = 24 * 1000 = 24000
+        // cashBalance = 30000, blockedCollateral = 10000 => available = 20000 < 24000
+        const walletWithCollateral = {
+          ...mockWallet,
+          cashBalance: 30000,
+          blockedCollateral: 10000,
+        };
+        prisma.wallet.findUnique.mockResolvedValue(walletWithCollateral);
+
+        await expect(
+          service.exerciseOption(
+            'wallet-123',
+            'position-123',
+            { idempotencyKey: 'exercise-blocked-collateral' },
+            mockActor,
+          ),
+        ).rejects.toThrow(BadRequestException);
+      });
+
       it('throws ConflictException on duplicate idempotency key', async () => {
         walletAccess.verifyWalletAccess.mockResolvedValue(mockWallet);
         walletAccess.isIdempotencyConflict.mockReturnValue(true);
@@ -565,6 +613,29 @@ describe('OptionLifecycleService', () => {
             'wallet-123',
             'position-short-put-123',
             { quantity: 5, idempotencyKey: 'assign-put-no-cash' },
+            mockActor,
+          ),
+        ).rejects.toThrow(BadRequestException);
+      });
+
+      it('throws BadRequestException when PUT assignment cash is blocked by collateral', async () => {
+        walletAccess.verifyWalletAccess.mockResolvedValue(mockWallet);
+        prisma.position.findFirst.mockResolvedValue(mockShortPutPosition);
+
+        // settlementAmount = 24 * 500 = 12000
+        // cashBalance = 15000, blockedCollateral = 5000 => available = 10000 < 12000
+        const walletWithCollateral = {
+          ...mockWallet,
+          cashBalance: 15000,
+          blockedCollateral: 5000,
+        };
+        prisma.wallet.findUnique.mockResolvedValue(walletWithCollateral);
+
+        await expect(
+          service.handleAssignment(
+            'wallet-123',
+            'position-short-put-123',
+            { quantity: 5, idempotencyKey: 'assign-put-blocked-collateral' },
             mockActor,
           ),
         ).rejects.toThrow(BadRequestException);
