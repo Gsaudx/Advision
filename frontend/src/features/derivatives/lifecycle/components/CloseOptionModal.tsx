@@ -3,12 +3,11 @@ import { XCircle, X, AlertTriangle } from 'lucide-react';
 import ModalBase from '@/components/layout/ModalBase';
 import { LoadingSpinner } from '@/components/ui/LoadingSpinner';
 import { getApiErrorMessage } from '@/lib/api-error';
-import { formatCurrency } from '@/lib/formatters';
 import { generateIdempotencyKey } from '@/lib/utils';
 import { useCloseOption } from '../../options/api';
+import { CONTRACT_SIZE } from '../../types';
+import { formatCurrency } from '@/lib/formatters';
 import type { OptionPosition } from '../../types';
-
-const CONTRACT_SIZE = 100;
 
 interface CloseOptionModalProps {
   isOpen: boolean;

@@ -1,4 +1,5 @@
 import { api } from '@/lib/axios';
+import type { ApiResponse } from '@/types/api-response';
 import type {
   OptionPositionList,
   BuyOptionInput,
@@ -17,12 +18,6 @@ import type {
   ExpirationResult,
   UpcomingExpirationsResponse,
 } from '../../types';
-
-interface ApiResponse<T> {
-  success: boolean;
-  data: T;
-  message?: string;
-}
 
 export const derivativesApi = {
   // ============================================================================

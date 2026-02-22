@@ -1,11 +1,6 @@
 import { api } from '@/lib/axios';
+import type { ApiResponse } from '@/types/api-response';
 import type { LoginCredentials, RegisterCredentials, User } from '../types';
-
-interface ApiResponse<T> {
-  success: boolean;
-  data: T;
-  message?: string;
-}
 
 export const authApi = {
   login: async (credentials: LoginCredentials): Promise<User> => {

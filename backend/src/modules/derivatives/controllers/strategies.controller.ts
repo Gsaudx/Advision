@@ -50,13 +50,13 @@ export class StrategiesController {
   })
   async getStrategies(
     @Param('walletId', ParseUUIDPipe) walletId: string,
+    @CurrentUser() actor: CurrentUserData,
     @Query('limit') limit?: string,
     @Query('cursor') cursor?: string,
-    @CurrentUser() actor?: CurrentUserData,
   ) {
     const data = await this.strategyExecutor.getStrategies(
       walletId,
-      actor!,
+      actor,
       limit ? parseInt(limit, 10) : undefined,
       cursor,
     );

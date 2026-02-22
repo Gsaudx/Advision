@@ -112,9 +112,9 @@ describe('StrategiesController', () => {
 
       const result = await controller.getStrategies(
         'wallet-123',
-        undefined,
-        undefined,
         mockActor,
+        undefined,
+        undefined,
       );
 
       expect(result.success).toBe(true);
@@ -132,7 +132,7 @@ describe('StrategiesController', () => {
         mockStrategyListResponse,
       );
 
-      await controller.getStrategies('wallet-123', '25', undefined, mockActor);
+      await controller.getStrategies('wallet-123', mockActor, '25', undefined);
 
       expect(strategyExecutor.getStrategies).toHaveBeenCalledWith(
         'wallet-123',
@@ -149,9 +149,9 @@ describe('StrategiesController', () => {
 
       await controller.getStrategies(
         'wallet-123',
+        mockActor,
         undefined,
         'cursor-123',
-        mockActor,
       );
 
       expect(strategyExecutor.getStrategies).toHaveBeenCalledWith(

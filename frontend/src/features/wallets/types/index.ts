@@ -99,14 +99,9 @@ export type TransactionList = {
 };
 
 /**
- * Transaction type derived from the Transaction entity.
- * Extended with option types until api.d.ts is regenerated with derivatives endpoints.
+ * Transaction type derived from the Transaction entity (includes option types).
  */
-export type TransactionType =
-  | Transaction['type']
-  | 'OPTION_EXERCISE'
-  | 'OPTION_ASSIGNMENT'
-  | 'OPTION_EXPIRY';
+export type TransactionType = Transaction['type'];
 
 // ============================================================================
 // Frontend-specific types (not from backend)

@@ -1,4 +1,5 @@
 import { api } from '@/lib/axios';
+import type { ApiResponse } from '@/types/api-response';
 
 export interface ActivityItem {
   id: string;
@@ -51,12 +52,6 @@ export interface ClientProfile {
   clientName: string;
   advisorId: string;
   advisorName: string;
-}
-
-interface ApiResponse<T> {
-  success: boolean;
-  data: T;
-  message?: string;
 }
 
 export const activityApi = {

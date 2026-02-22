@@ -1,4 +1,5 @@
 import { api } from '@/lib/axios';
+import type { ApiResponse } from '@/types/api-response';
 import type {
   Wallet,
   WalletSummary,
@@ -10,12 +11,6 @@ import type {
   TransactionList,
   OptionDetailsResult,
 } from '../types';
-
-interface ApiResponse<T> {
-  success: boolean;
-  data: T;
-  message?: string;
-}
 
 export const walletsApi = {
   getAll: async (clientId?: string): Promise<WalletSummary[]> => {

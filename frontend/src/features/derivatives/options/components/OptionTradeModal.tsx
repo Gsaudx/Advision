@@ -3,7 +3,11 @@ import ModalBase from '@/components/layout/ModalBase';
 import { LoadingSpinner } from '@/components/ui/LoadingSpinner';
 import { TrendingUp, TrendingDown, X, RefreshCw, Info } from 'lucide-react';
 import { useBuyOption, useSellOption } from '../api';
-import { formatCurrency, generateIdempotencyKey } from '../../types';
+import {
+  formatCurrency,
+  generateIdempotencyKey,
+  CONTRACT_SIZE,
+} from '../../types';
 import { OptionTickerAutocomplete } from './OptionTickerAutocomplete';
 import { useAssetPrice, useOptionDetails } from '@/features/wallets/api';
 import { getApiErrorMessage } from '@/lib/api-error';
@@ -20,8 +24,6 @@ interface OptionTradeModalProps {
   currentBalance: number;
   currency?: string;
 }
-
-const CONTRACT_SIZE = 100;
 
 export function OptionTradeModal({
   isOpen,

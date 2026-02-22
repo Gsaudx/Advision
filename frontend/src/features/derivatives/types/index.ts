@@ -1,3 +1,4 @@
+import type { components } from '@/types/api';
 import type { AssetSearchResult } from '@/features/wallets/types';
 
 // Re-export shared utilities (single source for the whole app)
@@ -10,50 +11,172 @@ export {
 } from '@/lib/formatters';
 
 // ============================================================================
-// OPTION TYPES
-// Note: These types mirror backend DTOs. Once api.d.ts is regenerated with
-// derivatives endpoints, migrate to: type X = components['schemas']['XDto']
+// CONTRACT CONSTANT (single source for frontend)
 // ============================================================================
 
-export type OptionType = 'CALL' | 'PUT';
-export type ExerciseType = 'AMERICAN' | 'EUROPEAN';
-export type OperationStatus =
-  | 'PENDING'
-  | 'EXECUTED'
-  | 'FAILED'
-  | 'EXPIRED'
-  | 'EXERCISED'
-  | 'ASSIGNED';
-export type OptionLifecycleEventType =
-  | 'OPENED'
-  | 'EXERCISED'
-  | 'ASSIGNED'
-  | 'EXPIRED_ITM'
-  | 'EXPIRED_OTM'
-  | 'CLOSED';
-export type Moneyness = 'ITM' | 'ATM' | 'OTM';
-
-export type OperationLegType =
-  | 'BUY_CALL'
-  | 'SELL_CALL'
-  | 'BUY_PUT'
-  | 'SELL_PUT'
-  | 'BUY_STOCK'
-  | 'SELL_STOCK';
-
-export type StrategyType =
-  | 'SINGLE_OPTION'
-  | 'STRADDLE'
-  | 'STRANGLE'
-  | 'BULL_CALL_SPREAD'
-  | 'BEAR_PUT_SPREAD'
-  | 'COVERED_CALL'
-  | 'PROTECTIVE_PUT'
-  | 'COLLAR'
-  | 'CUSTOM';
+/** Standard B3 options contract size (number of shares per contract) */
+export const CONTRACT_SIZE = 100;
 
 // ============================================================================
-// OPTION SEARCH TYPES
+// Types derived from auto-generated API types (single source of truth)
+// ============================================================================
+
+// --- Enum-like types extracted from the generated schemas ---
+
+export type OptionType =
+  components['schemas']['OptionPositionListApiResponseDto']['data'] extends
+    | infer D
+    | undefined
+    ? NonNullable<D> extends { positions: (infer P)[] }
+      ? P extends { optionDetail: { optionType: infer T } }
+        ? T
+        : never
+      : never
+    : never;
+
+export type ExerciseType =
+  components['schemas']['OptionPositionListApiResponseDto']['data'] extends
+    | infer D
+    | undefined
+    ? NonNullable<D> extends { positions: (infer P)[] }
+      ? P extends { optionDetail: { exerciseType: infer T } }
+        ? T
+        : never
+      : never
+    : never;
+
+export type OperationStatus = NonNullable<
+  NonNullable<
+    components['schemas']['OptionTradeResultApiResponseDto']['data']
+  >['status']
+>;
+
+export type OptionLifecycleEventType = NonNullable<
+  NonNullable<
+    components['schemas']['ExerciseResultApiResponseDto']['data']
+  >['event']
+>;
+
+export type OperationLegType = NonNullable<
+  NonNullable<
+    components['schemas']['StructuredOperationApiResponseDto']['data']
+  >['legs'][number]['legType']
+>;
+
+export type StrategyType = NonNullable<
+  NonNullable<
+    components['schemas']['StructuredOperationApiResponseDto']['data']
+  >['strategyType']
+>;
+
+export type Moneyness = NonNullable<
+  NonNullable<
+    components['schemas']['UpcomingExpirationsApiResponseDto']['data']
+  >['expirations'][number]['moneyness']
+>;
+
+// --- Data types derived from response schemas ---
+
+/**
+ * Option detail nested inside a position
+ */
+export type OptionDetail = NonNullable<
+  NonNullable<
+    components['schemas']['OptionPositionListApiResponseDto']['data']
+  >['positions'][number]['optionDetail']
+>;
+
+/**
+ * Single option position
+ */
+export type OptionPosition = NonNullable<
+  NonNullable<
+    components['schemas']['OptionPositionListApiResponseDto']['data']
+  >['positions'][number]
+>;
+
+/**
+ * Option positions list with premium summary
+ */
+export type OptionPositionList = NonNullable<
+  components['schemas']['OptionPositionListApiResponseDto']['data']
+>;
+
+// --- Input types ---
+
+export type BuyOptionInput = components['schemas']['BuyOptionInputDto'];
+
+export type SellOptionInput = components['schemas']['SellOptionInputDto'];
+
+export type CloseOptionInput = components['schemas']['CloseOptionInputDto'];
+
+export type OperationLegInput =
+  components['schemas']['ExecuteStrategyInputDto']['legs'][number];
+
+export type ExecuteStrategyInput =
+  components['schemas']['ExecuteStrategyInputDto'];
+
+export type ExerciseOptionInput =
+  components['schemas']['ExerciseOptionInputDto'];
+
+export type AssignmentInput = components['schemas']['AssignmentInputDto'];
+
+export type ExpireOptionInput = components['schemas']['ExpireOptionInputDto'];
+
+// --- Response data types ---
+
+export type OptionTradeResult = NonNullable<
+  components['schemas']['OptionTradeResultApiResponseDto']['data']
+>;
+
+export type OperationLeg = NonNullable<
+  NonNullable<
+    components['schemas']['StructuredOperationApiResponseDto']['data']
+  >['legs'][number]
+>;
+
+export type StructuredOperation = NonNullable<
+  components['schemas']['StructuredOperationApiResponseDto']['data']
+>;
+
+export type StructuredOperationList = NonNullable<
+  components['schemas']['StructuredOperationListApiResponseDto']['data']
+>;
+
+export type StrategyRiskProfile = NonNullable<
+  NonNullable<
+    components['schemas']['StrategyPreviewApiResponseDto']['data']
+  >['riskProfile']
+>;
+
+export type StrategyPreview = NonNullable<
+  components['schemas']['StrategyPreviewApiResponseDto']['data']
+>;
+
+export type ExerciseResult = NonNullable<
+  components['schemas']['ExerciseResultApiResponseDto']['data']
+>;
+
+export type AssignmentResult = NonNullable<
+  components['schemas']['AssignmentResultApiResponseDto']['data']
+>;
+
+export type ExpirationResult = NonNullable<
+  components['schemas']['ExpirationResultApiResponseDto']['data']
+>;
+
+export type UpcomingExpiration = NonNullable<
+  NonNullable<
+    components['schemas']['UpcomingExpirationsApiResponseDto']['data']
+  >['expirations'][number]
+>;
+
+export type UpcomingExpirationsResponse = NonNullable<
+  components['schemas']['UpcomingExpirationsApiResponseDto']['data']
+>;
+
+// ============================================================================
+// OPTION SEARCH TYPES (frontend-specific, extends wallet search result)
 // ============================================================================
 
 export interface OptionSearchResult extends AssetSearchResult {
@@ -61,227 +184,6 @@ export interface OptionSearchResult extends AssetSearchResult {
   expirationDate?: string;
   optionType?: OptionType;
   lastPrice?: number;
-}
-
-// ============================================================================
-// OPTION POSITION TYPES
-// ============================================================================
-
-export interface OptionDetail {
-  optionType: OptionType;
-  exerciseType: ExerciseType;
-  strikePrice: number;
-  expirationDate: string;
-  underlyingTicker: string;
-}
-
-export interface OptionPosition {
-  id: string;
-  walletId: string;
-  assetId: string;
-  ticker: string;
-  name: string;
-  quantity: number;
-  averagePrice: number;
-  totalCost: number;
-  currentPrice?: number;
-  currentValue?: number;
-  profitLoss?: number;
-  profitLossPercent?: number;
-  isShort: boolean;
-  collateralBlocked?: number;
-  optionDetail: OptionDetail;
-}
-
-export interface OptionPositionList {
-  positions: OptionPosition[];
-  totalPremiumPaid: number;
-  totalPremiumReceived: number;
-  netPremium: number;
-}
-
-// ============================================================================
-// OPTION TRADE TYPES
-// ============================================================================
-
-export interface BuyOptionInput {
-  ticker: string;
-  quantity: number;
-  premium: number;
-  date: string;
-  idempotencyKey: string;
-}
-
-export interface SellOptionInput {
-  ticker: string;
-  quantity: number;
-  premium: number;
-  date: string;
-  covered: boolean;
-  idempotencyKey: string;
-}
-
-export interface CloseOptionInput {
-  quantity?: number;
-  premium: number;
-  date: string;
-  idempotencyKey: string;
-}
-
-export interface OptionTradeResult {
-  positionId: string;
-  transactionId: string;
-  ticker: string;
-  quantity: number;
-  premium: number;
-  totalValue: number;
-  status: OperationStatus;
-}
-
-// ============================================================================
-// STRATEGY TYPES
-// ============================================================================
-
-export interface OperationLegInput {
-  legType: OperationLegType;
-  ticker: string;
-  quantity: number;
-  price: number;
-}
-
-export interface ExecuteStrategyInput {
-  strategyType: StrategyType;
-  underlyingTicker?: string;
-  legs: OperationLegInput[];
-  executedAt: string;
-  notes?: string;
-  idempotencyKey: string;
-}
-
-export interface OperationLeg {
-  id: string;
-  legOrder: number;
-  legType: OperationLegType;
-  ticker: string;
-  assetId: string;
-  quantity: number;
-  price: number;
-  totalValue: number;
-  status: OperationStatus;
-  transactionId: string | null;
-  executedAt: string | null;
-}
-
-export interface StructuredOperation {
-  id: string;
-  walletId: string;
-  strategyType: StrategyType;
-  status: OperationStatus;
-  totalPremium: number;
-  netDebitCredit: number;
-  executedAt: string | null;
-  expirationDate: string | null;
-  notes: string | null;
-  legs: OperationLeg[];
-  createdAt: string;
-  updatedAt: string;
-}
-
-export interface StructuredOperationList {
-  items: StructuredOperation[];
-  nextCursor: string | null;
-}
-
-export interface StrategyRiskProfile {
-  maxLoss: number | null;
-  maxGain: number | null;
-  breakEvenPoints: number[];
-  netPremium: number;
-  marginRequired: number;
-  isDebitStrategy: boolean;
-}
-
-export interface StrategyPreview {
-  strategyType: StrategyType;
-  legs: OperationLegInput[];
-  riskProfile: StrategyRiskProfile;
-  totalCost: number;
-  isValid: boolean;
-  validationErrors: string[];
-}
-
-// ============================================================================
-// LIFECYCLE TYPES
-// ============================================================================
-
-export interface ExerciseOptionInput {
-  quantity?: number;
-  notes?: string;
-  idempotencyKey: string;
-}
-
-export interface AssignmentInput {
-  quantity: number;
-  notes?: string;
-  idempotencyKey: string;
-}
-
-export interface ExpireOptionInput {
-  notes?: string;
-  idempotencyKey: string;
-}
-
-export interface ExerciseResult {
-  lifecycleId: string;
-  event: OptionLifecycleEventType;
-  optionPositionId: string;
-  underlyingPositionId: string | null;
-  underlyingTicker: string;
-  underlyingQuantity: number;
-  strikePrice: number;
-  totalCost: number;
-  cashBalanceAfter: number;
-}
-
-export interface AssignmentResult {
-  lifecycleId: string;
-  event: OptionLifecycleEventType;
-  optionPositionId: string;
-  underlyingPositionId: string | null;
-  underlyingTicker: string;
-  underlyingQuantity: number;
-  strikePrice: number;
-  settlementAmount: number;
-  cashBalanceAfter: number;
-  collateralReleased: number;
-}
-
-export interface ExpirationResult {
-  lifecycleId: string;
-  event: OptionLifecycleEventType;
-  positionId: string;
-  ticker: string;
-  wasInTheMoney: boolean;
-  collateralReleased: number;
-}
-
-export interface UpcomingExpiration {
-  positionId: string;
-  ticker: string;
-  optionType: OptionType;
-  strikePrice: number;
-  expirationDate: string;
-  daysUntilExpiry: number;
-  quantity: number;
-  isShort: boolean;
-  underlyingTicker: string;
-  currentUnderlyingPrice?: number;
-  moneyness?: Moneyness;
-}
-
-export interface UpcomingExpirationsResponse {
-  expirations: UpcomingExpiration[];
-  totalPositionsExpiring: number;
 }
 
 // ============================================================================

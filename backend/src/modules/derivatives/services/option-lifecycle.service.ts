@@ -19,7 +19,7 @@ import { OptionLifecycleEvent } from '@/generated/prisma/enums';
 import type { CurrentUserData } from '@/common/decorators';
 import { AuditService, WalletAccessService } from '@/modules/wallets/services';
 import { MarketDataProvider } from '@/modules/wallets/providers';
-import { CONTRACT_SIZE } from '../constants';
+import { CONTRACT_SIZE, MONEYNESS_ATM_THRESHOLD } from '../constants';
 import type {
   ExerciseOptionInput,
   AssignmentInput,
@@ -803,7 +803,7 @@ export class OptionLifecycleService {
       let moneyness: 'ITM' | 'ATM' | 'OTM' | undefined;
       if (underlyingPrice !== undefined) {
         const priceDiff = Math.abs(underlyingPrice - strikePrice);
-        const threshold = strikePrice * 0.01;
+        const threshold = strikePrice * MONEYNESS_ATM_THRESHOLD;
 
         if (priceDiff <= threshold) {
           moneyness = 'ATM';
