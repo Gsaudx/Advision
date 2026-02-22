@@ -204,6 +204,7 @@ export const AssetSearchResultSchema = z.object({
   strike: z.number().optional(),
   expirationDate: z.string().optional(),
   optionType: z.enum(['CALL', 'PUT']).optional(),
+  lastPrice: z.number().optional(),
 });
 export type AssetSearchResultType = z.infer<typeof AssetSearchResultSchema>;
 

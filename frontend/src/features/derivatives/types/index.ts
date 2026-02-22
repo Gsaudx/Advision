@@ -60,6 +60,7 @@ export interface OptionSearchResult extends AssetSearchResult {
   strike?: number;
   expirationDate?: string;
   optionType?: OptionType;
+  lastPrice?: number;
 }
 
 // ============================================================================

@@ -551,6 +551,7 @@ export class OpLabMarketService extends MarketDataProvider {
       strike: option.strike,
       expirationDate: option.due_date,
       optionType: option.type,
+      lastPrice: option.close ?? option.bid ?? option.ask,
     }));
   }
 

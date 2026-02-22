@@ -193,7 +193,11 @@ export function StrategyBuilderModal({
     }
   };
 
-  const handleOptionSelect = async (index: number, ticker: string) => {
+  const handleOptionSelect = async (
+    index: number,
+    ticker: string,
+    lastPrice?: number,
+  ) => {
     // Update ticker
     setLegs((prev) =>
       prev.map((leg, i) =>
@@ -202,7 +206,7 @@ export function StrategyBuilderModal({
     );
     setErrors((prev) => ({ ...prev, [`leg-${index}-ticker`]: '' }));
 
-    // Auto-fill price from market data
+    // Auto-fill price from market data (with search-result lastPrice as fallback)
     try {
       const priceData = await walletsApi.getAssetPrice(ticker);
       if (priceData?.price != null) {
@@ -217,20 +221,24 @@ export function StrategyBuilderModal({
               : leg,
           ),
         );
-      } else {
-        setLegs((prev) =>
-          prev.map((leg, i) =>
-            i === index ? { ...leg, isLoadingPrice: false } : leg,
-          ),
-        );
+        return;
       }
     } catch {
-      setLegs((prev) =>
-        prev.map((leg, i) =>
-          i === index ? { ...leg, isLoadingPrice: false } : leg,
-        ),
-      );
+      // Price API failed — fall through to lastPrice fallback
     }
+
+    // Use lastPrice from search results as fallback
+    setLegs((prev) =>
+      prev.map((leg, i) =>
+        i === index
+          ? {
+              ...leg,
+              price: lastPrice != null ? lastPrice.toFixed(2) : leg.price,
+              isLoadingPrice: false,
+            }
+          : leg,
+      ),
+    );
   };
 
   const validateLegs = (): boolean => {
@@ -473,7 +481,7 @@ export function StrategyBuilderModal({
                       value={leg.ticker}
                       onChange={(val) => updateLeg(index, 'ticker', val)}
                       onOptionSelect={(opt) =>
-                        handleOptionSelect(index, opt.ticker)
+                        handleOptionSelect(index, opt.ticker, opt.lastPrice)
                       }
                       error={errors[`leg-${index}-ticker`]}
                       placeholder="Selecione o ativo subjacente"
