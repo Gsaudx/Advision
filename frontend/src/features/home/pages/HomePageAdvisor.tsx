@@ -101,9 +101,7 @@ export function HomePageAdvisor() {
         <QuickActions />
       </div>
 
-      <UpcomingDueDates
-        expirations={expirationsData?.expirations ?? []}
-      />
+      <UpcomingDueDates expirations={expirationsData?.expirations ?? []} />
 
       <ActivityHistoryModal
         isOpen={showHistoryModal}

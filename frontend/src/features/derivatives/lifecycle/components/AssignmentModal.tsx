@@ -31,9 +31,12 @@ export function AssignmentModal({
     ? getApiErrorMessage(assignmentMutation.error)
     : null;
 
-  const contractsToAssign = quantity ? parseInt(quantity, 10) : position.quantity;
+  const contractsToAssign = quantity
+    ? parseInt(quantity, 10)
+    : position.quantity;
   const underlyingQuantity = contractsToAssign * CONTRACT_SIZE;
-  const settlementAmount = underlyingQuantity * position.optionDetail.strikePrice;
+  const settlementAmount =
+    underlyingQuantity * position.optionDetail.strikePrice;
 
   const isCall = position.optionDetail.optionType === 'CALL';
 
@@ -75,7 +78,12 @@ export function AssignmentModal({
   };
 
   return (
-    <ModalBase isOpen={isOpen} onClose={handleClose} backgroundColor="bg-slate-900" minHeight={0}>
+    <ModalBase
+      isOpen={isOpen}
+      onClose={handleClose}
+      backgroundColor="bg-slate-900"
+      minHeight={0}
+    >
       {/* Header */}
       <div className="flex items-center justify-between p-6 border-b border-slate-800">
         <div className="flex items-center gap-3">
@@ -83,7 +91,9 @@ export function AssignmentModal({
             <AlertTriangle className="w-5 h-5 text-amber-500" />
           </div>
           <div>
-            <h2 className="text-xl font-semibold text-white">Registrar Atribuicao</h2>
+            <h2 className="text-xl font-semibold text-white">
+              Registrar Atribuicao
+            </h2>
             <p className="text-sm text-gray-500">{position.ticker}</p>
           </div>
         </div>
@@ -106,7 +116,8 @@ export function AssignmentModal({
         {/* Warning */}
         <div className="p-3 bg-amber-500/10 border border-amber-500/20 rounded-lg">
           <p className="text-amber-400 text-sm">
-            Voce foi atribuido nesta posicao vendida. Isso significa que o titular exerceu a opcao contra voce.
+            Voce foi atribuido nesta posicao vendida. Isso significa que o
+            titular exerceu a opcao contra voce.
           </p>
         </div>
 
@@ -132,13 +143,18 @@ export function AssignmentModal({
           </div>
           <div className="flex justify-between">
             <span className="text-sm text-gray-500">Posicao Vendida</span>
-            <span className="text-sm text-white">{position.quantity} contratos</span>
+            <span className="text-sm text-white">
+              {position.quantity} contratos
+            </span>
           </div>
         </div>
 
         {/* Quantity */}
         <div className="flex flex-col gap-1.5">
-          <label htmlFor="assignment-quantity" className="text-sm font-medium text-gray-300">
+          <label
+            htmlFor="assignment-quantity"
+            className="text-sm font-medium text-gray-300"
+          >
             Contratos atribuidos
           </label>
           <input
@@ -162,7 +178,10 @@ export function AssignmentModal({
 
         {/* Notes */}
         <div className="flex flex-col gap-1.5">
-          <label htmlFor="assignment-notes" className="text-sm font-medium text-gray-300">
+          <label
+            htmlFor="assignment-notes"
+            className="text-sm font-medium text-gray-300"
+          >
             Observacoes (opcional)
           </label>
           <input
@@ -178,21 +197,30 @@ export function AssignmentModal({
 
         {/* Financial Summary */}
         <div className="p-4 bg-slate-800 rounded-lg space-y-2">
-          <h3 className="text-sm font-medium text-gray-400 mb-2">Impacto Financeiro</h3>
+          <h3 className="text-sm font-medium text-gray-400 mb-2">
+            Impacto Financeiro
+          </h3>
           <div className="flex justify-between">
             <span className="text-sm text-gray-500">
-              {isCall ? 'Venda obrigatoria' : 'Compra obrigatoria'} de {position.optionDetail.underlyingTicker}
+              {isCall ? 'Venda obrigatoria' : 'Compra obrigatoria'} de{' '}
+              {position.optionDetail.underlyingTicker}
             </span>
-            <span className="text-sm text-white">{underlyingQuantity} acoes</span>
+            <span className="text-sm text-white">
+              {underlyingQuantity} acoes
+            </span>
           </div>
           <div className="flex justify-between">
-            <span className="text-sm text-gray-500">Preco por acao (strike)</span>
+            <span className="text-sm text-gray-500">
+              Preco por acao (strike)
+            </span>
             <span className="text-sm text-white">
               {formatCurrency(position.optionDetail.strikePrice)}
             </span>
           </div>
           <div className="flex justify-between border-t border-slate-700 pt-2">
-            <span className="text-sm text-gray-500 font-medium">Liquidacao</span>
+            <span className="text-sm text-gray-500 font-medium">
+              Liquidacao
+            </span>
             <span className="text-sm font-semibold text-white">
               {formatCurrency(settlementAmount)}
             </span>

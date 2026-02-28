@@ -137,7 +137,8 @@ const optionSellConfig: TransactionStyle = {
 
 function getTransactionStyle(transaction: Transaction): TransactionStyle {
   const txType = transaction.type as TransactionType;
-  const isOption = (transaction as Record<string, unknown>).assetType === 'OPTION';
+  const isOption =
+    (transaction as Record<string, unknown>).assetType === 'OPTION';
 
   if (isOption && txType === 'BUY') return optionBuyConfig;
   if (isOption && txType === 'SELL') return optionSellConfig;
@@ -219,7 +220,8 @@ function TransactionItem({
   const config = getTransactionStyle(transaction);
   const Icon = config.icon;
 
-  const isOption = (transaction as Record<string, unknown>).assetType === 'OPTION';
+  const isOption =
+    (transaction as Record<string, unknown>).assetType === 'OPTION';
   const isTrade = transaction.type === 'BUY' || transaction.type === 'SELL';
 
   return (
@@ -248,7 +250,9 @@ function TransactionItem({
                     ? 'Compra de Opcao'
                     : isOption && transaction.type === 'SELL'
                       ? 'Venda de Opcao'
-                      : transactionTypeLabels[transaction.type as TransactionType]}
+                      : transactionTypeLabels[
+                          transaction.type as TransactionType
+                        ]}
                 </span>
                 {transaction.ticker && (
                   <span className="px-2 py-0.5 bg-slate-700 rounded text-xs font-medium text-white">

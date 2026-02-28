@@ -61,12 +61,10 @@ export function OptionPositionCard({
 
   // Exercise: long positions only
   // American options can be exercised anytime, European only at expiry
-  const canExercise =
-    !position.isShort && (isAmerican || isExpired);
+  const canExercise = !position.isShort && (isAmerican || isExpired);
 
   // Assignment: short positions (can happen anytime for American, at expiry for European)
-  const canBeAssigned =
-    position.isShort && (isAmerican || isExpired);
+  const canBeAssigned = position.isShort && (isAmerican || isExpired);
 
   // Expiration: any position that has expired
   const canExpire = isExpired;
@@ -150,9 +148,7 @@ export function OptionPositionCard({
           {daysUntilExpiry > 0 && (
             <span className="ml-1">({daysUntilExpiry} dias)</span>
           )}
-          {isExpired && (
-            <span className="ml-1 font-bold">(VENCIDO)</span>
-          )}
+          {isExpired && <span className="ml-1 font-bold">(VENCIDO)</span>}
         </span>
       </div>
 

@@ -31,7 +31,9 @@ export function ExerciseOptionModal({
     ? getApiErrorMessage(exerciseMutation.error)
     : null;
 
-  const contractsToExercise = quantity ? parseInt(quantity, 10) : position.quantity;
+  const contractsToExercise = quantity
+    ? parseInt(quantity, 10)
+    : position.quantity;
   const underlyingQuantity = contractsToExercise * CONTRACT_SIZE;
   const totalCost = underlyingQuantity * position.optionDetail.strikePrice;
 
@@ -87,7 +89,12 @@ export function ExerciseOptionModal({
   };
 
   return (
-    <ModalBase isOpen={isOpen} onClose={handleClose} backgroundColor="bg-slate-900" minHeight={0}>
+    <ModalBase
+      isOpen={isOpen}
+      onClose={handleClose}
+      backgroundColor="bg-slate-900"
+      minHeight={0}
+    >
       {/* Header */}
       <div className="flex items-center justify-between p-6 border-b border-slate-800">
         <div className="flex items-center gap-3">
@@ -117,10 +124,16 @@ export function ExerciseOptionModal({
 
         {europeanBlocked && (
           <div className="p-3 bg-amber-500/10 border border-amber-500/20 rounded-lg flex items-start gap-2">
-            <AlertTriangle size={16} className="text-amber-400 mt-0.5 shrink-0" />
+            <AlertTriangle
+              size={16}
+              className="text-amber-400 mt-0.5 shrink-0"
+            />
             <p className="text-amber-400 text-sm">
-              Opcoes europeias so podem ser exercidas na data de vencimento
-              ({new Date(position.optionDetail.expirationDate).toLocaleDateString('pt-BR')}).
+              Opcoes europeias so podem ser exercidas na data de vencimento (
+              {new Date(
+                position.optionDetail.expirationDate,
+              ).toLocaleDateString('pt-BR')}
+              ).
             </p>
           </div>
         )}
@@ -130,7 +143,10 @@ export function ExerciseOptionModal({
           <div className="flex justify-between">
             <span className="text-sm text-gray-500">Tipo</span>
             <span className="text-sm text-white">
-              {isCall ? 'CALL' : 'PUT'} - {position.optionDetail.exerciseType === 'AMERICAN' ? 'Americana' : 'Europeia'}
+              {isCall ? 'CALL' : 'PUT'} -{' '}
+              {position.optionDetail.exerciseType === 'AMERICAN'
+                ? 'Americana'
+                : 'Europeia'}
             </span>
           </div>
           <div className="flex justify-between">
@@ -147,13 +163,18 @@ export function ExerciseOptionModal({
           </div>
           <div className="flex justify-between">
             <span className="text-sm text-gray-500">Posicao Atual</span>
-            <span className="text-sm text-white">{position.quantity} contratos</span>
+            <span className="text-sm text-white">
+              {position.quantity} contratos
+            </span>
           </div>
         </div>
 
         {/* Quantity */}
         <div className="flex flex-col gap-1.5">
-          <label htmlFor="exercise-quantity" className="text-sm font-medium text-gray-300">
+          <label
+            htmlFor="exercise-quantity"
+            className="text-sm font-medium text-gray-300"
+          >
             Contratos a exercer (opcional, padrao: todos)
           </label>
           <input
@@ -177,7 +198,10 @@ export function ExerciseOptionModal({
 
         {/* Notes */}
         <div className="flex flex-col gap-1.5">
-          <label htmlFor="exercise-notes" className="text-sm font-medium text-gray-300">
+          <label
+            htmlFor="exercise-notes"
+            className="text-sm font-medium text-gray-300"
+          >
             Observacoes (opcional)
           </label>
           <input
@@ -193,15 +217,22 @@ export function ExerciseOptionModal({
 
         {/* Financial Summary */}
         <div className="p-4 bg-slate-800 rounded-lg space-y-2">
-          <h3 className="text-sm font-medium text-gray-400 mb-2">Resumo do Exercicio</h3>
+          <h3 className="text-sm font-medium text-gray-400 mb-2">
+            Resumo do Exercicio
+          </h3>
           <div className="flex justify-between">
             <span className="text-sm text-gray-500">
-              {isCall ? 'Compra' : 'Venda'} de {position.optionDetail.underlyingTicker}
+              {isCall ? 'Compra' : 'Venda'} de{' '}
+              {position.optionDetail.underlyingTicker}
             </span>
-            <span className="text-sm text-white">{underlyingQuantity} acoes</span>
+            <span className="text-sm text-white">
+              {underlyingQuantity} acoes
+            </span>
           </div>
           <div className="flex justify-between">
-            <span className="text-sm text-gray-500">Preco por acao (strike)</span>
+            <span className="text-sm text-gray-500">
+              Preco por acao (strike)
+            </span>
             <span className="text-sm text-white">
               {formatCurrency(position.optionDetail.strikePrice)}
             </span>
@@ -210,8 +241,11 @@ export function ExerciseOptionModal({
             <span className="text-sm text-gray-500 font-medium">
               {isCall ? 'Custo Total' : 'Valor Recebido'}
             </span>
-            <span className={`text-sm font-semibold ${isCall ? 'text-red-400' : 'text-emerald-400'}`}>
-              {isCall ? '-' : '+'}{formatCurrency(totalCost)}
+            <span
+              className={`text-sm font-semibold ${isCall ? 'text-red-400' : 'text-emerald-400'}`}
+            >
+              {isCall ? '-' : '+'}
+              {formatCurrency(totalCost)}
             </span>
           </div>
         </div>

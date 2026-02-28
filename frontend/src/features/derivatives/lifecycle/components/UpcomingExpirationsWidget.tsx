@@ -40,19 +40,29 @@ function ExpirationRow({
   const isExpired = expiration.daysUntilExpiry <= 0;
 
   return (
-    <div className={`flex items-center justify-between p-3 rounded-lg border ${getUrgencyBg(expiration.daysUntilExpiry)}`}>
+    <div
+      className={`flex items-center justify-between p-3 rounded-lg border ${getUrgencyBg(expiration.daysUntilExpiry)}`}
+    >
       <div className="flex items-center gap-3 min-w-0">
         <div className="flex flex-col items-center min-w-[48px]">
-          <span className={`text-lg font-bold ${getUrgencyColor(expiration.daysUntilExpiry)}`}>
+          <span
+            className={`text-lg font-bold ${getUrgencyColor(expiration.daysUntilExpiry)}`}
+          >
             {isExpired ? '!' : expiration.daysUntilExpiry}
           </span>
           <span className="text-[10px] text-gray-500 uppercase">
-            {isExpired ? 'vencido' : expiration.daysUntilExpiry === 1 ? 'dia' : 'dias'}
+            {isExpired
+              ? 'vencido'
+              : expiration.daysUntilExpiry === 1
+                ? 'dia'
+                : 'dias'}
           </span>
         </div>
         <div className="min-w-0">
           <div className="flex items-center gap-2">
-            <span className="text-sm font-medium text-white truncate">{expiration.ticker}</span>
+            <span className="text-sm font-medium text-white truncate">
+              {expiration.ticker}
+            </span>
             <span
               className={`text-xs px-1.5 py-0.5 rounded ${
                 expiration.optionType === 'CALL'
@@ -68,7 +78,9 @@ function ExpirationRow({
               </span>
             )}
             {expiration.moneyness && (
-              <span className={`text-xs font-medium ${moneynessColors[expiration.moneyness]}`}>
+              <span
+                className={`text-xs font-medium ${moneynessColors[expiration.moneyness]}`}
+              >
                 {expiration.moneyness}
               </span>
             )}
@@ -128,7 +140,9 @@ export function UpcomingExpirationsWidget({
       <div className="bg-slate-800/50 rounded-lg p-4">
         <div className="flex items-center gap-2 mb-3">
           <Calendar className="w-4 h-4 text-gray-400" />
-          <h3 className="text-sm font-medium text-gray-400">Vencimentos Proximos</h3>
+          <h3 className="text-sm font-medium text-gray-400">
+            Vencimentos Proximos
+          </h3>
         </div>
         <div className="flex items-center justify-center py-4">
           <LoadingSpinner size="sm" />
@@ -146,10 +160,13 @@ export function UpcomingExpirationsWidget({
       <div className="flex items-center justify-between mb-3">
         <div className="flex items-center gap-2">
           <Calendar className="w-4 h-4 text-gray-400" />
-          <h3 className="text-sm font-medium text-gray-400">Vencimentos Proximos</h3>
+          <h3 className="text-sm font-medium text-gray-400">
+            Vencimentos Proximos
+          </h3>
         </div>
         <span className="text-xs text-gray-500">
-          {data.totalPositionsExpiring} {data.totalPositionsExpiring === 1 ? 'posicao' : 'posicoes'}
+          {data.totalPositionsExpiring}{' '}
+          {data.totalPositionsExpiring === 1 ? 'posicao' : 'posicoes'}
         </span>
       </div>
       <div className="flex flex-col gap-2">

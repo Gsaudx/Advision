@@ -56,7 +56,12 @@ export function ExpirationModal({
   };
 
   return (
-    <ModalBase isOpen={isOpen} onClose={handleClose} backgroundColor="bg-slate-900" minHeight={0}>
+    <ModalBase
+      isOpen={isOpen}
+      onClose={handleClose}
+      backgroundColor="bg-slate-900"
+      minHeight={0}
+    >
       {/* Header */}
       <div className="flex items-center justify-between p-6 border-b border-slate-800">
         <div className="flex items-center gap-3">
@@ -64,7 +69,9 @@ export function ExpirationModal({
             <Clock className="w-5 h-5 text-gray-400" />
           </div>
           <div>
-            <h2 className="text-xl font-semibold text-white">Processar Vencimento</h2>
+            <h2 className="text-xl font-semibold text-white">
+              Processar Vencimento
+            </h2>
             <p className="text-sm text-gray-500">{position.ticker}</p>
           </div>
         </div>
@@ -113,7 +120,9 @@ export function ExpirationModal({
           {moneyness && (
             <div className="flex justify-between">
               <span className="text-sm text-gray-500">Moneyness</span>
-              <span className={`text-sm font-medium ${moneynessColors[moneyness]}`}>
+              <span
+                className={`text-sm font-medium ${moneynessColors[moneyness]}`}
+              >
                 {moneyness}
               </span>
             </div>
@@ -124,13 +133,18 @@ export function ExpirationModal({
         {isITM ? (
           <div className="p-3 bg-green-500/10 border border-green-500/20 rounded-lg">
             <p className="text-green-400 text-sm">
-              Esta opcao esta In The Money (ITM). O vencimento pode resultar em exercicio automatico.
+              Esta opcao esta In The Money (ITM). O vencimento pode resultar em
+              exercicio automatico.
             </p>
           </div>
         ) : (
           <div className="p-3 bg-gray-500/10 border border-gray-500/20 rounded-lg">
             <p className="text-gray-400 text-sm">
-              Esta opcao esta {moneyness === 'ATM' ? 'At The Money (ATM)' : 'Out of The Money (OTM)'}. A opcao expirara sem valor.
+              Esta opcao esta{' '}
+              {moneyness === 'ATM'
+                ? 'At The Money (ATM)'
+                : 'Out of The Money (OTM)'}
+              . A opcao expirara sem valor.
             </p>
           </div>
         )}
@@ -139,14 +153,18 @@ export function ExpirationModal({
         {position.isShort && position.collateralBlocked && (
           <div className="p-3 bg-emerald-500/10 border border-emerald-500/20 rounded-lg">
             <p className="text-emerald-400 text-sm">
-              Margem bloqueada de {formatCurrency(position.collateralBlocked)} sera liberada apos o vencimento.
+              Margem bloqueada de {formatCurrency(position.collateralBlocked)}{' '}
+              sera liberada apos o vencimento.
             </p>
           </div>
         )}
 
         {/* Notes */}
         <div className="flex flex-col gap-1.5">
-          <label htmlFor="expiration-notes" className="text-sm font-medium text-gray-300">
+          <label
+            htmlFor="expiration-notes"
+            className="text-sm font-medium text-gray-300"
+          >
             Observacoes (opcional)
           </label>
           <input

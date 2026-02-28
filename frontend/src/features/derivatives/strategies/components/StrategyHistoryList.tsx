@@ -50,11 +50,13 @@ function StrategyCard({ operation }: { operation: StructuredOperation }) {
           <div>
             <div className="flex items-center gap-2">
               <span className="text-white font-medium text-sm">
-                {strategyTypeLabels[operation.strategyType] ?? operation.strategyType}
+                {strategyTypeLabels[operation.strategyType] ??
+                  operation.strategyType}
               </span>
               <span
                 className={`text-xs px-2 py-0.5 rounded-full font-medium ${
-                  statusBadgeStyles[operation.status] ?? 'bg-gray-500/20 text-gray-400'
+                  statusBadgeStyles[operation.status] ??
+                  'bg-gray-500/20 text-gray-400'
                 }`}
               >
                 {operationStatusLabels[operation.status] ?? operation.status}
@@ -69,7 +71,9 @@ function StrategyCard({ operation }: { operation: StructuredOperation }) {
         <div className="flex items-center gap-3">
           <span
             className={`text-sm font-medium ${
-              operation.netDebitCredit >= 0 ? 'text-emerald-400' : 'text-red-400'
+              operation.netDebitCredit >= 0
+                ? 'text-emerald-400'
+                : 'text-red-400'
             }`}
           >
             {operation.netDebitCredit >= 0 ? '+' : ''}

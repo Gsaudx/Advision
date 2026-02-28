@@ -51,7 +51,9 @@ export function UpcomingDueDates({ expirations }: UpcomingDueDatesProps) {
                   <td className="py-3 text-white font-medium">
                     {item.ticker}
                     {item.isShort && (
-                      <span className="ml-1.5 text-xs text-orange-400">(V)</span>
+                      <span className="ml-1.5 text-xs text-orange-400">
+                        (V)
+                      </span>
                     )}
                   </td>
                   <td className="py-3 text-slate-300">{item.clientName}</td>
@@ -70,7 +72,9 @@ export function UpcomingDueDates({ expirations }: UpcomingDueDatesProps) {
                   <td className="py-3 text-slate-300">
                     {formatExpirationDate(item.expirationDate)}
                   </td>
-                  <td className="py-3 text-slate-300">{item.daysUntilExpiry}d</td>
+                  <td className="py-3 text-slate-300">
+                    {item.daysUntilExpiry}d
+                  </td>
                   <td className="py-3">
                     <span
                       className={`px-2 py-1 rounded-full text-xs font-medium ${statusStyles[item.status]}`}

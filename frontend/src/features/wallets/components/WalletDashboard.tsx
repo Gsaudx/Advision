@@ -96,8 +96,10 @@ export function WalletDashboard({
   >(undefined);
 
   // Lifecycle modal state
-  const [lifecycleAction, setLifecycleAction] = useState<LifecycleAction | null>(null);
-  const [selectedPosition, setSelectedPosition] = useState<OptionPosition | null>(null);
+  const [lifecycleAction, setLifecycleAction] =
+    useState<LifecycleAction | null>(null);
+  const [selectedPosition, setSelectedPosition] =
+    useState<OptionPosition | null>(null);
 
   const handleOpenTrade = (type: TradeType, ticker?: string) => {
     setTradeType(type);
@@ -119,7 +121,9 @@ export function WalletDashboard({
     setShowOptionTradeModal(true);
   };
 
-  const findOptionPosition = (positionId: string): OptionPosition | undefined => {
+  const findOptionPosition = (
+    positionId: string,
+  ): OptionPosition | undefined => {
     return optionPositionsData?.positions.find((p) => p.id === positionId);
   };
 

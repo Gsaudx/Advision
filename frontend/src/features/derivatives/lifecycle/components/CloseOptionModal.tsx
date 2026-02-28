@@ -33,7 +33,9 @@ export function CloseOptionModal({
     ? getApiErrorMessage(closeMutation.error)
     : null;
 
-  const contractsToClose = quantity ? parseInt(quantity, 10) : position.quantity;
+  const contractsToClose = quantity
+    ? parseInt(quantity, 10)
+    : position.quantity;
   const premiumValue = parseFloat(premium) || 0;
   const totalValue = contractsToClose * premiumValue * CONTRACT_SIZE;
 
@@ -82,7 +84,12 @@ export function CloseOptionModal({
   };
 
   return (
-    <ModalBase isOpen={isOpen} onClose={handleClose} backgroundColor="bg-slate-900" minHeight={0}>
+    <ModalBase
+      isOpen={isOpen}
+      onClose={handleClose}
+      backgroundColor="bg-slate-900"
+      minHeight={0}
+    >
       {/* Header */}
       <div className="flex items-center justify-between p-6 border-b border-slate-800">
         <div className="flex items-center gap-3">
@@ -115,12 +122,15 @@ export function CloseOptionModal({
           <div className="flex justify-between">
             <span className="text-sm text-gray-500">Tipo</span>
             <span className="text-sm text-white">
-              {position.optionDetail.optionType} - {position.isShort ? 'Vendida' : 'Comprada'}
+              {position.optionDetail.optionType} -{' '}
+              {position.isShort ? 'Vendida' : 'Comprada'}
             </span>
           </div>
           <div className="flex justify-between">
             <span className="text-sm text-gray-500">Posicao Atual</span>
-            <span className="text-sm text-white">{position.quantity} contratos</span>
+            <span className="text-sm text-white">
+              {position.quantity} contratos
+            </span>
           </div>
           <div className="flex justify-between">
             <span className="text-sm text-gray-500">Premio Medio</span>
@@ -133,7 +143,10 @@ export function CloseOptionModal({
         <div className="grid grid-cols-2 gap-4">
           {/* Premium */}
           <div className="flex flex-col gap-1.5">
-            <label htmlFor="close-premium" className="text-sm font-medium text-gray-300">
+            <label
+              htmlFor="close-premium"
+              className="text-sm font-medium text-gray-300"
+            >
               Premio de Fechamento *
             </label>
             <input
@@ -157,7 +170,10 @@ export function CloseOptionModal({
 
           {/* Quantity */}
           <div className="flex flex-col gap-1.5">
-            <label htmlFor="close-quantity" className="text-sm font-medium text-gray-300">
+            <label
+              htmlFor="close-quantity"
+              className="text-sm font-medium text-gray-300"
+            >
               Contratos (padrao: todos)
             </label>
             <input
@@ -184,23 +200,34 @@ export function CloseOptionModal({
         <div className="p-4 bg-slate-800 rounded-lg space-y-2">
           <div className="flex justify-between">
             <span className="text-sm text-gray-500">
-              Total ({contractsToClose} x {premiumValue.toFixed(2)} x {CONTRACT_SIZE})
+              Total ({contractsToClose} x {premiumValue.toFixed(2)} x{' '}
+              {CONTRACT_SIZE})
             </span>
-            <span className={`text-sm font-semibold ${position.isShort ? 'text-red-400' : 'text-emerald-400'}`}>
-              {position.isShort ? '-' : '+'}{formatCurrency(totalValue)}
+            <span
+              className={`text-sm font-semibold ${position.isShort ? 'text-red-400' : 'text-emerald-400'}`}
+            >
+              {position.isShort ? '-' : '+'}
+              {formatCurrency(totalValue)}
             </span>
           </div>
         </div>
 
         {/* Insufficient balance warning for short positions (BTC) */}
-        {position.isShort && walletCashBalance !== undefined && totalValue > walletCashBalance && (
-          <div className="p-3 bg-amber-500/10 border border-amber-500/20 rounded-lg flex items-start gap-2">
-            <AlertTriangle size={16} className="text-amber-400 mt-0.5 shrink-0" />
-            <p className="text-amber-400 text-sm">
-              Saldo insuficiente para fechar esta posicao. Custo: {formatCurrency(totalValue)}, Disponivel: {formatCurrency(walletCashBalance)}.
-            </p>
-          </div>
-        )}
+        {position.isShort &&
+          walletCashBalance !== undefined &&
+          totalValue > walletCashBalance && (
+            <div className="p-3 bg-amber-500/10 border border-amber-500/20 rounded-lg flex items-start gap-2">
+              <AlertTriangle
+                size={16}
+                className="text-amber-400 mt-0.5 shrink-0"
+              />
+              <p className="text-amber-400 text-sm">
+                Saldo insuficiente para fechar esta posicao. Custo:{' '}
+                {formatCurrency(totalValue)}, Disponivel:{' '}
+                {formatCurrency(walletCashBalance)}.
+              </p>
+            </div>
+          )}
 
         {/* Footer */}
         <div className="flex justify-end gap-3 mt-2 pt-4 border-t border-slate-800">
