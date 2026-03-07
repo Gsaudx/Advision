@@ -6,13 +6,11 @@ import { QuickActions } from '../components/advisor/QuickActions';
 import { WelcomeSection } from '../components/advisor/WelcomeSection';
 import { RecentActivity } from '../components/advisor/RecentActivity';
 import { ActivityHistoryModal } from '../components/advisor/ActivityHistoryModal';
-import {
-  UpcomingDueDates,
-  type DueDate,
-} from '../components/advisor/UpcomingDueDates';
+import { UpcomingDueDates } from '../components/advisor/UpcomingDueDates';
 import {
   useAdvisorActivity,
   useAdvisorActivityHistory,
+  useAdvisorExpirations,
   useAdvisorMetrics,
 } from '../api';
 
@@ -29,28 +27,6 @@ function formatCompactCurrency(value: number): string {
   return `R$ ${value.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}`;
 }
 
-// TODO: Replace with real data from API (options expiration tracking)
-const mockDueDates: DueDate[] = [
-  {
-    asset: 'PETR4 Call',
-    client: 'Cliente A',
-    date: '15/01/2026',
-    status: 'Proximo',
-  },
-  {
-    asset: 'VALE3 Put',
-    client: 'Cliente B',
-    date: '22/01/2026',
-    status: 'Em dia',
-  },
-  {
-    asset: 'ITUB4 Call',
-    client: 'Cliente C',
-    date: '30/01/2026',
-    status: 'Em dia',
-  },
-];
-
 export function HomePageAdvisor() {
   const { user } = useAuth();
   const userName = user?.name ?? 'Assessor';
@@ -64,11 +40,14 @@ export function HomePageAdvisor() {
     refetch: refetchActivities,
   } = useAdvisorActivity(5);
   const { data: metrics } = useAdvisorMetrics();
+  const { data: expirationsData } = useAdvisorExpirations(30);
   const { data: historyData, isLoading: isLoadingHistory } =
     useAdvisorActivityHistory(historyPage, 20);
 
   const clientCount = metrics?.clientCount ?? 0;
   const totalWalletValue = metrics?.totalWalletValue ?? 0;
+  const pendingOperationsCount = metrics?.pendingOperationsCount ?? 0;
+  const expiringOptionsCount = metrics?.expiringOptionsCount ?? 0;
   const isRefreshingActivities = isFetchingActivities && !isLoadingActivities;
 
   const handleOpenHistory = () => {
@@ -96,13 +75,13 @@ export function HomePageAdvisor() {
         />
         <StatCard
           label="Operacoes Pendentes"
-          value={0}
+          value={pendingOperationsCount}
           icon={Clock}
           accentColor="amber"
         />
         <StatCard
           label="Opcoes a Vencer"
-          value={0}
+          value={expiringOptionsCount}
           icon={AlertTriangle}
           accentColor="rose"
         />
@@ -122,7 +101,7 @@ export function HomePageAdvisor() {
         <QuickActions />
       </div>
 
-      <UpcomingDueDates dueDates={mockDueDates} />
+      <UpcomingDueDates expirations={expirationsData?.expirations ?? []} />
 
       <ActivityHistoryModal
         isOpen={showHistoryModal}

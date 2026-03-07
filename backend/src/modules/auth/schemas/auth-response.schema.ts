@@ -1,12 +1,13 @@
 import { z } from 'zod';
 import { createZodDto } from 'nestjs-zod';
 import { createApiResponseSchema } from '@/common/schemas';
+import { UserRole } from '@/generated/prisma/enums';
 
 export const UserProfileSchema = z.object({
   id: z.string().uuid(),
   email: z.string(),
   name: z.string(),
-  role: z.enum(['ADVISOR', 'CLIENT', 'ADMIN']),
+  role: z.nativeEnum(UserRole),
   cpfCnpj: z.string().nullable(),
   phone: z.string().nullable(),
   clientProfileId: z.string().uuid().nullable(),

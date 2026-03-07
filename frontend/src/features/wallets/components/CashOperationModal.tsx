@@ -1,10 +1,10 @@
 import ModalBase from '@/components/layout/ModalBase';
 import { LoadingSpinner } from '@/components/ui/LoadingSpinner';
-import type { AxiosError } from 'axios';
 import { ArrowDownLeft, ArrowUpRight, X } from 'lucide-react';
 import { useCashOperationForm } from '../hooks';
 import { useCashOperation } from '../api';
 import { formatCurrency } from '@/lib/formatters';
+import { getApiErrorMessage } from '@/lib/api-error';
 import type { CashOperationType } from '../types';
 import { cashOperationLabels } from '../types';
 
@@ -16,26 +16,6 @@ interface CashOperationModalProps {
   currentBalance: number;
   currency?: string;
   initialType?: CashOperationType;
-}
-
-type ApiErrorResponse = {
-  message?: string;
-  errors?: string[];
-};
-
-function getApiErrorMessage(error: unknown): string {
-  const axiosError = error as AxiosError<ApiErrorResponse> | undefined;
-  const responseData = axiosError?.response?.data;
-
-  if (responseData?.message) {
-    return responseData.message;
-  }
-
-  if (responseData?.errors?.length) {
-    return responseData.errors[0] ?? 'Erro ao realizar operacao.';
-  }
-
-  return 'Erro ao realizar operacao. Tente novamente.';
 }
 
 export function CashOperationModal({

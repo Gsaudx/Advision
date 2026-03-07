@@ -14,8 +14,8 @@ export const InviteResponseSchema = z.object({
 export const AcceptInviteInputSchema = z.object({
   token: z
     .string()
-    .min(1, 'Token e obrigatorio')
-    .regex(/^INV-[A-Z0-9]{8}$/, 'Formato de token invalido'),
+    .min(1, 'Token é obrigatório')
+    .regex(/^INV-[A-Z0-9]{8}$/, 'Formato de token inválido'),
 });
 
 export const AcceptInviteResponseSchema = z.object({

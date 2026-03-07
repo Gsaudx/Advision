@@ -3,7 +3,7 @@ import { NestFactory } from '@nestjs/core';
 import { AppModule } from './app.module';
 import { DocumentBuilder, SwaggerModule } from '@nestjs/swagger';
 import { Logger } from '@nestjs/common';
-import { ZodValidationPipe } from 'nestjs-zod';
+import { ZodValidationPipe, cleanupOpenApiDoc } from 'nestjs-zod';
 import { HttpExceptionFilter } from '@/common/filters';
 import { env } from '@/config';
 import cookieParser from 'cookie-parser';
@@ -37,10 +37,12 @@ async function bootstrap() {
       )
       .setVersion('1.0')
       .addTag('Health', 'Monitoramento e status da aplicacao')
+      .addTag('Derivatives', 'Opcoes, estrategias e ciclo de vida')
       .build();
 
     const document = SwaggerModule.createDocument(app, config);
-    SwaggerModule.setup('api', app, document);
+    const cleanedDocument = cleanupOpenApiDoc(document);
+    SwaggerModule.setup('api', app, cleanedDocument);
   }
 
   await app.listen(env.PORT, '0.0.0.0');

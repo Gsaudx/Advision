@@ -405,7 +405,7 @@ describe('YahooMarketService', () => {
       expect(results[0].ticker).toBe('PETR4');
     });
 
-    it('filters for equities only', async () => {
+    it('includes both equities and options', async () => {
       mockYahooFinance.search.mockResolvedValue({
         quotes: [
           { symbol: 'PETR4.SA', shortname: 'Petrobras', quoteType: 'EQUITY' },
@@ -414,6 +414,23 @@ describe('YahooMarketService', () => {
       });
 
       const results = await service.search('PETR');
+
+      expect(results).toHaveLength(2);
+      expect(results[0].ticker).toBe('PETR4');
+      expect(results[0].type).toBe('STOCK');
+      expect(results[1].ticker).toBe('PETRA30');
+      expect(results[1].type).toBe('OPTION');
+    });
+
+    it('filters out options when includeOptions is false', async () => {
+      mockYahooFinance.search.mockResolvedValue({
+        quotes: [
+          { symbol: 'PETR4.SA', shortname: 'Petrobras', quoteType: 'EQUITY' },
+          { symbol: 'PETRA30.SA', shortname: 'PETR Call', quoteType: 'OPTION' },
+        ],
+      });
+
+      const results = await service.search('PETR', 10, false);
 
       expect(results).toHaveLength(1);
       expect(results[0].ticker).toBe('PETR4');

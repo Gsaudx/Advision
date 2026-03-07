@@ -62,13 +62,29 @@ export type AssetPriceResult = NonNullable<
   components['schemas']['AssetPriceApiResponseDto']['data']
 >;
 
+/**
+ * Option details result from OpLab API
+ * Note: This is a frontend-specific type for OpLab market data responses
+ * which include Greeks not present in the main backend schema.
+ */
+export interface OptionDetailsResult {
+  ticker: string;
+  strike: number;
+  expirationDate: string;
+  type: 'CALL' | 'PUT';
+  impliedVolatility?: number;
+  delta?: number;
+  gamma?: number;
+  theta?: number;
+  vega?: number;
+}
+
 // ============================================================================
 // Transaction types
 // ============================================================================
 
 /**
  * Single transaction record
- * Note: Using the generated schema element for field shape only.
  */
 export type Transaction = NonNullable<
   components['schemas']['TransactionListApiResponseDto']['data']
@@ -76,21 +92,16 @@ export type Transaction = NonNullable<
 
 /**
  * Transaction list response (paginated)
- * Note: Backend returns { items, nextCursor }.
  */
 export type TransactionList = {
   items: Transaction[];
   nextCursor: string | null;
 };
 
-export type TransactionType =
-  | 'BUY'
-  | 'SELL'
-  | 'DEPOSIT'
-  | 'WITHDRAWAL'
-  | 'DIVIDEND'
-  | 'SPLIT'
-  | 'SUBSCRIPTION';
+/**
+ * Transaction type derived from the Transaction entity (includes option types).
+ */
+export type TransactionType = Transaction['type'];
 
 // ============================================================================
 // Frontend-specific types (not from backend)
@@ -146,6 +157,9 @@ export const transactionTypeLabels: Record<TransactionType, string> = {
   DIVIDEND: 'Dividendo',
   SPLIT: 'Desdobramento',
   SUBSCRIPTION: 'Subscrição',
+  OPTION_EXERCISE: 'Exercício de Opção',
+  OPTION_ASSIGNMENT: 'Atribuição de Opção',
+  OPTION_EXPIRY: 'Vencimento de Opção',
 };
 
 /**
@@ -159,6 +173,9 @@ export const transactionTypeColors: Record<TransactionType, string> = {
   DIVIDEND: 'text-emerald-400',
   SPLIT: 'text-purple-400',
   SUBSCRIPTION: 'text-cyan-400',
+  OPTION_EXERCISE: 'text-indigo-400',
+  OPTION_ASSIGNMENT: 'text-amber-400',
+  OPTION_EXPIRY: 'text-gray-400',
 };
 
 /**
@@ -176,21 +193,3 @@ export const assetTypeLabels: Record<AssetType, string> = {
   STOCK: 'Ação',
   OPTION: 'Opção',
 };
-
-// ============================================================================
-// Helper Functions
-// ============================================================================
-
-/**
- * Generates a unique idempotency key for operations
- */
-export function generateIdempotencyKey(): string {
-  return crypto.randomUUID();
-}
-
-/**
- * Gets today's date in ISO format for date inputs
- */
-export function getTodayISO(): string {
-  return new Date().toISOString();
-}

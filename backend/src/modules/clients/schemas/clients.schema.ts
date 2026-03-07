@@ -11,10 +11,10 @@ export const CreateClientInputSchema = z.object({
   name: z
     .string()
     .min(2, 'Apelido deve ter pelo menos 2 caracteres')
-    .max(100, 'Apelido deve ter no maximo 100 caracteres'),
+    .max(100, 'Apelido deve ter no máximo 100 caracteres'),
   clientCode: z
     .string()
-    .regex(/^\d+$/, 'Codigo do cliente deve conter apenas numeros'),
+    .regex(/^\d+$/, 'Codigo do cliente deve conter apenas números'),
 });
 export class CreateClientInputDto extends createZodDto(
   CreateClientInputSchema,
@@ -28,11 +28,11 @@ export const UpdateClientInputSchema = z.object({
   name: z
     .string()
     .min(2, 'Apelido deve ter pelo menos 2 caracteres')
-    .max(100, 'Apelido deve ter no maximo 100 caracteres')
+    .max(100, 'Apelido deve ter no máximo 100 caracteres')
     .optional(),
   clientCode: z
     .string()
-    .regex(/^\d+$/, 'Codigo do cliente deve conter apenas numeros'),
+    .regex(/^\d+$/, 'Codigo do cliente deve conter apenas números'),
 });
 export class UpdateClientInputDto extends createZodDto(
   UpdateClientInputSchema,

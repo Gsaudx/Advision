@@ -60,10 +60,10 @@ export class AssetResolverService {
             optionDetail: {
               create: {
                 underlyingAssetId,
-                optionType: metadata.optionType || 'CALL',
+                optionType: metadata.optionType ?? 'CALL',
                 exerciseType,
-                strikePrice: metadata.strikePrice || 0,
-                expirationDate: metadata.expirationDate || new Date(),
+                strikePrice: metadata.strikePrice ?? 0,
+                expirationDate: metadata.expirationDate ?? new Date(),
               },
             },
           },

@@ -40,7 +40,7 @@ export class HealthController {
   })
   @ApiResponse({
     status: 401,
-    description: 'Token JWT invalido ou ausente',
+    description: 'Token JWT inválido ou ausente',
     type: ApiErrorResponseDto,
   })
   @ApiResponse({

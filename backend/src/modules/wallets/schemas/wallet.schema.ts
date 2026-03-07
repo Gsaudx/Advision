@@ -1,6 +1,7 @@
 import { z } from 'zod';
 import { createZodDto } from 'nestjs-zod';
 import { createApiResponseSchema } from '@/common/schemas';
+import { TransactionType, AssetType } from '@/generated/prisma/enums';
 
 // ============================================================================
 // INPUT SCHEMAS
@@ -10,11 +11,11 @@ import { createApiResponseSchema } from '@/common/schemas';
  * Schema for creating a new wallet
  */
 export const CreateWalletInputSchema = z.object({
-  clientId: z.string().uuid('ID do cliente invalido'),
+  clientId: z.string().uuid('ID do cliente inválido'),
   name: z
     .string()
     .min(2, 'Nome deve ter pelo menos 2 caracteres')
-    .max(100, 'Nome deve ter no maximo 100 caracteres'),
+    .max(100, 'Nome deve ter no máximo 100 caracteres'),
   description: z.string().max(500).optional(),
   currency: z.string().length(3).optional().default('BRL'),
   initialCashBalance: z
@@ -41,8 +42,8 @@ export const CashOperationInputSchema = z.object({
   amount: z.number().positive('Valor deve ser positivo'),
   date: z
     .string()
-    .datetime({ message: 'Data invalida (formato ISO esperado)' }),
-  idempotencyKey: z.string().min(1, 'Chave de idempotencia obrigatoria'),
+    .datetime({ message: 'Data inválida (formato ISO esperado)' }),
+  idempotencyKey: z.string().min(1, 'Chave de idempotência obrigatória'),
 });
 export class CashOperationInputDto extends createZodDto(
   CashOperationInputSchema,
@@ -56,14 +57,14 @@ export const TradeInputSchema = z.object({
   ticker: z
     .string()
     .min(1, 'Ticker obrigatorio')
-    .max(20, 'Ticker deve ter no maximo 20 caracteres')
+    .max(20, 'Ticker deve ter no máximo 20 caracteres')
     .toUpperCase(),
   quantity: z.number().positive('Quantidade deve ser positiva'),
-  price: z.number().positive('Preco deve ser positivo'),
+  price: z.number().positive('Preço deve ser positivo'),
   date: z
     .string()
-    .datetime({ message: 'Data invalida (formato ISO esperado)' }),
-  idempotencyKey: z.string().min(1, 'Chave de idempotencia obrigatoria'),
+    .datetime({ message: 'Data inválida (formato ISO esperado)' }),
+  idempotencyKey: z.string().min(1, 'Chave de idempotência obrigatória'),
 });
 export class TradeInputDto extends createZodDto(TradeInputSchema) {}
 export type TradeInput = z.infer<typeof TradeInputSchema>;
@@ -79,20 +80,13 @@ export const TransactionResponseSchema = z.object({
   id: z.string().uuid(),
   walletId: z.string().uuid(),
   assetId: z.string().uuid().nullable(),
-  type: z.enum([
-    'BUY',
-    'SELL',
-    'DIVIDEND',
-    'SPLIT',
-    'SUBSCRIPTION',
-    'DEPOSIT',
-    'WITHDRAWAL',
-  ]),
+  type: z.nativeEnum(TransactionType),
   quantity: z.number().nullable(),
   price: z.number().nullable(),
   totalValue: z.number(),
   executedAt: z.string(),
   ticker: z.string().nullable(),
+  assetType: z.nativeEnum(AssetType).nullable(),
   createdAt: z.string(),
 });
 export type TransactionResponse = z.infer<typeof TransactionResponseSchema>;
@@ -105,7 +99,7 @@ export const PositionResponseSchema = z.object({
   assetId: z.string().uuid(),
   ticker: z.string(),
   name: z.string(),
-  type: z.enum(['STOCK', 'OPTION']),
+  type: z.nativeEnum(AssetType),
   quantity: z.number(),
   averagePrice: z.number(),
   currentPrice: z.number().optional(),
@@ -113,6 +107,7 @@ export const PositionResponseSchema = z.object({
   currentValue: z.number().optional(),
   profitLoss: z.number().optional(),
   profitLossPercent: z.number().optional(),
+  collateralBlocked: z.number().nullable().optional(),
 });
 export type PositionResponse = z.infer<typeof PositionResponseSchema>;
 
@@ -205,6 +200,11 @@ export const AssetSearchResultSchema = z.object({
   name: z.string(),
   type: z.string(),
   exchange: z.string(),
+  // Option-specific fields (present in OpLab search results)
+  strike: z.number().optional(),
+  expirationDate: z.string().optional(),
+  optionType: z.enum(['CALL', 'PUT']).optional(),
+  lastPrice: z.number().optional(),
 });
 export type AssetSearchResultType = z.infer<typeof AssetSearchResultSchema>;
 

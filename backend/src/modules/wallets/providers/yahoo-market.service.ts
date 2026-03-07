@@ -1,6 +1,10 @@
 import { Injectable, Logger, NotFoundException } from '@nestjs/common';
 import YahooFinance from 'yahoo-finance2';
-import { MarketDataProvider, AssetMetadata } from './market-data.provider';
+import {
+  MarketDataProvider,
+  AssetMetadata,
+  MARKET_CACHE_TTL_MS,
+} from './market-data.provider';
 
 interface CacheEntry {
   value: number;
@@ -12,6 +16,10 @@ export interface AssetSearchResult {
   name: string;
   type: string;
   exchange: string;
+  // Option-specific fields (optional, used by OpLab search results)
+  strike?: number;
+  expirationDate?: string;
+  optionType?: 'CALL' | 'PUT';
 }
 
 interface YahooQuote {
@@ -37,8 +45,6 @@ interface YahooSearchQuote {
 interface YahooSearchResult {
   quotes: YahooSearchQuote[];
 }
-
-const CACHE_TTL_MS = 60 * 1000; // 60 seconds
 
 @Injectable()
 export class YahooMarketService extends MarketDataProvider {
@@ -66,12 +72,12 @@ export class YahooMarketService extends MarketDataProvider {
    */
   private isCacheValid(entry: CacheEntry | undefined): boolean {
     if (!entry) return false;
-    return Date.now() - entry.timestamp < CACHE_TTL_MS;
+    return Date.now() - entry.timestamp < MARKET_CACHE_TTL_MS;
   }
 
   private pruneCache(now = Date.now()): void {
     for (const [ticker, entry] of this.priceCache.entries()) {
-      if (now - entry.timestamp >= CACHE_TTL_MS) {
+      if (now - entry.timestamp >= MARKET_CACHE_TTL_MS) {
         this.priceCache.delete(ticker);
       }
     }
@@ -93,7 +99,7 @@ export class YahooMarketService extends MarketDataProvider {
       )) as YahooQuote;
 
       if (!quote || quote.regularMarketPrice === undefined) {
-        throw new NotFoundException(`Preco nao encontrado para ${ticker}`);
+        throw new NotFoundException(`Preço não encontrado para ${ticker}`);
       }
 
       const price = quote.regularMarketPrice;
@@ -108,7 +114,7 @@ export class YahooMarketService extends MarketDataProvider {
       this.logger.error(
         `Erro ao buscar preco para ${ticker}: ${(error as Error).message}`,
       );
-      throw new NotFoundException(`Preco nao encontrado para ${ticker}`);
+      throw new NotFoundException(`Preço não encontrado para ${ticker}`);
     }
   }
 
@@ -218,23 +224,27 @@ export class YahooMarketService extends MarketDataProvider {
 
   /**
    * Search for assets by query string (for autocomplete)
-   * Filters to show only Brazilian stocks (.SA suffix)
+   * Includes Brazilian stocks (.SA suffix) and options
    */
-  async search(query: string, limit = 10): Promise<AssetSearchResult[]> {
+  async search(
+    query: string,
+    limit = 10,
+    includeOptions = true,
+  ): Promise<AssetSearchResult[]> {
     if (!query || query.length < 2) {
       return [];
     }
 
     try {
       const searchResult = (await Promise.resolve(
-        this.yahooFinance.search(query, { quotesCount: limit * 2 }),
+        this.yahooFinance.search(query, { quotesCount: limit * 3 }),
       )) as YahooSearchResult;
 
       if (!searchResult || !searchResult.quotes) {
         return [];
       }
 
-      // Filter for Brazilian stocks and equities only
+      // Filter for Brazilian stocks, equities, and options
       const results: AssetSearchResult[] = [];
 
       for (const quote of searchResult.quotes) {
@@ -244,6 +254,7 @@ export class YahooMarketService extends MarketDataProvider {
         // Include Brazilian stocks (.SA) or if user is searching with .SA
         const isBrazilian = quote.symbol.endsWith('.SA');
         const isEquity = quote.quoteType === 'EQUITY';
+        const isOption = quote.quoteType === 'OPTION';
 
         if (isBrazilian && isEquity) {
           // Remove .SA suffix for display
@@ -253,6 +264,18 @@ export class YahooMarketService extends MarketDataProvider {
             ticker,
             name: quote.shortname || quote.longname || ticker,
             type: 'STOCK',
+            exchange: quote.exchange || 'BVMF',
+          });
+
+          if (results.length >= limit) break;
+        } else if (includeOptions && isOption) {
+          // Include options (may have different suffix patterns)
+          const ticker = quote.symbol.replace('.SA', '');
+
+          results.push({
+            ticker,
+            name: quote.shortname || quote.longname || ticker,
+            type: 'OPTION',
             exchange: quote.exchange || 'BVMF',
           });
 

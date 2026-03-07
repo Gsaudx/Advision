@@ -6,6 +6,8 @@ import type {
   AdvisorMetrics,
   ClientProfile,
   PaginatedActivity,
+  AdvisorExpirationsList,
+  AdvisorExpiration,
 } from '../schemas';
 
 /**
@@ -14,12 +16,12 @@ import type {
 const EVENT_LABELS: Record<string, string> = {
   // Wallet events
   WalletCreated: 'Nova carteira criada',
-  CashDeposited: 'Deposito realizado',
+  CashDeposited: 'Depósito realizado',
   CashWithdrawn: 'Saque realizado',
-  PositionOpened: 'Nova posicao aberta',
-  PositionIncreased: 'Posicao aumentada',
-  PositionDecreased: 'Posicao reduzida',
-  PositionClosed: 'Posicao encerrada',
+  PositionOpened: 'Nova posição aberta',
+  PositionIncreased: 'Posição aumentada',
+  PositionDecreased: 'Posição reduzida',
+  PositionClosed: 'Posição encerrada',
   // Client events
   ClientCreated: 'Cliente cadastrado',
   ClientUpdated: 'Cliente atualizado',
@@ -28,6 +30,14 @@ const EVENT_LABELS: Record<string, string> = {
   InviteAccepted: 'Convite aceito',
   InviteRevoked: 'Convite revogado',
   UserLinked: 'Usuario vinculado',
+  // Derivatives events
+  OptionBought: 'Opcao comprada',
+  OptionSold: 'Opcao vendida',
+  OptionPositionClosed: 'Posicao de opcao encerrada',
+  OptionExercised: 'Opcao exercida',
+  OptionAssigned: 'Opcao atribuida',
+  OptionExpired: 'Opcao expirada',
+  StrategyExecuted: 'Estrategia executada',
   // Optimization events
   OptimizationRunCreated: 'Otimizacao iniciada',
   OptimizationRunAccepted: 'Otimizacao aceita',
@@ -67,6 +77,20 @@ function getDescription(eventType: string, payload: unknown): string {
       return 'Convite aceito pelo cliente';
     case 'InviteRevoked':
       return 'Convite de acesso revogado';
+    case 'OptionBought':
+      return `Compra de ${String(p.contracts)} contratos ${String(p.ticker)}`;
+    case 'OptionSold':
+      return `Venda de ${String(p.contracts)} contratos ${String(p.ticker)}`;
+    case 'OptionPositionClosed':
+      return `Encerramento de ${String(p.contractsClosed)} contratos ${String(p.ticker)}`;
+    case 'OptionExercised':
+      return `Exercicio de ${String(p.contracts)} contratos ${String(p.optionTicker)}`;
+    case 'OptionAssigned':
+      return `Assignment de ${String(p.contracts)} contratos ${String(p.optionTicker)}`;
+    case 'OptionExpired':
+      return `Vencimento de ${String(p.contracts)} contratos ${String(p.optionTicker)}`;
+    case 'StrategyExecuted':
+      return `Estrategia ${String(p.strategyType)} executada`;
     default:
       return EVENT_LABELS[eventType] || eventType;
   }
@@ -206,6 +230,7 @@ export class ActivityService {
         client: { advisorId },
       },
       select: {
+        id: true,
         cashBalance: true,
       },
     });
@@ -215,9 +240,155 @@ export class ActivityService {
       0,
     );
 
+    const walletIds = wallets.map((w) => w.id);
+
+    // Count pending structured operations
+    const pendingOperationsCount =
+      walletIds.length > 0
+        ? await this.prisma.structuredOperation.count({
+            where: {
+              walletId: { in: walletIds },
+              status: 'PENDING',
+            },
+          })
+        : 0;
+
+    // Count option positions expiring within 30 days
+    const today = new Date();
+    today.setHours(0, 0, 0, 0);
+    const thirtyDaysFromNow = new Date(today);
+    thirtyDaysFromNow.setDate(thirtyDaysFromNow.getDate() + 30);
+
+    const expiringOptionsCount =
+      walletIds.length > 0
+        ? await this.prisma.position.count({
+            where: {
+              walletId: { in: walletIds },
+              quantity: { not: 0 },
+              asset: {
+                type: 'OPTION',
+                optionDetail: {
+                  expirationDate: {
+                    gte: today,
+                    lte: thirtyDaysFromNow,
+                  },
+                },
+              },
+            },
+          })
+        : 0;
+
     return {
       clientCount,
       totalWalletValue: totalCashBalance,
+      pendingOperationsCount,
+      expiringOptionsCount,
+    };
+  }
+
+  /**
+   * Get upcoming option expirations across all advisor's clients
+   */
+  async getAdvisorExpirations(
+    advisorId: string,
+    daysAhead = 30,
+  ): Promise<AdvisorExpirationsList> {
+    const today = new Date();
+    today.setHours(0, 0, 0, 0);
+    const endDate = new Date(today);
+    endDate.setDate(endDate.getDate() + daysAhead);
+
+    const clients = await this.prisma.client.findMany({
+      where: { advisorId },
+      select: { id: true, name: true },
+    });
+
+    const clientIds = clients.map((c) => c.id);
+    const clientMap = new Map(clients.map((c) => [c.id, c.name]));
+
+    const wallets = await this.prisma.wallet.findMany({
+      where: { clientId: { in: clientIds } },
+      select: { id: true, name: true, clientId: true },
+    });
+
+    const walletIds = wallets.map((w) => w.id);
+    const walletMap = new Map(
+      wallets.map((w) => [w.id, { name: w.name, clientId: w.clientId }]),
+    );
+
+    const positions = await this.prisma.position.findMany({
+      where: {
+        walletId: { in: walletIds },
+        quantity: { not: 0 },
+        asset: {
+          type: 'OPTION',
+          optionDetail: {
+            expirationDate: {
+              gte: today,
+              lte: endDate,
+            },
+          },
+        },
+      },
+      include: {
+        asset: {
+          include: {
+            optionDetail: true,
+          },
+        },
+      },
+      orderBy: {
+        asset: {
+          optionDetail: {
+            expirationDate: 'asc',
+          },
+        },
+      },
+    });
+
+    const expirations: AdvisorExpiration[] = positions.map((position) => {
+      const optionDetail = position.asset.optionDetail!;
+      const expirationDate = new Date(optionDetail.expirationDate);
+      const daysUntilExpiry = Math.ceil(
+        (expirationDate.getTime() - today.getTime()) / (1000 * 60 * 60 * 24),
+      );
+
+      const currentQty = Number(position.quantity);
+      const isShort = currentQty < 0;
+
+      const walletInfo = walletMap.get(position.walletId);
+      const clientName = walletInfo
+        ? (clientMap.get(walletInfo.clientId) ?? 'Desconhecido')
+        : 'Desconhecido';
+      const walletName = walletInfo?.name ?? 'Desconhecida';
+
+      let status: 'Proximo' | 'Em dia' | 'Vencido';
+      if (daysUntilExpiry <= 0) {
+        status = 'Vencido';
+      } else if (daysUntilExpiry <= 7) {
+        status = 'Proximo';
+      } else {
+        status = 'Em dia';
+      }
+
+      return {
+        positionId: position.id,
+        ticker: position.asset.ticker,
+        optionType: optionDetail.optionType as 'CALL' | 'PUT',
+        strikePrice: Number(optionDetail.strikePrice),
+        expirationDate: expirationDate.toISOString(),
+        daysUntilExpiry,
+        quantity: Math.abs(currentQty),
+        isShort,
+        walletName,
+        clientName,
+        status,
+      };
+    });
+
+    return {
+      expirations,
+      total: expirations.length,
     };
   }
 

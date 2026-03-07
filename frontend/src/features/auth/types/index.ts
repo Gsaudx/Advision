@@ -1,27 +1,29 @@
-export interface User {
-  id: string;
-  email: string;
-  name: string;
-  role: 'ADVISOR' | 'CLIENT' | 'ADMIN';
-  cpfCnpj: string | null;
-  phone: string | null;
-  clientProfileId: string | null;
-  createdAt: string;
-}
+import type { components } from '@/types/api';
 
-export interface LoginCredentials {
-  email: string;
-  password: string;
-}
+// ============================================================================
+// Types derived from auto-generated API types (single source of truth)
+// ============================================================================
 
-export interface RegisterCredentials {
-  name: string;
-  email: string;
-  password: string;
-  role?: 'ADVISOR' | 'CLIENT';
-  cpfCnpj?: string;
-  phone?: string;
-}
+/**
+ * User profile as returned from the API
+ */
+export type User = NonNullable<
+  components['schemas']['UserProfileApiResponseDto']['data']
+>;
+
+/**
+ * Login credentials input
+ */
+export type LoginCredentials = components['schemas']['LoginDto'];
+
+/**
+ * Register credentials input
+ */
+export type RegisterCredentials = components['schemas']['RegisterDto'];
+
+// ============================================================================
+// Frontend-specific types (not from backend)
+// ============================================================================
 
 export interface AuthState {
   user: User | null;

@@ -1,11 +1,11 @@
 import { useState, useEffect, useRef } from 'react';
 import ModalBase from '@/components/layout/ModalBase';
 import { LoadingSpinner } from '@/components/ui/LoadingSpinner';
-import type { AxiosError } from 'axios';
 import { ShoppingCart, DollarSign, X } from 'lucide-react';
 import { useTradeForm } from '../hooks';
 import { useBuyAsset, useSellAsset, useAssetPrice } from '../api';
 import { formatCurrency } from '@/lib/formatters';
+import { getApiErrorMessage } from '@/lib/api-error';
 import { TickerAutocomplete } from './TickerAutocomplete';
 import type { TradeType, Position, AssetSearchResult } from '../types';
 
@@ -19,26 +19,6 @@ interface TradeModalProps {
   positions: Position[];
   currency?: string;
   preselectedTicker?: string;
-}
-
-type ApiErrorResponse = {
-  message?: string;
-  errors?: string[];
-};
-
-function getApiErrorMessage(error: unknown): string {
-  const axiosError = error as AxiosError<ApiErrorResponse> | undefined;
-  const responseData = axiosError?.response?.data;
-
-  if (responseData?.message) {
-    return responseData.message;
-  }
-
-  if (responseData?.errors?.length) {
-    return responseData.errors[0] ?? 'Erro ao realizar operacao.';
-  }
-
-  return 'Erro ao realizar operacao. Tente novamente.';
 }
 
 export function TradeModal({
@@ -382,7 +362,7 @@ export function TradeModal({
             </span>
           </div>
           <div className="flex justify-between border-t border-slate-700 pt-2">
-            <span className="text-sm text-gray-500">Saldo Apos Operacao</span>
+            <span className="text-sm text-gray-500">Saldo Após Operação</span>
             <span
               className={`text-sm font-semibold ${balanceAfter >= 0 ? 'text-white' : 'text-red-400'}`}
             >
