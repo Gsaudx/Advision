@@ -84,6 +84,7 @@ enum AggregateType {
   USER
   STRUCTURED_OPERATION
   OPTION_LIFECYCLE
+  DIVIDEND_SYNC
 }
 
 enum OperationLegType {
@@ -140,7 +141,8 @@ model User {
   createdAt    DateTime @default(now())
   updatedAt    DateTime @updatedAt
   clients       Client[] @relation("AdvisorClients")
-  clientProfile Client?  @relation("LinkedUser")
+  clientProfile    Client?            @relation("LinkedUser")
+  dividendSyncLogs DividendSyncLog[]
 
   @@map("users")
 }
@@ -412,4 +414,46 @@ model OptionLifecycle {
   @@index([positionId])
   @@index([structuredOperationId])
   @@map("option_lifecycle")
+}
+
+// ============================================================================
+// DIVIDENDS & PROVENTOS
+// ============================================================================
+
+model DividendEvent {
+  id             String    @id @default(uuid())
+  ticker         String    @db.VarChar(20)
+  dividendType   String?   @db.VarChar(30)
+  approvedDate   DateTime? @db.Date
+  paymentDate    DateTime? @db.Date
+  exDividendDate DateTime? @db.Date
+  valuePerShare  Decimal?  @db.Decimal(18, 8)
+  source         String    @db.VarChar(20)
+  integrityHash  String    @unique @db.VarChar(200)
+  rawPayload     Json
+  referenceWeek  String    @db.VarChar(10)
+  importedAt     DateTime  @default(now())
+  active         Boolean   @default(true)
+
+  @@index([ticker])
+  @@index([referenceWeek])
+  @@index([ticker, referenceWeek])
+  @@map("dividend_events")
+}
+
+model DividendSyncLog {
+  id             String   @id @default(uuid())
+  syncDate       DateTime @unique @db.Date
+  trigger        String   @db.VarChar(30)
+  userId         String?
+  tickersFound   Int      @default(0)
+  tickersPending Int      @default(0)
+  eventsCreated  Int      @default(0)
+  errors         Int      @default(0)
+  durationMs     Int?
+  createdAt      DateTime @default(now())
+
+  user User? @relation(fields: [userId], references: [id])
+
+  @@map("dividend_sync_logs")
 }
