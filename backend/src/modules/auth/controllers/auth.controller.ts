@@ -16,6 +16,7 @@ import { ApiResponseDto, ApiErrorResponseDto } from '@/common/schemas';
 import type { ApiResponse as ApiResponseType } from '@/common/schemas';
 import { env, parseJwtExpirationToMs } from '@/config';
 import { AuthService } from '../services/auth.service';
+import { ProventosSyncService } from '@/modules/proventos/services/proventos-sync.service';
 import { RegisterDto, LoginDto, UserProfileApiResponseDto } from '../schemas';
 import type { UserProfile } from '../schemas';
 import { AUTH_COOKIE_NAME, type RequestUser } from '../strategies/jwt.strategy';
@@ -55,7 +56,10 @@ function clearAuthCookie(res: ExpressResponse): void {
 @ApiTags('Auth')
 @Controller('auth')
 export class AuthController {
-  constructor(private readonly authService: AuthService) {}
+  constructor(
+    private readonly authService: AuthService,
+    private readonly proventosSyncService: ProventosSyncService,
+  ) {}
 
   @Post('register')
   @ApiOperation({
@@ -107,6 +111,11 @@ export class AuthController {
   ): ApiResponseType<UserProfile> {
     const token = this.authService.generateToken(req.user);
     setAuthCookie(res, token);
+
+    if (req.user.role === 'ADMIN') {
+      this.proventosSyncService.trySyncAfterAdminLogin(req.user.id);
+    }
+
     return ApiResponseDto.success(req.user);
   }
 
