@@ -5,6 +5,7 @@ import {
   MARKET_CACHE_TTL_MS,
 } from './market-data.provider';
 import type { AssetSearchResult } from './yahoo-market.service';
+import { buildBrapiUrl } from '@/shared/http/brapi.utils';
 
 interface CacheEntry {
   value: number;
@@ -55,8 +56,6 @@ interface BrapiAvailableResponse {
   indexes: string[];
   stocks: string[];
 }
-
-const BRAPI_BASE_URL = 'https://brapi.dev/api';
 
 /**
  * B3 Option Naming Convention:
@@ -161,12 +160,10 @@ function isOptionTicker(ticker: string): boolean {
 export class BrapiMarketService extends MarketDataProvider {
   private readonly logger = new Logger(BrapiMarketService.name);
   private readonly priceCache = new Map<string, CacheEntry>();
-  private readonly token: string;
 
   constructor() {
     super();
-    this.token = process.env.BRAPI_TOKEN ?? '';
-    if (!this.token) {
+    if (!process.env.BRAPI_TOKEN) {
       this.logger.warn(
         'BRAPI_TOKEN not configured. Some features may not work correctly.',
       );
@@ -189,22 +186,6 @@ export class BrapiMarketService extends MarketDataProvider {
     }
   }
 
-  /**
-   * Build URL with optional token
-   */
-  private buildUrl(
-    endpoint: string,
-    params: Record<string, string> = {},
-  ): string {
-    const url = new URL(`${BRAPI_BASE_URL}${endpoint}`);
-    if (this.token) {
-      url.searchParams.set('token', this.token);
-    }
-    for (const [key, value] of Object.entries(params)) {
-      url.searchParams.set(key, value);
-    }
-    return url.toString();
-  }
 
   async getPrice(ticker: string): Promise<number> {
     this.pruneCache();
@@ -215,7 +196,7 @@ export class BrapiMarketService extends MarketDataProvider {
     }
 
     try {
-      const url = this.buildUrl(`/quote/${ticker.toUpperCase()}`);
+      const url = buildBrapiUrl(`/quote/${ticker.toUpperCase()}`);
       const response = await fetch(url);
 
       if (!response.ok) {
@@ -259,7 +240,7 @@ export class BrapiMarketService extends MarketDataProvider {
 
     // Otherwise, fetch from Brapi as a stock
     try {
-      const url = this.buildUrl(`/quote/${upperTicker}`);
+      const url = buildBrapiUrl(`/quote/${upperTicker}`);
       const response = await fetch(url);
 
       if (!response.ok) {
@@ -300,7 +281,7 @@ export class BrapiMarketService extends MarketDataProvider {
 
     // Validate that the underlying asset exists in B3
     try {
-      const url = this.buildUrl(`/quote/${underlyingTicker}`);
+      const url = buildBrapiUrl(`/quote/${underlyingTicker}`);
       const response = await fetch(url);
 
       if (!response.ok) {
@@ -389,7 +370,7 @@ export class BrapiMarketService extends MarketDataProvider {
     try {
       // Brapi supports comma-separated tickers
       const tickerString = tickersToFetch.join(',');
-      const url = this.buildUrl(`/quote/${tickerString}`);
+      const url = buildBrapiUrl(`/quote/${tickerString}`);
       const response = await fetch(url);
 
       if (!response.ok) {
@@ -483,7 +464,7 @@ export class BrapiMarketService extends MarketDataProvider {
 
     try {
       // Use the quote/list endpoint which supports search
-      const url = this.buildUrl('/quote/list', {
+      const url = buildBrapiUrl('/quote/list', {
         search: query.toUpperCase(),
         limit: String(limit),
       });
@@ -522,7 +503,7 @@ export class BrapiMarketService extends MarketDataProvider {
     limit = 10,
   ): Promise<AssetSearchResult[]> {
     try {
-      const url = this.buildUrl('/available', {
+      const url = buildBrapiUrl('/available', {
         search: query.toUpperCase(),
       });
 
