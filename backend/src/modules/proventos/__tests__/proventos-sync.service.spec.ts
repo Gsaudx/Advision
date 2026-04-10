@@ -18,7 +18,7 @@ const mockDomainEvents = {
 const mockPrisma = {
   position: { findMany: jest.fn() },
   dividendEvent: { createMany: jest.fn() },
-  $transaction: jest.fn((fn: (tx: unknown) => Promise<void>) => fn(mockPrisma)),
+  $transaction: jest.fn((fn: (tx: unknown) => Promise<void>): Promise<void> => fn(mockPrisma)),
 };
 
 describe('ProventosSyncService', () => {
