@@ -104,6 +104,26 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/proventos": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * Listar proventos
+         * @description Retorna o historico de eventos de dividendos sincronizados da BRAPI. Filtravel por ticker.
+         */
+        get: operations["ProventosController_findAll"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/clients/{id}/invite": {
         parameters: {
             query?: never;
@@ -820,6 +840,29 @@ export interface components {
             /** Format: email */
             email: string;
             password: string;
+        };
+        DividendEventListApiResponseDto: {
+            /** @enum {boolean} */
+            success: true;
+            data?: {
+                items: {
+                    /** Format: uuid */
+                    id: string;
+                    ticker: string;
+                    dividendType: string | null;
+                    approvedDate: string | null;
+                    paymentDate: string | null;
+                    exDividendDate: string | null;
+                    valuePerShare: number | null;
+                    source: string;
+                    referenceWeek: string;
+                    importedAt: string;
+                }[];
+                total: number;
+                skip: number;
+                take: number;
+            };
+            message?: string;
         };
         InviteApiResponseDto: {
             /** @enum {boolean} */
@@ -1571,6 +1614,42 @@ export interface operations {
                 };
             };
             /** @description Cookie inválido ou expirado */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ApiErrorResponseDto"];
+                };
+            };
+        };
+    };
+    ProventosController_findAll: {
+        parameters: {
+            query?: {
+                /** @description Filtrar por ticker do ativo (ex: PETR4) */
+                ticker?: string;
+                /** @description Numero de registros a pular para paginacao (padrao: 0) */
+                skip?: string;
+                /** @description Numero de registros a retornar (padrao: 20, maximo: 100) */
+                take?: string;
+            };
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Lista de proventos */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["DividendEventListApiResponseDto"];
+                };
+            };
+            /** @description Nao autenticado */
             401: {
                 headers: {
                     [name: string]: unknown;
