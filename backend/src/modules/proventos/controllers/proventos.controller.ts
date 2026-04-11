@@ -1,4 +1,4 @@
-import { Controller, Get, Query, UseGuards } from '@nestjs/common';
+import { Controller, Get, Post, Query, UseGuards } from '@nestjs/common';
 import {
   ApiTags,
   ApiOperation,
@@ -12,6 +12,7 @@ import type { ApiResponse as ApiResponseType } from '@/common/schemas';
 import { RolesGuard } from '@/common/guards';
 import { Roles } from '@/common/decorators';
 import { ProventosService } from '../services/proventos.service';
+import { ProventosSyncService } from '../services/proventos-sync.service';
 import {
   DividendEventListApiResponseDto,
   type DividendEventListResponse,
@@ -22,7 +23,20 @@ import {
 @UseGuards(AuthGuard('jwt'), RolesGuard)
 @ApiCookieAuth()
 export class ProventosController {
-  constructor(private readonly proventosService: ProventosService) {}
+  constructor(
+    private readonly proventosService: ProventosService,
+    private readonly syncService: ProventosSyncService,
+  ) {}
+
+  // TODO: remove — temporary endpoint for manual sync testing
+  @Post('sync')
+  @Roles('ADMIN', 'ADVISOR')
+  @ApiOperation({ summary: '[TEMP] Força sync de proventos da BRAPI' })
+  @ApiResponse({ status: 201, description: 'Sync disparado' })
+  forceSync(): { message: string } {
+    this.syncService.forceSync();
+    return { message: 'Sync disparado. Acompanhe os logs do servidor.' };
+  }
 
   @Get()
   @Roles('ADVISOR', 'ADMIN', 'CLIENT')

@@ -28,6 +28,48 @@ export class ProventosSyncService implements OnApplicationBootstrap {
     void this.trySync('ADMIN_LOGIN', adminUserId);
   }
 
+  // TODO: remove — temporary method for manual testing
+  forceSync(): void {
+    void this.runSync('MANUAL');
+  }
+
+  // TODO: remove — bypasses daily lock for manual testing
+  private async runSync(trigger: string, userId?: string): Promise<void> {
+    const startTime = Date.now();
+    this.logger.log(`Force sync triggered by ${trigger}`);
+
+    const allTickers = await this.getRelevantTickers();
+    if (allTickers.length === 0) {
+      this.logger.log('No active stock tickers found, skipping sync');
+      return;
+    }
+
+    let totalNew = 0;
+    let totalErrors = 0;
+    const DELAY_MS = Number(process.env.BRAPI_REQUEST_DELAY_MS ?? 200);
+
+    for (const ticker of allTickers) {
+      try {
+        const events = await this.brapiDividends.fetchDividends(ticker);
+        const newCount = await this.persistNewEvents(ticker, events);
+        totalNew += newCount;
+        this.logger.debug(`${ticker}: ${events.length} events, ${newCount} new`);
+      } catch (error: unknown) {
+        totalErrors++;
+        const message = error instanceof Error ? error.message : String(error);
+        this.logger.error(`Failed to sync ${ticker}: ${message}`);
+      }
+
+      if (DELAY_MS > 0) {
+        await new Promise((resolve) => setTimeout(resolve, DELAY_MS));
+      }
+    }
+
+    this.logger.log(
+      `Force sync complete: ${allTickers.length} tickers, ${totalNew} new events, ${totalErrors} errors, ${Date.now() - startTime}ms`,
+    );
+  }
+
   private async trySync(trigger: string, userId?: string): Promise<void> {
     const startTime = Date.now();
 
