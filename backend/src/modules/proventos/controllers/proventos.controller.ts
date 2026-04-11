@@ -1,4 +1,4 @@
-import { Controller, Get, Post, Query, UseGuards } from '@nestjs/common';
+import { Controller, Get, Param, Post, Query, UseGuards } from '@nestjs/common';
 import {
   ApiTags,
   ApiOperation,
@@ -13,9 +13,14 @@ import { RolesGuard } from '@/common/guards';
 import { Roles } from '@/common/decorators';
 import { ProventosService } from '../services/proventos.service';
 import { ProventosSyncService } from '../services/proventos-sync.service';
+import { ProventosCalculationService } from '../services/proventos-calculation.service';
 import {
   DividendEventListApiResponseDto,
+  WalletProventosApiResponseDto,
+  ProventosSummaryApiResponseDto,
   type DividendEventListResponse,
+  type WalletProventosResponse,
+  type ProventosSummaryResponse,
 } from '../schemas/dividend-event.schema';
 
 @ApiTags('Proventos')
@@ -26,6 +31,7 @@ export class ProventosController {
   constructor(
     private readonly proventosService: ProventosService,
     private readonly syncService: ProventosSyncService,
+    private readonly calculationService: ProventosCalculationService,
   ) {}
 
   // TODO: remove — temporary endpoint for manual sync testing
@@ -38,6 +44,46 @@ export class ProventosController {
     return { message: 'Sync disparado. Acompanhe os logs do servidor.' };
   }
 
+  @Get('wallet/:walletId')
+  @Roles('ADVISOR', 'ADMIN', 'CLIENT')
+  @ApiOperation({
+    summary: 'Proventos detalhados de uma carteira',
+    description:
+      'Calcula e retorna todos os eventos de dividendo recebidos pelas posições STOCK da carteira, com a quantidade histórica e total recebido por evento.',
+  })
+  @ApiResponse({
+    status: 200,
+    description: 'Proventos calculados',
+    type: WalletProventosApiResponseDto,
+  })
+  @ApiResponse({ status: 401, description: 'Nao autenticado', type: ApiErrorResponseDto })
+  async getWalletProventos(
+    @Param('walletId') walletId: string,
+  ): Promise<ApiResponseType<WalletProventosResponse>> {
+    const data = await this.calculationService.processWallet(walletId);
+    return ApiResponseDto.success(data);
+  }
+
+  @Get('summary')
+  @Roles('ADVISOR', 'ADMIN', 'CLIENT')
+  @ApiOperation({
+    summary: 'Resumo de proventos por ticker de uma carteira',
+    description: 'Retorna os totais de proventos recebidos agrupados por ticker.',
+  })
+  @ApiQuery({ name: 'walletId', required: true, description: 'ID da carteira' })
+  @ApiResponse({
+    status: 200,
+    description: 'Resumo de proventos',
+    type: ProventosSummaryApiResponseDto,
+  })
+  @ApiResponse({ status: 401, description: 'Nao autenticado', type: ApiErrorResponseDto })
+  async getProventosSummary(
+    @Query('walletId') walletId: string,
+  ): Promise<ApiResponseType<ProventosSummaryResponse>> {
+    const data = await this.calculationService.getSummary(walletId);
+    return ApiResponseDto.success(data);
+  }
+
   @Get()
   @Roles('ADVISOR', 'ADMIN', 'CLIENT')
   @ApiOperation({
@@ -45,31 +91,11 @@ export class ProventosController {
     description:
       'Retorna o historico de eventos de dividendos sincronizados da BRAPI. Filtravel por ticker.',
   })
-  @ApiQuery({
-    name: 'ticker',
-    required: false,
-    description: 'Filtrar por ticker do ativo (ex: PETR4)',
-  })
-  @ApiQuery({
-    name: 'skip',
-    required: false,
-    description: 'Numero de registros a pular para paginacao (padrao: 0)',
-  })
-  @ApiQuery({
-    name: 'take',
-    required: false,
-    description: 'Numero de registros a retornar (padrao: 20, maximo: 100)',
-  })
-  @ApiResponse({
-    status: 200,
-    description: 'Lista de proventos',
-    type: DividendEventListApiResponseDto,
-  })
-  @ApiResponse({
-    status: 401,
-    description: 'Nao autenticado',
-    type: ApiErrorResponseDto,
-  })
+  @ApiQuery({ name: 'ticker', required: false, description: 'Filtrar por ticker (ex: PETR4)' })
+  @ApiQuery({ name: 'skip', required: false, description: 'Registros a pular (padrao: 0)' })
+  @ApiQuery({ name: 'take', required: false, description: 'Registros a retornar (padrao: 20, max: 100)' })
+  @ApiResponse({ status: 200, description: 'Lista de proventos', type: DividendEventListApiResponseDto })
+  @ApiResponse({ status: 401, description: 'Nao autenticado', type: ApiErrorResponseDto })
   async findAll(
     @Query('ticker') ticker?: string,
     @Query('skip') skip?: string,

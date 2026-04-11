@@ -38,6 +38,7 @@ import {
     WalletAccessService,
     AuditService,
     AssetResolverService,
+    OpLabMarketService,
     CompositeMarketService,
     'MARKET_DATA_PROVIDER',
   ],

@@ -227,14 +227,16 @@ model OptionDetail {
 }
 
 model Position {
-  id                String   @id @default(uuid())
-  walletId          String
-  assetId           String
-  quantity          Decimal  @db.Decimal(18, 8)
-  averagePrice      Decimal  @db.Decimal(18, 2)
-  collateralBlocked Decimal? @db.Decimal(18, 2)
-  createdAt         DateTime @default(now())
-  updatedAt         DateTime @updatedAt
+  id                  String    @id @default(uuid())
+  walletId            String
+  assetId             String
+  quantity            Decimal   @db.Decimal(18, 8)
+  averagePrice        Decimal   @db.Decimal(18, 2)
+  collateralBlocked   Decimal?  @db.Decimal(18, 2)
+  lastDividendDate    DateTime?
+  priceAtLastDividend Decimal?  @db.Decimal(18, 2)
+  createdAt           DateTime  @default(now())
+  updatedAt           DateTime  @updatedAt
 
   wallet          Wallet            @relation(fields: [walletId], references: [id], onDelete: Cascade)
   asset           Asset             @relation(fields: [assetId], references: [id])

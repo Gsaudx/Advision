@@ -93,13 +93,22 @@ export class WalletsService {
       quantity,
       averagePrice,
       totalCost,
+      lastDividendDate: position.lastDividendDate?.toISOString() ?? null,
+      priceAtLastDividend: position.priceAtLastDividend
+        ? Number(position.priceAtLastDividend)
+        : null,
     };
 
     if (currentPrice !== undefined) {
+      const referencePrice = position.priceAtLastDividend
+        ? Number(position.priceAtLastDividend)
+        : averagePrice;
+      const referenceCost = quantity * referencePrice;
+
       const currentValue = quantity * currentPrice;
-      const profitLoss = currentValue - totalCost;
+      const profitLoss = currentValue - referenceCost;
       const profitLossPercent =
-        totalCost > 0 ? (profitLoss / totalCost) * 100 : 0;
+        referenceCost > 0 ? (profitLoss / referenceCost) * 100 : 0;
 
       result.currentPrice = currentPrice;
       result.currentValue = currentValue;

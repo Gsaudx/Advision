@@ -1,6 +1,8 @@
 import { Test, TestingModule } from '@nestjs/testing';
 import { ProventosController } from '../controllers/proventos.controller';
 import { ProventosService } from '../services/proventos.service';
+import { ProventosSyncService } from '../services/proventos-sync.service';
+import { ProventosCalculationService } from '../services/proventos-calculation.service';
 
 const mockListResponse = {
   items: [
@@ -31,7 +33,11 @@ describe('ProventosController', () => {
 
     const module: TestingModule = await Test.createTestingModule({
       controllers: [ProventosController],
-      providers: [{ provide: ProventosService, useValue: service }],
+      providers: [
+        { provide: ProventosService, useValue: service },
+        { provide: ProventosSyncService, useValue: { forceSync: jest.fn() } },
+        { provide: ProventosCalculationService, useValue: { processWallet: jest.fn(), getSummary: jest.fn() } },
+      ],
     }).compile();
 
     controller = module.get<ProventosController>(ProventosController);
