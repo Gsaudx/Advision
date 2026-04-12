@@ -96,7 +96,11 @@ describe('ProventosService', () => {
 
     it('trata datas nulas corretamente', async () => {
       prisma.dividendEvent.findMany.mockResolvedValue([
-        makeEvent({ approvedDate: null, paymentDate: null, exDividendDate: null }),
+        makeEvent({
+          approvedDate: null,
+          paymentDate: null,
+          exDividendDate: null,
+        }),
       ]);
       prisma.dividendEvent.count.mockResolvedValue(1);
 

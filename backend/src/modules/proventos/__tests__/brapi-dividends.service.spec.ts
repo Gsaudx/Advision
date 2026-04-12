@@ -79,9 +79,7 @@ describe('BrapiDividendsService', () => {
   });
 
   it('should handle null fields gracefully', async () => {
-    mockFetch.mockResolvedValue(
-      brapiResponse([{ label: null, rate: null }]),
-    );
+    mockFetch.mockResolvedValue(brapiResponse([{ label: null, rate: null }]));
 
     const result = await service.fetchDividends('PETR4');
 

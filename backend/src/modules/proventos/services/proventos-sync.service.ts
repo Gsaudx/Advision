@@ -53,7 +53,9 @@ export class ProventosSyncService implements OnApplicationBootstrap {
         const events = await this.brapiDividends.fetchDividends(ticker);
         const newCount = await this.persistNewEvents(ticker, events);
         totalNew += newCount;
-        this.logger.debug(`${ticker}: ${events.length} events, ${newCount} new`);
+        this.logger.debug(
+          `${ticker}: ${events.length} events, ${newCount} new`,
+        );
       } catch (error: unknown) {
         totalErrors++;
         const message = error instanceof Error ? error.message : String(error);
@@ -178,11 +180,11 @@ export class ProventosSyncService implements OnApplicationBootstrap {
       this.logger.error(`Dividend sync failed: ${message}`);
 
       try {
-        await this.recordSyncEvent(
-          DividendSyncEvents.SYNC_FAILED,
-          'unknown',
-          { trigger, userId, error: message },
-        );
+        await this.recordSyncEvent(DividendSyncEvents.SYNC_FAILED, 'unknown', {
+          trigger,
+          userId,
+          error: message,
+        });
       } catch {
         // If even this fails, only console log remains
       }

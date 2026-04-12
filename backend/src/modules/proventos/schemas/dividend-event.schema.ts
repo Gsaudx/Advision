@@ -66,7 +66,9 @@ export const WalletProventosResponseSchema = z.object({
   totalReceived: z.number(),
 });
 
-export type WalletProventosResponse = z.infer<typeof WalletProventosResponseSchema>;
+export type WalletProventosResponse = z.infer<
+  typeof WalletProventosResponseSchema
+>;
 
 export class WalletProventosApiResponseDto extends createZodDto(
   createApiResponseSchema(WalletProventosResponseSchema),
@@ -79,9 +81,13 @@ export const ProventosSummaryItemSchema = z.object({
   lastDividendDate: z.string().nullable(),
 });
 
-export const ProventosSummaryResponseSchema = z.array(ProventosSummaryItemSchema);
+export const ProventosSummaryResponseSchema = z.array(
+  ProventosSummaryItemSchema,
+);
 
-export type ProventosSummaryResponse = z.infer<typeof ProventosSummaryResponseSchema>;
+export type ProventosSummaryResponse = z.infer<
+  typeof ProventosSummaryResponseSchema
+>;
 
 export class ProventosSummaryApiResponseDto extends createZodDto(
   createApiResponseSchema(ProventosSummaryResponseSchema),

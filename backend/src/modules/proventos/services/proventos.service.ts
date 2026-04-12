@@ -72,8 +72,7 @@ export class ProventosService {
       dividendType: event.dividendType,
       approvedDate: event.approvedDate?.toISOString().split('T')[0] ?? null,
       paymentDate: event.paymentDate?.toISOString().split('T')[0] ?? null,
-      exDividendDate:
-        event.exDividendDate?.toISOString().split('T')[0] ?? null,
+      exDividendDate: event.exDividendDate?.toISOString().split('T')[0] ?? null,
       valuePerShare:
         event.valuePerShare != null ? Number(event.valuePerShare) : null,
       source: event.source,

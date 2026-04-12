@@ -57,9 +57,7 @@ describe('ProventosSyncPolicyService', () => {
     });
 
     it('should rethrow non-P2002 errors', async () => {
-      mockPrisma.dividendSyncLog.create.mockRejectedValue(
-        new Error('DB down'),
-      );
+      mockPrisma.dividendSyncLog.create.mockRejectedValue(new Error('DB down'));
 
       await expect(service.createSyncLog('APP_STARTUP')).rejects.toThrow(
         'DB down',

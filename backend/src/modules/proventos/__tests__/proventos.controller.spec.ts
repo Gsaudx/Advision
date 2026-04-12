@@ -36,7 +36,10 @@ describe('ProventosController', () => {
       providers: [
         { provide: ProventosService, useValue: service },
         { provide: ProventosSyncService, useValue: { forceSync: jest.fn() } },
-        { provide: ProventosCalculationService, useValue: { processWallet: jest.fn(), getSummary: jest.fn() } },
+        {
+          provide: ProventosCalculationService,
+          useValue: { processWallet: jest.fn(), getSummary: jest.fn() },
+        },
       ],
     }).compile();
 

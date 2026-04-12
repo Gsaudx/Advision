@@ -186,7 +186,6 @@ export class BrapiMarketService extends MarketDataProvider {
     }
   }
 
-
   async getPrice(ticker: string): Promise<number> {
     this.pruneCache();
 
