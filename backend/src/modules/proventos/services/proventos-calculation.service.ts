@@ -38,6 +38,8 @@ export class ProventosCalculationService {
 
   private static readonly COOLDOWN_MS = 60 * 60 * 1000; // 1 hour
 
+  // Garante que os proventos da carteira estão atualizados antes de qualquer leitura.
+  // Usa cooldown de 1h para evitar reprocessamento desnecessário a cada abertura de carteira.
   async ensureProcessed(walletId: string): Promise<void> {
     const cooldownCutoff = new Date(
       Date.now() - ProventosCalculationService.COOLDOWN_MS,
@@ -64,6 +66,8 @@ export class ProventosCalculationService {
     }
   }
 
+  // Verifica se existe algum evento de dividendo importado após o último processamento
+  // de qualquer posição STOCK da carteira. Retorna true se houver algo novo a processar.
   async isStale(walletId: string): Promise<boolean> {
     const positions = await this.prisma.position.findMany({
       where: { walletId, asset: { type: 'STOCK' } },
@@ -91,6 +95,8 @@ export class ProventosCalculationService {
     return !!newEvent;
   }
 
+  // Retorna todos os proventos recebidos pela carteira, com detalhes por evento.
+  // Garante que os dados estão atualizados antes de ler (via ensureProcessed).
   async getWalletProventos(walletId: string): Promise<WalletProventosResult> {
     await this.ensureProcessed(walletId);
 
@@ -119,6 +125,8 @@ export class ProventosCalculationService {
     return { walletId, items, totalReceived };
   }
 
+  // Retorna os proventos agrupados por ticker: total recebido, número de eventos
+  // e data do último pagamento. Útil para visão resumida por ativo.
   async getSummary(walletId: string): Promise<ProventosSummaryItem[]> {
     await this.ensureProcessed(walletId);
 
@@ -161,6 +169,7 @@ export class ProventosCalculationService {
     return Array.from(byTicker.values());
   }
 
+  // Itera sobre todas as posições STOCK da carteira e processa cada uma.
   private async processWallet(walletId: string): Promise<void> {
     const positions = await this.prisma.position.findMany({
       where: {
@@ -175,6 +184,9 @@ export class ProventosCalculationService {
     }
   }
 
+  // Processa uma posição: busca os eventos de dividendo desde a primeira compra,
+  // calcula quanto o cliente tinha na data-ex de cada evento e salva em WalletDividendPayment.
+  // Atualiza também o preço histórico na data-ex mais recente via OPLAB.
   private async processPosition(
     walletId: string,
     position: PositionWithAsset,
@@ -280,6 +292,8 @@ export class ProventosCalculationService {
     });
   }
 
+  // Reconstrói a quantidade que o cliente tinha em uma data específica,
+  // somando BUYs e subtraindo SELLs até aquela data.
   private async getQuantityAtDate(
     walletId: string,
     assetId: string,
