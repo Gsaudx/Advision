@@ -39,12 +39,20 @@ function buildSummary(items: WalletProvento[]): ProventosSummaryItem[] {
 }
 
 export function ProventosTab({ walletId, currency }: ProventosTabProps) {
-  const { data, isLoading } = useWalletProventos(walletId);
+  const { data, isLoading, isError } = useWalletProventos(walletId);
 
   if (isLoading) {
     return (
       <div className="flex items-center justify-center py-12">
         <LoadingSpinner size="md" />
+      </div>
+    );
+  }
+
+  if (isError) {
+    return (
+      <div className="p-4 bg-red-500/10 border border-red-500/20 rounded-lg">
+        <p className="text-red-400">Erro ao carregar proventos. Tente novamente.</p>
       </div>
     );
   }

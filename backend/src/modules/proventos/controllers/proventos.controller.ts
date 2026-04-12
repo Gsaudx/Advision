@@ -1,4 +1,12 @@
-import { Controller, Get, Param, Post, Query, UseGuards } from '@nestjs/common';
+import {
+  BadRequestException,
+  Controller,
+  Get,
+  Param,
+  Post,
+  Query,
+  UseGuards,
+} from '@nestjs/common';
 import {
   ApiTags,
   ApiOperation,
@@ -10,7 +18,9 @@ import { AuthGuard } from '@nestjs/passport';
 import { ApiResponseDto, ApiErrorResponseDto } from '@/common/schemas';
 import type { ApiResponse as ApiResponseType } from '@/common/schemas';
 import { RolesGuard } from '@/common/guards';
-import { Roles } from '@/common/decorators';
+import { CurrentUser, Roles } from '@/common/decorators';
+import type { CurrentUserData } from '@/common/decorators';
+import { WalletAccessService } from '@/modules/wallets/services/wallet-access.service';
 import { ProventosService } from '../services/proventos.service';
 import { ProventosSyncService } from '../services/proventos-sync.service';
 import { ProventosCalculationService } from '../services/proventos-calculation.service';
@@ -23,6 +33,15 @@ import {
   type ProventosSummaryResponse,
 } from '../schemas/dividend-event.schema';
 
+const UUID_REGEX =
+  /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
+
+function assertUuid(value: string, field: string): void {
+  if (!UUID_REGEX.test(value)) {
+    throw new BadRequestException(`${field} deve ser um UUID válido`);
+  }
+}
+
 @ApiTags('Proventos')
 @Controller('proventos')
 @UseGuards(AuthGuard('jwt'), RolesGuard)
@@ -32,6 +51,7 @@ export class ProventosController {
     private readonly proventosService: ProventosService,
     private readonly syncService: ProventosSyncService,
     private readonly calculationService: ProventosCalculationService,
+    private readonly walletAccess: WalletAccessService,
   ) {}
 
   // TODO: remove — temporary endpoint for manual sync testing
@@ -63,7 +83,10 @@ export class ProventosController {
   })
   async getWalletProventos(
     @Param('walletId') walletId: string,
+    @CurrentUser() actor: CurrentUserData,
   ): Promise<ApiResponseType<WalletProventosResponse>> {
+    assertUuid(walletId, 'walletId');
+    await this.walletAccess.verifyWalletAccess(walletId, actor);
     const data = await this.calculationService.getWalletProventos(walletId);
     return ApiResponseDto.success(data);
   }
@@ -88,7 +111,10 @@ export class ProventosController {
   })
   async getProventosSummary(
     @Query('walletId') walletId: string,
+    @CurrentUser() actor: CurrentUserData,
   ): Promise<ApiResponseType<ProventosSummaryResponse>> {
+    assertUuid(walletId, 'walletId');
+    await this.walletAccess.verifyWalletAccess(walletId, actor);
     const data = await this.calculationService.getSummary(walletId);
     return ApiResponseDto.success(data);
   }

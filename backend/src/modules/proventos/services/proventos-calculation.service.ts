@@ -38,7 +38,28 @@ export class ProventosCalculationService {
     private readonly oplab: OpLabMarketService,
   ) {}
 
+  private static readonly COOLDOWN_MS = 60 * 60 * 1000; // 1 hour
+
   async ensureProcessed(walletId: string): Promise<void> {
+    const cooldownCutoff = new Date(
+      Date.now() - ProventosCalculationService.COOLDOWN_MS,
+    );
+
+    // Fast path: skip if all STOCK positions were processed within the cooldown window
+    const needsCheck = await this.prisma.position.findFirst({
+      where: {
+        walletId,
+        asset: { type: 'STOCK' },
+        OR: [
+          { dividendsProcessedAt: null },
+          { dividendsProcessedAt: { lt: cooldownCutoff } },
+        ],
+      },
+      select: { id: true },
+    });
+
+    if (!needsCheck) return;
+
     const stale = await this.isStale(walletId);
     if (stale) {
       await this.processWallet(walletId);
@@ -57,19 +78,19 @@ export class ProventosCalculationService {
     if (positions.length === 0) return false;
     if (positions.some((p) => p.dividendsProcessedAt === null)) return true;
 
-    for (const position of positions) {
-      const newEvent = await this.prisma.dividendEvent.findFirst({
-        where: {
-          ticker: position.asset.ticker,
+    // Single query with OR conditions — replaces N+1 loop
+    const newEvent = await this.prisma.dividendEvent.findFirst({
+      where: {
+        OR: positions.map((p) => ({
+          ticker: p.asset.ticker,
           active: true,
-          importedAt: { gt: position.dividendsProcessedAt! },
-        },
-        select: { id: true },
-      });
-      if (newEvent) return true;
-    }
+          importedAt: { gt: p.dividendsProcessedAt! },
+        })),
+      },
+      select: { id: true },
+    });
 
-    return false;
+    return !!newEvent;
   }
 
   async getWalletProventos(walletId: string): Promise<WalletProventosResult> {
