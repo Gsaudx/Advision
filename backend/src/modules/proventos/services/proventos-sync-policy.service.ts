@@ -58,7 +58,8 @@ export class ProventosSyncPolicyService {
         data: metrics,
       });
     } catch (error: unknown) {
-      this.logger.warn(`Failed to update sync log ${logId}: ${error}`);
+      const message = error instanceof Error ? error.message : String(error);
+      this.logger.warn(`Failed to update sync log ${logId}: ${message}`);
     }
   }
 

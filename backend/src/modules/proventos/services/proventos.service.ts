@@ -47,7 +47,7 @@ export class ProventosService {
     ]);
 
     return {
-      items: items.map(this.formatEvent),
+      items: items.map((event) => this.formatEvent(event)),
       total,
       skip,
       take,

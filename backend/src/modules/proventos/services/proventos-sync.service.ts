@@ -34,7 +34,7 @@ export class ProventosSyncService implements OnApplicationBootstrap {
   }
 
   // TODO: remove — bypasses daily lock for manual testing
-  private async runSync(trigger: string, userId?: string): Promise<void> {
+  private async runSync(trigger: string): Promise<void> {
     const startTime = Date.now();
     this.logger.log(`Force sync triggered by ${trigger}`);
 

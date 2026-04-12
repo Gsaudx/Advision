@@ -1,4 +1,4 @@
-import { Injectable } from '@nestjs/common';
+import { Injectable, Logger } from '@nestjs/common';
 import { Decimal } from 'decimal.js';
 import { PrismaService } from '@/shared/prisma/prisma.service';
 import { OpLabMarketService } from '@/modules/wallets/providers/oplab-market.service';
@@ -31,6 +31,8 @@ type PositionWithAsset = Position & { asset: Asset };
 
 @Injectable()
 export class ProventosCalculationService {
+  private readonly logger = new Logger(ProventosCalculationService.name);
+
   constructor(
     private readonly prisma: PrismaService,
     private readonly oplab: OpLabMarketService,
@@ -198,6 +200,9 @@ export class ProventosCalculationService {
     });
 
     if (!firstBuy) {
+      this.logger.warn(
+        `Position ${position.id} (${position.asset.ticker}) has no BUY transaction — skipping dividend processing`,
+      );
       await this.prisma.position.update({
         where: { id: position.id },
         data: { dividendsProcessedAt: new Date() },
@@ -225,7 +230,13 @@ export class ProventosCalculationService {
         event.exDividendDate,
       );
 
-      if (quantity <= 0) continue;
+      if (quantity < 0) {
+        this.logger.warn(
+          `Negative quantity (${quantity}) for ${position.asset.ticker} at ${event.exDividendDate.toISOString()} in wallet ${walletId} — possible data corruption, skipping`,
+        );
+        continue;
+      }
+      if (quantity === 0) continue;
 
       const totalReceived = new Decimal(quantity)
         .times(event.valuePerShare.toString())

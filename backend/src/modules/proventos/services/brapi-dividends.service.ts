@@ -22,7 +22,9 @@ export class BrapiDividendsService {
       throw new Error(`brapi returned ${response.status} for ${ticker}`);
     }
 
-    const data = await response.json();
+    const data = (await response.json()) as {
+      results?: Array<{ dividendsData?: { cashDividends?: unknown[] } }>;
+    };
     const cashDividends = data?.results?.[0]?.dividendsData?.cashDividends;
 
     if (!Array.isArray(cashDividends)) {

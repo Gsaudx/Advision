@@ -13,14 +13,15 @@ describe('BrapiDividendsService', () => {
 
   const brapiResponse = (cashDividends: unknown[]) => ({
     ok: true,
-    json: async () => ({
-      results: [
-        {
-          symbol: 'PETR4',
-          dividendsData: { cashDividends },
-        },
-      ],
-    }),
+    json: () =>
+      Promise.resolve({
+        results: [
+          {
+            symbol: 'PETR4',
+            dividendsData: { cashDividends },
+          },
+        ],
+      }),
   });
 
   it('should map brapi response to BrapiDividendDto[]', async () => {
@@ -53,7 +54,7 @@ describe('BrapiDividendsService', () => {
   it('should return empty array when no cashDividends', async () => {
     mockFetch.mockResolvedValue({
       ok: true,
-      json: async () => ({ results: [{ symbol: 'PETR4' }] }),
+      json: () => Promise.resolve({ results: [{ symbol: 'PETR4' }] }),
     });
 
     const result = await service.fetchDividends('PETR4');
@@ -63,7 +64,7 @@ describe('BrapiDividendsService', () => {
   it('should return empty array when results is empty', async () => {
     mockFetch.mockResolvedValue({
       ok: true,
-      json: async () => ({ results: [] }),
+      json: () => Promise.resolve({ results: [] }),
     });
 
     const result = await service.fetchDividends('PETR4');
