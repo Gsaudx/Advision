@@ -21,6 +21,7 @@ import type {
   Transaction,
 } from '@/generated/prisma/client';
 import type { CurrentUserData } from '@/common/decorators';
+import { ProventosCalculationService } from '@/modules/proventos/services/proventos-calculation.service';
 import { MarketDataProvider } from '../providers';
 import { AuditService } from './audit.service';
 import { WalletAccessService } from './wallet-access.service';
@@ -55,6 +56,7 @@ export class WalletsService {
     private readonly auditService: AuditService,
     private readonly domainEvents: DomainEventsService,
     private readonly walletAccess: WalletAccessService,
+    private readonly proventosCalc: ProventosCalculationService,
   ) {}
 
   /**
@@ -269,6 +271,8 @@ export class WalletsService {
     actor: CurrentUserData,
   ): Promise<WalletResponse> {
     const wallet = await this.walletAccess.verifyWalletAccess(walletId, actor);
+
+    await this.proventosCalc.ensureProcessed(walletId);
 
     const positions = await this.prisma.position.findMany({
       where: { walletId, quantity: { not: 0 } },

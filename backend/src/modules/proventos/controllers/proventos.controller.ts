@@ -56,11 +56,15 @@ export class ProventosController {
     description: 'Proventos calculados',
     type: WalletProventosApiResponseDto,
   })
-  @ApiResponse({ status: 401, description: 'Nao autenticado', type: ApiErrorResponseDto })
+  @ApiResponse({
+    status: 401,
+    description: 'Nao autenticado',
+    type: ApiErrorResponseDto,
+  })
   async getWalletProventos(
     @Param('walletId') walletId: string,
   ): Promise<ApiResponseType<WalletProventosResponse>> {
-    const data = await this.calculationService.processWallet(walletId);
+    const data = await this.calculationService.getWalletProventos(walletId);
     return ApiResponseDto.success(data);
   }
 
@@ -68,7 +72,8 @@ export class ProventosController {
   @Roles('ADVISOR', 'ADMIN', 'CLIENT')
   @ApiOperation({
     summary: 'Resumo de proventos por ticker de uma carteira',
-    description: 'Retorna os totais de proventos recebidos agrupados por ticker.',
+    description:
+      'Retorna os totais de proventos recebidos agrupados por ticker.',
   })
   @ApiQuery({ name: 'walletId', required: true, description: 'ID da carteira' })
   @ApiResponse({
@@ -76,7 +81,11 @@ export class ProventosController {
     description: 'Resumo de proventos',
     type: ProventosSummaryApiResponseDto,
   })
-  @ApiResponse({ status: 401, description: 'Nao autenticado', type: ApiErrorResponseDto })
+  @ApiResponse({
+    status: 401,
+    description: 'Nao autenticado',
+    type: ApiErrorResponseDto,
+  })
   async getProventosSummary(
     @Query('walletId') walletId: string,
   ): Promise<ApiResponseType<ProventosSummaryResponse>> {
@@ -91,11 +100,31 @@ export class ProventosController {
     description:
       'Retorna o historico de eventos de dividendos sincronizados da BRAPI. Filtravel por ticker.',
   })
-  @ApiQuery({ name: 'ticker', required: false, description: 'Filtrar por ticker (ex: PETR4)' })
-  @ApiQuery({ name: 'skip', required: false, description: 'Registros a pular (padrao: 0)' })
-  @ApiQuery({ name: 'take', required: false, description: 'Registros a retornar (padrao: 20, max: 100)' })
-  @ApiResponse({ status: 200, description: 'Lista de proventos', type: DividendEventListApiResponseDto })
-  @ApiResponse({ status: 401, description: 'Nao autenticado', type: ApiErrorResponseDto })
+  @ApiQuery({
+    name: 'ticker',
+    required: false,
+    description: 'Filtrar por ticker (ex: PETR4)',
+  })
+  @ApiQuery({
+    name: 'skip',
+    required: false,
+    description: 'Registros a pular (padrao: 0)',
+  })
+  @ApiQuery({
+    name: 'take',
+    required: false,
+    description: 'Registros a retornar (padrao: 20, max: 100)',
+  })
+  @ApiResponse({
+    status: 200,
+    description: 'Lista de proventos',
+    type: DividendEventListApiResponseDto,
+  })
+  @ApiResponse({
+    status: 401,
+    description: 'Nao autenticado',
+    type: ApiErrorResponseDto,
+  })
   async findAll(
     @Query('ticker') ticker?: string,
     @Query('skip') skip?: string,

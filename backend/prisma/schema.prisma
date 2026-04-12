@@ -185,6 +185,7 @@ model Wallet {
   optimizationRuns      OptimizationRun[]
   rebalanceLogs         RebalanceLog[]
   structuredOperations  StructuredOperation[]
+  dividendPayments      WalletDividendPayment[]
 
   @@index([clientId])
   @@map("wallets")
@@ -227,25 +228,48 @@ model OptionDetail {
 }
 
 model Position {
-  id                  String    @id @default(uuid())
-  walletId            String
-  assetId             String
-  quantity            Decimal   @db.Decimal(18, 8)
-  averagePrice        Decimal   @db.Decimal(18, 2)
-  collateralBlocked   Decimal?  @db.Decimal(18, 2)
-  lastDividendDate    DateTime?
-  priceAtLastDividend Decimal?  @db.Decimal(18, 2)
-  createdAt           DateTime  @default(now())
-  updatedAt           DateTime  @updatedAt
+  id                    String    @id @default(uuid())
+  walletId              String
+  assetId               String
+  quantity              Decimal   @db.Decimal(18, 8)
+  averagePrice          Decimal   @db.Decimal(18, 2)
+  collateralBlocked     Decimal?  @db.Decimal(18, 2)
+  dividendsProcessedAt  DateTime?
+  lastDividendDate      DateTime?
+  priceAtLastDividend   Decimal?  @db.Decimal(18, 2)
+  createdAt             DateTime  @default(now())
+  updatedAt             DateTime  @updatedAt
 
-  wallet          Wallet            @relation(fields: [walletId], references: [id], onDelete: Cascade)
-  asset           Asset             @relation(fields: [assetId], references: [id])
-  lifecycleEvents OptionLifecycle[]
+  wallet           Wallet                  @relation(fields: [walletId], references: [id], onDelete: Cascade)
+  asset            Asset                   @relation(fields: [assetId], references: [id])
+  lifecycleEvents  OptionLifecycle[]
+  dividendPayments WalletDividendPayment[]
 
   @@unique([walletId, assetId])
   @@index([walletId])
   @@index([assetId])
   @@map("positions")
+}
+
+model WalletDividendPayment {
+  id             String    @id @default(uuid())
+  walletId       String
+  positionId     String
+  ticker         String    @db.VarChar(20)
+  dividendType   String?   @db.VarChar(30)
+  exDividendDate DateTime  @db.Date
+  paymentDate    DateTime? @db.Date
+  valuePerShare  Decimal   @db.Decimal(18, 8)
+  quantityAtDate Decimal   @db.Decimal(18, 8)
+  totalReceived  Decimal   @db.Decimal(18, 2)
+  createdAt      DateTime  @default(now())
+
+  wallet   Wallet   @relation(fields: [walletId], references: [id], onDelete: Cascade)
+  position Position @relation(fields: [positionId], references: [id], onDelete: Cascade)
+
+  @@unique([walletId, ticker, exDividendDate])
+  @@index([walletId])
+  @@map("wallet_dividend_payments")
 }
 
 model Transaction {

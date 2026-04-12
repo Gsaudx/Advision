@@ -6,6 +6,7 @@ import {
 } from '@nestjs/common';
 import { WalletsService } from '../services/wallets.service';
 import { WalletAccessService } from '../services/wallet-access.service';
+import { ProventosCalculationService } from '@/modules/proventos/services/proventos-calculation.service';
 
 // Use Prisma-compatible Decimal mock (simply a number that works with Decimal.js)
 // Decimal.js accepts numbers directly, so we use numbers for cashBalance
@@ -192,6 +193,10 @@ describe('WalletsService', () => {
         { provide: AuditService, useValue: auditService },
         { provide: DomainEventsService, useValue: domainEventsService },
         { provide: WalletAccessService, useValue: walletAccessService },
+        {
+          provide: ProventosCalculationService,
+          useValue: { ensureProcessed: jest.fn().mockResolvedValue(undefined) },
+        },
       ],
     }).compile();
 

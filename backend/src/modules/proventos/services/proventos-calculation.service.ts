@@ -2,6 +2,7 @@ import { Injectable, Logger } from '@nestjs/common';
 import { Decimal } from 'decimal.js';
 import { PrismaService } from '@/shared/prisma/prisma.service';
 import { OpLabMarketService } from '@/modules/wallets/providers/oplab-market.service';
+import type { Asset, Position } from '@/generated/prisma/client';
 
 export interface DividendEventResult {
   ticker: string;
@@ -26,6 +27,8 @@ export interface ProventosSummaryItem {
   lastDividendDate: string | null;
 }
 
+type PositionWithAsset = Position & { asset: Asset };
+
 @Injectable()
 export class ProventosCalculationService {
   private readonly logger = new Logger(ProventosCalculationService.name);
@@ -35,7 +38,111 @@ export class ProventosCalculationService {
     private readonly oplab: OpLabMarketService,
   ) {}
 
-  async processWallet(walletId: string): Promise<WalletProventosResult> {
+  async ensureProcessed(walletId: string): Promise<void> {
+    const stale = await this.isStale(walletId);
+    if (stale) {
+      await this.processWallet(walletId);
+    }
+  }
+
+  async isStale(walletId: string): Promise<boolean> {
+    const positions = await this.prisma.position.findMany({
+      where: { walletId, asset: { type: 'STOCK' } },
+      select: {
+        dividendsProcessedAt: true,
+        asset: { select: { ticker: true } },
+      },
+    });
+
+    if (positions.length === 0) return false;
+    if (positions.some((p) => p.dividendsProcessedAt === null)) return true;
+
+    for (const position of positions) {
+      const newEvent = await this.prisma.dividendEvent.findFirst({
+        where: {
+          ticker: position.asset.ticker,
+          active: true,
+          importedAt: { gt: position.dividendsProcessedAt! },
+        },
+        select: { id: true },
+      });
+      if (newEvent) return true;
+    }
+
+    return false;
+  }
+
+  async getWalletProventos(walletId: string): Promise<WalletProventosResult> {
+    await this.ensureProcessed(walletId);
+
+    const payments = await this.prisma.walletDividendPayment.findMany({
+      where: { walletId },
+      orderBy: [{ ticker: 'asc' }, { exDividendDate: 'asc' }],
+    });
+
+    const items: DividendEventResult[] = payments.map((p) => ({
+      ticker: p.ticker,
+      dividendType: p.dividendType,
+      exDividendDate: p.exDividendDate.toISOString().split('T')[0],
+      paymentDate: p.paymentDate
+        ? p.paymentDate.toISOString().split('T')[0]
+        : null,
+      valuePerShare: Number(p.valuePerShare),
+      quantityAtDate: Number(p.quantityAtDate),
+      totalReceived: Number(p.totalReceived),
+    }));
+
+    const totalReceived = items.reduce(
+      (sum, item) => sum + item.totalReceived,
+      0,
+    );
+
+    return { walletId, items, totalReceived };
+  }
+
+  async getSummary(walletId: string): Promise<ProventosSummaryItem[]> {
+    await this.ensureProcessed(walletId);
+
+    const payments = await this.prisma.walletDividendPayment.findMany({
+      where: { walletId },
+      orderBy: { exDividendDate: 'asc' },
+    });
+
+    const byTicker = new Map<string, ProventosSummaryItem>();
+
+    for (const payment of payments) {
+      const paymentDate = payment.paymentDate
+        ? payment.paymentDate.toISOString().split('T')[0]
+        : null;
+
+      const existing = byTicker.get(payment.ticker);
+
+      if (!existing) {
+        byTicker.set(payment.ticker, {
+          ticker: payment.ticker,
+          totalReceived: Number(payment.totalReceived),
+          eventsCount: 1,
+          lastDividendDate: paymentDate,
+        });
+      } else {
+        existing.totalReceived = new Decimal(existing.totalReceived)
+          .plus(payment.totalReceived.toString())
+          .toNumber();
+        existing.eventsCount += 1;
+        if (
+          paymentDate &&
+          (!existing.lastDividendDate ||
+            paymentDate > existing.lastDividendDate)
+        ) {
+          existing.lastDividendDate = paymentDate;
+        }
+      }
+    }
+
+    return Array.from(byTicker.values());
+  }
+
+  private async processWallet(walletId: string): Promise<void> {
     const positions = await this.prisma.position.findMany({
       where: {
         walletId,
@@ -44,99 +151,114 @@ export class ProventosCalculationService {
       include: { asset: true },
     });
 
-    const allItems: DividendEventResult[] = [];
-
     for (const position of positions) {
-      const items = await this.processPosition(walletId, position.assetId, position.asset.ticker);
-      allItems.push(...items);
-
-      if (items.length > 0) {
-        await this.updatePositionDividendFields(position.id, position.asset.ticker, items);
-      }
+      await this.processPosition(walletId, position);
     }
-
-    const totalReceived = allItems.reduce((sum, item) => sum + item.totalReceived, 0);
-
-    return { walletId, items: allItems, totalReceived };
-  }
-
-  async getSummary(walletId: string): Promise<ProventosSummaryItem[]> {
-    const result = await this.processWallet(walletId);
-
-    const byTicker = new Map<string, ProventosSummaryItem>();
-
-    for (const item of result.items) {
-      const existing = byTicker.get(item.ticker);
-      if (!existing) {
-        byTicker.set(item.ticker, {
-          ticker: item.ticker,
-          totalReceived: item.totalReceived,
-          eventsCount: 1,
-          lastDividendDate: item.paymentDate,
-        });
-      } else {
-        existing.totalReceived = new Decimal(existing.totalReceived)
-          .plus(item.totalReceived)
-          .toNumber();
-        existing.eventsCount += 1;
-        if (
-          item.paymentDate &&
-          (!existing.lastDividendDate || item.paymentDate > existing.lastDividendDate)
-        ) {
-          existing.lastDividendDate = item.paymentDate;
-        }
-      }
-    }
-
-    return Array.from(byTicker.values());
   }
 
   private async processPosition(
     walletId: string,
-    assetId: string,
-    ticker: string,
-  ): Promise<DividendEventResult[]> {
+    position: PositionWithAsset,
+  ): Promise<void> {
     const firstBuy = await this.prisma.transaction.findFirst({
-      where: { walletId, assetId, type: 'BUY' },
+      where: { walletId, assetId: position.assetId, type: 'BUY' },
       orderBy: { executedAt: 'asc' },
       select: { executedAt: true },
     });
 
-    if (!firstBuy) return [];
+    if (!firstBuy) {
+      await this.prisma.position.update({
+        where: { id: position.id },
+        data: { dividendsProcessedAt: new Date() },
+      });
+      return;
+    }
 
     const dividendEvents = await this.prisma.dividendEvent.findMany({
       where: {
-        ticker,
+        ticker: position.asset.ticker,
         exDividendDate: { gte: firstBuy.executedAt, not: null },
         active: true,
       },
       orderBy: { exDividendDate: 'asc' },
     });
 
-    const results: DividendEventResult[] = [];
+    let mostRecentEvent: (typeof dividendEvents)[0] | null = null;
 
     for (const event of dividendEvents) {
       if (!event.exDividendDate || event.valuePerShare === null) continue;
 
-      const quantity = await this.getQuantityAtDate(walletId, assetId, event.exDividendDate);
+      const quantity = await this.getQuantityAtDate(
+        walletId,
+        position.assetId,
+        event.exDividendDate,
+      );
 
       if (quantity <= 0) continue;
 
-      const valuePerShare = Number(event.valuePerShare);
-      const totalReceived = new Decimal(quantity).times(valuePerShare).toNumber();
+      const totalReceived = new Decimal(quantity)
+        .times(event.valuePerShare.toString())
+        .toNumber();
 
-      results.push({
-        ticker,
-        dividendType: event.dividendType,
-        exDividendDate: event.exDividendDate.toISOString().split('T')[0],
-        paymentDate: event.paymentDate ? event.paymentDate.toISOString().split('T')[0] : null,
-        valuePerShare,
-        quantityAtDate: quantity,
-        totalReceived,
+      await this.prisma.walletDividendPayment.upsert({
+        where: {
+          walletId_ticker_exDividendDate: {
+            walletId,
+            ticker: position.asset.ticker,
+            exDividendDate: event.exDividendDate,
+          },
+        },
+        create: {
+          walletId,
+          positionId: position.id,
+          ticker: position.asset.ticker,
+          dividendType: event.dividendType,
+          exDividendDate: event.exDividendDate,
+          paymentDate: event.paymentDate,
+          valuePerShare: event.valuePerShare,
+          quantityAtDate: quantity,
+          totalReceived,
+        },
+        update: {
+          quantityAtDate: quantity,
+          totalReceived,
+          paymentDate: event.paymentDate,
+          valuePerShare: event.valuePerShare,
+        },
       });
+
+      if (
+        !mostRecentEvent ||
+        event.exDividendDate > mostRecentEvent.exDividendDate!
+      ) {
+        mostRecentEvent = event;
+      }
     }
 
-    return results;
+    const positionData: Parameters<
+      typeof this.prisma.position.update
+    >[0]['data'] = {
+      dividendsProcessedAt: new Date(),
+    };
+
+    if (mostRecentEvent?.exDividendDate) {
+      positionData.lastDividendDate =
+        mostRecentEvent.paymentDate ?? mostRecentEvent.exDividendDate;
+
+      const historicalPrice = await this.oplab.getHistoricalClose(
+        position.asset.ticker,
+        mostRecentEvent.exDividendDate,
+      );
+
+      if (historicalPrice !== null) {
+        positionData.priceAtLastDividend = new Decimal(historicalPrice);
+      }
+    }
+
+    await this.prisma.position.update({
+      where: { id: position.id },
+      data: positionData,
+    });
   }
 
   private async getQuantityAtDate(
@@ -154,46 +276,13 @@ export class ProventosCalculationService {
       select: { type: true, quantity: true },
     });
 
-    const qty = transactions.reduce((sum, tx) => {
-      if (!tx.quantity) return sum;
-      return tx.type === 'BUY'
-        ? sum.plus(tx.quantity.toString())
-        : sum.minus(tx.quantity.toString());
-    }, new Decimal(0));
-
-    return qty.toNumber();
-  }
-
-  private async updatePositionDividendFields(
-    positionId: string,
-    ticker: string,
-    items: DividendEventResult[],
-  ): Promise<void> {
-    const mostRecent = items.reduce((latest, item) =>
-      item.exDividendDate > latest.exDividendDate ? item : latest,
-    );
-
-    const lastDividendDate = mostRecent.paymentDate
-      ? new Date(mostRecent.paymentDate)
-      : new Date(mostRecent.exDividendDate);
-
-    let priceAtLastDividend: number | null = null;
-
-    try {
-      priceAtLastDividend = await this.oplab.getHistoricalClose(
-        ticker,
-        new Date(mostRecent.exDividendDate),
-      );
-    } catch {
-      this.logger.warn(`Could not fetch historical close for ${ticker} on ${mostRecent.exDividendDate}`);
-    }
-
-    await this.prisma.position.update({
-      where: { id: positionId },
-      data: {
-        lastDividendDate,
-        ...(priceAtLastDividend !== null && { priceAtLastDividend }),
-      },
-    });
+    return transactions
+      .reduce((sum, tx) => {
+        if (!tx.quantity) return sum;
+        return tx.type === 'BUY'
+          ? sum.plus(tx.quantity.toString())
+          : sum.minus(tx.quantity.toString());
+      }, new Decimal(0))
+      .toNumber();
   }
 }
