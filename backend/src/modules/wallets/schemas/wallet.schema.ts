@@ -108,6 +108,8 @@ export const PositionResponseSchema = z.object({
   profitLoss: z.number().optional(),
   profitLossPercent: z.number().optional(),
   collateralBlocked: z.number().nullable().optional(),
+  lastDividendDate: z.string().nullable().optional(),
+  priceAtLastDividend: z.number().nullable().optional(),
 });
 export type PositionResponse = z.infer<typeof PositionResponseSchema>;
 

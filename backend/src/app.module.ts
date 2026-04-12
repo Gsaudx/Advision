@@ -6,6 +6,7 @@ import { ClientsModule } from '@/modules/clients';
 import { WalletsModule } from '@/modules/wallets';
 import { ActivityModule } from '@/modules/activity';
 import { DerivativesModule } from '@/modules/derivatives';
+import { ProventosModule } from '@/modules/proventos/proventos.module';
 
 @Module({
   imports: [
@@ -16,6 +17,7 @@ import { DerivativesModule } from '@/modules/derivatives';
     WalletsModule,
     ActivityModule,
     DerivativesModule,
+    ProventosModule,
   ],
 })
 export class AppModule {}

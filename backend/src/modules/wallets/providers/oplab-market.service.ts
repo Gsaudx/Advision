@@ -82,6 +82,15 @@ interface OpLabSearchResponse {
   data: OpLabInstrument[];
 }
 
+interface OpLabCandle {
+  time: string;
+  open?: number;
+  high?: number;
+  low?: number;
+  close?: number;
+  volume?: number;
+}
+
 /**
  * Actual OpLab series response format - nested structure
  */
@@ -474,6 +483,34 @@ export class OpLabMarketService extends MarketDataProvider {
     }
 
     return result;
+  }
+
+  /**
+   * Get the closing price of a stock on a specific date.
+   * Uses smooth=true so holidays return the previous trading day's close.
+   * Returns null if the API is not configured or no data is found.
+   */
+  async getHistoricalClose(ticker: string, date: Date): Promise<number | null> {
+    if (!this.accessToken) return null;
+
+    const dateStr = date.toISOString().split('T')[0];
+    const from = `${dateStr}T00:00:00`;
+    const to = `${dateStr}T23:59:59`;
+
+    try {
+      const candles = await this.makeRequest<OpLabCandle[]>(
+        `/market/instruments/${ticker.toUpperCase()}/candles/1d`,
+        { from, to, smooth: 'true', df: 'iso' },
+      );
+
+      if (!Array.isArray(candles) || candles.length === 0) return null;
+      return candles[0].close ?? null;
+    } catch (error) {
+      this.logger.warn(
+        `Failed to fetch historical close for ${ticker} on ${dateStr}: ${(error as Error).message}`,
+      );
+      return null;
+    }
   }
 
   /**

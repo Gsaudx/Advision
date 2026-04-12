@@ -38,6 +38,15 @@ export const OptimizationEvents = {
 /**
  * Event type constants for Derivatives aggregate
  */
+/**
+ * Event type constants for DividendSync aggregate
+ */
+export const DividendSyncEvents = {
+  SYNC_STARTED: 'DividendSyncStarted',
+  SYNC_COMPLETED: 'DividendSyncCompleted',
+  SYNC_FAILED: 'DividendSyncFailed',
+} as const;
+
 export const DerivativesEvents = {
   OPTION_BOUGHT: 'OptionBought',
   OPTION_SOLD: 'OptionSold',
@@ -64,6 +73,12 @@ export type ClientEventType = (typeof ClientEvents)[keyof typeof ClientEvents];
  */
 export type OptimizationEventType =
   (typeof OptimizationEvents)[keyof typeof OptimizationEvents];
+
+/**
+ * Union type of all dividend sync event types
+ */
+export type DividendSyncEventType =
+  (typeof DividendSyncEvents)[keyof typeof DividendSyncEvents];
 
 /**
  * Union type of all derivatives event types

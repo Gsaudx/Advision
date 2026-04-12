@@ -3,6 +3,7 @@ import {
   LayoutDashboard,
   Users,
   Wallet,
+  TrendingUp,
   ChevronLeft,
   ChevronRight,
 } from 'lucide-react';
@@ -18,11 +19,13 @@ const advisorNavItems: NavItem[] = [
   { name: 'Dashboard', href: '/advisor/home', icon: LayoutDashboard },
   { name: 'Clientes', href: '/clients', icon: Users },
   { name: 'Carteiras', href: '/wallets', icon: Wallet },
+  { name: 'Proventos', href: '/proventos', icon: TrendingUp },
 ];
 
 const clientNavItems: NavItem[] = [
   { name: 'Inicio', href: '/client/home', icon: LayoutDashboard },
   { name: 'Carteiras', href: '/wallets', icon: Wallet },
+  { name: 'Proventos', href: '/proventos', icon: TrendingUp },
 ];
 
 interface SidebarProps {

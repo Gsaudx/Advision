@@ -1,4 +1,5 @@
 import { Module } from '@nestjs/common';
+import { ProventosModule } from '@/modules/proventos/proventos.module';
 import { WalletsController } from './controllers';
 import {
   WalletsService,
@@ -14,6 +15,7 @@ import {
 } from './providers';
 
 @Module({
+  imports: [ProventosModule],
   controllers: [WalletsController],
   providers: [
     // Core services
@@ -38,6 +40,7 @@ import {
     WalletAccessService,
     AuditService,
     AssetResolverService,
+    OpLabMarketService,
     CompositeMarketService,
     'MARKET_DATA_PROVIDER',
   ],

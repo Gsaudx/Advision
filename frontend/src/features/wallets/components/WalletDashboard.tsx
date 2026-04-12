@@ -18,8 +18,10 @@ import { formatCurrency, formatDateTime } from '@/lib/formatters';
 import { LoadingSpinner } from '@/components/ui/LoadingSpinner';
 import ModalBase from '@/components/layout/ModalBase';
 import { useWalletById, useTransactions } from '../api';
+import { useWalletProventos } from '@/features/proventos/api';
 import { PositionTable } from './PositionTable';
 import { TransactionTimeline } from './TransactionTimeline';
+import { ProventosTab } from './ProventosTab';
 import { CashOperationModal } from './CashOperationModal';
 import { TradeModal } from './TradeModal';
 import {
@@ -38,7 +40,7 @@ import type { OptionPosition } from '@/features/derivatives';
 import type { TradeType, CashOperationType, Position } from '../types';
 
 type OptionTradeType = 'BUY' | 'SELL';
-type TabType = 'positions' | 'options' | 'strategies' | 'history';
+type TabType = 'positions' | 'options' | 'strategies' | 'history' | 'proventos';
 type LifecycleAction = 'close' | 'exercise' | 'assignment' | 'expiration';
 
 interface WalletDashboardProps {
@@ -77,6 +79,9 @@ export function WalletDashboard({
     isLoading: isLoadingOptions,
     isFetching: isFetchingOptions,
   } = useOptionPositions(walletId);
+
+  // Proventos for tags on position cards
+  const { data: proventosData } = useWalletProventos(walletId, isOpen);
 
   // Use dataUpdatedAt as reference time for option expiry calculations (avoids impure render)
   const currentTime = dataUpdatedAt || 0;
@@ -388,6 +393,17 @@ export function WalletDashboard({
                     <History className="w-4 h-4" />
                     Historico
                   </button>
+                  <button
+                    onClick={() => setActiveTab('proventos')}
+                    className={`flex items-center gap-2 px-4 py-2 rounded-md text-sm font-medium transition-colors ${
+                      activeTab === 'proventos'
+                        ? 'bg-slate-700 text-white'
+                        : 'text-gray-400 hover:text-white'
+                    }`}
+                  >
+                    <TrendingUp className="w-4 h-4" />
+                    Proventos
+                  </button>
                 </div>
 
                 {/* Tab Content */}
@@ -398,6 +414,7 @@ export function WalletDashboard({
                     canTrade={canTrade}
                     onSellClick={handleSellPosition}
                     isLoading={isRefreshing}
+                    proventos={proventosData?.items}
                   />
                 )}
                 {activeTab === 'options' && (
@@ -514,6 +531,12 @@ export function WalletDashboard({
                     transactions={transactions?.items ?? []}
                     currency={wallet.currency}
                     isLoading={isLoadingTransactions}
+                  />
+                )}
+                {activeTab === 'proventos' && (
+                  <ProventosTab
+                    walletId={walletId}
+                    currency={wallet.currency}
                   />
                 )}
               </div>
