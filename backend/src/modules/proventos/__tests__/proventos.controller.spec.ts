@@ -3,6 +3,7 @@ import { ProventosController } from '../controllers/proventos.controller';
 import { ProventosService } from '../services/proventos.service';
 import { ProventosSyncService } from '../services/proventos-sync.service';
 import { ProventosCalculationService } from '../services/proventos-calculation.service';
+import { WalletAccessService } from '@/modules/wallets/services/wallet-access.service';
 
 const mockListResponse = {
   items: [
@@ -39,6 +40,10 @@ describe('ProventosController', () => {
         {
           provide: ProventosCalculationService,
           useValue: { processWallet: jest.fn(), getSummary: jest.fn() },
+        },
+        {
+          provide: WalletAccessService,
+          useValue: { verifyWalletAccess: jest.fn() },
         },
       ],
     }).compile();

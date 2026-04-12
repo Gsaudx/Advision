@@ -52,7 +52,7 @@ const makeTx = (type: 'BUY' | 'SELL', qty: string, date: string) => ({
 });
 
 type PrismaMock = {
-  position: { findMany: jest.Mock; update: jest.Mock };
+  position: { findFirst: jest.Mock; findMany: jest.Mock; update: jest.Mock };
   transaction: { findFirst: jest.Mock; findMany: jest.Mock };
   dividendEvent: { findMany: jest.Mock; findFirst: jest.Mock };
   walletDividendPayment: { findMany: jest.Mock; upsert: jest.Mock };
@@ -65,7 +65,11 @@ describe('ProventosCalculationService', () => {
 
   beforeEach(async () => {
     prisma = {
-      position: { findMany: jest.fn(), update: jest.fn() },
+      position: {
+        findFirst: jest.fn().mockResolvedValue({ id: 'pos-1' }),
+        findMany: jest.fn(),
+        update: jest.fn(),
+      },
       transaction: { findFirst: jest.fn(), findMany: jest.fn() },
       dividendEvent: {
         findMany: jest.fn(),
