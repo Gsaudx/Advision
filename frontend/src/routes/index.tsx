@@ -50,7 +50,7 @@ export function AppRoutes() {
             <ProtectedLayout allowedRoles={['ADVISOR', 'ADMIN', 'CLIENT']} />
           }
         >
-            <Route path="/wallets" element={<WalletsPage />} />
+          <Route path="/wallets" element={<WalletsPage />} />
           <Route path="/proventos" element={<ProventosPage />} />
         </Route>
 

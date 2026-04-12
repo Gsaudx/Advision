@@ -1,5 +1,10 @@
 import { TrendingUp, TrendingDown, Minus, ChevronRight } from 'lucide-react';
-import { formatCurrency, formatPercent, formatNumber, formatDate } from '@/lib/formatters';
+import {
+  formatCurrency,
+  formatPercent,
+  formatNumber,
+  formatDate,
+} from '@/lib/formatters';
 import type { Position } from '../types';
 import { assetTypeLabels } from '../types';
 import type { WalletProvento } from '@/features/proventos/types';
@@ -47,7 +52,10 @@ function SkeletonRow() {
   );
 }
 
-function getUpcomingPayment(ticker: string, proventos: WalletProvento[]): string | null {
+function getUpcomingPayment(
+  ticker: string,
+  proventos: WalletProvento[],
+): string | null {
   const now = new Date();
   const in30Days = new Date(now.getTime() + 30 * 24 * 60 * 60 * 1000);
   const upcoming = proventos
@@ -56,7 +64,10 @@ function getUpcomingPayment(ticker: string, proventos: WalletProvento[]): string
       const d = new Date(p.paymentDate);
       return d >= now && d <= in30Days;
     })
-    .sort((a, b) => new Date(a.paymentDate!).getTime() - new Date(b.paymentDate!).getTime());
+    .sort(
+      (a, b) =>
+        new Date(a.paymentDate!).getTime() - new Date(b.paymentDate!).getTime(),
+    );
   return upcoming[0]?.paymentDate ?? null;
 }
 

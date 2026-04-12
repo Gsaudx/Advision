@@ -23,7 +23,11 @@ export function ProventosPage() {
   const [skip, setSkip] = useState(0);
   const [syncing, setSyncing] = useState(false);
 
-  const { data, isLoading, isError, refetch } = useProventos({ ticker, skip, take: PAGE_SIZE });
+  const { data, isLoading, isError, refetch } = useProventos({
+    ticker,
+    skip,
+    take: PAGE_SIZE,
+  });
 
   const total = data?.total ?? 0;
   const currentPage = Math.floor(skip / PAGE_SIZE) + 1;
@@ -69,7 +73,10 @@ export function ProventosPage() {
           </button>
         </div>
         {/* Search */}
-        <form onSubmit={handleSearch} className="flex gap-3 items-center max-w-md">
+        <form
+          onSubmit={handleSearch}
+          className="flex gap-3 items-center max-w-md"
+        >
           <div className="relative flex-1">
             <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" />
             <input
@@ -105,7 +112,9 @@ export function ProventosPage() {
         ) : isError ? (
           <div className="text-center py-12">
             <TrendingUp className="w-12 h-12 text-gray-600 mx-auto mb-4" />
-            <p className="text-gray-400">Erro ao carregar proventos. Tente novamente.</p>
+            <p className="text-gray-400">
+              Erro ao carregar proventos. Tente novamente.
+            </p>
           </div>
         ) : (
           <>
@@ -113,11 +122,21 @@ export function ProventosPage() {
               <table className="w-full text-sm">
                 <thead>
                   <tr className="border-b border-[#2a2a2a] bg-[#1a1a1a]">
-                    <th className="text-left px-4 py-3 text-gray-400 font-medium">Ticker</th>
-                    <th className="text-left px-4 py-3 text-gray-400 font-medium">Tipo</th>
-                    <th className="text-left px-4 py-3 text-gray-400 font-medium">Data Ex</th>
-                    <th className="text-left px-4 py-3 text-gray-400 font-medium">Data Pagamento</th>
-                    <th className="text-right px-4 py-3 text-gray-400 font-medium">Valor/Ação</th>
+                    <th className="text-left px-4 py-3 text-gray-400 font-medium">
+                      Ticker
+                    </th>
+                    <th className="text-left px-4 py-3 text-gray-400 font-medium">
+                      Tipo
+                    </th>
+                    <th className="text-left px-4 py-3 text-gray-400 font-medium">
+                      Data Ex
+                    </th>
+                    <th className="text-left px-4 py-3 text-gray-400 font-medium">
+                      Data Pagamento
+                    </th>
+                    <th className="text-right px-4 py-3 text-gray-400 font-medium">
+                      Valor/Ação
+                    </th>
                   </tr>
                 </thead>
                 <tbody>
@@ -126,10 +145,18 @@ export function ProventosPage() {
                       key={event.id}
                       className="border-b border-[#2a2a2a] hover:bg-[#1e1e1e] transition-colors"
                     >
-                      <td className="px-4 py-3 text-white font-medium">{event.ticker}</td>
-                      <td className="px-4 py-3 text-gray-300">{event.dividendType ?? '-'}</td>
-                      <td className="px-4 py-3 text-gray-300">{formatDate(event.exDividendDate)}</td>
-                      <td className="px-4 py-3 text-gray-300">{formatDate(event.paymentDate)}</td>
+                      <td className="px-4 py-3 text-white font-medium">
+                        {event.ticker}
+                      </td>
+                      <td className="px-4 py-3 text-gray-300">
+                        {event.dividendType ?? '-'}
+                      </td>
+                      <td className="px-4 py-3 text-gray-300">
+                        {formatDate(event.exDividendDate)}
+                      </td>
+                      <td className="px-4 py-3 text-gray-300">
+                        {formatDate(event.paymentDate)}
+                      </td>
                       <td className="px-4 py-3 text-right text-emerald-400 font-medium">
                         {formatCurrency(event.valuePerShare)}
                       </td>

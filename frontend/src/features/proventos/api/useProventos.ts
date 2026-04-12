@@ -12,6 +12,7 @@ export function useProventos(options: UseProventosOptions = {}) {
 
   return useQuery({
     queryKey: ['proventos', ticker, skip, take],
-    queryFn: () => proventosApi.getAll({ ticker: ticker || undefined, skip, take }),
+    queryFn: () =>
+      proventosApi.getAll({ ticker: ticker || undefined, skip, take }),
   });
 }

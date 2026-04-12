@@ -534,7 +534,10 @@ export function WalletDashboard({
                   />
                 )}
                 {activeTab === 'proventos' && (
-                  <ProventosTab walletId={walletId} currency={wallet.currency} />
+                  <ProventosTab
+                    walletId={walletId}
+                    currency={wallet.currency}
+                  />
                 )}
               </div>
             </div>

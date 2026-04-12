@@ -18,19 +18,26 @@ export const proventosApi = {
     await api.post('/proventos/sync');
   },
 
-  getAll: async (params: GetProventosParams = {}): Promise<DividendEventList> => {
+  getAll: async (
+    params: GetProventosParams = {},
+  ): Promise<DividendEventList> => {
     const query: Record<string, string> = {};
     if (params.ticker) query.ticker = params.ticker;
     if (params.skip !== undefined) query.skip = String(params.skip);
     if (params.take !== undefined) query.take = String(params.take);
 
-    const response = await api.get<ApiResponse<DividendEventList>>('/proventos', {
-      params: query,
-    });
+    const response = await api.get<ApiResponse<DividendEventList>>(
+      '/proventos',
+      {
+        params: query,
+      },
+    );
     return response.data.data;
   },
 
-  getWalletProventos: async (walletId: string): Promise<WalletProventosResult> => {
+  getWalletProventos: async (
+    walletId: string,
+  ): Promise<WalletProventosResult> => {
     const response = await api.get<ApiResponse<WalletProventosResult>>(
       `/proventos/wallet/${walletId}`,
     );

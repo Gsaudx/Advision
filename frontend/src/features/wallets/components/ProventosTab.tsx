@@ -2,7 +2,10 @@ import { TrendingUp } from 'lucide-react';
 import { formatCurrency, formatDate, formatNumber } from '@/lib/formatters';
 import { LoadingSpinner } from '@/components/ui/LoadingSpinner';
 import { useWalletProventos } from '@/features/proventos/api';
-import type { ProventosSummaryItem, WalletProvento } from '@/features/proventos/types';
+import type {
+  ProventosSummaryItem,
+  WalletProvento,
+} from '@/features/proventos/types';
 
 interface ProventosTabProps {
   walletId: string;
@@ -26,15 +29,16 @@ function buildSummary(items: WalletProvento[]): ProventosSummaryItem[] {
       existing.eventsCount += 1;
       if (
         item.paymentDate &&
-        (!existing.lastDividendDate || item.paymentDate > existing.lastDividendDate)
+        (!existing.lastDividendDate ||
+          item.paymentDate > existing.lastDividendDate)
       ) {
         existing.lastDividendDate = item.paymentDate;
       }
     }
   }
 
-  return Array.from(byTicker.values()).sort((a, b) =>
-    b.totalReceived - a.totalReceived,
+  return Array.from(byTicker.values()).sort(
+    (a, b) => b.totalReceived - a.totalReceived,
   );
 }
 
@@ -52,7 +56,9 @@ export function ProventosTab({ walletId, currency }: ProventosTabProps) {
   if (isError) {
     return (
       <div className="p-4 bg-red-500/10 border border-red-500/20 rounded-lg">
-        <p className="text-red-400">Erro ao carregar proventos. Tente novamente.</p>
+        <p className="text-red-400">
+          Erro ao carregar proventos. Tente novamente.
+        </p>
       </div>
     );
   }
@@ -64,7 +70,9 @@ export function ProventosTab({ walletId, currency }: ProventosTabProps) {
     return (
       <div className="text-center py-12">
         <TrendingUp className="w-12 h-12 text-gray-600 mx-auto mb-3" />
-        <p className="text-gray-400">Nenhum provento registrado para esta carteira</p>
+        <p className="text-gray-400">
+          Nenhum provento registrado para esta carteira
+        </p>
       </div>
     );
   }
@@ -133,9 +141,14 @@ export function ProventosTab({ walletId, currency }: ProventosTabProps) {
             </thead>
             <tbody className="divide-y divide-slate-800">
               {items.map((item, idx) => (
-                <tr key={idx} className="hover:bg-slate-800/50 transition-colors">
+                <tr
+                  key={idx}
+                  className="hover:bg-slate-800/50 transition-colors"
+                >
                   <td className="px-4 py-3">
-                    <span className="text-sm font-medium text-white">{item.ticker}</span>
+                    <span className="text-sm font-medium text-white">
+                      {item.ticker}
+                    </span>
                   </td>
                   <td className="px-4 py-3">
                     <span className="text-xs text-gray-400">
