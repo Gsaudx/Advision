@@ -194,19 +194,10 @@ function PositionRow({
           <span className="text-xs text-gray-500 truncate">
             {position.name} • {assetTypeLabels[position.type]}
           </span>
-          {(upcomingPayment || position.lastDividendDate) && (
-            <div className="flex flex-wrap gap-1 mt-0.5">
-              {upcomingPayment && (
-                <span className="inline-flex items-center px-1.5 py-0.5 rounded text-xs bg-emerald-600/20 text-emerald-400">
-                  Provento em {formatDate(upcomingPayment)}
-                </span>
-              )}
-              {position.lastDividendDate && (
-                <span className="inline-flex items-center px-1.5 py-0.5 rounded text-xs bg-slate-700 text-gray-400">
-                  Último: {formatDate(position.lastDividendDate)}
-                </span>
-              )}
-            </div>
+          {upcomingPayment && (
+            <span className="inline-flex items-center px-1.5 py-0.5 rounded text-xs bg-emerald-600/20 text-emerald-400 mt-0.5 w-fit">
+              Provento a ser pago: {formatDate(upcomingPayment)}
+            </span>
           )}
         </div>
       </td>
