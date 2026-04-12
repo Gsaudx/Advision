@@ -67,7 +67,10 @@ describe('ProventosCalculationService', () => {
     prisma = {
       position: { findMany: jest.fn(), update: jest.fn() },
       transaction: { findFirst: jest.fn(), findMany: jest.fn() },
-      dividendEvent: { findMany: jest.fn(), findFirst: jest.fn().mockResolvedValue(null) },
+      dividendEvent: {
+        findMany: jest.fn(),
+        findFirst: jest.fn().mockResolvedValue(null),
+      },
       walletDividendPayment: { findMany: jest.fn(), upsert: jest.fn() },
     };
 
@@ -115,9 +118,7 @@ describe('ProventosCalculationService', () => {
   describe('getWalletProventos', () => {
     it('returns data from WalletDividendPayment without reprocessing when not stale', async () => {
       prisma.position.findMany.mockResolvedValue([makeFreshPosition()]);
-      prisma.walletDividendPayment.findMany.mockResolvedValue([
-        makePayment(),
-      ]);
+      prisma.walletDividendPayment.findMany.mockResolvedValue([makePayment()]);
 
       const result = await service.getWalletProventos('wallet-1');
 
@@ -141,9 +142,7 @@ describe('ProventosCalculationService', () => {
       ]);
       prisma.walletDividendPayment.upsert.mockResolvedValue({});
       prisma.position.update.mockResolvedValue({});
-      prisma.walletDividendPayment.findMany.mockResolvedValue([
-        makePayment(),
-      ]);
+      prisma.walletDividendPayment.findMany.mockResolvedValue([makePayment()]);
 
       const result = await service.getWalletProventos('wallet-1');
 
