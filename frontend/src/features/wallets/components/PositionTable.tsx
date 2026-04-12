@@ -1,7 +1,8 @@
 import { TrendingUp, TrendingDown, Minus, ChevronRight } from 'lucide-react';
-import { formatCurrency, formatPercent, formatNumber } from '@/lib/formatters';
+import { formatCurrency, formatPercent, formatNumber, formatDate } from '@/lib/formatters';
 import type { Position } from '../types';
 import { assetTypeLabels } from '../types';
+import type { WalletProvento } from '@/features/proventos/types';
 
 interface PositionTableProps {
   positions: Position[];
@@ -9,6 +10,7 @@ interface PositionTableProps {
   canTrade?: boolean;
   onSellClick?: (position: Position) => void;
   isLoading?: boolean;
+  proventos?: WalletProvento[];
 }
 
 function SkeletonRow() {
@@ -45,12 +47,26 @@ function SkeletonRow() {
   );
 }
 
+function getUpcomingPayment(ticker: string, proventos: WalletProvento[]): string | null {
+  const now = new Date();
+  const in30Days = new Date(now.getTime() + 30 * 24 * 60 * 60 * 1000);
+  const upcoming = proventos
+    .filter((p) => {
+      if (p.ticker !== ticker || !p.paymentDate) return false;
+      const d = new Date(p.paymentDate);
+      return d >= now && d <= in30Days;
+    })
+    .sort((a, b) => new Date(a.paymentDate!).getTime() - new Date(b.paymentDate!).getTime());
+  return upcoming[0]?.paymentDate ?? null;
+}
+
 export function PositionTable({
   positions,
   currency = 'BRL',
   canTrade = false,
   onSellClick,
   isLoading = false,
+  proventos = [],
 }: PositionTableProps) {
   if (!isLoading && positions.length === 0) {
     return (
@@ -107,6 +123,11 @@ export function PositionTable({
                   currency={currency}
                   canTrade={canTrade}
                   onSellClick={onSellClick}
+                  upcomingPayment={
+                    position.type === 'STOCK'
+                      ? getUpcomingPayment(position.ticker, proventos)
+                      : null
+                  }
                 />
               ))
             )}
@@ -122,6 +143,7 @@ interface PositionRowProps {
   currency: string;
   canTrade?: boolean;
   onSellClick?: (position: Position) => void;
+  upcomingPayment?: string | null;
 }
 
 function PositionRow({
@@ -129,6 +151,7 @@ function PositionRow({
   currency,
   canTrade,
   onSellClick,
+  upcomingPayment,
 }: PositionRowProps) {
   const profitLoss = position.profitLoss ?? 0;
   const profitLossPercent = position.profitLossPercent ?? 0;
@@ -164,13 +187,27 @@ function PositionRow({
       }`}
     >
       <td className="px-4 py-3">
-        <div className="flex flex-col min-w-0">
+        <div className="flex flex-col min-w-0 gap-1">
           <span className="text-sm font-medium text-white">
             {position.ticker}
           </span>
           <span className="text-xs text-gray-500 truncate">
             {position.name} • {assetTypeLabels[position.type]}
           </span>
+          {(upcomingPayment || position.lastDividendDate) && (
+            <div className="flex flex-wrap gap-1 mt-0.5">
+              {upcomingPayment && (
+                <span className="inline-flex items-center px-1.5 py-0.5 rounded text-xs bg-emerald-600/20 text-emerald-400">
+                  Provento em {formatDate(upcomingPayment)}
+                </span>
+              )}
+              {position.lastDividendDate && (
+                <span className="inline-flex items-center px-1.5 py-0.5 rounded text-xs bg-slate-700 text-gray-400">
+                  Último: {formatDate(position.lastDividendDate)}
+                </span>
+              )}
+            </div>
+          )}
         </div>
       </td>
       <td className="px-4 py-3 text-right">

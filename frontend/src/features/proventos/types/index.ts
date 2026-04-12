@@ -1,3 +1,26 @@
+export interface WalletProvento {
+  ticker: string;
+  dividendType: string | null;
+  exDividendDate: string;
+  paymentDate: string | null;
+  valuePerShare: number;
+  quantityAtDate: number;
+  totalReceived: number;
+}
+
+export interface WalletProventosResult {
+  walletId: string;
+  items: WalletProvento[];
+  totalReceived: number;
+}
+
+export interface ProventosSummaryItem {
+  ticker: string;
+  totalReceived: number;
+  eventsCount: number;
+  lastDividendDate: string | null;
+}
+
 export interface DividendEvent {
   id: string;
   ticker: string;

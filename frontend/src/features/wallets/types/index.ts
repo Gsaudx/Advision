@@ -20,8 +20,12 @@ export type WalletSummary = NonNullable<
 
 /**
  * Position with calculated fields (P&L, current value, etc.)
+ * Extended with dividend fields not yet in the generated api.d.ts
  */
-export type Position = Wallet['positions'][number];
+export type Position = Wallet['positions'][number] & {
+  lastDividendDate?: string | null;
+  priceAtLastDividend?: number | null;
+};
 
 /**
  * Asset type enum

@@ -1,6 +1,10 @@
 import { api } from '@/lib/axios';
 import type { ApiResponse } from '@/types/api-response';
-import type { DividendEventList } from '../types';
+import type {
+  DividendEventList,
+  WalletProventosResult,
+  ProventosSummaryItem,
+} from '../types';
 
 interface GetProventosParams {
   ticker?: string;
@@ -23,6 +27,21 @@ export const proventosApi = {
     const response = await api.get<ApiResponse<DividendEventList>>('/proventos', {
       params: query,
     });
+    return response.data.data;
+  },
+
+  getWalletProventos: async (walletId: string): Promise<WalletProventosResult> => {
+    const response = await api.get<ApiResponse<WalletProventosResult>>(
+      `/proventos/wallet/${walletId}`,
+    );
+    return response.data.data;
+  },
+
+  getSummary: async (walletId: string): Promise<ProventosSummaryItem[]> => {
+    const response = await api.get<ApiResponse<ProventosSummaryItem[]>>(
+      '/proventos/summary',
+      { params: { walletId } },
+    );
     return response.data.data;
   },
 };
