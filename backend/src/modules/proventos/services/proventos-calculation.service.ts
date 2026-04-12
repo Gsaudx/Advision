@@ -1,4 +1,4 @@
-import { Injectable, Logger } from '@nestjs/common';
+import { Injectable } from '@nestjs/common';
 import { Decimal } from 'decimal.js';
 import { PrismaService } from '@/shared/prisma/prisma.service';
 import { OpLabMarketService } from '@/modules/wallets/providers/oplab-market.service';
@@ -31,8 +31,6 @@ type PositionWithAsset = Position & { asset: Asset };
 
 @Injectable()
 export class ProventosCalculationService {
-  private readonly logger = new Logger(ProventosCalculationService.name);
-
   constructor(
     private readonly prisma: PrismaService,
     private readonly oplab: OpLabMarketService,
