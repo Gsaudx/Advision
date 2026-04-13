@@ -21,21 +21,21 @@ input[type='number'] {
 }
 
 ::-webkit-scrollbar-track {
-  background: rgb(30 41 59); /* slate-800 */
+  background: #eceef0; /* adv-s2 */
   border-radius: 4px;
 }
 
 ::-webkit-scrollbar-thumb {
-  background: rgb(71 85 105); /* slate-600 */
+  background: #e6e8ea; /* adv-s3 */
   border-radius: 4px;
 }
 
 ::-webkit-scrollbar-thumb:hover {
-  background: rgb(100 116 139); /* slate-500 */
+  background: #c4c6ce; /* adv-outline-2 */
 }
 
 /* Firefox scrollbar */
 * {
   scrollbar-width: thin;
-  scrollbar-color: rgb(71 85 105) rgb(30 41 59);
+  scrollbar-color: #e6e8ea #eceef0;
 }
