@@ -13,7 +13,7 @@ function getRoleBasedPath(role: string): string {
 }
 
 export function ProtectedLayout({ allowedRoles }: ProtectedLayoutProps) {
-  const [isSidebarOpen, setIsSidebarOpen] = useState(true);
+  const [isSidebarOpen, setIsSidebarOpen] = useState(false);
   const { isAuthenticated, user } = useAuth();
   const location = useLocation();
 
@@ -26,18 +26,16 @@ export function ProtectedLayout({ allowedRoles }: ProtectedLayoutProps) {
   }
 
   return (
-    <div className="h-screen flex flex-col bg-slate-950">
-      <Header />
-      <div className="flex flex-1 overflow-hidden">
+    <div className="h-screen flex flex-col bg-adv-bg">
+      <Header onSidebarToggle={() => setIsSidebarOpen((prev) => !prev)} />
+      <div className="flex flex-1 overflow-hidden relative">
         <Sidebar
           isOpen={isSidebarOpen}
-          onToggle={() => setIsSidebarOpen(!isSidebarOpen)}
+          onClose={() => setIsSidebarOpen(false)}
         />
-        <div className="flex-1 flex flex-col overflow-hidden">
-          <main className="flex-1 overflow-auto p-4 sm:p-6 lg:p-8">
-            <Outlet />
-          </main>
-        </div>
+        <main className="flex-1 overflow-auto p-4 sm:p-6 lg:p-8">
+          <Outlet />
+        </main>
       </div>
     </div>
   );
