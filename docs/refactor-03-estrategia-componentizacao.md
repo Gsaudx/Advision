@@ -98,16 +98,21 @@ theme: {
 
 ### 3.1 Componentes a CRIAR (novos)
 
-#### `components/ui/Button.tsx` — substitui `ButtonSubmit.tsx`
+#### `components/ui/Button.tsx` — componente genérico novo
 
 ```tsx
-// Variantes: primary | secondary | ghost | danger | outline
+// Variantes: primary | secondary | ghost | danger
 // Sizes: sm | md | lg
 // Props: variant, size, loading, icon, full, children
-// REMOVE o anti-pattern de mt-4 embutido
+// Sem mt-4 embutido — posicionamento é responsabilidade do pai
+// Named export: export function Button(...)
 ```
 
-`ButtonSubmit` existente deve ser mantido como alias temporário (re-export de `Button` com variant="primary") para não quebrar código de uma vez.
+`ButtonSubmit` **permanece** como está (não é deprecado, não é re-export). Motivo: `DEVELOPMENT.md` o documenta como padrão oficial de formulários com loading state. Ele será apenas refatorado internamente para usar as novas classes `adv-*`.
+
+Regra de uso:
+- **Novas telas e componentes:** usar `Button` com as variantes
+- **Componentes existentes com `ButtonSubmit`:** manter até migração deliberada
 
 #### `components/ui/Badge.tsx`
 
@@ -158,6 +163,42 @@ theme: {
 // Resolve a inconsistência entre os 3 estilos de search input
 // Props: value, onChange, placeholder, className?
 // Padroniza bg-adv-s4 border-none focus:ring-adv-accent
+```
+
+---
+
+### 3.1.1 — Migrar UI color constants nos arquivos types/
+
+Existem mapeamentos de cor acoplados ao tema dark nos arquivos de tipos das features. Devem ser atualizados para classes `adv-*` durante a refatoração da respectiva feature:
+
+```typescript
+// features/wallets/types/index.ts — antes:
+BUY: 'text-blue-400',
+SELL: 'text-orange-400',
+
+// depois (tema light):
+BUY: 'text-adv-primary',
+SELL: 'text-adv-error',
+```
+
+Arquivos afetados:
+- `features/wallets/types/index.ts` → `transactionTypeColors`
+- `features/clients-page/types/index.ts` → `inviteStatusColors`
+
+Esses são tipos de UI (não vêm do backend) — podem ser alterados diretamente.
+
+---
+
+### 3.1.2 — Padrão de export para novos componentes
+
+**Todos os novos componentes em `components/ui/`** usam **named exports**:
+```tsx
+// ✅ correto para novos componentes
+export function Button(...) { }
+export function Badge(...) { }
+
+// componentes existentes com default export NÃO são alterados
+// export default function Input — MANTER como está
 ```
 
 ---
@@ -245,6 +286,17 @@ export { Button as default } from './Button';
 | `ConfirmationDialog.tsx` | Adaptar cores, usa ModalBase | Sem mudança estrutural |
 | `PageTitle.tsx` | Trocar cor do texto → `text-adv-text` | Simples |
 | `NotFound.tsx` | Adaptar tema | Simples |
+
+---
+
+### 3.3.1 Componentes a REUTILIZAR — `ButtonSubmit`
+
+Refatorar internamente para usar classes `adv-*`, mas manter API e comportamento:
+```tsx
+// Antes: bg-blue-600 hover:bg-blue-700
+// Depois: bg-adv-primary hover:bg-adv-primary-ct (ou gradiente)
+// Props: sem alteração
+```
 
 ---
 

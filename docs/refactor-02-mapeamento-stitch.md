@@ -168,62 +168,24 @@ Mantém feel "profissional", sem exagero de redondeza.
 
 ---
 
-## 6. Gaps Funcionais — Perguntas Obrigatórias
+## 6. Gaps Funcionais — Decisões Registradas
 
-As funcionalidades abaixo existem no projeto atual mas **não aparecem nas telas do STITCH**. Precisamos de decisão antes de qualquer implementação.
+> Decisões coletadas em 2026-04-13.
 
 ### GAP 1 — Feature Derivatives (Opções e Estratégias)
-
-**O que existe hoje:**
-- `OptionPositionCard` — card de posição em opção
-- `OptionTradeModal` — compra/venda de opção
-- `CloseOptionModal`, `ExerciseOptionModal`, `AssignmentModal`, `ExpirationModal` — lifecycle de opções
-- `StrategyBuilderModal` — construção de estratégias multi-perna
-- `StrategyHistoryList` — histórico de estratégias
-- `UpcomingExpirationsWidget` — widget de vencimentos próximos
-
-**Esses componentes são visíveis no `WalletDashboard` (tab "Opções" e "Estratégias")**
-
-**Pergunta:** As telas do STITCH para o WalletDashboard não mostram a tab de Opções. Devemos:
-- (A) Manter as tabs de Opções e Estratégias e adaptar visualmente ao novo tema?
-- (B) Remover essas funcionalidades do escopo visual por ora?
-- (C) Criar novas telas STITCH especificamente para isso?
+**Decisão:** ✅ Adaptar visualmente ao novo tema light. Ficará dentro do `WalletDashboard` (tabs "Opções" e "Estratégias") com o novo design. Pode ser revisado com telas STITCH dedicadas no futuro.
 
 ### GAP 2 — ProventosPage
-
-**O que existe hoje:**
-- Página `/proventos` com `ProventosTab` dentro do WalletDashboard
-- `useProventos`, `useWalletProventos`
-
-**Pergunta:** A ProventosPage não aparece no STITCH. Devemos:
-- (A) Manter como está e adaptar apenas o tema?
-- (B) Integrar na tela de "Análises e Gráficos" do STITCH?
+**Decisão:** ✅ Manter como página separada (`/proventos`). Adaptar ao novo tema light sem mudança estrutural.
 
 ### GAP 3 — Tela de Login/Register
+**Decisão:** ✅ Redesenhar com o visual STITCH. Uma tela será criada no STITCH para servir de referência. **A implementação aguarda a tela STITCH ser criada.** Registrado como pendência de asset.
 
-**O que existe hoje:** Telas dark com layout dividido (form + branding sidebar)
-
-**Pergunta:** Devemos:
-- (A) Refatorar para o tema light mantendo a estrutura atual?
-- (B) Criar um design novo alinhado ao STITCH (tema light, Manrope, paleta navy)?
-
-### GAP 4 — Dashboard do Cliente (HomePageClient)
-
-**O que existe hoje:** Dashboard simplificado para o papel CLIENT com `InviteTokenPrompt`
-
-**Pergunta:** Devemos:
-- (A) Adaptar apenas o tema ao light?
-- (B) Expandir a tela para algo mais completo conforme o STITCH (que mostra uma view de carteira do cliente)?
+### GAP 4 — Dashboard Advisor e Dashboard do Cliente
+**Decisão:** ✅ Ambas as telas de dashboard (Advisor e Cliente) devem ser reformuladas usando a tela **"Dashboard Principal"** do STITCH como referência visual. Ver mapeamento detalhado no documento `refactor-05-analytics-dashboard.md`.
 
 ### GAP 5 — Tela "Análises e Gráficos"
-
-**No STITCH:** Existe uma tela dedicada de análises com gráficos de performance, alocação de ativos, métricas de risco (Sharpe, volatilidade).
-
-**No projeto atual:** A feature `optimization/` está vazia. A `HomePageAdvisor` tem métricas simples. Os gráficos do WalletDashboard são apenas `recharts` simples.
-
-**Pergunta:** A tela "Análises e Gráficos" do STITCH é:
-- (A) Uma nova feature a ser implementada futuramente (fora do escopo desta refatoração visual)?
-- (B) Uma versão expandida do dashboard atual (mesmo não implementada)?
+**Decisão:** ✅ É uma nova feature a ser planejada e implementada. Ver planejamento completo no documento `refactor-05-analytics-dashboard.md`.
 
 ---
 

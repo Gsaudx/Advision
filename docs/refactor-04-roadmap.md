@@ -8,15 +8,16 @@
 ## Visão Geral das Etapas
 
 ```
-Etapa 0 — Resolução dos GAPs (blocking)
+Etapa 0 — Resolução dos GAPs                    ✅ CONCLUÍDA
 Etapa 1 — Fundação: Tokens + Tipografia
 Etapa 2 — Componentes Base (ui/)
 Etapa 3 — Shell de Layout (Sidebar, Header, ProtectedLayout)
-Etapa 4 — Páginas Públicas (Login, Register)
-Etapa 5 — Feature: Dashboard Advisor
+Etapa 4 — Páginas Públicas (Login, Register)    ⏳ Parcial — aguarda asset STITCH
+Etapa 5 — Feature: Dashboard Advisor            (reformulação completa)
 Etapa 6 — Feature: Clientes
 Etapa 7 — Feature: Carteiras (WalletDashboard)
-Etapa 8 — Features menores (Proventos, Client Home)
+Etapa 7.5 — Nova Feature: Analytics
+Etapa 8 — Features menores (Proventos, Client Home, Login*)
 Etapa 9 — Polish e Revisão Final
 ```
 
@@ -24,17 +25,15 @@ Etapa 9 — Polish e Revisão Final
 
 ## Etapa 0 — Resolução dos GAPs Funcionais
 
-**Status:** Blocking — precisa de decisão do dono do produto antes de qualquer implementação.
+**Status:** ✅ Concluída — decisões registradas em 2026-04-13.
 
-**Ações:**
-- Responder as 5 perguntas do documento `refactor-02 §6`:
-  - GAP 1: O que fazer com a feature Derivatives/Opções no novo design?
-  - GAP 2: ProventosPage — manter como está ou integrar em outra tela?
-  - GAP 3: Login/Register — adaptar tema ou redesenhar?
-  - GAP 4: Dashboard do Cliente — adaptar ou expandir?
-  - GAP 5: Tela "Análises e Gráficos" — fora do escopo ou nova feature?
-
-**Estimativa:** Decisão do produto (sem código)
+| GAP | Decisão |
+|---|---|
+| 1 — Derivatives | Adaptar visualmente ao tema light. Manter dentro do WalletDashboard. |
+| 2 — ProventosPage | Manter como página separada. Adaptar ao tema light. |
+| 3 — Login/Register | Redesenhar com visual STITCH. **Aguarda tela STITCH ser criada pelo usuário.** |
+| 4 — Dashboards | Reformular HomePageAdvisor E HomePageClient com base na tela "Dashboard Principal" do STITCH. |
+| 5 — Analytics | Nova feature planejada. Ver `refactor-05-analytics-dashboard.md`. |
 
 ---
 
@@ -174,33 +173,63 @@ Etapa 9 — Polish e Revisão Final
 
 ---
 
-## Etapa 5 — Feature: Dashboard Advisor
+## Etapa 5 — Feature: Dashboard Advisor (Reformulação completa)
 
-**Objetivo:** Refatorar `HomePageAdvisor` e todos os seus componentes.
+**Objetivo:** Reformular `HomePageAdvisor` com base na tela "Dashboard Principal" do STITCH. Não é só adaptação de cor — é reestruturação da composição da página.
 
-### 5.1 — Migrar `features/home/components/advisor/StatCard.tsx`
+**Referência:** tela STITCH "Dashboard Principal" + `refactor-05-analytics-dashboard.md §2`
+
+### 5.1 — Migrar `StatCard` para o novo visual
 - Remover gradient text
-- Novo visual: `Card.tsx` base + `font-headline` para valores
-- Considerar mover para `components/ui/StatCard.tsx`
+- `font-headline` para valores grandes
+- Mover para `components/ui/StatCard.tsx` (é reutilizável globalmente)
 
-### 5.2 — Migrar `features/home/components/advisor/WelcomeSection.tsx`
-- Adaptar cores ao tema light
+### 5.2 — Reformular grid de KPIs
+- Os 4 KPI cards passam a exibir:
+  - Assets Under Management (= `totalWalletValue` existente)
+  - Crescimento Mensal (= novo endpoint ou calculado)
+  - Novos Aportes (= novo endpoint ou mock)
+  - Clientes Ativos (= `clientCount` existente)
+- Layout: 4 colunas no desktop, 2 no tablet, 1 no mobile
 
-### 5.3 — Migrar `features/home/components/advisor/RecentActivity.tsx`
-- Cards de atividade: `Card.tsx` variant
-- Ícones de ação: cores `adv-*`
+### 5.3 — Criar `features/home/components/advisor/RecentClientAvatars.tsx`
+- Mostra os 3 últimos clientes com avatares (iniciais)
+- Indicador "+N este mês"
+- Link "Ver todos" → `/clients`
 
-### 5.4 — Migrar `features/home/components/advisor/QuickActions.tsx`
-- Botões de ação rápida: usar `Button.tsx`
+### 5.4 — Reformular `RecentActivity.tsx`
+- Manter lógica de `useAdvisorActivity`
+- Visual: `Card.tsx` base, ícones tipados por evento, timestamp relativo
+- Link "Ver tudo" abre `ActivityHistoryModal`
 
-### 5.5 — Migrar `features/home/components/advisor/UpcomingDueDates.tsx`
-- Adaptar tabela/lista para novo estilo
+### 5.5 — Criar `features/home/components/advisor/AlertCard.tsx`
+- Card de alerta com: título, descrição, botão de ação
+- Variantes: `warning` | `info` | `critical`
 
-### 5.6 — Migrar modais do advisor
-- `ActivityDetailModal.tsx` → usar `ModalBase.Header` + `ModalBase.Body`
+### 5.6 — Criar `features/home/components/advisor/CriticalAlertsSection.tsx`
+- Seção "Alertas Críticos" com lista de `AlertCard`
+- Inicialmente alimentada por `useAdvisorExpirations` + dados mock para os outros alertas
+- Tipos de alerta mapeados:
+  - Opções a vencer → "Rebalanceamento / Vencimento"
+  - Compliance → mock por enquanto (GAP de backend)
+
+### 5.7 — Remover `QuickActions.tsx`
+- Substituído pela seção de Alertas Críticos
+- ⚠️ Confirmar com contexto da aplicação se alguma ação rápida deve ser preservada em outro lugar
+
+### 5.8 — Adaptar `UpcomingDueDates.tsx`
+- Avaliar se subsiste como componente ou é absorvido por `CriticalAlertsSection`
+- Se mantido, adaptar visual ao tema light
+
+### 5.9 — Migrar modais do advisor
+- `ActivityDetailModal.tsx` → `ModalBase.Header` + `ModalBase.Body`
 - `ActivityHistoryModal.tsx` → idem
 
-**Dependências:** Etapas 1-3
+### 5.10 — Criar `MarketStatusBadge.tsx` (opcional)
+- Badge "Mercado Aberto / Fechado" no topo da página
+- Pode ser mockado com horário de trading B3 (10h–17h)
+
+**Dependências:** Etapas 1-3, 2.8 (Card), 2.7 (Badge)
 
 ---
 
@@ -275,18 +304,102 @@ Esta etapa deve ser quebrada em sub-etapas por tamanho.
 
 ---
 
+## Etapa 7.5 — Nova Feature: Analytics (shell visual com mocks)
+
+**Objetivo:** Criar a tela "Análises e Gráficos" com dados mockados. O backend será planejado e implementado em ciclo futuro separado.
+**Referência completa:** `refactor-05-analytics-dashboard.md`
+
+### 7.5.1 — Criar estrutura `features/analytics/`
+- `api/`, `components/`, `pages/`, `types/`, `index.ts`
+
+### 7.5.2 — Criar `types/index.ts`
+- Interfaces manuais temporárias: `PeriodFilter`, `PortfolioEvolution`, `AllocationItem`, `AssetAllocation`, `DividendsSummary`
+- Comentário TODO indicando substituição futura por `api.d.ts`
+
+### 7.5.3 — Criar `api/analytics.mock.ts`
+- Centraliza todos os dados mockados: `MOCK_PORTFOLIO_EVOLUTION`, `MOCK_ASSET_ALLOCATION`, `MOCK_DIVIDENDS`
+- Dados realistas em R$ baseados no visual do STITCH
+
+### 7.5.4 — Criar hooks TanStack Query com mocks
+- `usePortfolioEvolution.ts` — queryFn retorna mock
+- `useAssetAllocation.ts` — queryFn retorna mock
+- `useDividendsSummary.ts` — queryFn retorna mock
+- Assinatura dos hooks **estável** para migração futura
+
+### 7.5.5 — Criar `PeriodSelector.tsx`
+- Botões pill: YTD | Max
+
+### 7.5.6 — Criar `PortfolioEvolutionChart.tsx`
+- `recharts` AreaChart com gradiente emerald (`adv-accent`)
+- Tooltip com `formatCurrency`
+
+### 7.5.7 — Criar `AssetAllocationChart.tsx`
+- `recharts` PieChart (donut, innerRadius=60)
+- Legenda lateral com percentuais
+
+### 7.5.8 — Criar `AnalyticsPage.tsx`
+- Layout: título + PeriodSelector → linha de gráficos → linha de KPIs
+- Cards de Performance Relativa e Risco: placeholder visual "Disponível em breve"
+
+### 7.5.9 — Registrar rota no grupo ADVISOR/ADMIN existente
+```tsx
+// routes/index.tsx — dentro do Route já existente ['ADVISOR', 'ADMIN']
+<Route path="/analytics" element={<AnalyticsPage />} />
+```
+
+### 7.5.10 — Adicionar item no Sidebar
+- `{ name: 'Analytics', href: '/analytics', icon: BarChart2 }` em `advisorNavItems`
+
+### 7.5.11 — Barrel export
+```typescript
+// features/analytics/index.ts
+export { AnalyticsPage } from './pages/AnalyticsPage';
+export * from './types';
+```
+
+**Dependências:** Etapas 1-3 (tokens + componentes base + shell), 2.8 (Card.tsx)
+
+---
+
 ## Etapa 8 — Features Menores
 
 ### 8.1 — Migrar `features/proventos/pages/ProventosPage.tsx`
-- Adaptar tema (condicionado ao GAP 2)
+- Adaptar ao tema light (GAP 2: manter como página separada)
+- Inline inputs → `SearchInput.tsx`
+- Tabela → `Table.tsx`
 
-### 8.2 — Migrar `features/home/pages/HomePageClient.tsx`
-- Dashboard do cliente (condicionado ao GAP 4)
+### 8.2 — Reformular `features/home/pages/HomePageClient.tsx`
+- Usar "Dashboard Principal" STITCH como referência visual (GAP 4)
+- KPIs do cliente: Patrimônio Total, Rentabilidade YTD, Dividendos Recebidos, Aportes no Mês
+- Mini chart de evolução patrimonial (versão simplificada do `PortfolioEvolutionChart`)
+- Últimas transações da carteira principal
+- Botão "Ver Carteira" → WalletsPage
 
 ### 8.3 — Migrar `features/home/components/client/InviteTokenPrompt.tsx`
-- Adaptar cores
+- Adaptar cores ao tema light
+- Card: `Card.tsx` base
 
-**Dependências:** Etapas 1-3
+### 8.4 — Tela Login/Register (aguarda asset STITCH)
+- **Status:** 🔴 Bloqueado — aguarda criação da tela no STITCH pelo usuário
+- Quando disponível: redesenhar com visual STITCH (Manrope, paleta navy, layout novo)
+
+**Dependências:** Etapas 1-3, 7.5 (para HomePageClient usar chart simplificado)
+
+---
+
+## Regras de Execução (atualizado pós validação)
+
+1. **Nunca misturar lógica de negócio com refatoração visual** — cada PR deve ser puramente visual
+2. **Backend antes de frontend para Analytics** — Etapa 7.5.A deve estar completa antes de 7.5.B
+3. **Tipos de resposta nunca hardcoded** — sempre derivar de `api.d.ts` via `components['schemas']`
+4. **`ButtonSubmit` não é re-exportado** — mantido com API original, refatorado internamente para `adv-*`
+5. **`Button.tsx` novo, não substituto** — usado em novas telas; `ButtonSubmit` em formulários existentes
+6. **Named exports para novos componentes** em `components/ui/`
+7. **UI color constants migradas junto com a feature** — `transactionTypeColors` na Etapa 7, `inviteStatusColors` na Etapa 6
+8. **Rota `/analytics` no grupo de roles existente** — não criar novo `<Route element>` isolado
+9. **Barrel exports obrigatórios** — toda nova feature deve ter `index.ts` com exports
+10. **Testar funcionalmente cada feature após migração**
+11. **Etapa 3 (Shell) é o único commit obrigatório atômico**
 
 ---
 
@@ -318,33 +431,38 @@ Esta etapa deve ser quebrada em sub-etapas por tamanho.
 ## Mapa de Dependências
 
 ```
-Etapa 1 (Tokens)
-    └── Etapa 2 (Componentes Base)
-            └── Etapa 3 (Shell Layout)  ──────────────────┐
-                    ├── Etapa 4 (Login/Register)           │
-                    ├── Etapa 5 (Dashboard)                │
-                    ├── Etapa 6 (Clientes)                 │
-                    ├── Etapa 7 (Carteiras)                │
-                    └── Etapa 8 (Features menores)         │
-                            └── Etapa 9 (Polish)  ←────────┘
+Etapa 0 ✅
+    └── Etapa 1 (Tokens)
+            └── Etapa 2 (Componentes Base)
+                    └── Etapa 3 (Shell Layout)  ──────────────────────┐
+                            ├── Etapa 4 (Login — bloqueado*)           │
+                            ├── Etapa 5 (Dashboard Advisor)            │
+                            ├── Etapa 6 (Clientes)                     │
+                            ├── Etapa 7 (Carteiras)                    │
+                            │       └── Etapa 7.5 (Analytics)          │
+                            └── Etapa 8 (Features menores)             │
+                                    └── Etapa 9 (Polish) ←─────────────┘
+
+* Etapa 4 (Login/Register) depende também da tela STITCH ser criada
 ```
 
 ---
 
 ## Priorização
 
-| Etapa | Prioridade | Impacto Visual | Risco |
-|---|---|---|---|
-| 0 — GAPs | P0 🔴 | Blocking | - |
-| 1 — Tokens | P0 🔴 | Fundação | Baixo |
-| 2 — Componentes Base | P0 🔴 | Alto | Médio |
-| 3 — Shell Layout | P0 🔴 | Máximo | Médio |
-| 4 — Login/Register | P1 🟡 | Alto | Baixo |
-| 5 — Dashboard | P1 🟡 | Alto | Baixo |
-| 6 — Clientes | P1 🟡 | Alto | Baixo |
-| 7 — Carteiras | P1 🟡 | Máximo | Alto |
-| 8 — Features menores | P2 🟢 | Médio | Baixo |
-| 9 — Polish | P2 🟢 | Médio | Baixo |
+| Etapa | Prioridade | Impacto Visual | Risco | Status |
+|---|---|---|---|---|
+| 0 — GAPs | P0 🔴 | Blocking | - | ✅ Concluída |
+| 1 — Tokens | P0 🔴 | Fundação | Baixo | ⬜ Próxima |
+| 2 — Componentes Base | P0 🔴 | Alto | Médio | ⬜ |
+| 3 — Shell Layout | P0 🔴 | Máximo | Médio | ⬜ |
+| 4 — Login/Register | P2 🟢 | Alto | Baixo | 🔴 Bloqueada (aguarda STITCH) |
+| 5 — Dashboard Advisor | P1 🟡 | Máximo | Médio | ⬜ |
+| 6 — Clientes | P1 🟡 | Alto | Baixo | ⬜ |
+| 7 — Carteiras | P1 🟡 | Máximo | Alto | ⬜ |
+| 7.5 — Analytics (nova) | P1 🟡 | Alto | Médio | ⬜ |
+| 8 — Features menores | P2 🟢 | Médio | Baixo | ⬜ |
+| 9 — Polish | P2 🟢 | Médio | Baixo | ⬜ |
 
 ---
 
