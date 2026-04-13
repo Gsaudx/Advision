@@ -15,7 +15,7 @@ export function LoadingSpinner({
 }: LoadingSpinnerProps) {
   return (
     <div
-      className={`${sizeClasses[size]} border-slate-600 border-t-blue-400 rounded-full animate-spin ${className}`}
+      className={`${sizeClasses[size]} border-adv-s3 border-t-adv-primary rounded-full animate-spin ${className}`}
       role="status"
       aria-label="Carregando"
     />

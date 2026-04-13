@@ -113,8 +113,8 @@ export default function Select({
         onClick={handleToggle}
         disabled={disabled}
         className={cn(
-          'w-full bg-[#1e1e1e] border border-[#2a2a2a] rounded-lg px-4 py-2.5 text-white focus:outline-none focus:border-[#3a3a3a] h-11 flex items-center justify-between gap-3 transition-colors',
-          disabled ? 'opacity-60 cursor-not-allowed' : 'hover:border-[#3a3a3a]',
+          'w-full bg-adv-s4 border-none rounded-lg px-4 py-2.5 text-adv-text focus:outline-none focus:ring-2 focus:ring-adv-accent h-11 flex items-center justify-between gap-3 transition-colors',
+          disabled ? 'opacity-60 cursor-not-allowed' : 'hover:bg-adv-s3',
           className,
         )}
         aria-haspopup="listbox"
@@ -125,7 +125,7 @@ export default function Select({
         </span>
         <ChevronDown
           className={cn(
-            'w-4 h-4 text-gray-400 transition-transform',
+            'w-4 h-4 text-adv-text-2 transition-transform',
             isOpen ? 'rotate-180' : '',
           )}
         />
@@ -134,14 +134,14 @@ export default function Select({
       {isOpen && !disabled && (
         <div
           className={cn(
-            'absolute z-50 mt-2 w-full rounded-lg border border-[#2a2a2a] bg-[#151515] shadow-xl',
+            'absolute z-50 mt-2 w-full rounded-lg bg-adv-s0 shadow-modal border border-adv-outline-2',
             dropdownClassName,
           )}
           role="listbox"
         >
-          <div className="p-2 border-b border-[#2a2a2a]">
+          <div className="p-2 border-b border-adv-outline-2">
             <div className="relative">
-              <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-500" />
+              <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-adv-text-2" />
               <input
                 type="text"
                 ref={searchInputRef}
@@ -154,13 +154,13 @@ export default function Select({
                   }
                 }}
                 placeholder={searchPlaceholder}
-                className="w-full bg-[#101010] border border-[#2a2a2a] rounded-md py-2 pl-9 pr-3 text-sm text-white placeholder-gray-500 focus:outline-none focus:border-[#3a3a3a]"
+                className="w-full bg-adv-s2 border-none rounded-md py-2 pl-9 pr-3 text-sm text-adv-text placeholder-adv-text-2 focus:outline-none focus:ring-2 focus:ring-adv-accent"
               />
             </div>
           </div>
           <div className="max-h-56 overflow-auto">
             {filteredOptions.length === 0 ? (
-              <div className="px-4 py-3 text-sm text-gray-400">
+              <div className="px-4 py-3 text-sm text-adv-text-2">
                 {emptyMessage}
               </div>
             ) : (
@@ -174,8 +174,8 @@ export default function Select({
                     className={cn(
                       'w-full text-left px-4 py-2 text-sm transition-colors',
                       isSelected
-                        ? 'bg-blue-600/20 text-blue-200'
-                        : 'text-gray-200 hover:bg-[#242424]',
+                        ? 'bg-adv-accent/10 text-adv-accent font-medium'
+                        : 'text-adv-text hover:bg-adv-s2',
                     )}
                     role="option"
                     aria-selected={isSelected}
