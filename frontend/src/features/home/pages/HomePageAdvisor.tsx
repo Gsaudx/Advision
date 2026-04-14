@@ -1,31 +1,22 @@
 import { useState } from 'react';
-import { Users, Wallet, Clock, AlertTriangle } from 'lucide-react';
 import { useAuth } from '@/features/auth';
-import { StatCard } from '../components/advisor/StatCard';
-import { QuickActions } from '../components/advisor/QuickActions';
-import { WelcomeSection } from '../components/advisor/WelcomeSection';
+import { PortfolioOverviewCard } from '../components/advisor/PortfolioOverviewCard';
+import { CriticalAlertsSection } from '../components/advisor/CriticalAlertsSection';
 import { RecentActivity } from '../components/advisor/RecentActivity';
 import { ActivityHistoryModal } from '../components/advisor/ActivityHistoryModal';
-import { UpcomingDueDates } from '../components/advisor/UpcomingDueDates';
 import {
   useAdvisorActivity,
   useAdvisorActivityHistory,
-  useAdvisorExpirations,
   useAdvisorMetrics,
 } from '../api';
 
-/**
- * Format currency value in a compact way (e.g., R$ 2.4M, R$ 150K)
- */
-function formatCompactCurrency(value: number): string {
-  if (value >= 1_000_000) {
-    return `R$ ${(value / 1_000_000).toFixed(1).replace('.', ',')}M`;
-  }
-  if (value >= 1_000) {
-    return `R$ ${(value / 1_000).toFixed(1).replace('.', ',')}K`;
-  }
-  return `R$ ${value.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}`;
-}
+// ⚠️ NAO EXISTE NO STITCH, AVALIAR — imports removidos da view principal
+// import { Users, Wallet, Clock, AlertTriangle } from 'lucide-react';
+// import { StatCard } from '@/components/ui/StatCard';
+// import { WelcomeSection } from '../components/advisor/WelcomeSection';
+// import { QuickActions } from '../components/advisor/QuickActions';
+// import { UpcomingDueDates } from '../components/advisor/UpcomingDueDates';
+// import { useAdvisorExpirations } from '../api';
 
 export function HomePageAdvisor() {
   const { user } = useAuth();
@@ -40,7 +31,6 @@ export function HomePageAdvisor() {
     refetch: refetchActivities,
   } = useAdvisorActivity(5);
   const { data: metrics } = useAdvisorMetrics();
-  const { data: expirationsData } = useAdvisorExpirations(30);
   const { data: historyData, isLoading: isLoadingHistory } =
     useAdvisorActivityHistory(historyPage, 20);
 
@@ -57,37 +47,14 @@ export function HomePageAdvisor() {
 
   return (
     <div className="space-y-6">
-      <WelcomeSection userName={userName} />
+      {/* Hero — Visão do Portfólio */}
+      <PortfolioOverviewCard
+        userName={userName}
+        totalWalletValue={totalWalletValue}
+        clientCount={clientCount}
+      />
 
-      {/* Stats Grid */}
-      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
-        <StatCard
-          label="Total de Clientes"
-          value={clientCount}
-          icon={Users}
-          accentColor="blue"
-        />
-        <StatCard
-          label="Valor em Carteiras"
-          value={formatCompactCurrency(totalWalletValue)}
-          icon={Wallet}
-          accentColor="emerald"
-        />
-        <StatCard
-          label="Operacoes Pendentes"
-          value={pendingOperationsCount}
-          icon={Clock}
-          accentColor="amber"
-        />
-        <StatCard
-          label="Opcoes a Vencer"
-          value={expiringOptionsCount}
-          icon={AlertTriangle}
-          accentColor="rose"
-        />
-      </div>
-
-      {/* Main Content Grid - items-start prevents stretch */}
+      {/* Main Content Grid */}
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 items-start">
         <div className="lg:col-span-2">
           <RecentActivity
@@ -98,10 +65,25 @@ export function HomePageAdvisor() {
             onSeeAll={handleOpenHistory}
           />
         </div>
-        <QuickActions />
+        <CriticalAlertsSection
+          expiringOptionsCount={expiringOptionsCount}
+          pendingOperationsCount={pendingOperationsCount}
+        />
       </div>
 
-      <UpcomingDueDates expirations={expirationsData?.expirations ?? []} />
+      {/* ⚠️ NAO EXISTE NO STITCH, AVALIAR — Stats Grid (4 cards) */}
+      {/* <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+        <StatCard label="Total de Clientes" value={clientCount} icon={Users} accentColor="primary" />
+        <StatCard label="Valor em Carteiras" value={formatCompactCurrency(totalWalletValue)} icon={Wallet} accentColor="accent" />
+        <StatCard label="Operações Pendentes" value={pendingOperationsCount} icon={Clock} accentColor="warning" />
+        <StatCard label="Opções a Vencer" value={expiringOptionsCount} icon={AlertTriangle} accentColor="error" />
+      </div> */}
+
+      {/* ⚠️ NAO EXISTE NO STITCH, AVALIAR — Ações Rápidas */}
+      {/* <QuickActions /> */}
+
+      {/* ⚠️ NAO EXISTE NO STITCH, AVALIAR — Vencimentos Próximos */}
+      {/* <UpcomingDueDates expirations={expirationsData?.expirations ?? []} /> */}
 
       <ActivityHistoryModal
         isOpen={showHistoryModal}

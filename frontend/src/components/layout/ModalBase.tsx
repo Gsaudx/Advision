@@ -9,6 +9,7 @@ interface ModalBaseProps {
   size?: 'sm' | 'md' | 'lg' | 'xl' | 'xxl' | '3xl' | '4xl' | '5xl' | '6xl';
   minHeight?: number;
   backgroundColor?: string;
+  className?: string;
 }
 
 const sizeClasses = {
@@ -99,6 +100,7 @@ function ModalBaseRoot({
   size = 'md',
   minHeight = 600,
   backgroundColor = 'bg-adv-s0/90',
+  className,
 }: ModalBaseProps) {
   if (!isOpen) return null;
 
@@ -116,6 +118,7 @@ function ModalBaseRoot({
           'relative z-50 backdrop-blur-xl rounded-xl shadow-modal w-full mx-4 animate-scale-in',
           backgroundColor,
           sizeClasses[size],
+          className,
         )}
         style={{ minHeight: `${minHeight}px` }}
       >

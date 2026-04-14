@@ -1,9 +1,11 @@
-import { useState } from 'react';
-import { RefreshCw } from 'lucide-react';
+import { useState, type ElementType } from 'react';
+import { RefreshCw, ChevronRight, Wallet, User, FileText, ArrowUpRight } from 'lucide-react';
 import type { ActivityItem } from '../../api';
 import { formatTimeAgo, getActivityTarget } from '../../utils/activity.utils';
 import { ActivityDetailModal } from './ActivityDetailModal';
 import { ActivitySkeleton } from './ActivitySkeleton';
+import { EmptyState } from '@/components/ui/EmptyState';
+import { cn } from '@/lib/utils';
 
 interface RecentActivityProps {
   activities: ActivityItem[];
@@ -13,6 +15,12 @@ interface RecentActivityProps {
   onSeeAll?: () => void;
 }
 
+function getActivityIcon(activity: ActivityItem): ElementType {
+  if (activity.aggregateType === 'WALLET') return Wallet;
+  if (activity.aggregateType === 'CLIENT') return User;
+  return FileText;
+}
+
 export function RecentActivity({
   activities,
   isLoading,
@@ -20,71 +28,89 @@ export function RecentActivity({
   onRefresh,
   onSeeAll,
 }: RecentActivityProps) {
-  const [selectedActivity, setSelectedActivity] = useState<ActivityItem | null>(
-    null,
-  );
+  const [selectedActivity, setSelectedActivity] = useState<ActivityItem | null>(null);
 
   const showSkeleton = isLoading || isRefreshing;
 
   return (
     <>
-      <div className="bg-slate-900 rounded-xl p-5 border border-slate-800 flex flex-col h-fit">
-        <div className="flex items-center justify-between mb-4">
-          <h3 className="text-white font-semibold">Atividade Recente</h3>
-          {onRefresh && (
-            <button
-              onClick={onRefresh}
-              disabled={isRefreshing}
-              className="text-slate-400 hover:text-white transition-colors p-1.5 hover:bg-slate-800 rounded-lg disabled:opacity-50"
-              title="Atualizar"
-            >
-              <RefreshCw
-                size={16}
-                className={isRefreshing ? 'animate-spin' : ''}
-              />
-            </button>
-          )}
-        </div>
-        <div className="space-y-3 max-h-80 overflow-y-auto pr-1">
-          {showSkeleton ? (
-            <ActivitySkeleton count={5} />
-          ) : activities.length === 0 ? (
-            <p className="text-slate-400 text-sm text-center py-8">
-              Nenhuma atividade recente.
-            </p>
-          ) : (
-            activities.map((activity) => (
+      <div className="space-y-6">
+        <div className="flex items-center justify-between px-1">
+          <h4 className="font-headline font-bold text-xl text-adv-primary">
+            Atividades Recentes
+          </h4>
+          <div className="flex items-center gap-3">
+            {onRefresh && (
               <button
-                key={activity.id}
-                onClick={() => setSelectedActivity(activity)}
-                className="flex items-center justify-between p-3 rounded-lg bg-slate-800/50 hover:bg-slate-800 transition-colors w-full text-left cursor-pointer"
+                onClick={onRefresh}
+                disabled={isRefreshing}
+                className="text-adv-text-2 hover:text-adv-text transition-colors p-1.5 hover:bg-adv-s2 rounded-lg disabled:opacity-50"
+                title="Atualizar"
               >
-                <div className="flex items-center gap-3 min-w-0 flex-1">
-                  <div className="w-2 h-2 rounded-full bg-blue-400 flex-shrink-0" />
-                  <div className="min-w-0">
-                    <p className="text-sm text-white truncate">
-                      {activity.action}
-                    </p>
-                    <p className="text-xs text-slate-400 truncate">
-                      {getActivityTarget(activity)}
-                    </p>
-                  </div>
-                </div>
-                <span className="text-xs text-slate-500 flex-shrink-0 ml-2">
-                  {formatTimeAgo(activity.occurredAt)}
-                </span>
+                <RefreshCw size={15} className={isRefreshing ? 'animate-spin' : ''} />
               </button>
-            ))
+            )}
+            {onSeeAll && activities.length > 0 && !showSkeleton && (
+              <button
+                onClick={onSeeAll}
+                className="text-adv-accent text-sm font-bold hover:text-adv-primary transition-colors flex items-center gap-1"
+              >
+                Ver tudo <ArrowUpRight size={14} />
+              </button>
+            )}
+          </div>
+        </div>
+
+        <div className="bg-adv-s1/40 rounded-2xl overflow-hidden border border-adv-outline-2/30">
+          {showSkeleton ? (
+            <div className="p-4">
+              <ActivitySkeleton count={5} />
+            </div>
+          ) : activities.length === 0 ? (
+            <div className="p-6">
+              <EmptyState title="Nenhuma atividade recente." />
+            </div>
+          ) : (
+            <div className="divide-y divide-adv-outline-2/20">
+              {activities.map((activity) => {
+                const Icon = getActivityIcon(activity);
+                return (
+                  <button
+                    key={activity.id}
+                    onClick={() => setSelectedActivity(activity)}
+                    className="flex items-center gap-6 p-5 hover:bg-adv-s2/60 transition-colors w-full text-left cursor-pointer group"
+                  >
+                    <div className="w-11 h-11 rounded-full bg-white flex items-center justify-center text-adv-primary shadow-sm group-hover:scale-110 transition-transform flex-shrink-0 border border-adv-outline-2/20">
+                      <Icon size={18} />
+                    </div>
+
+                    <div className="flex-1 min-w-0">
+                      <div className="flex justify-between items-start gap-2">
+                        <p className="text-sm font-bold text-adv-primary font-headline truncate">
+                          {activity.action}
+                        </p>
+                        <span className="text-[10px] font-bold text-adv-text-2 uppercase tracking-widest flex-shrink-0">
+                          {formatTimeAgo(activity.occurredAt)}
+                        </span>
+                      </div>
+                      <p className="text-xs text-adv-text-2 mt-0.5 truncate">
+                        {getActivityTarget(activity)}
+                      </p>
+                    </div>
+
+                    <ChevronRight
+                      size={18}
+                      className={cn(
+                        'text-adv-text-2/30 flex-shrink-0 transition-opacity',
+                        'opacity-0 group-hover:opacity-100',
+                      )}
+                    />
+                  </button>
+                );
+              })}
+            </div>
           )}
         </div>
-        {onSeeAll && activities.length > 0 && !showSkeleton && (
-          <button
-            onClick={onSeeAll}
-            className="mt-4 w-full py-2 text-sm text-blue-400 hover:text-blue-300 hover:bg-slate-800 rounded-lg transition-colors"
-          >
-            Ver tudo
-          </button>
-        )}
       </div>
 
       <ActivityDetailModal

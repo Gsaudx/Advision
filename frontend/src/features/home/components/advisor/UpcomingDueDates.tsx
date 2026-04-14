@@ -1,13 +1,19 @@
 import type { AdvisorExpiration } from '../../api';
+import { Card } from '@/components/ui/Card';
+import { Badge } from '@/components/ui/Badge';
+import { Table } from '@/components/ui/Table';
+import { EmptyState } from '@/components/ui/EmptyState';
+
+type BadgeVariant = React.ComponentProps<typeof Badge>['variant'];
 
 interface UpcomingDueDatesProps {
   expirations: AdvisorExpiration[];
 }
 
-const statusStyles: Record<AdvisorExpiration['status'], string> = {
-  Proximo: 'bg-amber-500/20 text-amber-400',
-  'Em dia': 'bg-emerald-500/20 text-emerald-400',
-  Vencido: 'bg-rose-500/20 text-rose-400',
+const statusVariant: Record<AdvisorExpiration['status'], BadgeVariant> = {
+  Proximo:  'warning',
+  'Em dia': 'success',
+  Vencido:  'error',
 };
 
 function formatExpirationDate(dateStr: string): string {
@@ -24,70 +30,56 @@ function formatExpirationDate(dateStr: string): string {
 
 export function UpcomingDueDates({ expirations }: UpcomingDueDatesProps) {
   return (
-    <div className="bg-slate-900 rounded-xl p-5 border border-slate-800">
-      <h3 className="text-white font-semibold mb-4">Proximos Vencimentos</h3>
-      <div className="overflow-x-auto">
-        {expirations.length === 0 ? (
-          <p className="text-slate-400 text-sm">Nenhum vencimento proximo.</p>
-        ) : (
-          <table className="w-full">
-            <thead>
-              <tr className="text-left text-slate-400 text-sm border-b border-slate-800">
-                <th className="pb-3 font-medium">Ativo</th>
-                <th className="pb-3 font-medium">Cliente</th>
-                <th className="pb-3 font-medium">Carteira</th>
-                <th className="pb-3 font-medium">Tipo</th>
-                <th className="pb-3 font-medium">Vencimento</th>
-                <th className="pb-3 font-medium">Dias</th>
-                <th className="pb-3 font-medium">Status</th>
-              </tr>
-            </thead>
-            <tbody className="text-sm">
-              {expirations.map((item) => (
-                <tr
-                  key={item.positionId}
-                  className="border-b border-slate-800/50 last:border-0"
-                >
-                  <td className="py-3 text-white font-medium">
+    <Card className="p-5">
+      <h3 className="font-headline font-semibold text-adv-primary mb-4">
+        Próximos Vencimentos
+      </h3>
+
+      {expirations.length === 0 ? (
+        <EmptyState title="Nenhum vencimento próximo." />
+      ) : (
+        <Table>
+          <Table.Head>
+            <Table.Row>
+              <Table.HeaderCell>Ativo</Table.HeaderCell>
+              <Table.HeaderCell>Cliente</Table.HeaderCell>
+              <Table.HeaderCell>Carteira</Table.HeaderCell>
+              <Table.HeaderCell>Tipo</Table.HeaderCell>
+              <Table.HeaderCell>Vencimento</Table.HeaderCell>
+              <Table.HeaderCell align="right">Dias</Table.HeaderCell>
+              <Table.HeaderCell>Status</Table.HeaderCell>
+            </Table.Row>
+          </Table.Head>
+          <Table.Body>
+            {expirations.map((item) => (
+              <Table.Row key={item.positionId}>
+                <Table.Cell>
+                  <span className="font-medium text-adv-primary">
                     {item.ticker}
-                    {item.isShort && (
-                      <span className="ml-1.5 text-xs text-orange-400">
-                        (V)
-                      </span>
-                    )}
-                  </td>
-                  <td className="py-3 text-slate-300">{item.clientName}</td>
-                  <td className="py-3 text-slate-300">{item.walletName}</td>
-                  <td className="py-3">
-                    <span
-                      className={`text-xs px-1.5 py-0.5 rounded font-medium ${
-                        item.optionType === 'CALL'
-                          ? 'bg-green-600/20 text-green-400'
-                          : 'bg-red-600/20 text-red-400'
-                      }`}
-                    >
-                      {item.optionType}
-                    </span>
-                  </td>
-                  <td className="py-3 text-slate-300">
-                    {formatExpirationDate(item.expirationDate)}
-                  </td>
-                  <td className="py-3 text-slate-300">
-                    {item.daysUntilExpiry}d
-                  </td>
-                  <td className="py-3">
-                    <span
-                      className={`px-2 py-1 rounded-full text-xs font-medium ${statusStyles[item.status]}`}
-                    >
-                      {item.status}
-                    </span>
-                  </td>
-                </tr>
-              ))}
-            </tbody>
-          </table>
-        )}
-      </div>
-    </div>
+                  </span>
+                  {item.isShort && (
+                    <span className="ml-1.5 text-xs text-amber-600">(V)</span>
+                  )}
+                </Table.Cell>
+                <Table.Cell>{item.clientName}</Table.Cell>
+                <Table.Cell>{item.walletName}</Table.Cell>
+                <Table.Cell>
+                  <Badge variant={item.optionType === 'CALL' ? 'success' : 'error'}>
+                    {item.optionType}
+                  </Badge>
+                </Table.Cell>
+                <Table.Cell>{formatExpirationDate(item.expirationDate)}</Table.Cell>
+                <Table.Cell align="right">{item.daysUntilExpiry}d</Table.Cell>
+                <Table.Cell>
+                  <Badge variant={statusVariant[item.status]}>
+                    {item.status}
+                  </Badge>
+                </Table.Cell>
+              </Table.Row>
+            ))}
+          </Table.Body>
+        </Table>
+      )}
+    </Card>
   );
 }

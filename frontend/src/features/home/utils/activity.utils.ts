@@ -12,10 +12,10 @@ export function formatTimeAgo(dateString: string): string {
   const diffDays = Math.floor(diffMs / (1000 * 60 * 60 * 24));
 
   if (diffMinutes < 1) return 'Agora';
-  if (diffMinutes < 60) return `Ha ${diffMinutes} min`;
-  if (diffHours < 24) return `Ha ${diffHours} hora${diffHours > 1 ? 's' : ''}`;
+  if (diffMinutes < 60) return `Há ${diffMinutes} min`;
+  if (diffHours < 24) return `Há ${diffHours} hora${diffHours > 1 ? 's' : ''}`;
   if (diffDays === 1) return 'Ontem';
-  if (diffDays < 7) return `Ha ${diffDays} dias`;
+  if (diffDays < 7) return `Há ${diffDays} dias`;
   return date.toLocaleDateString('pt-BR');
 }
 

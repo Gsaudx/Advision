@@ -1,9 +1,12 @@
 import { useState } from 'react';
-import { X, ChevronLeft, ChevronRight } from 'lucide-react';
+import { ChevronLeft, ChevronRight } from 'lucide-react';
 import type { ActivityItem, PaginatedActivity } from '../../api';
 import { formatTimeAgo, getActivityTarget } from '../../utils/activity.utils';
 import { ActivityDetailModal } from './ActivityDetailModal';
 import { ActivitySkeleton } from './ActivitySkeleton';
+import ModalBase from '@/components/layout/ModalBase';
+import { Button } from '@/components/ui/Button';
+import { EmptyState } from '@/components/ui/EmptyState';
 
 interface ActivityHistoryModalProps {
   isOpen: boolean;
@@ -26,102 +29,83 @@ export function ActivityHistoryModal({
     null,
   );
 
-  if (!isOpen) return null;
-
   const totalPages = data?.totalPages ?? 1;
   const total = data?.total ?? 0;
 
   return (
     <>
-      <div className="fixed inset-0 z-50 flex items-center justify-center">
-        {/* Backdrop */}
-        <div
-          className="fixed inset-0 bg-black/50 backdrop-blur-sm"
-          onClick={onClose}
-        />
+      <ModalBase
+        isOpen={isOpen}
+        onClose={onClose}
+        size="xxl"
+        minHeight={0}
+        className="max-h-[90vh] flex flex-col"
+      >
+        <ModalBase.Header title="Histórico de Atividades" onClose={onClose}>
+          <span className="text-sm text-adv-text-2">
+            {total} {total === 1 ? 'atividade' : 'atividades'}
+          </span>
+        </ModalBase.Header>
 
-        {/* Modal */}
-        <div className="relative z-50 bg-slate-900 border border-slate-700 rounded-xl shadow-2xl max-w-2xl w-full mx-4 max-h-[90vh] flex flex-col animate-fade-in">
-          {/* Header */}
-          <div className="flex items-center justify-between p-4 border-b border-slate-700 flex-shrink-0">
-            <div>
-              <h2 className="text-lg font-semibold text-white">
-                Historico de Atividades
-              </h2>
-              <p className="text-sm text-slate-400">
-                {total} {total === 1 ? 'atividade' : 'atividades'} no total
-              </p>
-            </div>
-            <button
-              onClick={onClose}
-              className="p-1 rounded-lg text-slate-400 hover:text-white hover:bg-slate-800 transition-colors"
-            >
-              <X className="w-5 h-5" />
-            </button>
-          </div>
-
-          {/* Body */}
-          <div className="flex-1 overflow-y-auto p-4">
-            <div className="space-y-2">
-              {isLoading ? (
-                <ActivitySkeleton count={10} />
-              ) : data?.items.length === 0 ? (
-                <p className="text-slate-400 text-sm text-center py-8">
-                  Nenhuma atividade encontrada.
-                </p>
-              ) : (
-                data?.items.map((activity) => (
-                  <button
-                    key={activity.id}
-                    onClick={() => setSelectedActivity(activity)}
-                    className="flex items-center justify-between p-3 rounded-lg bg-slate-800/50 hover:bg-slate-800 transition-colors w-full text-left cursor-pointer"
-                  >
-                    <div className="flex items-center gap-3 min-w-0 flex-1">
-                      <div className="w-2 h-2 rounded-full bg-blue-400 flex-shrink-0" />
-                      <div className="min-w-0">
-                        <p className="text-sm text-white truncate">
-                          {activity.action}
-                        </p>
-                        <p className="text-xs text-slate-400 truncate">
-                          {getActivityTarget(activity)}
-                        </p>
-                      </div>
+        <ModalBase.Body className="flex-1 overflow-y-auto">
+          <div className="space-y-2">
+            {isLoading ? (
+              <ActivitySkeleton count={10} />
+            ) : data?.items.length === 0 ? (
+              <EmptyState title="Nenhuma atividade encontrada." />
+            ) : (
+              data?.items.map((activity) => (
+                <button
+                  key={activity.id}
+                  onClick={() => setSelectedActivity(activity)}
+                  className="flex items-center justify-between p-3 rounded-lg bg-adv-s1 hover:bg-adv-s2 transition-colors w-full text-left cursor-pointer"
+                >
+                  <div className="flex items-center gap-3 min-w-0 flex-1">
+                    <div className="w-2 h-2 rounded-full bg-adv-accent flex-shrink-0" />
+                    <div className="min-w-0">
+                      <p className="text-sm text-adv-text truncate">
+                        {activity.action}
+                      </p>
+                      <p className="text-xs text-adv-text-2 truncate">
+                        {getActivityTarget(activity)}
+                      </p>
                     </div>
-                    <span className="text-xs text-slate-500 flex-shrink-0 ml-2">
-                      {formatTimeAgo(activity.occurredAt)}
-                    </span>
-                  </button>
-                ))
-              )}
-            </div>
+                  </div>
+                  <span className="text-xs text-adv-text-2 flex-shrink-0 ml-2">
+                    {formatTimeAgo(activity.occurredAt)}
+                  </span>
+                </button>
+              ))
+            )}
           </div>
+        </ModalBase.Body>
 
-          {/* Footer with pagination */}
-          {totalPages > 1 && (
-            <div className="flex items-center justify-between p-4 border-t border-slate-700 flex-shrink-0">
-              <button
-                onClick={() => onPageChange(page - 1)}
-                disabled={page <= 1 || isLoading}
-                className="flex items-center gap-1 px-3 py-1.5 text-sm text-slate-400 hover:text-white hover:bg-slate-800 rounded-lg transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
-              >
-                <ChevronLeft className="w-4 h-4" />
-                Anterior
-              </button>
-              <span className="text-sm text-slate-400">
-                Pagina {page} de {totalPages}
-              </span>
-              <button
-                onClick={() => onPageChange(page + 1)}
-                disabled={page >= totalPages || isLoading}
-                className="flex items-center gap-1 px-3 py-1.5 text-sm text-slate-400 hover:text-white hover:bg-slate-800 rounded-lg transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
-              >
-                Proxima
-                <ChevronRight className="w-4 h-4" />
-              </button>
-            </div>
-          )}
-        </div>
-      </div>
+        {totalPages > 1 && (
+          <ModalBase.Footer className="justify-between">
+            <Button
+              variant="ghost"
+              size="sm"
+              icon={<ChevronLeft className="w-4 h-4" />}
+              onClick={() => onPageChange(page - 1)}
+              disabled={page <= 1 || isLoading}
+            >
+              Anterior
+            </Button>
+            <span className="text-sm text-adv-text-2">
+              Página {page} de {totalPages}
+            </span>
+            <Button
+              variant="ghost"
+              size="sm"
+              onClick={() => onPageChange(page + 1)}
+              disabled={page >= totalPages || isLoading}
+            >
+              Próxima
+              <ChevronRight className="w-4 h-4 ml-1" />
+            </Button>
+          </ModalBase.Footer>
+        )}
+      </ModalBase>
 
       <ActivityDetailModal
         activity={selectedActivity}
