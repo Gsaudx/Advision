@@ -18,116 +18,100 @@ function formatFullDate(dateString: string): string {
   });
 }
 
-export function ActivityDetailModal({
-  activity,
-  onClose,
-}: ActivityDetailModalProps) {
+export function ActivityDetailModal({ activity, onClose }: ActivityDetailModalProps) {
   if (!activity) return null;
 
   const isWalletEvent = activity.aggregateType === 'WALLET';
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center">
-      {/* Backdrop */}
       <div
         className="fixed inset-0 bg-black/50 backdrop-blur-sm"
         onClick={onClose}
       />
-
-      {/* Modal */}
-      <div className="relative z-50 bg-slate-900 border border-slate-700 rounded-xl shadow-2xl max-w-md w-full mx-4 animate-fade-in">
-        {/* Header */}
-        <div className="flex items-center justify-between p-4 border-b border-slate-700">
-          <h2 className="text-lg font-semibold text-white">
+      <div className="relative z-50 bg-surface-container-lowest border border-outline-variant/20 rounded-3xl shadow-2xl max-w-md w-full mx-4 animate-fade-in">
+        <div className="flex items-center justify-between p-6 border-b border-outline-variant/20">
+          <h2 className="text-lg font-headline font-bold text-on-surface">
             Detalhes da Atividade
           </h2>
           <button
             onClick={onClose}
-            className="p-1 rounded-lg text-slate-400 hover:text-white hover:bg-slate-800 transition-colors"
+            className="p-1.5 rounded-xl text-on-surface-variant hover:text-on-surface hover:bg-surface-container-high transition-colors"
           >
             <X className="w-5 h-5" />
           </button>
         </div>
 
-        {/* Body */}
-        <div className="p-4 space-y-4">
-          {/* Action */}
+        <div className="p-6 space-y-4">
           <div className="flex items-start gap-3">
-            <div className="p-2 rounded-lg bg-blue-500/20">
-              <FileText className="w-4 h-4 text-blue-400" />
+            <div className="p-2 rounded-xl bg-tertiary/10">
+              <FileText className="w-4 h-4 text-tertiary" />
             </div>
             <div>
-              <p className="text-xs text-slate-400 uppercase tracking-wider">
-                Acao
+              <p className="text-xs text-on-surface-variant uppercase tracking-wider mb-0.5">
+                Ação
               </p>
-              <p className="text-white font-medium">{activity.action}</p>
+              <p className="text-on-surface font-medium">{activity.action}</p>
             </div>
           </div>
 
-          {/* Description */}
           <div className="flex items-start gap-3">
-            <div className="p-2 rounded-lg bg-emerald-500/20">
-              <FileText className="w-4 h-4 text-emerald-400" />
+            <div className="p-2 rounded-xl bg-tertiary/10">
+              <FileText className="w-4 h-4 text-tertiary" />
             </div>
             <div>
-              <p className="text-xs text-slate-400 uppercase tracking-wider">
+              <p className="text-xs text-on-surface-variant uppercase tracking-wider mb-0.5">
                 Descrição
               </p>
-              <p className="text-white">{activity.description}</p>
+              <p className="text-on-surface">{activity.description}</p>
             </div>
           </div>
 
-          {/* Client */}
           {activity.clientName && (
             <div className="flex items-start gap-3">
-              <div className="p-2 rounded-lg bg-purple-500/20">
-                <User className="w-4 h-4 text-purple-400" />
+              <div className="p-2 rounded-xl bg-primary/10">
+                <User className="w-4 h-4 text-primary" />
               </div>
               <div>
-                <p className="text-xs text-slate-400 uppercase tracking-wider">
+                <p className="text-xs text-on-surface-variant uppercase tracking-wider mb-0.5">
                   Cliente
                 </p>
-                <p className="text-white">{activity.clientName}</p>
+                <p className="text-on-surface">{activity.clientName}</p>
               </div>
             </div>
           )}
 
-          {/* Wallet (only for wallet events) */}
           {isWalletEvent && activity.walletName && (
             <div className="flex items-start gap-3">
-              <div className="p-2 rounded-lg bg-amber-500/20">
-                <Wallet className="w-4 h-4 text-amber-400" />
+              <div className="p-2 rounded-xl bg-primary/10">
+                <Wallet className="w-4 h-4 text-primary" />
               </div>
               <div>
-                <p className="text-xs text-slate-400 uppercase tracking-wider">
+                <p className="text-xs text-on-surface-variant uppercase tracking-wider mb-0.5">
                   Carteira
                 </p>
-                <p className="text-white">{activity.walletName}</p>
+                <p className="text-on-surface">{activity.walletName}</p>
               </div>
             </div>
           )}
 
-          {/* Date/Time */}
           <div className="flex items-start gap-3">
-            <div className="p-2 rounded-lg bg-slate-500/20">
-              <Clock className="w-4 h-4 text-slate-400" />
+            <div className="p-2 rounded-xl bg-outline-variant/20">
+              <Clock className="w-4 h-4 text-on-surface-variant" />
             </div>
             <div>
-              <p className="text-xs text-slate-400 uppercase tracking-wider">
+              <p className="text-xs text-on-surface-variant uppercase tracking-wider mb-0.5">
                 Data e Hora
               </p>
-              <p className="text-white">
-                {formatFullDate(activity.occurredAt)}
-              </p>
+              <p className="text-on-surface">{formatFullDate(activity.occurredAt)}</p>
             </div>
           </div>
         </div>
 
-        {/* Footer */}
-        <div className="p-4 border-t border-slate-700">
+        <div className="p-6 border-t border-outline-variant/20">
           <button
             onClick={onClose}
-            className="w-full py-2 px-4 bg-slate-800 hover:bg-slate-700 text-white rounded-lg transition-colors"
+            className="w-full py-2.5 px-4 bg-surface-container-high hover:bg-surface-container-highest text-on-surface rounded-full text-sm font-bold transition-colors"
           >
             Fechar
           </button>

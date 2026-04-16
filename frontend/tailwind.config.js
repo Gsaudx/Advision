@@ -3,6 +3,28 @@ export default {
   content: ['./index.html', './src/**/*.{js,ts,jsx,tsx}'],
   theme: {
     extend: {
+      colors: {
+        primary:                    'rgb(var(--color-primary) / <alpha-value>)',
+        'primary-container':        'rgb(var(--color-primary-container) / <alpha-value>)',
+        'on-primary':               'rgb(var(--color-on-primary) / <alpha-value>)',
+        tertiary:                   'rgb(var(--color-tertiary) / <alpha-value>)',
+        'tertiary-fixed-dim':       'rgb(var(--color-tertiary-fixed-dim) / <alpha-value>)',
+        'surface-container-lowest': 'rgb(var(--color-surface-container-lowest) / <alpha-value>)',
+        'surface-container-low':    'rgb(var(--color-surface-container-low) / <alpha-value>)',
+        'surface-container-high':   'rgb(var(--color-surface-container-high) / <alpha-value>)',
+        'surface-container-highest':'rgb(var(--color-surface-container-highest) / <alpha-value>)',
+        'on-surface':               'rgb(var(--color-on-surface) / <alpha-value>)',
+        'on-surface-variant':       'rgb(var(--color-on-surface-variant) / <alpha-value>)',
+        'outline-variant':          'rgb(var(--color-outline-variant) / <alpha-value>)',
+        error:                      'rgb(var(--color-error) / <alpha-value>)',
+        'error-container':          'rgb(var(--color-error-container) / <alpha-value>)',
+        'secondary-fixed-dim':      'rgb(var(--color-secondary-fixed-dim) / <alpha-value>)',
+        'secondary-container':      'rgb(var(--color-secondary-container) / <alpha-value>)',
+      },
+      fontFamily: {
+        sans:     ['Inter', 'ui-sans-serif', 'system-ui', 'sans-serif'],
+        headline: ['Manrope', 'sans-serif'],
+      },
       animation: {
         'fade-in': 'fadeIn 0.3s ease-out',
         'fade-out': 'fadeOut 0.3s ease-out',

@@ -11,13 +11,11 @@ export function WelcomeSection({ userName }: WelcomeSectionProps) {
   });
 
   return (
-    <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2">
-      <div>
-        <h1 className="text-2xl sm:text-3xl font-bold text-white">
-          Bem-vindo, <span className="text-blue-400">{userName}</span>
-        </h1>
-        <p className="text-slate-400 mt-1 capitalize">{currentDate}</p>
-      </div>
-    </div>
+    <section>
+      <h2 className="text-3xl font-headline font-extrabold tracking-tight text-on-surface">
+        Bem-vindo, <span className="text-tertiary">{userName}</span>
+      </h2>
+      <p className="text-on-surface-variant mt-1 capitalize text-sm">{currentDate}</p>
+    </section>
   );
 }

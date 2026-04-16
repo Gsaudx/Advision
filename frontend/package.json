@@ -17,6 +17,7 @@
     "clsx": "^2.1.1",
     "libphonenumber-js": "^1.12.34",
     "lucide-react": "^0.562.0",
+    "motion": "^12.38.0",
     "react": "^19.2.0",
     "react-dom": "^19.2.0",
     "react-imask": "^7.6.1",
