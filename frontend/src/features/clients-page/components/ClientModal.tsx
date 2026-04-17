@@ -45,12 +45,12 @@ export default function ClientModal({
       isOpen={isOpen}
       onClose={onClose}
       size={size}
-      backgroundColor="bg-slate-900"
+      backgroundColor="bg-surface-container-lowest"
       minHeight={0}
     >
       {/* Header with gradient */}
       <div
-        className={`relative bg-gradient-to-r p-6 from-orange-900/70 to-slate-900 rounded-t-xl`}
+        className={`relative bg-gradient-to-r p-6 from-primary-container/60 to-surface-container-lowest rounded-t-xl`}
       >
         {/* Action buttons */}
         <div className="absolute top-4 right-4 flex items-center gap-2">
@@ -92,7 +92,7 @@ export default function ClientModal({
               {selectedClient.name}
             </h2>
             <div className="flex flex-col gap-2">
-              <span className="text-md text-gray-500 font-semibold text-left">
+              <span className="text-md text-on-surface-variant font-semibold text-left">
                 #{selectedClient.clientCode}
               </span>
               <span className="text-xs px-2.5 py-1 rounded-full font-medium bg-white/10 text-white/90 border border-white/20 w-fit">
@@ -107,7 +107,7 @@ export default function ClientModal({
       <div className="p-6 space-y-6">
         {/* Contact Information */}
         <div>
-          <h3 className="text-sm font-semibold text-gray-400 uppercase tracking-wider mb-4">
+          <h3 className="text-sm font-semibold text-on-surface-variant uppercase tracking-wider mb-4">
             Informações de Contato
           </h3>
           <div className="space-y-3">
@@ -116,7 +116,7 @@ export default function ClientModal({
                 <Mail size={18} className="text-blue-400" />
               </div>
               <div className="min-w-0">
-                <p className="text-xs text-gray-500">E-mail</p>
+                <p className="text-xs text-on-surface-variant">E-mail</p>
                 <p className="text-white truncate">
                 </p>
               </div>
@@ -127,7 +127,7 @@ export default function ClientModal({
                 <Phone size={18} className="text-green-400" />
               </div>
               <div className="min-w-0">
-                <p className="text-xs text-gray-500">Telefone</p>
+                <p className="text-xs text-on-surface-variant">Telefone</p>
                 <p className="text-white">
                 </p>
               </div>
@@ -138,18 +138,18 @@ export default function ClientModal({
                 <CreditCard size={18} className="text-purple-400" />
               </div>
               <div className="min-w-0">
-                <p className="text-xs text-gray-500">CPF</p>
+                <p className="text-xs text-on-surface-variant">CPF</p>
                 <p className="text-white font-mono">
                 </p>
               </div>
             </div> */}
 
             <div className="flex items-center gap-3">
-              <div className="w-10 h-10 rounded-lg bg-slate-500/20 flex items-center justify-center flex-shrink-0">
-                <Calendar size={18} className="text-slate-400" />
+              <div className="w-10 h-10 rounded-lg bg-outline-variant/20 flex items-center justify-center flex-shrink-0">
+                <Calendar size={18} className="text-on-surface-variant" />
               </div>
               <div className="min-w-0">
-                <p className="text-xs text-gray-500">Cliente desde</p>
+                <p className="text-xs text-on-surface-variant">Cliente desde</p>
                 <p className="text-white">
                   {formatDate(selectedClient.createdAt)}
                 </p>
@@ -159,11 +159,11 @@ export default function ClientModal({
         </div>
 
         {/* Divider */}
-        <div className="border-t border-slate-800" />
+        <div className="border-t border-outline-variant/20" />
 
         {/* Invite Section */}
         <div>
-          <h3 className="text-sm font-semibold text-gray-400 uppercase tracking-wider mb-4">
+          <h3 className="text-sm font-semibold text-on-surface-variant uppercase tracking-wider mb-4">
             Vinculacao de Conta
           </h3>
           <InviteLinkSection
