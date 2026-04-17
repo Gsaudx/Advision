@@ -169,3 +169,9 @@ Quality checks run on PRs to main/master:
 7. **Standards**: Follow existing patterns. Report security issues or bad implementations for discussion.
 8. **Quality**: Maintainable, secure, scalable, simple, and efficient code.
 9. **Single Source of Truth**: The SSOT should be in the following order: 1-database, 2-backend. If a data is present in the database, then it should be transportated all the way to the frontend. Backend should use the types available from the prisma generated types, then create the DTOs and export them to the frontend using Swagger docs (auto generated types).
+
+# Migração
+⚠️ ANTES de qualquer tarefa de migração de UI:
+1. Leia `PROMPT_MIGRACAO_UI_SOVEREIGN.md` — contém as regras e o protocolo completo
+2. Leia `MIGRATION_TRACKER.md` — contém o estado atual da migração e decisões anteriores
+3. Siga o protocolo de 3 fases descrito no prompt (Análise → Perguntas → Execução)

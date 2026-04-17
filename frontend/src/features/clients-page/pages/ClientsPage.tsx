@@ -1,5 +1,5 @@
 import { useState, useMemo } from 'react';
-import { ChevronRight, UserPlus, Users, MoreVertical, Filter, Search, Sparkles } from 'lucide-react';
+import { ChevronRight, UserPlus, Users, MoreVertical, Filter, Search } from 'lucide-react';
 import { motion } from 'motion/react';
 import type { Client, InviteStatus } from '../types/index.ts';
 import { inviteStatusLabels } from '../types/index.ts';
@@ -198,7 +198,7 @@ export default function ClientsPage() {
               <p className="text-on-surface-variant text-sm">Nenhum cliente encontrado.</p>
             </div>
           ) : (
-            <div className="overflow-x-auto">
+            <div className="overflow-x-auto overflow-y-auto max-h-[450px]">
               <table className="w-full text-left border-separate border-spacing-0">
                 <thead>
                   <tr className="bg-surface-container-low/20">
@@ -228,7 +228,7 @@ export default function ClientsPage() {
                         onClick={() => handleOpenClientDetails(client)}
                         className="group hover:bg-surface-container-low transition-all cursor-pointer"
                       >
-                        <td className="px-8 py-5">
+                        <td className="px-8 py-7">
                           <div className="flex items-center gap-3">
                             <div
                               className={`w-10 h-10 rounded-full flex items-center justify-center text-xs font-bold flex-shrink-0 ${avatarColor}`}
@@ -238,20 +238,20 @@ export default function ClientsPage() {
                             <p className="font-bold text-on-surface">{client.name}</p>
                           </div>
                         </td>
-                        <td className="px-6 py-5 font-mono text-sm text-on-surface-variant">
+                        <td className="px-6 py-7 font-mono text-sm text-on-surface-variant">
                           {client.clientCode}
                         </td>
-                        <td className="px-6 py-5">
+                        <td className="px-6 py-7">
                           <span
                             className={`text-xs px-2.5 py-1 rounded-full font-bold border ${inviteStatusBadge[client.inviteStatus]}`}
                           >
                             {inviteStatusLabels[client.inviteStatus]}
                           </span>
                         </td>
-                        <td className="px-6 py-5 text-sm text-on-surface-variant">
+                        <td className="px-6 py-7 text-sm text-on-surface-variant">
                           {new Date(client.createdAt).toLocaleDateString('pt-BR')}
                         </td>
-                        <td className="px-8 py-5 text-right">
+                        <td className="px-8 py-7 text-right">
                           <button
                             onClick={(e) => {
                               e.stopPropagation();
@@ -271,14 +271,13 @@ export default function ClientsPage() {
           )}
         </motion.div>
 
-        {/* Secondary Section — MOCKUP */}
+        {/* Secondary Section — MOCKUP (comentado até endpoints disponíveis)
         <motion.section
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ delay: 0.15 }}
           className="grid grid-cols-1 md:grid-cols-3 gap-8"
         >
-          {/* MOCKUP: relatório trimestral — remover quando endpoint de relatórios estiver disponível */}
           <div className="md:col-span-2 bg-primary-container p-8 rounded-[2.5rem] text-white flex flex-col justify-between overflow-hidden relative">
             <div className="relative z-10">
               <h3 className="text-2xl font-headline font-bold mb-2">
@@ -299,7 +298,6 @@ export default function ClientsPage() {
             <div className="absolute -bottom-10 -right-10 w-64 h-64 bg-tertiary/10 rounded-full blur-3xl" />
           </div>
 
-          {/* MOCKUP: Elite Access — remover quando funcionalidade estiver disponível */}
           <div className="bg-surface-container-low p-8 rounded-[2.5rem] border border-outline-variant/10 flex flex-col items-center justify-center text-center">
             <div className="w-16 h-16 bg-surface-container-lowest rounded-full flex items-center justify-center mb-4">
               <Sparkles className="text-tertiary" size={28} />
@@ -313,6 +311,7 @@ export default function ClientsPage() {
             </button>
           </div>
         </motion.section>
+        */}
       </div>
     </>
   );
