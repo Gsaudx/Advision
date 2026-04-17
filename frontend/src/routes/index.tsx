@@ -7,7 +7,7 @@ import { HomePageAdvisor, HomePageClient } from '@/features/home';
 import LoginPage from '@/features/login-register/pages/LoginPage';
 import RegisterPage from '@/features/login-register/pages/RegisterPage';
 import ClientsPage from '@/features/clients-page/pages/ClientsPage';
-import { WalletsPage } from '@/features/wallets';
+import { WalletsPage, WalletPage } from '@/features/wallets';
 import { ProventosPage } from '@/features/proventos';
 
 function RoleBasedRedirect() {
@@ -51,6 +51,7 @@ export function AppRoutes() {
           }
         >
           <Route path="/wallets" element={<WalletsPage />} />
+          <Route path="/wallets/:walletId" element={<WalletPage />} />
           <Route path="/proventos" element={<ProventosPage />} />
         </Route>
 

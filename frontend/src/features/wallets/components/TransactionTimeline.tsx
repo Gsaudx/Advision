@@ -32,7 +32,7 @@ type TransactionStyle = {
   valueColor: string;
 };
 
-// Transaction type configuration
+// Transaction type configuration — semantic colors preserved intentionally
 const transactionConfig: Record<TransactionType, TransactionStyle> = {
   BUY: {
     icon: ShoppingCart,
@@ -40,7 +40,7 @@ const transactionConfig: Record<TransactionType, TransactionStyle> = {
     iconColor: 'text-blue-400',
     borderColor: 'border-blue-500/30',
     valuePrefix: '-',
-    valueColor: 'text-red-400',
+    valueColor: 'text-error',
   },
   SELL: {
     icon: DollarSign,
@@ -48,31 +48,31 @@ const transactionConfig: Record<TransactionType, TransactionStyle> = {
     iconColor: 'text-orange-400',
     borderColor: 'border-orange-500/30',
     valuePrefix: '+',
-    valueColor: 'text-emerald-400',
+    valueColor: 'text-tertiary',
   },
   DEPOSIT: {
     icon: ArrowDownToLine,
-    bgColor: 'bg-emerald-500/20',
-    iconColor: 'text-emerald-400',
-    borderColor: 'border-emerald-500/30',
+    bgColor: 'bg-tertiary/20',
+    iconColor: 'text-tertiary',
+    borderColor: 'border-tertiary/30',
     valuePrefix: '+',
-    valueColor: 'text-emerald-400',
+    valueColor: 'text-tertiary',
   },
   WITHDRAWAL: {
     icon: ArrowUpFromLine,
-    bgColor: 'bg-red-500/20',
-    iconColor: 'text-red-400',
-    borderColor: 'border-red-500/30',
+    bgColor: 'bg-error/20',
+    iconColor: 'text-error',
+    borderColor: 'border-error/30',
     valuePrefix: '-',
-    valueColor: 'text-red-400',
+    valueColor: 'text-error',
   },
   DIVIDEND: {
     icon: TrendingUp,
-    bgColor: 'bg-green-500/20',
-    iconColor: 'text-green-400',
-    borderColor: 'border-green-500/30',
+    bgColor: 'bg-tertiary/20',
+    iconColor: 'text-tertiary',
+    borderColor: 'border-tertiary/30',
     valuePrefix: '+',
-    valueColor: 'text-emerald-400',
+    valueColor: 'text-tertiary',
   },
   SPLIT: {
     icon: Layers,
@@ -80,7 +80,7 @@ const transactionConfig: Record<TransactionType, TransactionStyle> = {
     iconColor: 'text-purple-400',
     borderColor: 'border-purple-500/30',
     valuePrefix: '',
-    valueColor: 'text-gray-300',
+    valueColor: 'text-on-surface-variant',
   },
   SUBSCRIPTION: {
     icon: Ticket,
@@ -88,7 +88,7 @@ const transactionConfig: Record<TransactionType, TransactionStyle> = {
     iconColor: 'text-cyan-400',
     borderColor: 'border-cyan-500/30',
     valuePrefix: '-',
-    valueColor: 'text-red-400',
+    valueColor: 'text-error',
   },
   OPTION_EXERCISE: {
     icon: Target,
@@ -96,7 +96,7 @@ const transactionConfig: Record<TransactionType, TransactionStyle> = {
     iconColor: 'text-violet-400',
     borderColor: 'border-violet-500/30',
     valuePrefix: '-',
-    valueColor: 'text-red-400',
+    valueColor: 'text-error',
   },
   OPTION_ASSIGNMENT: {
     icon: ShieldAlert,
@@ -108,11 +108,11 @@ const transactionConfig: Record<TransactionType, TransactionStyle> = {
   },
   OPTION_EXPIRY: {
     icon: Hourglass,
-    bgColor: 'bg-slate-500/20',
-    iconColor: 'text-slate-400',
-    borderColor: 'border-slate-500/30',
+    bgColor: 'bg-surface-container-high',
+    iconColor: 'text-on-surface-variant',
+    borderColor: 'border-outline-variant/30',
     valuePrefix: '',
-    valueColor: 'text-slate-400',
+    valueColor: 'text-on-surface-variant',
   },
 };
 
@@ -123,7 +123,7 @@ const optionBuyConfig: TransactionStyle = {
   iconColor: 'text-violet-400',
   borderColor: 'border-violet-500/30',
   valuePrefix: '-',
-  valueColor: 'text-red-400',
+  valueColor: 'text-error',
 };
 
 const optionSellConfig: TransactionStyle = {
@@ -132,7 +132,7 @@ const optionSellConfig: TransactionStyle = {
   iconColor: 'text-fuchsia-400',
   borderColor: 'border-fuchsia-500/30',
   valuePrefix: '+',
-  valueColor: 'text-emerald-400',
+  valueColor: 'text-tertiary',
 };
 
 function getTransactionStyle(transaction: Transaction): TransactionStyle {
@@ -196,13 +196,13 @@ function SkeletonItem() {
   return (
     <div className="flex gap-4 animate-pulse">
       <div className="flex flex-col items-center">
-        <div className="w-10 h-10 rounded-full bg-slate-700" />
-        <div className="w-0.5 h-full bg-slate-700 mt-2" />
+        <div className="w-10 h-10 rounded-full bg-surface-container-high" />
+        <div className="w-0.5 h-full bg-surface-container-high mt-2" />
       </div>
       <div className="flex-1 pb-8">
-        <div className="h-4 w-24 bg-slate-700 rounded mb-2" />
-        <div className="h-3 w-48 bg-slate-700/50 rounded mb-1" />
-        <div className="h-3 w-32 bg-slate-700/50 rounded" />
+        <div className="h-4 w-24 bg-surface-container-high rounded mb-2" />
+        <div className="h-3 w-48 bg-surface-container-high/50 rounded mb-1" />
+        <div className="h-3 w-32 bg-surface-container-high/50 rounded" />
       </div>
     </div>
   );
@@ -234,13 +234,13 @@ function TransactionItem({
           <Icon className={`w-5 h-5 ${config.iconColor}`} />
         </div>
         {!isLast && (
-          <div className="w-0.5 flex-1 bg-gradient-to-b from-slate-700 to-transparent mt-2 min-h-[2rem]" />
+          <div className="w-0.5 flex-1 bg-gradient-to-b from-outline-variant/30 to-transparent mt-2 min-h-[2rem]" />
         )}
       </div>
 
       {/* Content */}
       <div className={`flex-1 ${isLast ? '' : 'pb-6'}`}>
-        <div className="bg-slate-800/50 rounded-lg p-4 border border-slate-700/50 hover:border-slate-600/50 transition-colors">
+        <div className="bg-surface-container-high/50 rounded-xl p-4 border border-outline-variant/20 hover:border-outline-variant/40 transition-colors">
           {/* Header */}
           <div className="flex items-start justify-between gap-4">
             <div>
@@ -255,12 +255,12 @@ function TransactionItem({
                         ]}
                 </span>
                 {transaction.ticker && (
-                  <span className="px-2 py-0.5 bg-slate-700 rounded text-xs font-medium text-white">
+                  <span className="px-2 py-0.5 bg-surface-container-highest rounded text-xs font-medium text-on-surface">
                     {transaction.ticker}
                   </span>
                 )}
               </div>
-              <div className="flex items-center gap-2 mt-1 text-xs text-gray-500">
+              <div className="flex items-center gap-2 mt-1 text-xs text-on-surface-variant">
                 <Clock className="w-3 h-3" />
                 <span>{formatTime(transaction.executedAt)}</span>
               </div>
@@ -275,18 +275,20 @@ function TransactionItem({
 
           {/* Details for trades */}
           {isTrade && transaction.quantity && transaction.price && (
-            <div className="mt-3 pt-3 border-t border-slate-700/50 grid grid-cols-2 gap-4 text-sm">
+            <div className="mt-3 pt-3 border-t border-outline-variant/20 grid grid-cols-2 gap-4 text-sm">
               <div>
-                <span className="text-gray-500">
+                <span className="text-on-surface-variant">
                   {isOption ? 'Contratos' : 'Quantidade'}
                 </span>
-                <p className="text-white font-medium">{transaction.quantity}</p>
+                <p className="text-on-surface font-medium">
+                  {transaction.quantity}
+                </p>
               </div>
               <div>
-                <span className="text-gray-500">
+                <span className="text-on-surface-variant">
                   {isOption ? 'Premio' : 'Preco unitario'}
                 </span>
-                <p className="text-white font-medium">
+                <p className="text-on-surface font-medium">
                   {formatCurrency(transaction.price, currency)}
                 </p>
               </div>
@@ -316,11 +318,11 @@ export function TransactionTimeline({
   if (transactions.length === 0) {
     return (
       <div className="text-center py-12">
-        <div className="w-16 h-16 rounded-full bg-slate-800 flex items-center justify-center mx-auto mb-4">
-          <Clock className="w-8 h-8 text-gray-600" />
+        <div className="w-16 h-16 rounded-full bg-surface-container-high flex items-center justify-center mx-auto mb-4">
+          <Clock className="w-8 h-8 text-on-surface-variant/40" />
         </div>
-        <p className="text-gray-500">Nenhuma transacao registrada</p>
-        <p className="text-gray-600 text-sm mt-1">
+        <p className="text-on-surface-variant">Nenhuma transacao registrada</p>
+        <p className="text-on-surface-variant/50 text-sm mt-1">
           As operacoes realizadas aparecerao aqui
         </p>
       </div>
@@ -336,11 +338,11 @@ export function TransactionTimeline({
           <div key={dateKey}>
             {/* Date header */}
             <div className="flex items-center gap-3 mb-4">
-              <div className="h-px flex-1 bg-gradient-to-r from-transparent via-slate-700 to-transparent" />
-              <span className="text-xs font-medium text-gray-500 uppercase tracking-wider px-2">
+              <div className="h-px flex-1 bg-gradient-to-r from-transparent via-outline-variant/30 to-transparent" />
+              <span className="text-xs font-medium text-on-surface-variant uppercase tracking-wider px-2">
                 {formatRelativeDate(dayTransactions[0].executedAt)}
               </span>
-              <div className="h-px flex-1 bg-gradient-to-r from-transparent via-slate-700 to-transparent" />
+              <div className="h-px flex-1 bg-gradient-to-r from-transparent via-outline-variant/30 to-transparent" />
             </div>
 
             {/* Transactions for this day */}

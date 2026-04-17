@@ -1,6 +1,20 @@
-import { Wallet, TrendingUp, Banknote, ChevronRight } from 'lucide-react';
+import { motion } from 'motion/react';
+import { TrendingUp, TrendingDown } from 'lucide-react';
 import { formatCurrency } from '@/lib/formatters';
 import type { WalletSummary } from '../types';
+
+// MOCKUP: riskProfile, performance30d e sparkline — remover quando endpoint retornar esses dados
+const MOCK_RISK_PROFILES = ['MODERADA', 'AGRESSIVA', 'CONSERVADORA'] as const;
+const MOCK_SPARKLINES = [
+  [30, 45, 35, 60, 40, 70, 55, 80, 65, 90],
+  [80, 65, 70, 50, 60, 45, 55, 40, 30, 45],
+  [50, 55, 52, 58, 54, 60, 57, 62, 59, 65],
+];
+const MOCK_PERFORMANCES = [4.2, -1.8, 7.3, 2.1, -0.5, 5.6];
+
+function deterministicIndex(id: string, length: number): number {
+  return id.split('').reduce((acc, c) => acc + c.charCodeAt(0), 0) % length;
+}
 
 interface WalletCardProps extends React.ButtonHTMLAttributes<HTMLButtonElement> {
   wallet: WalletSummary;
@@ -8,62 +22,75 @@ interface WalletCardProps extends React.ButtonHTMLAttributes<HTMLButtonElement> 
 }
 
 export function WalletCard({ wallet, clientName, ...props }: WalletCardProps) {
+  const riskProfile = MOCK_RISK_PROFILES[deterministicIndex(wallet.id, MOCK_RISK_PROFILES.length)];
+  const sparkline = MOCK_SPARKLINES[deterministicIndex(wallet.id, MOCK_SPARKLINES.length)];
+  const performance = MOCK_PERFORMANCES[deterministicIndex(wallet.id, MOCK_PERFORMANCES.length)];
+  const isPositive = performance >= 0;
+
   return (
-    <button {...props}>
-      <div className="bg-slate-900 rounded-xl p-5 border border-slate-800 hover:border-slate-700 transition-all duration-300 group cursor-pointer h-full flex flex-col">
-        <div className="flex items-start justify-between mb-4">
-          <div className="flex items-center gap-3">
-            <div className="w-12 h-12 rounded-full bg-emerald-500/20 flex items-center justify-center">
-              <Wallet className="w-6 h-6 text-emerald-400" />
-            </div>
-            <div className="flex flex-col">
-              <span className="text-sm font-bold text-gray-300 text-left">
-                {wallet.name}
-              </span>
-              {clientName && (
-                <span className="text-xs text-gray-500 text-left mt-0.5">
-                  {clientName}
-                </span>
-              )}
-            </div>
-          </div>
-          <span className="text-xs px-2 py-1 rounded-full bg-slate-700/50 text-gray-400">
-            {wallet.currency}
-          </span>
-        </div>
-
-        <div className="space-y-3 flex-1">
-          <div className="flex items-center justify-between">
-            <div className="flex items-center gap-2 text-gray-400">
-              <Banknote className="w-4 h-4" />
-              <span className="text-sm">Saldo em Caixa</span>
-            </div>
-            <span className="text-sm font-semibold text-emerald-400">
-              {formatCurrency(wallet.cashBalance, wallet.currency)}
+    <button {...props} className="text-left w-full">
+      <motion.div
+        whileHover={{ y: -4 }}
+        transition={{ type: 'spring', stiffness: 300, damping: 20 }}
+        className="bg-surface-container-lowest p-8 rounded-[2.5rem] border border-outline-variant/10 cursor-pointer group flex flex-col justify-between h-[340px]"
+      >
+        <div>
+          <div className="flex items-center gap-2 mb-6">
+            <span className="bg-on-surface text-surface-container-low px-3 py-1 rounded-full text-[10px] font-bold tracking-widest leading-none">
+              {wallet.currency}
+            </span>
+            <span className={`px-3 py-1 rounded-full text-[10px] font-bold tracking-widest leading-none ${
+              riskProfile === 'AGRESSIVA'
+                ? 'bg-error/10 text-error'
+                : riskProfile === 'CONSERVADORA'
+                  ? 'bg-primary/10 text-primary'
+                  : 'bg-outline-variant/20 text-on-surface-variant'
+            }`}>
+              {riskProfile}
             </span>
           </div>
-          <div className="flex items-center justify-between">
-            <div className="flex items-center gap-2 text-gray-400">
-              <TrendingUp className="w-4 h-4" />
-              <span className="text-sm">Valor Total</span>
-            </div>
-            <span className="text-sm font-semibold text-white">
+          <h3 className="text-2xl font-headline font-bold text-on-surface mb-1">{wallet.name}</h3>
+          {clientName && (
+            <p className="text-sm text-on-surface-variant font-medium">{clientName}</p>
+          )}
+        </div>
+
+        <div className="space-y-4">
+          <div className="space-y-1">
+            <p className="text-[10px] font-bold text-on-surface-variant uppercase tracking-widest">
+              Patrimônio Líquido
+            </p>
+            <h4 className="text-3xl font-headline font-extrabold text-on-surface tracking-tighter">
               {formatCurrency(wallet.cashBalance, wallet.currency)}
-            </span>
+            </h4>
+          </div>
+
+          <div className="pt-4 border-t border-outline-variant/10 flex items-center justify-between">
+            <div>
+              <p className="text-[10px] font-bold text-on-surface-variant uppercase tracking-widest mb-1">
+                Performance (30d)
+              </p>
+              <div className={`flex items-center gap-1 font-bold text-sm ${isPositive ? 'text-primary' : 'text-error'}`}>
+                {isPositive ? <TrendingUp size={14} /> : <TrendingDown size={14} />}
+                {isPositive ? '+' : ''}{performance}%
+              </div>
+            </div>
+            <div className="flex items-end gap-1 h-8">
+              {sparkline.map((val, idx) => (
+                <div
+                  key={idx}
+                  className={`w-1.5 rounded-full transition-all duration-500 ${
+                    isPositive
+                      ? 'bg-primary/20 group-hover:bg-primary'
+                      : 'bg-error/20 group-hover:bg-error'
+                  }`}
+                  style={{ height: `${val}%` }}
+                />
+              ))}
+            </div>
           </div>
         </div>
-
-        {wallet.description && (
-          <p className="mt-3 pt-3 border-t border-slate-800 text-xs text-gray-500 truncate text-left">
-            {wallet.description}
-          </p>
-        )}
-
-        <div className="mt-4 pt-3 border-t border-slate-800 flex items-center justify-end text-xs text-gray-500 group-hover:text-emerald-400 transition-colors">
-          <span>Ver detalhes</span>
-          <ChevronRight className="w-4 h-4 ml-1 group-hover:translate-x-0.5 transition-transform" />
-        </div>
-      </div>
+      </motion.div>
     </button>
   );
 }
