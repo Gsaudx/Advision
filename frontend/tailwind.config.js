@@ -9,6 +9,7 @@ export default {
         'on-primary':               'rgb(var(--color-on-primary) / <alpha-value>)',
         tertiary:                   'rgb(var(--color-tertiary) / <alpha-value>)',
         'tertiary-fixed-dim':       'rgb(var(--color-tertiary-fixed-dim) / <alpha-value>)',
+        surface:                    'rgb(var(--color-surface) / <alpha-value>)',
         'surface-container-lowest': 'rgb(var(--color-surface-container-lowest) / <alpha-value>)',
         'surface-container-low':    'rgb(var(--color-surface-container-low) / <alpha-value>)',
         'surface-container-high':   'rgb(var(--color-surface-container-high) / <alpha-value>)',

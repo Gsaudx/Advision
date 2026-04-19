@@ -212,6 +212,35 @@ export interface StrategyFormData {
 }
 
 // ============================================================================
+// EXPIRY STATUS (frontend-specific, client-side tier classification)
+// ============================================================================
+
+/** Tier classification for how close an option is to expiration */
+export type ExpiryStatus = 'urgent' | 'near' | 'valid' | 'normal' | 'expired';
+
+/**
+ * Classifies an option's expiry date into a status tier.
+ * - expired : ≤ 0 days
+ * - urgent  : ≤ 7 days
+ * - near    : ≤ 15 days
+ * - valid   : ≤ 30 days
+ * - normal  : > 30 days
+ */
+export function calcExpiryStatus(
+  expirationDate: string,
+  currentTime: number,
+): ExpiryStatus {
+  const days = Math.ceil(
+    (new Date(expirationDate).getTime() - currentTime) / (1000 * 60 * 60 * 24),
+  );
+  if (days <= 0) return 'expired';
+  if (days <= 7) return 'urgent';
+  if (days <= 15) return 'near';
+  if (days <= 30) return 'valid';
+  return 'normal';
+}
+
+// ============================================================================
 // UI DISPLAY CONSTANTS
 // ============================================================================
 

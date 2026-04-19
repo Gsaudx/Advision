@@ -1,11 +1,11 @@
-import { Calendar, TrendingUp, TrendingDown } from 'lucide-react';
-import type { OptionPosition, Moneyness } from '../../types';
+import { Calendar } from 'lucide-react';
+import type { OptionPosition, Moneyness, ExpiryStatus } from '../../types';
 import {
   formatCurrency,
   formatPercent,
   formatDate,
   optionTypeLabels,
-  moneynessColors,
+  calcExpiryStatus,
 } from '../../types';
 
 interface OptionPositionCardProps {
@@ -14,9 +14,41 @@ interface OptionPositionCardProps {
   onExercise?: (positionId: string) => void;
   onAssignment?: (positionId: string) => void;
   onExpire?: (positionId: string) => void;
-  /** Current timestamp for calculating days until expiry - pass from parent to ensure pure render */
   currentTime: number;
 }
+
+function calcMoneyness(position: OptionPosition): Moneyness | null {
+  if (position.currentPrice === undefined) return null;
+  const diff = Math.abs(position.currentPrice - position.optionDetail.strikePrice);
+  const threshold = position.optionDetail.strikePrice * 0.01;
+  if (diff <= threshold) return 'ATM';
+  if (position.optionDetail.optionType === 'CALL') {
+    return position.currentPrice > position.optionDetail.strikePrice ? 'ITM' : 'OTM';
+  }
+  return position.currentPrice < position.optionDetail.strikePrice ? 'ITM' : 'OTM';
+}
+
+const moneynessStyle: Record<Moneyness, string> = {
+  ITM: 'bg-tertiary/[0.15] text-tertiary',
+  ATM: 'bg-outline-variant/30 text-on-surface-variant',
+  OTM: 'bg-error/[0.15] text-error',
+};
+
+const expiryBarColor: Record<ExpiryStatus, string> = {
+  expired: 'bg-error',
+  urgent: 'bg-error',
+  near: 'bg-amber-500',
+  valid: 'bg-tertiary',
+  normal: 'bg-tertiary',
+};
+
+const expiryTextColor: Record<ExpiryStatus, string> = {
+  expired: 'text-error',
+  urgent: 'text-error',
+  near: 'text-amber-500',
+  valid: 'text-on-surface-variant',
+  normal: 'text-on-surface-variant',
+};
 
 export function OptionPositionCard({
   position,
@@ -26,209 +58,176 @@ export function OptionPositionCard({
   onExpire,
   currentTime,
 }: OptionPositionCardProps) {
+  const isCall = position.optionDetail.optionType === 'CALL';
   const isProfit = (position.profitLoss ?? 0) >= 0;
+  const moneyness = calcMoneyness(position);
+
   const daysUntilExpiry = Math.ceil(
     (new Date(position.optionDetail.expirationDate).getTime() - currentTime) /
       (1000 * 60 * 60 * 24),
   );
-
-  const isExpiringSoon = daysUntilExpiry <= 7;
-  const isExpired = daysUntilExpiry <= 0;
+  const expiryStatus = calcExpiryStatus(position.optionDetail.expirationDate, currentTime);
+  const isExpired = expiryStatus === 'expired';
   const isAmerican = position.optionDetail.exerciseType === 'AMERICAN';
 
-  // Determine moneyness based on available price data
-  let moneyness: Moneyness | null = null;
-  if (position.currentPrice !== undefined) {
-    const diff = Math.abs(
-      position.currentPrice - position.optionDetail.strikePrice,
-    );
-    const threshold = position.optionDetail.strikePrice * 0.01;
-
-    if (diff <= threshold) {
-      moneyness = 'ATM';
-    } else if (position.optionDetail.optionType === 'CALL') {
-      moneyness =
-        position.currentPrice > position.optionDetail.strikePrice
-          ? 'ITM'
-          : 'OTM';
-    } else {
-      moneyness =
-        position.currentPrice < position.optionDetail.strikePrice
-          ? 'ITM'
-          : 'OTM';
-    }
-  }
-
-  // Exercise: long positions only
-  // American options can be exercised anytime, European only at expiry
   const canExercise = !position.isShort && (isAmerican || isExpired);
-
-  // Assignment: short positions (can happen anytime for American, at expiry for European)
   const canBeAssigned = position.isShort && (isAmerican || isExpired);
+  const hasActions =
+    onClose ||
+    (onExercise && canExercise) ||
+    (onAssignment && canBeAssigned) ||
+    (onExpire && isExpired);
 
-  // Expiration: any position that has expired
-  const canExpire = isExpired;
+  // 0% = vencido, 100% = 90+ dias
+  const barWidth = isExpired
+    ? 0
+    : Math.max(4, Math.min(100, (daysUntilExpiry / 90) * 100));
+
+  // 3rd metric: show currentPrice if available, otherwise strike
+  const thirdMetric =
+    position.currentPrice !== undefined
+      ? { label: 'ATUAL', value: formatCurrency(position.currentPrice) }
+      : { label: 'STRIKE', value: formatCurrency(position.optionDetail.strikePrice) };
 
   return (
-    <div className="bg-slate-800 rounded-lg p-4 border border-slate-700 hover:border-slate-600 transition-colors">
-      {/* Header */}
-      <div className="flex items-start justify-between mb-3">
-        <div className="flex items-center gap-2">
-          <span className="text-lg font-semibold text-white">
+    <div className="relative bg-surface rounded-xl border border-outline-variant/15 overflow-hidden hover:bg-surface-container-lowest hover:border-outline-variant/25 transition-colors duration-150">
+      {/* Left accent bar */}
+      <div className={`absolute left-0 top-0 bottom-0 w-[3px] ${isCall ? 'bg-tertiary' : 'bg-error'}`} />
+
+      {/* ── Main horizontal row ── */}
+      <div className="flex items-stretch px-6 pt-5 pb-[18px]">
+
+        {/* Section: Ticker */}
+        <div className="flex-shrink-0 w-[172px] pr-5 border-r border-outline-variant/15 flex flex-col justify-center gap-[10px]">
+          <span className="text-[10px] font-bold text-on-surface-variant uppercase tracking-[0.14em]">
+            {position.optionDetail.underlyingTicker}
+          </span>
+          <span className="font-headline font-black text-[20px] text-on-surface tracking-[-0.02em] leading-none">
             {position.ticker}
           </span>
-          <span
-            className={`text-xs px-2 py-0.5 rounded ${
-              position.optionDetail.optionType === 'CALL'
-                ? 'bg-blue-500/20 text-blue-400'
-                : 'bg-purple-500/20 text-purple-400'
-            }`}
-          >
-            {optionTypeLabels[position.optionDetail.optionType]}
-          </span>
-          {position.isShort && (
-            <span className="text-xs px-2 py-0.5 rounded bg-orange-500/20 text-orange-400">
-              VENDIDO
-            </span>
-          )}
-          {moneyness && (
+          <div className="flex gap-[5px] flex-wrap">
             <span
-              className={`text-xs px-2 py-0.5 rounded bg-slate-700 ${moneynessColors[moneyness]}`}
+              className={`text-[9px] font-black tracking-[0.1em] px-2 py-[3px] rounded-[4px] ${
+                isCall ? 'bg-tertiary/20 text-tertiary' : 'bg-error/20 text-error'
+              }`}
             >
-              {moneyness}
+              {optionTypeLabels[position.optionDetail.optionType]}
             </span>
-          )}
-        </div>
-        {isProfit ? (
-          <TrendingUp className="w-5 h-5 text-emerald-400" />
-        ) : (
-          <TrendingDown className="w-5 h-5 text-red-400" />
-        )}
-      </div>
-
-      {/* Details */}
-      <div className="grid grid-cols-2 gap-x-4 gap-y-2 text-sm mb-3">
-        <div>
-          <span className="text-gray-500">Contratos</span>
-          <p className="text-white font-medium">{position.quantity}</p>
-        </div>
-        <div>
-          <span className="text-gray-500">Premio Medio</span>
-          <p className="text-white font-medium">
-            {formatCurrency(position.averagePrice)}
-          </p>
-        </div>
-        <div>
-          <span className="text-gray-500">Strike</span>
-          <p className="text-white font-medium">
-            {formatCurrency(position.optionDetail.strikePrice)}
-          </p>
-        </div>
-        <div>
-          <span className="text-gray-500">Ativo Subjacente</span>
-          <p className="text-white font-medium">
-            {position.optionDetail.underlyingTicker}
-          </p>
-        </div>
-      </div>
-
-      {/* Expiration */}
-      <div
-        className={`flex items-center gap-2 p-2 rounded mb-3 ${
-          isExpiringSoon ? 'bg-red-500/10' : 'bg-slate-700'
-        }`}
-      >
-        <Calendar
-          className={`w-4 h-4 ${isExpiringSoon ? 'text-red-400' : 'text-gray-400'}`}
-        />
-        <span
-          className={`text-sm ${isExpiringSoon ? 'text-red-400' : 'text-gray-400'}`}
-        >
-          Venc: {formatDate(position.optionDetail.expirationDate)}
-          {daysUntilExpiry > 0 && (
-            <span className="ml-1">({daysUntilExpiry} dias)</span>
-          )}
-          {isExpired && <span className="ml-1 font-bold">(VENCIDO)</span>}
-        </span>
-      </div>
-
-      {/* Value Summary */}
-      <div className="grid grid-cols-2 gap-2 text-sm border-t border-slate-700 pt-3">
-        <div>
-          <span className="text-gray-500">Custo Total</span>
-          <p className="text-white font-medium">
-            {formatCurrency(position.totalCost)}
-          </p>
-        </div>
-        {position.currentValue !== undefined && (
-          <div>
-            <span className="text-gray-500">Valor Atual</span>
-            <p className="text-white font-medium">
-              {formatCurrency(position.currentValue)}
-            </p>
+            {position.isShort && (
+              <span className="text-[9px] font-black tracking-[0.1em] px-2 py-[3px] rounded-[4px] bg-outline-variant/20 text-on-surface-variant">
+                VENDIDO
+              </span>
+            )}
+            {moneyness && (
+              <span className={`text-[9px] font-black tracking-[0.1em] px-2 py-[3px] rounded-[4px] ${moneynessStyle[moneyness]}`}>
+                {moneyness}
+              </span>
+            )}
           </div>
-        )}
-        {position.profitLoss !== undefined && (
-          <div>
-            <span className="text-gray-500">Lucro/Prejuizo</span>
-            <p className={isProfit ? 'text-emerald-400' : 'text-red-400'}>
-              {isProfit ? '+' : ''}
-              {formatCurrency(position.profitLoss)}
+          <span className="text-[11px] text-on-surface-variant">
+            Strike:{' '}
+            <strong className="font-bold text-on-surface">
+              {formatCurrency(position.optionDetail.strikePrice)}
+            </strong>
+          </span>
+        </div>
+
+        {/* Section: Metrics */}
+        <div className="flex-1 flex items-center px-7">
+          {[
+            { label: 'CONTRATOS', value: position.quantity.toLocaleString('pt-BR') },
+            { label: 'PRÊMIO MÉD.', value: formatCurrency(position.averagePrice) },
+            thirdMetric,
+            { label: 'CUSTO TOTAL', value: formatCurrency(position.totalCost) },
+          ].map(({ label, value }, i, arr) => (
+            <div
+              key={label}
+              className={`flex-1 ${i === 0 ? 'pl-0 pr-4' : i === arr.length - 1 ? 'px-4 border-r-0' : 'px-4'} ${i < arr.length - 1 ? 'border-r border-outline-variant/[0.13]' : ''}`}
+            >
+              <p className="text-[9px] font-bold text-on-surface-variant uppercase tracking-[0.14em] mb-[7px]">
+                {label}
+              </p>
+              <p className="text-[15px] font-bold text-on-surface leading-none">{value}</p>
+            </div>
+          ))}
+        </div>
+
+        {/* Section: P&L + Actions */}
+        <div className="flex-shrink-0 w-[188px] pl-6 border-l border-outline-variant/15 flex flex-col justify-center gap-3">
+          {position.profitLoss !== undefined ? (
+            <div>
+              <p className="text-[9px] font-bold text-on-surface-variant uppercase tracking-[0.14em] mb-1">
+                P&L Não Real.
+              </p>
+              <p className={`font-headline font-black text-[20px] leading-none tracking-[-0.02em] ${isProfit ? 'text-tertiary' : 'text-error'}`}>
+                {isProfit ? '+ ' : '- '}
+                {formatCurrency(Math.abs(position.profitLoss))}
+              </p>
               {position.profitLossPercent !== undefined && (
-                <span className="ml-1 text-xs">
-                  ({formatPercent(position.profitLossPercent)})
-                </span>
+                <p className={`text-xs font-bold mt-1 ${isProfit ? 'text-tertiary/60' : 'text-error/60'}`}>
+                  {formatPercent(position.profitLossPercent)}
+                </p>
               )}
-            </p>
-          </div>
-        )}
-        {position.collateralBlocked !== undefined && (
-          <div>
-            <span className="text-gray-500">Margem Bloqueada</span>
-            <p className="text-yellow-400">
-              {formatCurrency(position.collateralBlocked)}
-            </p>
-          </div>
-        )}
-      </div>
+            </div>
+          ) : null}
 
-      {/* Actions */}
-      {(onClose || onExercise || onAssignment || onExpire) && (
-        <div className="flex gap-2 mt-4 pt-3 border-t border-slate-700">
-          {onClose && (
-            <button
-              onClick={() => onClose(position.id)}
-              className="flex-1 px-3 py-2 text-sm font-medium rounded-lg bg-slate-700 text-gray-300 hover:bg-slate-600 hover:text-white transition-colors"
-            >
-              Fechar Posicao
-            </button>
-          )}
-          {onExercise && canExercise && (
-            <button
-              onClick={() => onExercise(position.id)}
-              className="flex-1 px-3 py-2 text-sm font-medium rounded-lg bg-indigo-600 text-white hover:bg-indigo-700 transition-colors"
-            >
-              Exercer
-            </button>
-          )}
-          {onAssignment && canBeAssigned && (
-            <button
-              onClick={() => onAssignment(position.id)}
-              className="flex-1 px-3 py-2 text-sm font-medium rounded-lg bg-amber-600 text-white hover:bg-amber-700 transition-colors"
-            >
-              Atribuicao
-            </button>
-          )}
-          {onExpire && canExpire && (
-            <button
-              onClick={() => onExpire(position.id)}
-              className="flex-1 px-3 py-2 text-sm font-medium rounded-lg bg-gray-600 text-white hover:bg-gray-700 transition-colors"
-            >
-              Vencimento
-            </button>
+          {hasActions && (
+            <div className="flex gap-[6px]">
+              {onClose && (
+                <button
+                  onClick={() => onClose(position.id)}
+                  className="text-[10px] font-black tracking-[0.1em] uppercase py-[7px] px-[14px] rounded-lg bg-surface-container-high text-on-surface-variant hover:brightness-110 transition-all whitespace-nowrap"
+                >
+                  Fechar
+                </button>
+              )}
+              {onExercise && canExercise && (
+                <button
+                  onClick={() => onExercise(position.id)}
+                  className="text-[10px] font-black tracking-[0.1em] uppercase py-[7px] px-[14px] rounded-lg bg-primary text-on-primary hover:brightness-110 transition-all whitespace-nowrap"
+                >
+                  Exercer
+                </button>
+              )}
+              {onAssignment && canBeAssigned && (
+                <button
+                  onClick={() => onAssignment(position.id)}
+                  className="text-[10px] font-black tracking-[0.1em] uppercase py-[7px] px-[14px] rounded-lg bg-outline-variant/20 text-on-surface-variant hover:brightness-110 transition-all whitespace-nowrap"
+                >
+                  Atribuição
+                </button>
+              )}
+              {onExpire && isExpired && (
+                <button
+                  onClick={() => onExpire(position.id)}
+                  className="text-[10px] font-black tracking-[0.1em] uppercase py-[7px] px-[14px] rounded-lg bg-error/[0.15] text-error hover:brightness-110 transition-all whitespace-nowrap"
+                >
+                  Vencimento
+                </button>
+              )}
+            </div>
           )}
         </div>
-      )}
+      </div>
+
+      {/* ── Expiry footer strip ── */}
+      <div className="px-6 pb-[14px] flex flex-col gap-[7px]">
+        <div className="flex items-center justify-between">
+          <span className={`flex items-center gap-[5px] text-[10px] font-bold uppercase tracking-[0.1em] ${expiryTextColor[expiryStatus]}`}>
+            <Calendar size={11} />
+            {isExpired ? 'VENCIDO' : `Vence em: ${daysUntilExpiry} dia(s)`}
+          </span>
+          <span className="text-[10px] text-on-surface-variant">
+            {formatDate(position.optionDetail.expirationDate)}
+          </span>
+        </div>
+        <div className="h-[3px] bg-surface-container-high rounded-full overflow-hidden">
+          <div
+            className={`h-full rounded-full ${expiryBarColor[expiryStatus]}`}
+            style={{ width: `${barWidth}%` }}
+          />
+        </div>
+      </div>
     </div>
   );
 }

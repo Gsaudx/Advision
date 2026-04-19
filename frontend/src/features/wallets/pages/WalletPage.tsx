@@ -4,8 +4,6 @@ import {
   ArrowLeft,
   ArrowDownLeft,
   ArrowUpRight,
-  ShoppingCart,
-  DollarSign,
   ChevronRight,
   TrendingUp,
   Wallet,
@@ -22,13 +20,15 @@ import { useClients } from '@/features/clients-page';
 import { useWalletById, useTransactions } from '../api';
 import { useWalletProventos } from '@/features/proventos/api';
 import { PositionTable } from '../components/PositionTable';
-import { TransactionTimeline } from '../components/TransactionTimeline';
 import { ProventosTab } from '../components/ProventosTab';
 import { CashOperationModal } from '../components/CashOperationModal';
-import { TradeModal } from '../components/TradeModal';
+import { UnifiedTradeModal } from '../components/UnifiedTradeModal';
+import { ContentPanel } from '@/components/ui/ContentPanel';
+import { OptionFilter, FilterSelect } from '../components';
+import { useOptionFilters } from '../hooks/useOptionFilters';
+import { Search, X } from 'lucide-react';
 import {
   useOptionPositions,
-  OptionTradeModal,
   OptionPositionCard,
   CloseOptionModal,
   ExerciseOptionModal,
@@ -38,14 +38,12 @@ import {
   StrategyBuilderModal,
   StrategyHistoryList,
 } from '@/features/derivatives';
-import type { OptionPosition } from '@/features/derivatives';
-import type { TradeType, CashOperationType, Position, Transaction } from '../types';
+import type { OptionPosition, ExpiryStatus, OptionType } from '@/features/derivatives';
+import type { CashOperationType, Position, Transaction } from '../types';
 import { transactionTypeLabels } from '../types';
 import { useWalletsPageConfig } from './useWalletsPageConfig';
-
-type OptionTradeType = 'BUY' | 'SELL';
 type SubTab = 'positions' | 'options' | 'strategies';
-type PillTab = 'operations' | 'proventos' | 'history';
+type PillTab = 'operations' | 'proventos' | 'ativos';
 type LifecycleAction = 'close' | 'exercise' | 'assignment' | 'expiration';
 
 // MOCKUP: riskProfile e performance30d — remover quando endpoint retornar esses dados
@@ -91,7 +89,7 @@ function OperationsTable({
   }
 
   return (
-    <div className="overflow-x-auto max-h-[480px] overflow-y-auto">
+    <div className="overflow-x-auto">
       <table className="w-full text-left">
         <thead className="sticky top-0 bg-surface-container-lowest z-10">
           <tr className="text-on-surface-variant text-[10px] uppercase font-bold tracking-widest border-b border-outline-variant/5">
@@ -198,38 +196,52 @@ export default function WalletPage() {
   const [pillTab, setPillTab] = useState<PillTab>('operations');
   const [showCashModal, setShowCashModal] = useState(false);
   const [showTradeModal, setShowTradeModal] = useState(false);
-  const [showOptionTradeModal, setShowOptionTradeModal] = useState(false);
   const [showStrategyModal, setShowStrategyModal] = useState(false);
-  const [tradeType, setTradeType] = useState<TradeType>('BUY');
-  const [optionTradeType, setOptionTradeType] = useState<OptionTradeType>('BUY');
   const [cashOperationType, setCashOperationType] =
     useState<CashOperationType>('DEPOSIT');
-  const [preselectedTicker, setPreselectedTicker] = useState<
-    string | undefined
-  >(undefined);
+  const [tradeInitial, setTradeInitial] = useState<{
+    instrument: 'asset' | 'option';
+    direction: 'BUY' | 'SELL';
+    ticker?: string;
+  }>({ instrument: 'asset', direction: 'BUY' });
 
   const [lifecycleAction, setLifecycleAction] =
     useState<LifecycleAction | null>(null);
   const [selectedPosition, setSelectedPosition] =
     useState<OptionPosition | null>(null);
 
-  const handleOpenTrade = (type: TradeType, ticker?: string) => {
-    setTradeType(type);
-    setPreselectedTicker(ticker);
+  const {
+    search: optionSearch,
+    setSearch: setOptionSearch,
+    optionType: optionTypeFilter,
+    setOptionType: setOptionTypeFilter,
+    direction: directionFilter,
+    setDirection: setDirectionFilter,
+    expiryStatus: expiryStatusFilter,
+    setExpiryStatus: setExpiryStatusFilter,
+    hasActive: hasActiveOptionFilters,
+    clearAll: handleClearOptionFilters,
+    filteredPositions: filteredOptionPositions,
+  } = useOptionFilters({
+    positions: optionPositionsData?.positions,
+    currentTime,
+  });
+
+  const handleOpenTrade = (
+    instrument: 'asset' | 'option' = 'asset',
+    direction: 'BUY' | 'SELL' = 'BUY',
+    ticker?: string,
+  ) => {
+    setTradeInitial({ instrument, direction, ticker });
     setShowTradeModal(true);
   };
 
   const handleSellPosition = (position: Position) =>
-    handleOpenTrade('SELL', position.ticker);
+    handleOpenTrade('asset', 'SELL', position.ticker);
 
   const handleOpenCashOperation = (type: CashOperationType) => {
     setCashOperationType(type);
     setShowCashModal(true);
-  };
-
-  const handleOpenOptionTrade = (type: OptionTradeType) => {
-    setOptionTradeType(type);
-    setShowOptionTradeModal(true);
   };
 
   const findOptionPosition = (positionId: string): OptionPosition | undefined =>
@@ -272,9 +284,9 @@ export default function WalletPage() {
   ];
 
   const pillTabs: { id: PillTab; label: string }[] = [
+    { id: 'ativos', label: 'Ativos' },
     { id: 'operations', label: 'Operações' },
     { id: 'proventos', label: 'Proventos' },
-    { id: 'history', label: 'Histórico' },
   ];
 
   if (isLoading) {
@@ -394,13 +406,35 @@ export default function WalletPage() {
                 </span>
               )}
               {config.canTrade && (
-                <button
-                  onClick={() => handleOpenTrade('BUY')}
-                  className="flex items-center gap-2 bg-tertiary text-white px-4 py-2 rounded-full text-xs font-bold hover:brightness-110 transition-all shadow-lg shadow-tertiary/20"
-                >
-                  <ShoppingCart size={12} />
-                  Nova Operação
-                </button>
+                <>
+                  <button
+                    onClick={() => handleOpenCashOperation('DEPOSIT')}
+                    className="flex items-center gap-1.5 bg-surface-container-high text-on-surface-variant px-4 py-2 rounded-full text-xs font-bold hover:bg-surface-container-highest hover:text-on-surface transition-all"
+                  >
+                    <ArrowDownLeft size={12} />
+                    Depositar
+                  </button>
+                  <button
+                    onClick={() => handleOpenCashOperation('WITHDRAWAL')}
+                    className="flex items-center gap-1.5 bg-surface-container-high text-on-surface-variant px-4 py-2 rounded-full text-xs font-bold hover:bg-surface-container-highest hover:text-on-surface transition-all"
+                  >
+                    <ArrowUpRight size={12} />
+                    Sacar
+                  </button>
+                  <button
+                    onClick={() => setShowStrategyModal(true)}
+                    className="flex items-center gap-1.5 bg-surface-container-high text-on-surface-variant px-4 py-2 rounded-full text-xs font-bold hover:bg-surface-container-highest hover:text-on-surface transition-all"
+                  >
+                    <LayoutGrid size={12} />
+                    Estratégia
+                  </button>
+                  <button
+                    onClick={() => handleOpenTrade()}
+                    className="flex items-center gap-2 bg-tertiary text-white px-4 py-2 rounded-full text-xs font-bold hover:brightness-110 transition-all shadow-lg shadow-tertiary/20"
+                  >
+                    Nova Operação
+                  </button>
+                </>
               )}
             </div>
             {clientName && (
@@ -533,66 +567,6 @@ export default function WalletPage() {
               <div className="absolute -right-10 -bottom-10 w-48 h-48 bg-tertiary/10 rounded-full blur-3xl" />
             </div>
 
-            {/* Action Buttons */}
-            {config.canTrade && (
-              <div className="bg-surface-container-lowest p-6 rounded-[2rem] border border-outline-variant/5 space-y-2">
-                <h4 className="text-[10px] font-bold text-on-surface-variant uppercase tracking-widest mb-4">
-                  Operações Rápidas
-                </h4>
-                <button
-                  onClick={() => handleOpenCashOperation('DEPOSIT')}
-                  className="w-full px-4 py-3 bg-tertiary/10 text-tertiary rounded-xl hover:bg-tertiary/20 transition-colors flex items-center gap-2 text-sm font-medium"
-                >
-                  <ArrowDownLeft className="w-4 h-4" />
-                  Depositar
-                </button>
-                <button
-                  onClick={() => handleOpenCashOperation('WITHDRAWAL')}
-                  className="w-full px-4 py-3 bg-error/10 text-error rounded-xl hover:bg-error/20 transition-colors flex items-center gap-2 text-sm font-medium"
-                >
-                  <ArrowUpRight className="w-4 h-4" />
-                  Sacar
-                </button>
-                <div className="h-px bg-outline-variant/10 my-2" />
-                <button
-                  onClick={() => handleOpenTrade('BUY')}
-                  className="w-full px-4 py-3 bg-primary/10 text-primary rounded-xl hover:bg-primary/20 transition-colors flex items-center gap-2 text-sm font-medium"
-                >
-                  <ShoppingCart className="w-4 h-4" />
-                  Comprar Ação
-                </button>
-                <button
-                  onClick={() => handleOpenTrade('SELL')}
-                  className="w-full px-4 py-3 bg-error/10 text-error rounded-xl hover:bg-error/20 transition-colors flex items-center gap-2 text-sm font-medium"
-                >
-                  <DollarSign className="w-4 h-4" />
-                  Vender Ação
-                </button>
-                <div className="h-px bg-outline-variant/10 my-2" />
-                <button
-                  onClick={() => handleOpenOptionTrade('BUY')}
-                  className="w-full px-4 py-3 bg-purple-500/10 text-purple-400 rounded-xl hover:bg-purple-500/20 transition-colors flex items-center gap-2 text-sm font-medium"
-                >
-                  <LineChart className="w-4 h-4" />
-                  Comprar Opção
-                </button>
-                <button
-                  onClick={() => handleOpenOptionTrade('SELL')}
-                  className="w-full px-4 py-3 bg-fuchsia-500/10 text-fuchsia-400 rounded-xl hover:bg-fuchsia-500/20 transition-colors flex items-center gap-2 text-sm font-medium"
-                >
-                  <LineChart className="w-4 h-4" />
-                  Vender Opção
-                </button>
-                <div className="h-px bg-outline-variant/10 my-2" />
-                <button
-                  onClick={() => setShowStrategyModal(true)}
-                  className="w-full px-4 py-3 bg-outline-variant/10 text-on-surface-variant rounded-xl hover:bg-outline-variant/20 hover:text-on-surface transition-colors flex items-center gap-2 text-sm font-medium"
-                >
-                  <LayoutGrid className="w-4 h-4" />
-                  Estratégia
-                </button>
-              </div>
-            )}
           </motion.div>
 
           {/* ── Right Column ── */}
@@ -604,177 +578,181 @@ export default function WalletPage() {
           >
             {/* Sub-tab content: Ações */}
             {subTab === 'positions' && (
-              <>
-                <PositionTable
-                  positions={wallet.positions}
-                  currency={wallet.currency}
-                  canTrade={config.canTrade}
-                  onSellClick={handleSellPosition}
-                  isLoading={isRefreshing}
-                  proventos={proventosData?.items}
-                />
-
-                {/* Upcoming Expirations */}
-                {optionPositionsData?.positions &&
-                  optionPositionsData.positions.length > 0 && (
-                    <UpcomingExpirationsWidget
+              <ContentPanel
+                className="flex flex-col max-h-[475px]"
+                bodyClassName="p-2 flex-1 overflow-y-auto"
+                header={
+                  <div className="bg-surface-container-low p-1.5 rounded-2xl flex w-fit">
+                    {pillTabs.map((tab) => (
+                      <button
+                        key={tab.id}
+                        onClick={() => setPillTab(tab.id)}
+                        className={`px-4 py-2.5 rounded-xl text-sm font-bold transition-all ${
+                          pillTab === tab.id
+                            ? 'bg-surface-container-high text-on-surface shadow-sm'
+                            : 'text-on-surface-variant hover:text-on-surface'
+                        }`}
+                      >
+                        {tab.label}
+                      </button>
+                    ))}
+                  </div>
+                }
+              >
+                {pillTab === 'ativos' && (
+                  <PositionTable
+                    positions={wallet.positions}
+                    currency={wallet.currency}
+                    canTrade={config.canTrade}
+                    onSellClick={handleSellPosition}
+                    isLoading={isRefreshing}
+                    proventos={proventosData?.items}
+                  />
+                )}
+                {pillTab === 'operations' && (
+                  <OperationsTable
+                    transactions={transactions?.items ?? []}
+                    currency={wallet.currency}
+                    isLoading={isLoadingTransactions}
+                  />
+                )}
+                {pillTab === 'proventos' && (
+                  <div className="p-4">
+                    <ProventosTab
                       walletId={walletId!}
-                      onExercise={
-                        config.canTrade ? handleExerciseOption : undefined
-                      }
-                      onExpire={config.canTrade ? handleExpireOption : undefined}
-                      onAssignment={
-                        config.canTrade ? handleAssignmentOption : undefined
-                      }
+                      currency={wallet.currency}
                     />
-                  )}
-
-                {/* Pill card: Operações | Proventos | Histórico */}
-                <div className="bg-surface-container-lowest rounded-[2.5rem] shadow-sm border border-outline-variant/5 overflow-hidden">
-                  <div className="p-6 flex items-center justify-between border-b border-outline-variant/5">
-                    <div className="bg-surface-container-low p-1.5 rounded-2xl flex w-fit">
-                      {pillTabs.map((tab) => (
-                        <button
-                          key={tab.id}
-                          onClick={() => setPillTab(tab.id)}
-                          className={`px-8 py-2.5 rounded-xl text-sm font-bold transition-all ${
-                            pillTab === tab.id
-                              ? 'bg-surface-container-high text-on-surface shadow-sm'
-                              : 'text-on-surface-variant hover:text-on-surface'
-                          }`}
-                        >
-                          {tab.label}
-                        </button>
-                      ))}
-                    </div>
                   </div>
-
-                  <div className="p-2">
-                    {pillTab === 'operations' && (
-                      <OperationsTable
-                        transactions={transactions?.items ?? []}
-                        currency={wallet.currency}
-                        isLoading={isLoadingTransactions}
-                      />
-                    )}
-                    {pillTab === 'proventos' && (
-                      <div className="p-4">
-                        <ProventosTab
-                          walletId={walletId!}
-                          currency={wallet.currency}
-                        />
-                      </div>
-                    )}
-                    {pillTab === 'history' && (
-                      <div className="p-4">
-                        <TransactionTimeline
-                          transactions={transactions?.items ?? []}
-                          currency={wallet.currency}
-                          isLoading={isLoadingTransactions}
-                        />
-                      </div>
-                    )}
-                  </div>
-                </div>
-              </>
+                )}
+              </ContentPanel>
             )}
 
             {/* Sub-tab content: Opções */}
             {subTab === 'options' && (
-              <div className="relative">
+              <>
+              <ContentPanel className="relative" bodyClassName="p-0">
                 {isLoadingOptions ? (
                   <div className="flex justify-center py-8">
                     <LoadingSpinner size="md" />
                   </div>
                 ) : optionPositionsData?.positions &&
                   optionPositionsData.positions.length > 0 ? (
-                  <div className="space-y-4">
-                    <div className="grid grid-cols-3 gap-4 p-6 bg-surface-container-lowest rounded-[2rem] border border-outline-variant/5">
-                      <div>
-                        <span className="text-xs text-on-surface-variant uppercase tracking-wider font-bold">
-                          Prêmio Pago
-                        </span>
-                        <p className="text-lg font-semibold text-error mt-1">
-                          {formatCurrency(
-                            optionPositionsData.totalPremiumPaid,
-                            wallet.currency,
+                  <div className="p-6 space-y-4">
+                    <OptionFilter
+                      title="Filtrar posições"
+                      resultCount={filteredOptionPositions.length}
+                      totalCount={optionPositionsData.positions.length}
+                      onClearAll={hasActiveOptionFilters ? handleClearOptionFilters : undefined}
+                    >
+                      <div className="flex flex-col gap-1.5">
+                        <label className="text-[10px] font-bold uppercase tracking-widest text-on-surface-variant">
+                          Buscar
+                        </label>
+                        <div className="relative">
+                          <Search
+                            size={13}
+                            className="absolute left-3 top-1/2 -translate-y-1/2 text-on-surface-variant/50"
+                          />
+                          <input
+                            type="text"
+                            value={optionSearch}
+                            onChange={(e) => setOptionSearch(e.target.value)}
+                            placeholder="Ticker ou ativo base..."
+                            className="w-full pl-8 pr-8 py-2.5 bg-surface-container-low rounded-xl text-sm text-on-surface placeholder:text-on-surface-variant/40 border border-transparent focus:border-outline-variant/20 focus:outline-none transition-colors"
+                          />
+                          {optionSearch && (
+                            <button
+                              onClick={() => setOptionSearch('')}
+                              className="absolute right-2.5 top-1/2 -translate-y-1/2 text-on-surface-variant/50 hover:text-on-surface-variant transition-colors"
+                            >
+                              <X size={12} />
+                            </button>
                           )}
+                        </div>
+                      </div>
+                      <FilterSelect
+                        label="Tipo"
+                        placeholder="Todos"
+                        options={[
+                          { value: 'CALL', label: 'CALL' },
+                          { value: 'PUT', label: 'PUT' },
+                        ]}
+                        value={optionTypeFilter}
+                        onChange={(v) => setOptionTypeFilter(v as OptionType | null)}
+                      />
+                      <FilterSelect
+                        label="Direção"
+                        placeholder="Todas"
+                        options={[
+                          { value: 'long', label: 'Compra' },
+                          { value: 'short', label: 'Venda' },
+                        ]}
+                        value={directionFilter}
+                        onChange={(v) => setDirectionFilter(v as 'long' | 'short' | null)}
+                      />
+                      <FilterSelect
+                        label="Vencimento"
+                        placeholder="Todos"
+                        options={[
+                          { value: 'valid', label: 'Válida (≤ 30d)' },
+                          { value: 'near', label: 'Próxima (≤ 15d)' },
+                          { value: 'urgent', label: 'Urgente (≤ 7d)' },
+                        ]}
+                        value={expiryStatusFilter}
+                        onChange={(v) =>
+                          setExpiryStatusFilter(
+                            v as Exclude<ExpiryStatus, 'expired' | 'normal'> | null,
+                          )
+                        }
+                      />
+                    </OptionFilter>
+                    {filteredOptionPositions.length > 0 ? (
+                      <div className="max-h-[320px] overflow-y-auto option-positions-scroll pr-1">
+                        <div className="flex flex-col gap-2">
+                          {filteredOptionPositions.map((position) => (
+                            <OptionPositionCard
+                              key={position.id}
+                              position={position}
+                              currentTime={currentTime}
+                              onClose={
+                                config.canTrade
+                                  ? handleCloseOptionPosition
+                                  : undefined
+                              }
+                              onExercise={
+                                config.canTrade ? handleExerciseOption : undefined
+                              }
+                              onAssignment={
+                                config.canTrade ? handleAssignmentOption : undefined
+                              }
+                              onExpire={
+                                config.canTrade ? handleExpireOption : undefined
+                              }
+                            />
+                          ))}
+                        </div>
+                      </div>
+                    ) : (
+                      <div className="text-center py-10">
+                        <p className="text-on-surface-variant text-sm">
+                          Nenhuma posição corresponde aos filtros aplicados.
                         </p>
                       </div>
-                      <div>
-                        <span className="text-xs text-on-surface-variant uppercase tracking-wider font-bold">
-                          Prêmio Recebido
-                        </span>
-                        <p className="text-lg font-semibold text-tertiary mt-1">
-                          {formatCurrency(
-                            optionPositionsData.totalPremiumReceived,
-                            wallet.currency,
-                          )}
-                        </p>
-                      </div>
-                      <div>
-                        <span className="text-xs text-on-surface-variant uppercase tracking-wider font-bold">
-                          Prêmio Líquido
-                        </span>
-                        <p
-                          className={`text-lg font-semibold mt-1 ${
-                            optionPositionsData.netPremium >= 0
-                              ? 'text-tertiary'
-                              : 'text-error'
-                          }`}
-                        >
-                          {formatCurrency(
-                            optionPositionsData.netPremium,
-                            wallet.currency,
-                          )}
-                        </p>
-                      </div>
-                    </div>
-                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                      {optionPositionsData.positions.map((position) => (
-                        <OptionPositionCard
-                          key={position.id}
-                          position={position}
-                          currentTime={currentTime}
-                          onClose={
-                            config.canTrade
-                              ? handleCloseOptionPosition
-                              : undefined
-                          }
-                          onExercise={
-                            config.canTrade ? handleExerciseOption : undefined
-                          }
-                          onAssignment={
-                            config.canTrade ? handleAssignmentOption : undefined
-                          }
-                          onExpire={
-                            config.canTrade ? handleExpireOption : undefined
-                          }
-                        />
-                      ))}
-                    </div>
+                    )}
                   </div>
                 ) : (
-                  <div className="text-center py-16">
+                  <div className="p-6 text-center py-16">
                     <LineChart className="w-12 h-12 text-on-surface-variant/30 mx-auto mb-3" />
                     <p className="text-on-surface-variant mb-4">
                       Nenhuma posição em opções
                     </p>
                     {config.canTrade && (
-                      <div className="flex justify-center gap-3">
-                        <button
-                          onClick={() => handleOpenOptionTrade('BUY')}
-                          className="px-4 py-2 bg-purple-500/10 text-purple-400 rounded-xl hover:bg-purple-500/20 transition-colors"
-                        >
-                          Comprar Opção
-                        </button>
-                        <button
-                          onClick={() => handleOpenOptionTrade('SELL')}
-                          className="px-4 py-2 bg-fuchsia-500/10 text-fuchsia-400 rounded-xl hover:bg-fuchsia-500/20 transition-colors"
-                        >
-                          Vender Opção
-                        </button>
-                      </div>
+                      <button
+                        onClick={() => handleOpenTrade('option', 'BUY')}
+                        className="px-5 py-2.5 bg-primary/10 text-primary rounded-xl hover:bg-primary/20 transition-colors text-sm font-medium"
+                      >
+                        Nova Operação de Opção
+                      </button>
                     )}
                   </div>
                 )}
@@ -783,12 +761,23 @@ export default function WalletPage() {
                     <LoadingSpinner size="sm" />
                   </div>
                 )}
-              </div>
+              </ContentPanel>
+              {optionPositionsData?.positions && optionPositionsData.positions.length > 0 && (
+                <UpcomingExpirationsWidget
+                  walletId={walletId!}
+                  onExercise={config.canTrade ? handleExerciseOption : undefined}
+                  onExpire={config.canTrade ? handleExpireOption : undefined}
+                  onAssignment={config.canTrade ? handleAssignmentOption : undefined}
+                />
+              )}
+              </>
             )}
 
             {/* Sub-tab content: Estratégias */}
             {subTab === 'strategies' && (
-              <StrategyHistoryList walletId={walletId!} />
+              <ContentPanel bodyClassName="p-0">
+                <StrategyHistoryList walletId={walletId!} />
+              </ContentPanel>
             )}
           </motion.div>
         </div>
@@ -805,28 +794,17 @@ export default function WalletPage() {
         initialType={cashOperationType}
       />
 
-      <TradeModal
+      <UnifiedTradeModal
         isOpen={showTradeModal}
-        onClose={() => {
-          setShowTradeModal(false);
-          setPreselectedTicker(undefined);
-        }}
-        tradeType={tradeType}
+        onClose={() => setShowTradeModal(false)}
         walletId={walletId!}
         walletName={wallet.name}
         currentBalance={wallet.cashBalance}
         positions={wallet.positions}
         currency={wallet.currency}
-        preselectedTicker={preselectedTicker}
-      />
-
-      <OptionTradeModal
-        isOpen={showOptionTradeModal}
-        onClose={() => setShowOptionTradeModal(false)}
-        tradeType={optionTradeType}
-        walletId={walletId!}
-        walletName={wallet.name}
-        currentBalance={wallet.cashBalance}
+        initialInstrument={tradeInitial.instrument}
+        initialDirection={tradeInitial.direction}
+        preselectedTicker={tradeInitial.ticker}
       />
 
       {selectedPosition && lifecycleAction === 'close' && (
