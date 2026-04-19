@@ -59,7 +59,9 @@ export default function NewClientModal({
           <div className="w-10 h-10 rounded-full bg-primary/20 flex items-center justify-center">
             <User className="w-5 h-5 text-primary" />
           </div>
-          <h2 className="text-xl font-semibold text-on-surface">Novo Cliente</h2>
+          <h2 className="text-xl font-semibold text-on-surface">
+            Novo Cliente
+          </h2>
         </div>
         <button
           onClick={handleClose}

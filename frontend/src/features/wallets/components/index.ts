@@ -3,7 +3,6 @@ export { WalletStatsCard } from './WalletStatsCard';
 export { PositionTable } from './PositionTable';
 export { NewWalletModal } from './NewWalletModal';
 export { CashOperationModal } from './CashOperationModal';
-export { TradeModal } from './TradeModal';
 export { TickerAutocomplete } from './TickerAutocomplete';
 export { UnifiedTradeModal } from './UnifiedTradeModal';
 export { FilterSelect } from './FilterSelect';

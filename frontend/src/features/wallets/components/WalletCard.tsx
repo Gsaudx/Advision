@@ -22,9 +22,14 @@ interface WalletCardProps extends React.ButtonHTMLAttributes<HTMLButtonElement> 
 }
 
 export function WalletCard({ wallet, clientName, ...props }: WalletCardProps) {
-  const riskProfile = MOCK_RISK_PROFILES[deterministicIndex(wallet.id, MOCK_RISK_PROFILES.length)];
-  const sparkline = MOCK_SPARKLINES[deterministicIndex(wallet.id, MOCK_SPARKLINES.length)];
-  const performance = MOCK_PERFORMANCES[deterministicIndex(wallet.id, MOCK_PERFORMANCES.length)];
+  const riskProfile =
+    MOCK_RISK_PROFILES[
+      deterministicIndex(wallet.id, MOCK_RISK_PROFILES.length)
+    ];
+  const sparkline =
+    MOCK_SPARKLINES[deterministicIndex(wallet.id, MOCK_SPARKLINES.length)];
+  const performance =
+    MOCK_PERFORMANCES[deterministicIndex(wallet.id, MOCK_PERFORMANCES.length)];
   const isPositive = performance >= 0;
 
   return (
@@ -39,19 +44,25 @@ export function WalletCard({ wallet, clientName, ...props }: WalletCardProps) {
             <span className="bg-on-surface text-surface-container-low px-3 py-1 rounded-full text-[10px] font-bold tracking-widest leading-none">
               {wallet.currency}
             </span>
-            <span className={`px-3 py-1 rounded-full text-[10px] font-bold tracking-widest leading-none ${
-              riskProfile === 'AGRESSIVA'
-                ? 'bg-error/10 text-error'
-                : riskProfile === 'CONSERVADORA'
-                  ? 'bg-primary/10 text-primary'
-                  : 'bg-outline-variant/20 text-on-surface-variant'
-            }`}>
+            <span
+              className={`px-3 py-1 rounded-full text-[10px] font-bold tracking-widest leading-none ${
+                riskProfile === 'AGRESSIVA'
+                  ? 'bg-error/10 text-error'
+                  : riskProfile === 'CONSERVADORA'
+                    ? 'bg-primary/10 text-primary'
+                    : 'bg-outline-variant/20 text-on-surface-variant'
+              }`}
+            >
               {riskProfile}
             </span>
           </div>
-          <h3 className="text-2xl font-headline font-bold text-on-surface mb-1">{wallet.name}</h3>
+          <h3 className="text-2xl font-headline font-bold text-on-surface mb-1">
+            {wallet.name}
+          </h3>
           {clientName && (
-            <p className="text-sm text-on-surface-variant font-medium">{clientName}</p>
+            <p className="text-sm text-on-surface-variant font-medium">
+              {clientName}
+            </p>
           )}
         </div>
 
@@ -70,9 +81,16 @@ export function WalletCard({ wallet, clientName, ...props }: WalletCardProps) {
               <p className="text-[10px] font-bold text-on-surface-variant uppercase tracking-widest mb-1">
                 Performance (30d)
               </p>
-              <div className={`flex items-center gap-1 font-bold text-sm ${isPositive ? 'text-primary' : 'text-error'}`}>
-                {isPositive ? <TrendingUp size={14} /> : <TrendingDown size={14} />}
-                {isPositive ? '+' : ''}{performance}%
+              <div
+                className={`flex items-center gap-1 font-bold text-sm ${isPositive ? 'text-primary' : 'text-error'}`}
+              >
+                {isPositive ? (
+                  <TrendingUp size={14} />
+                ) : (
+                  <TrendingDown size={14} />
+                )}
+                {isPositive ? '+' : ''}
+                {performance}%
               </div>
             </div>
             <div className="flex items-end gap-1 h-8">

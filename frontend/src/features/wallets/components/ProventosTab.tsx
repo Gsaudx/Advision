@@ -56,7 +56,9 @@ export function ProventosTab({ walletId, currency }: ProventosTabProps) {
   if (isError) {
     return (
       <div className="p-4 bg-error/10 border border-error/20 rounded-xl">
-        <p className="text-error">Erro ao carregar proventos. Tente novamente.</p>
+        <p className="text-error">
+          Erro ao carregar proventos. Tente novamente.
+        </p>
       </div>
     );
   }

@@ -17,10 +17,58 @@ import {
 
 // MOCKUP: remover quando useAdvisorExpirations retornar dados reais
 const MOCK_EXPIRATIONS: AdvisorExpiration[] = [
-  { positionId: '1', ticker: 'PETRH315', optionType: 'CALL', strikePrice: 31.5,  expirationDate: '2026-04-19', daysUntilExpiry: 4,  quantity: 200, isShort: false, walletName: 'Carteira Arrojada', clientName: 'Adriana Mendes',   status: 'Proximo' },
-  { positionId: '2', ticker: 'VALEF280', optionType: 'PUT',  strikePrice: 28.0,  expirationDate: '2026-04-19', daysUntilExpiry: 4,  quantity: 100, isShort: true,  walletName: 'Carteira Moderada',  clientName: 'Ricardo Silveira',  status: 'Proximo' },
-  { positionId: '3', ticker: 'BBASH320', optionType: 'CALL', strikePrice: 32.0,  expirationDate: '2026-04-25', daysUntilExpiry: 10, quantity: 150, isShort: false, walletName: 'Carteira Global',    clientName: 'João Paulo Neto',   status: 'Em dia'  },
-  { positionId: '4', ticker: 'ITUBF245', optionType: 'PUT',  strikePrice: 24.5,  expirationDate: '2026-04-17', daysUntilExpiry: 2,  quantity: 300, isShort: false, walletName: 'Carteira Conserv.',  clientName: 'Beatriz Valença',   status: 'Vencido' },
+  {
+    positionId: '1',
+    ticker: 'PETRH315',
+    optionType: 'CALL',
+    strikePrice: 31.5,
+    expirationDate: '2026-04-19',
+    daysUntilExpiry: 4,
+    quantity: 200,
+    isShort: false,
+    walletName: 'Carteira Arrojada',
+    clientName: 'Adriana Mendes',
+    status: 'Proximo',
+  },
+  {
+    positionId: '2',
+    ticker: 'VALEF280',
+    optionType: 'PUT',
+    strikePrice: 28.0,
+    expirationDate: '2026-04-19',
+    daysUntilExpiry: 4,
+    quantity: 100,
+    isShort: true,
+    walletName: 'Carteira Moderada',
+    clientName: 'Ricardo Silveira',
+    status: 'Proximo',
+  },
+  {
+    positionId: '3',
+    ticker: 'BBASH320',
+    optionType: 'CALL',
+    strikePrice: 32.0,
+    expirationDate: '2026-04-25',
+    daysUntilExpiry: 10,
+    quantity: 150,
+    isShort: false,
+    walletName: 'Carteira Global',
+    clientName: 'João Paulo Neto',
+    status: 'Em dia',
+  },
+  {
+    positionId: '4',
+    ticker: 'ITUBF245',
+    optionType: 'PUT',
+    strikePrice: 24.5,
+    expirationDate: '2026-04-17',
+    daysUntilExpiry: 2,
+    quantity: 300,
+    isShort: false,
+    walletName: 'Carteira Conserv.',
+    clientName: 'Beatriz Valença',
+    status: 'Vencido',
+  },
 ];
 
 function formatCompactCurrency(value: number): string {
@@ -107,7 +155,9 @@ export function HomePageAdvisor() {
                     Operações Pendentes
                   </p>
                 </div>
-                <p className="text-amber-400 font-bold text-lg pl-1">{pendingOperationsCount}</p>
+                <p className="text-amber-400 font-bold text-lg pl-1">
+                  {pendingOperationsCount}
+                </p>
               </div>
               <div className="h-10 w-px bg-outline-variant/40 hidden sm:block" />
               <div>
@@ -119,7 +169,9 @@ export function HomePageAdvisor() {
                     Opções a Vencer
                   </p>
                 </div>
-                <p className="text-error font-bold text-lg pl-1">{expiringOptionsCount}</p>
+                <p className="text-error font-bold text-lg pl-1">
+                  {expiringOptionsCount}
+                </p>
               </div>
             </div>
           </div>

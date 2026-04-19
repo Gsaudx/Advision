@@ -19,13 +19,19 @@ interface OptionPositionCardProps {
 
 function calcMoneyness(position: OptionPosition): Moneyness | null {
   if (position.currentPrice === undefined) return null;
-  const diff = Math.abs(position.currentPrice - position.optionDetail.strikePrice);
+  const diff = Math.abs(
+    position.currentPrice - position.optionDetail.strikePrice,
+  );
   const threshold = position.optionDetail.strikePrice * 0.01;
   if (diff <= threshold) return 'ATM';
   if (position.optionDetail.optionType === 'CALL') {
-    return position.currentPrice > position.optionDetail.strikePrice ? 'ITM' : 'OTM';
+    return position.currentPrice > position.optionDetail.strikePrice
+      ? 'ITM'
+      : 'OTM';
   }
-  return position.currentPrice < position.optionDetail.strikePrice ? 'ITM' : 'OTM';
+  return position.currentPrice < position.optionDetail.strikePrice
+    ? 'ITM'
+    : 'OTM';
 }
 
 const moneynessStyle: Record<Moneyness, string> = {
@@ -66,7 +72,10 @@ export function OptionPositionCard({
     (new Date(position.optionDetail.expirationDate).getTime() - currentTime) /
       (1000 * 60 * 60 * 24),
   );
-  const expiryStatus = calcExpiryStatus(position.optionDetail.expirationDate, currentTime);
+  const expiryStatus = calcExpiryStatus(
+    position.optionDetail.expirationDate,
+    currentTime,
+  );
   const isExpired = expiryStatus === 'expired';
   const isAmerican = position.optionDetail.exerciseType === 'AMERICAN';
 
@@ -87,16 +96,20 @@ export function OptionPositionCard({
   const thirdMetric =
     position.currentPrice !== undefined
       ? { label: 'ATUAL', value: formatCurrency(position.currentPrice) }
-      : { label: 'STRIKE', value: formatCurrency(position.optionDetail.strikePrice) };
+      : {
+          label: 'STRIKE',
+          value: formatCurrency(position.optionDetail.strikePrice),
+        };
 
   return (
     <div className="relative bg-surface rounded-xl border border-outline-variant/15 overflow-hidden hover:bg-surface-container-lowest hover:border-outline-variant/25 transition-colors duration-150">
       {/* Left accent bar */}
-      <div className={`absolute left-0 top-0 bottom-0 w-[3px] ${isCall ? 'bg-tertiary' : 'bg-error'}`} />
+      <div
+        className={`absolute left-0 top-0 bottom-0 w-[3px] ${isCall ? 'bg-tertiary' : 'bg-error'}`}
+      />
 
       {/* ── Main horizontal row ── */}
       <div className="flex items-stretch px-6 pt-5 pb-[18px]">
-
         {/* Section: Ticker */}
         <div className="flex-shrink-0 w-[172px] pr-5 border-r border-outline-variant/15 flex flex-col justify-center gap-[10px]">
           <span className="text-[10px] font-bold text-on-surface-variant uppercase tracking-[0.14em]">
@@ -108,7 +121,9 @@ export function OptionPositionCard({
           <div className="flex gap-[5px] flex-wrap">
             <span
               className={`text-[9px] font-black tracking-[0.1em] px-2 py-[3px] rounded-[4px] ${
-                isCall ? 'bg-tertiary/20 text-tertiary' : 'bg-error/20 text-error'
+                isCall
+                  ? 'bg-tertiary/20 text-tertiary'
+                  : 'bg-error/20 text-error'
               }`}
             >
               {optionTypeLabels[position.optionDetail.optionType]}
@@ -119,7 +134,9 @@ export function OptionPositionCard({
               </span>
             )}
             {moneyness && (
-              <span className={`text-[9px] font-black tracking-[0.1em] px-2 py-[3px] rounded-[4px] ${moneynessStyle[moneyness]}`}>
+              <span
+                className={`text-[9px] font-black tracking-[0.1em] px-2 py-[3px] rounded-[4px] ${moneynessStyle[moneyness]}`}
+              >
                 {moneyness}
               </span>
             )}
@@ -135,8 +152,14 @@ export function OptionPositionCard({
         {/* Section: Metrics */}
         <div className="flex-1 flex items-center px-7">
           {[
-            { label: 'CONTRATOS', value: position.quantity.toLocaleString('pt-BR') },
-            { label: 'PRÊMIO MÉD.', value: formatCurrency(position.averagePrice) },
+            {
+              label: 'CONTRATOS',
+              value: position.quantity.toLocaleString('pt-BR'),
+            },
+            {
+              label: 'PRÊMIO MÉD.',
+              value: formatCurrency(position.averagePrice),
+            },
             thirdMetric,
             { label: 'CUSTO TOTAL', value: formatCurrency(position.totalCost) },
           ].map(({ label, value }, i, arr) => (
@@ -147,7 +170,9 @@ export function OptionPositionCard({
               <p className="text-[9px] font-bold text-on-surface-variant uppercase tracking-[0.14em] mb-[7px]">
                 {label}
               </p>
-              <p className="text-[15px] font-bold text-on-surface leading-none">{value}</p>
+              <p className="text-[15px] font-bold text-on-surface leading-none">
+                {value}
+              </p>
             </div>
           ))}
         </div>
@@ -159,12 +184,16 @@ export function OptionPositionCard({
               <p className="text-[9px] font-bold text-on-surface-variant uppercase tracking-[0.14em] mb-1">
                 P&L Não Real.
               </p>
-              <p className={`font-headline font-black text-[20px] leading-none tracking-[-0.02em] ${isProfit ? 'text-tertiary' : 'text-error'}`}>
+              <p
+                className={`font-headline font-black text-[20px] leading-none tracking-[-0.02em] ${isProfit ? 'text-tertiary' : 'text-error'}`}
+              >
                 {isProfit ? '+ ' : '- '}
                 {formatCurrency(Math.abs(position.profitLoss))}
               </p>
               {position.profitLossPercent !== undefined && (
-                <p className={`text-xs font-bold mt-1 ${isProfit ? 'text-tertiary/60' : 'text-error/60'}`}>
+                <p
+                  className={`text-xs font-bold mt-1 ${isProfit ? 'text-tertiary/60' : 'text-error/60'}`}
+                >
                   {formatPercent(position.profitLossPercent)}
                 </p>
               )}
@@ -213,7 +242,9 @@ export function OptionPositionCard({
       {/* ── Expiry footer strip ── */}
       <div className="px-6 pb-[14px] flex flex-col gap-[7px]">
         <div className="flex items-center justify-between">
-          <span className={`flex items-center gap-[5px] text-[10px] font-bold uppercase tracking-[0.1em] ${expiryTextColor[expiryStatus]}`}>
+          <span
+            className={`flex items-center gap-[5px] text-[10px] font-bold uppercase tracking-[0.1em] ${expiryTextColor[expiryStatus]}`}
+          >
             <Calendar size={11} />
             {isExpired ? 'VENCIDO' : `Vence em: ${daysUntilExpiry} dia(s)`}
           </span>

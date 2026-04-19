@@ -22,7 +22,9 @@ export function ActivityHistoryModal({
   page,
   onPageChange,
 }: ActivityHistoryModalProps) {
-  const [selectedActivity, setSelectedActivity] = useState<ActivityItem | null>(null);
+  const [selectedActivity, setSelectedActivity] = useState<ActivityItem | null>(
+    null,
+  );
 
   if (!isOpen) return null;
 

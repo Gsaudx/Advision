@@ -1,5 +1,6 @@
 import { Users, TrendingUp, Clock, Wallet } from 'lucide-react';
 import type { Client } from '../types';
+import { StatCard } from '@/components/ui/StatCard';
 
 // MOCKUP: AUM e Patrimônio Médio — remover quando endpoint de métricas de clientes estiver disponível
 const MOCK_AUM = 'R$ 142,8M';
@@ -10,8 +11,12 @@ interface ClientStatsCardProps {
 }
 
 export default function ClientStatsCard({ clients }: ClientStatsCardProps) {
-  const linkedClients = clients.filter((c) => c.inviteStatus === 'ACCEPTED').length;
-  const pendingClients = clients.filter((c) => c.inviteStatus === 'PENDING').length;
+  const linkedClients = clients.filter(
+    (c) => c.inviteStatus === 'ACCEPTED',
+  ).length;
+  const pendingClients = clients.filter(
+    (c) => c.inviteStatus === 'PENDING',
+  ).length;
 
   const stats = [
     {
@@ -58,20 +63,16 @@ export default function ClientStatsCard({ clients }: ClientStatsCardProps) {
 
   return (
     <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-4">
-      {stats.map((stat, i) => (
-        <div
-          key={i}
-          className="bg-surface-container-lowest p-6 rounded-[2rem] border border-outline-variant/10 flex flex-col gap-2"
-        >
-          <div className={`w-9 h-9 rounded-xl ${stat.iconBg} flex items-center justify-center`}>
-            <stat.icon size={16} className={stat.iconColor} />
-          </div>
-          <span className="text-on-surface-variant text-xs font-bold uppercase tracking-wider">
-            {stat.label}
-          </span>
-          <span className="text-2xl font-black text-on-surface">{stat.value}</span>
-          <span className="text-on-surface-variant text-xs font-medium">{stat.sub}</span>
-        </div>
+      {stats.map((stat) => (
+        <StatCard
+          key={stat.label}
+          label={stat.label}
+          value={stat.value}
+          sub={stat.sub}
+          icon={stat.icon}
+          iconColor={stat.iconColor}
+          iconBg={stat.iconBg}
+        />
       ))}
     </div>
   );

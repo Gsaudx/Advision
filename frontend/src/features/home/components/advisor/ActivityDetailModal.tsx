@@ -18,7 +18,10 @@ function formatFullDate(dateString: string): string {
   });
 }
 
-export function ActivityDetailModal({ activity, onClose }: ActivityDetailModalProps) {
+export function ActivityDetailModal({
+  activity,
+  onClose,
+}: ActivityDetailModalProps) {
   if (!activity) return null;
 
   const isWalletEvent = activity.aggregateType === 'WALLET';
@@ -103,7 +106,9 @@ export function ActivityDetailModal({ activity, onClose }: ActivityDetailModalPr
               <p className="text-xs text-on-surface-variant uppercase tracking-wider mb-0.5">
                 Data e Hora
               </p>
-              <p className="text-on-surface">{formatFullDate(activity.occurredAt)}</p>
+              <p className="text-on-surface">
+                {formatFullDate(activity.occurredAt)}
+              </p>
             </div>
           </div>
         </div>

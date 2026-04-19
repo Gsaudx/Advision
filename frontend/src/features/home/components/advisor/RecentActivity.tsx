@@ -1,5 +1,11 @@
 import { useState } from 'react';
-import { RefreshCw, ChevronRight, Banknote, UserPlus, FileText } from 'lucide-react';
+import {
+  RefreshCw,
+  ChevronRight,
+  Banknote,
+  UserPlus,
+  FileText,
+} from 'lucide-react';
 import type { ActivityItem } from '../../api';
 import { formatTimeAgo, getActivityTarget } from '../../utils/activity.utils';
 import { ActivityDetailModal } from './ActivityDetailModal';
@@ -9,22 +15,27 @@ type ActivityCategory = 'financial' | 'client' | 'default';
 
 function getActivityCategory(action: string): ActivityCategory {
   const lower = action.toLowerCase();
-  if (lower.includes('deposit') || lower.includes('compra') || lower.includes('venda')) return 'financial';
+  if (
+    lower.includes('deposit') ||
+    lower.includes('compra') ||
+    lower.includes('venda')
+  )
+    return 'financial';
   if (lower.includes('cliente') || lower.includes('client')) return 'client';
   return 'default';
 }
 
 const categoryStyles: Record<ActivityCategory, { bg: string; icon: string }> = {
-  financial: { bg: 'bg-tertiary/10',        icon: 'text-tertiary' },
-  client:    { bg: 'bg-primary/10',          icon: 'text-primary' },
-  default:   { bg: 'bg-outline-variant/15',  icon: 'text-on-surface-variant' },
+  financial: { bg: 'bg-tertiary/10', icon: 'text-tertiary' },
+  client: { bg: 'bg-primary/10', icon: 'text-primary' },
+  default: { bg: 'bg-outline-variant/15', icon: 'text-on-surface-variant' },
 };
 
 const CategoryIcon = ({ category }: { category: ActivityCategory }) => {
   const cls = categoryStyles[category].icon;
   if (category === 'financial') return <Banknote size={18} className={cls} />;
-  if (category === 'client')    return <UserPlus  size={18} className={cls} />;
-  return                               <FileText  size={18} className={cls} />;
+  if (category === 'client') return <UserPlus size={18} className={cls} />;
+  return <FileText size={18} className={cls} />;
 };
 
 interface RecentActivityProps {
@@ -42,7 +53,9 @@ export function RecentActivity({
   onRefresh,
   onSeeAll,
 }: RecentActivityProps) {
-  const [selectedActivity, setSelectedActivity] = useState<ActivityItem | null>(null);
+  const [selectedActivity, setSelectedActivity] = useState<ActivityItem | null>(
+    null,
+  );
   const showSkeleton = isLoading || isRefreshing;
 
   return (
@@ -62,7 +75,10 @@ export function RecentActivity({
                 className="text-on-surface-variant hover:text-on-surface transition-colors disabled:opacity-50"
                 title="Atualizar"
               >
-                <RefreshCw size={14} className={isRefreshing ? 'animate-spin' : ''} />
+                <RefreshCw
+                  size={14}
+                  className={isRefreshing ? 'animate-spin' : ''}
+                />
               </button>
             )}
             {onSeeAll && !showSkeleton && activities.length > 0 && (
@@ -99,7 +115,9 @@ export function RecentActivity({
                   onClick={() => setSelectedActivity(activity)}
                   className="flex items-center gap-3 px-4 py-3 hover:bg-surface-container-high transition-colors cursor-pointer group w-full text-left"
                 >
-                  <div className={`w-9 h-9 rounded-xl ${styles.bg} flex items-center justify-center flex-shrink-0 group-hover:scale-105 transition-transform`}>
+                  <div
+                    className={`w-9 h-9 rounded-xl ${styles.bg} flex items-center justify-center flex-shrink-0 group-hover:scale-105 transition-transform`}
+                  >
                     <CategoryIcon category={category} />
                   </div>
                   <div className="flex-1 min-w-0">

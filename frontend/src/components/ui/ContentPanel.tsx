@@ -15,7 +15,12 @@ interface ContentPanelProps {
  * Card base que envolve o conteúdo do painel direito da WalletPage.
  * Aceita qualquer children e um header opcional (ex: pill tabs).
  */
-export function ContentPanel({ children, header, className, bodyClassName }: ContentPanelProps) {
+export function ContentPanel({
+  children,
+  header,
+  className,
+  bodyClassName,
+}: ContentPanelProps) {
   return (
     <div
       className={cn(

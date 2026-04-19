@@ -9,16 +9,6 @@ export {
   walletsApi,
 } from './api';
 
-// Components
-export {
-  WalletCard,
-  WalletStatsCard,
-  PositionTable,
-  NewWalletModal,
-  CashOperationModal,
-  TradeModal,
-} from './components';
-
 // Hooks
 export { useNewWalletForm, useCashOperationForm, useTradeForm } from './hooks';
 

@@ -50,7 +50,8 @@ export function UnifiedTradeModal({
   initialDirection = 'BUY',
   preselectedTicker,
 }: UnifiedTradeModalProps) {
-  const [instrument, setInstrument] = useState<InstrumentType>(initialInstrument);
+  const [instrument, setInstrument] =
+    useState<InstrumentType>(initialInstrument);
   const [direction, setDirection] = useState<Direction>(initialDirection);
 
   // Sync instrument/direction when modal opens with initial values
@@ -64,15 +65,16 @@ export function UnifiedTradeModal({
   // ── Asset trade state ──
   const buyAssetMutation = useBuyAsset();
   const sellAssetMutation = useSellAsset();
-  const activeAssetMutation = direction === 'BUY' ? buyAssetMutation : sellAssetMutation;
+  const activeAssetMutation =
+    direction === 'BUY' ? buyAssetMutation : sellAssetMutation;
 
-  const [selectedAsset, setSelectedAsset] = useState<AssetSearchResult | null>(null);
+  const [selectedAsset, setSelectedAsset] = useState<AssetSearchResult | null>(
+    null,
+  );
   const [tickerForAssetPrice, setTickerForAssetPrice] = useState('');
 
-  const { data: assetPriceData, isLoading: isAssetPriceLoading } = useAssetPrice(
-    tickerForAssetPrice,
-    tickerForAssetPrice.length > 0,
-  );
+  const { data: assetPriceData, isLoading: isAssetPriceLoading } =
+    useAssetPrice(tickerForAssetPrice, tickerForAssetPrice.length > 0);
 
   const {
     formData: assetFormData,
@@ -127,7 +129,10 @@ export function UnifiedTradeModal({
   // Auto-fill price for asset
   useEffect(() => {
     if (assetPriceData?.price) {
-      setAssetFormData((prev) => ({ ...prev, price: assetPriceData.price.toFixed(2) }));
+      setAssetFormData((prev) => ({
+        ...prev,
+        price: assetPriceData.price.toFixed(2),
+      }));
       setAssetErrors((prev) => ({ ...prev, price: '' }));
     }
   }, [assetPriceData, setAssetFormData, setAssetErrors]);
@@ -154,7 +159,10 @@ export function UnifiedTradeModal({
 
   const handleMaxQuantity = () => {
     if (maxAssetQuantity > 0) {
-      setAssetFormData((prev) => ({ ...prev, quantity: maxAssetQuantity.toString() }));
+      setAssetFormData((prev) => ({
+        ...prev,
+        quantity: maxAssetQuantity.toString(),
+      }));
       setAssetErrors((prev) => ({ ...prev, quantity: '' }));
     }
   };
@@ -162,7 +170,8 @@ export function UnifiedTradeModal({
   // ── Option trade state ──
   const buyOptionMutation = useBuyOption();
   const sellOptionMutation = useSellOption();
-  const activeOptionMutation = direction === 'BUY' ? buyOptionMutation : sellOptionMutation;
+  const activeOptionMutation =
+    direction === 'BUY' ? buyOptionMutation : sellOptionMutation;
 
   const [optionFormData, setOptionFormData] = useState({
     ticker: '',
@@ -172,7 +181,8 @@ export function UnifiedTradeModal({
     covered: false,
   });
   const [optionErrors, setOptionErrors] = useState<Record<string, string>>({});
-  const [selectedOption, setSelectedOption] = useState<OptionSearchResult | null>(null);
+  const [selectedOption, setSelectedOption] =
+    useState<OptionSearchResult | null>(null);
   const [isPremiumManual, setIsPremiumManual] = useState(false);
 
   const {
@@ -181,15 +191,16 @@ export function UnifiedTradeModal({
     refetch: refetchOptionPrice,
   } = useAssetPrice(optionFormData.ticker, optionFormData.ticker.length > 0);
 
-  const { data: optionDetails, isLoading: isLoadingOptionDetails } = useOptionDetails(
-    optionFormData.ticker,
-    optionFormData.ticker.length > 0,
-  );
+  const { data: optionDetails, isLoading: isLoadingOptionDetails } =
+    useOptionDetails(optionFormData.ticker, optionFormData.ticker.length > 0);
 
   // Auto-fill premium
   useEffect(() => {
     if (optionPriceData?.price != null && !isPremiumManual) {
-      setOptionFormData((prev) => ({ ...prev, premium: optionPriceData.price.toFixed(2) }));
+      setOptionFormData((prev) => ({
+        ...prev,
+        premium: optionPriceData.price.toFixed(2),
+      }));
     }
   }, [optionPriceData, isPremiumManual]);
 
@@ -197,7 +208,8 @@ export function UnifiedTradeModal({
     e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>,
   ) => {
     const { name, value, type } = e.target;
-    const newValue = type === 'checkbox' ? (e.target as HTMLInputElement).checked : value;
+    const newValue =
+      type === 'checkbox' ? (e.target as HTMLInputElement).checked : value;
     setOptionFormData((prev) => ({ ...prev, [name]: newValue }));
     setOptionErrors((prev) => ({ ...prev, [name]: '' }));
     if (name === 'premium') setIsPremiumManual(true);
@@ -211,7 +223,11 @@ export function UnifiedTradeModal({
 
   const handleOptionSelect = (option: OptionSearchResult) => {
     setSelectedOption(option);
-    setOptionFormData((prev) => ({ ...prev, ticker: option.ticker, premium: '' }));
+    setOptionFormData((prev) => ({
+      ...prev,
+      ticker: option.ticker,
+      premium: '',
+    }));
     setOptionErrors((prev) => ({ ...prev, ticker: '' }));
     setIsPremiumManual(false);
   };
@@ -223,7 +239,8 @@ export function UnifiedTradeModal({
 
   const validateOption = (): boolean => {
     const newErrors: Record<string, string> = {};
-    if (!optionFormData.ticker.trim()) newErrors.ticker = 'Ticker é obrigatório';
+    if (!optionFormData.ticker.trim())
+      newErrors.ticker = 'Ticker é obrigatório';
     const qty = parseInt(optionFormData.quantity, 10);
     if (!optionFormData.quantity || isNaN(qty) || qty <= 0)
       newErrors.quantity = 'Quantidade deve ser positiva';
@@ -320,11 +337,10 @@ export function UnifiedTradeModal({
       const id = setTimeout(resetAll, 200);
       return () => clearTimeout(id);
     }
-  // eslint-disable-next-line react-hooks/exhaustive-deps
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [isOpen]);
 
-  const displayOptionType =
-    optionDetails?.type ?? selectedOption?.optionType;
+  const displayOptionType = optionDetails?.type ?? selectedOption?.optionType;
   const displayStrike = optionDetails?.strike ?? selectedOption?.strike;
   const displayExpiration =
     optionDetails?.expirationDate ?? selectedOption?.expirationDate;
@@ -342,9 +358,12 @@ export function UnifiedTradeModal({
     }
   };
 
-  const totalValue = instrument === 'asset' ? assetTotalValue : optionTotalValue;
+  const totalValue =
+    instrument === 'asset' ? assetTotalValue : optionTotalValue;
   const balanceAfter =
-    direction === 'BUY' ? currentBalance - totalValue : currentBalance + totalValue;
+    direction === 'BUY'
+      ? currentBalance - totalValue
+      : currentBalance + totalValue;
 
   const submitLabel =
     direction === 'BUY'
@@ -385,7 +404,9 @@ export function UnifiedTradeModal({
                 <h2 className="text-xl font-headline font-bold text-on-surface">
                   Nova Operação
                 </h2>
-                <p className="text-sm text-on-surface-variant mt-0.5">{walletName}</p>
+                <p className="text-sm text-on-surface-variant mt-0.5">
+                  {walletName}
+                </p>
               </div>
               <button
                 onClick={handleClose}
@@ -454,7 +475,9 @@ export function UnifiedTradeModal({
               {/* API Error */}
               {(assetApiError || optionApiError) && (
                 <div className="p-3 bg-error/10 border border-error/20 rounded-xl">
-                  <p className="text-error text-sm">{assetApiError ?? optionApiError}</p>
+                  <p className="text-error text-sm">
+                    {assetApiError ?? optionApiError}
+                  </p>
                 </div>
               )}
 
@@ -470,7 +493,11 @@ export function UnifiedTradeModal({
 
               {/* ── Asset form ── */}
               {instrument === 'asset' && (
-                <form id="unified-trade-form" onSubmit={handleAssetSubmit} className="space-y-5">
+                <form
+                  id="unified-trade-form"
+                  onSubmit={handleAssetSubmit}
+                  className="space-y-5"
+                >
                   {/* Ticker */}
                   <div>
                     <label className="text-[10px] font-bold text-on-surface-variant uppercase tracking-[0.15em] block mb-2">
@@ -485,7 +512,9 @@ export function UnifiedTradeModal({
                       placeholder="Digite o ticker (ex: PETR4)"
                     />
                     {selectedAsset && (
-                      <p className="text-xs text-tertiary mt-1">{selectedAsset.name}</p>
+                      <p className="text-xs text-tertiary mt-1">
+                        {selectedAsset.name}
+                      </p>
                     )}
                     {selectedPosition && direction === 'SELL' && (
                       <p className="text-xs text-on-surface-variant mt-1">
@@ -526,7 +555,9 @@ export function UnifiedTradeModal({
                         </button>
                       </div>
                       {assetErrors.quantity && (
-                        <p className="text-error text-xs mt-1">{assetErrors.quantity}</p>
+                        <p className="text-error text-xs mt-1">
+                          {assetErrors.quantity}
+                        </p>
                       )}
                       {maxAssetQuantity > 0 && (
                         <p className="text-[10px] text-on-surface-variant mt-1">
@@ -553,7 +584,9 @@ export function UnifiedTradeModal({
                           value={assetFormData.price}
                           onChange={handleAssetChange}
                           disabled={isPending || isAssetPriceLoading}
-                          placeholder={isAssetPriceLoading ? 'Carregando…' : '0,00'}
+                          placeholder={
+                            isAssetPriceLoading ? 'Carregando…' : '0,00'
+                          }
                           className={`w-full bg-surface-container-lowest border rounded-xl py-3.5 px-4 text-sm text-on-surface placeholder-on-surface-variant/40 focus:outline-none focus:ring-1 focus:ring-primary focus:border-primary transition-colors ${
                             assetErrors.price
                               ? 'border-error'
@@ -567,11 +600,14 @@ export function UnifiedTradeModal({
                         )}
                       </div>
                       {assetErrors.price && (
-                        <p className="text-error text-xs mt-1">{assetErrors.price}</p>
+                        <p className="text-error text-xs mt-1">
+                          {assetErrors.price}
+                        </p>
                       )}
                       {assetPriceData && !isAssetPriceLoading && (
                         <p className="text-[10px] text-on-surface-variant mt-1">
-                          Mercado: {formatCurrency(assetPriceData.price, currency)}
+                          Mercado:{' '}
+                          {formatCurrency(assetPriceData.price, currency)}
                         </p>
                       )}
                     </div>
@@ -589,11 +625,15 @@ export function UnifiedTradeModal({
                       onChange={handleAssetChange}
                       disabled={isPending}
                       className={`w-full bg-surface-container-lowest border rounded-xl py-3.5 px-4 text-sm text-on-surface focus:outline-none focus:ring-1 focus:ring-primary focus:border-primary transition-colors ${
-                        assetErrors.date ? 'border-error' : 'border-outline-variant/10'
+                        assetErrors.date
+                          ? 'border-error'
+                          : 'border-outline-variant/10'
                       }`}
                     />
                     {assetErrors.date && (
-                      <p className="text-error text-xs mt-1">{assetErrors.date}</p>
+                      <p className="text-error text-xs mt-1">
+                        {assetErrors.date}
+                      </p>
                     )}
                   </div>
                 </form>
@@ -601,7 +641,11 @@ export function UnifiedTradeModal({
 
               {/* ── Option form ── */}
               {instrument === 'option' && (
-                <form id="unified-trade-form" onSubmit={handleOptionSubmit} className="space-y-5">
+                <form
+                  id="unified-trade-form"
+                  onSubmit={handleOptionSubmit}
+                  className="space-y-5"
+                >
                   {/* Ticker */}
                   <div>
                     <label className="text-[10px] font-bold text-on-surface-variant uppercase tracking-[0.15em] block mb-2">
@@ -618,50 +662,55 @@ export function UnifiedTradeModal({
                   </div>
 
                   {/* Option details card */}
-                  {optionFormData.ticker && (displayOptionType || isLoadingOptionDetails) && (
-                    <div className="p-4 bg-surface-container-high/50 border border-outline-variant/10 rounded-2xl">
-                      {isLoadingOptionDetails ? (
-                        <div className="flex items-center gap-2 text-on-surface-variant text-sm">
-                          <LoadingSpinner size="sm" />
-                          Carregando detalhes…
-                        </div>
-                      ) : (
-                        <div className="flex items-center justify-between">
-                          <div className="flex items-center gap-3">
-                            <Info size={14} className="text-on-surface-variant/60" />
-                            <div className="flex items-center gap-2 flex-wrap">
-                              {displayOptionType && (
-                                <span
-                                  className={`text-[10px] px-2.5 py-1 rounded-full font-bold uppercase tracking-wide ${
-                                    displayOptionType === 'CALL'
-                                      ? 'bg-tertiary/10 text-tertiary'
-                                      : 'bg-error/10 text-error'
-                                  }`}
-                                >
-                                  {displayOptionType}
-                                </span>
-                              )}
-                              {displayStrike != null && (
-                                <span className="text-sm text-on-surface-variant">
-                                  Strike: {formatCurrency(displayStrike, currency)}
-                                </span>
-                              )}
-                              {displayExpiration && (
-                                <span className="text-sm text-on-surface-variant">
-                                  Exp: {formatExpDate(displayExpiration)}
-                                </span>
-                              )}
-                            </div>
+                  {optionFormData.ticker &&
+                    (displayOptionType || isLoadingOptionDetails) && (
+                      <div className="p-4 bg-surface-container-high/50 border border-outline-variant/10 rounded-2xl">
+                        {isLoadingOptionDetails ? (
+                          <div className="flex items-center gap-2 text-on-surface-variant text-sm">
+                            <LoadingSpinner size="sm" />
+                            Carregando detalhes…
                           </div>
-                          {optionDetails?.delta !== undefined && (
-                            <span className="text-xs text-on-surface-variant/60">
-                              Δ {optionDetails.delta.toFixed(3)}
-                            </span>
-                          )}
-                        </div>
-                      )}
-                    </div>
-                  )}
+                        ) : (
+                          <div className="flex items-center justify-between">
+                            <div className="flex items-center gap-3">
+                              <Info
+                                size={14}
+                                className="text-on-surface-variant/60"
+                              />
+                              <div className="flex items-center gap-2 flex-wrap">
+                                {displayOptionType && (
+                                  <span
+                                    className={`text-[10px] px-2.5 py-1 rounded-full font-bold uppercase tracking-wide ${
+                                      displayOptionType === 'CALL'
+                                        ? 'bg-tertiary/10 text-tertiary'
+                                        : 'bg-error/10 text-error'
+                                    }`}
+                                  >
+                                    {displayOptionType}
+                                  </span>
+                                )}
+                                {displayStrike != null && (
+                                  <span className="text-sm text-on-surface-variant">
+                                    Strike:{' '}
+                                    {formatCurrency(displayStrike, currency)}
+                                  </span>
+                                )}
+                                {displayExpiration && (
+                                  <span className="text-sm text-on-surface-variant">
+                                    Exp: {formatExpDate(displayExpiration)}
+                                  </span>
+                                )}
+                              </div>
+                            </div>
+                            {optionDetails?.delta !== undefined && (
+                              <span className="text-xs text-on-surface-variant/60">
+                                Δ {optionDetails.delta.toFixed(3)}
+                              </span>
+                            )}
+                          </div>
+                        )}
+                      </div>
+                    )}
 
                   {/* Contratos + Prêmio */}
                   <div className="grid grid-cols-2 gap-4">
@@ -679,11 +728,15 @@ export function UnifiedTradeModal({
                         disabled={isPending}
                         placeholder="0"
                         className={`w-full bg-surface-container-lowest border rounded-xl py-3.5 px-4 text-sm text-on-surface placeholder-on-surface-variant/40 focus:outline-none focus:ring-1 focus:ring-primary focus:border-primary transition-colors ${
-                          optionErrors.quantity ? 'border-error' : 'border-outline-variant/10'
+                          optionErrors.quantity
+                            ? 'border-error'
+                            : 'border-outline-variant/10'
                         }`}
                       />
                       {optionErrors.quantity && (
-                        <p className="text-error text-xs mt-1">{optionErrors.quantity}</p>
+                        <p className="text-error text-xs mt-1">
+                          {optionErrors.quantity}
+                        </p>
                       )}
                       <p className="text-[10px] text-on-surface-variant mt-1">
                         1 contrato = {CONTRACT_SIZE} ações
@@ -703,9 +756,13 @@ export function UnifiedTradeModal({
                           value={optionFormData.premium}
                           onChange={handleOptionChange}
                           disabled={isPending || isOptionPriceLoading}
-                          placeholder={isOptionPriceLoading ? 'Buscando…' : '0,00'}
+                          placeholder={
+                            isOptionPriceLoading ? 'Buscando…' : '0,00'
+                          }
                           className={`w-full bg-surface-container-lowest border rounded-xl py-3.5 px-4 pr-10 text-sm text-on-surface placeholder-on-surface-variant/40 focus:outline-none focus:ring-1 focus:ring-primary focus:border-primary transition-colors ${
-                            optionErrors.premium ? 'border-error' : 'border-outline-variant/10'
+                            optionErrors.premium
+                              ? 'border-error'
+                              : 'border-outline-variant/10'
                           }`}
                         />
                         {optionFormData.ticker && (
@@ -718,17 +775,22 @@ export function UnifiedTradeModal({
                           >
                             <RefreshCw
                               size={14}
-                              className={isOptionPriceLoading ? 'animate-spin' : ''}
+                              className={
+                                isOptionPriceLoading ? 'animate-spin' : ''
+                              }
                             />
                           </button>
                         )}
                       </div>
                       {optionErrors.premium && (
-                        <p className="text-error text-xs mt-1">{optionErrors.premium}</p>
+                        <p className="text-error text-xs mt-1">
+                          {optionErrors.premium}
+                        </p>
                       )}
                       {optionPriceData && !isPremiumManual && (
                         <p className="text-[10px] text-on-surface-variant mt-1">
-                          Mercado: {formatCurrency(optionPriceData.price, currency)}
+                          Mercado:{' '}
+                          {formatCurrency(optionPriceData.price, currency)}
                         </p>
                       )}
                       {isPremiumManual && optionFormData.premium && (
@@ -751,11 +813,15 @@ export function UnifiedTradeModal({
                       onChange={handleOptionChange}
                       disabled={isPending}
                       className={`w-full bg-surface-container-lowest border rounded-xl py-3.5 px-4 text-sm text-on-surface focus:outline-none focus:ring-1 focus:ring-primary focus:border-primary transition-colors ${
-                        optionErrors.date ? 'border-error' : 'border-outline-variant/10'
+                        optionErrors.date
+                          ? 'border-error'
+                          : 'border-outline-variant/10'
                       }`}
                     />
                     {optionErrors.date && (
-                      <p className="text-error text-xs mt-1">{optionErrors.date}</p>
+                      <p className="text-error text-xs mt-1">
+                        {optionErrors.date}
+                      </p>
                     )}
                   </div>
 
@@ -777,7 +843,8 @@ export function UnifiedTradeModal({
                       </label>
                       {optionFormData.covered && (
                         <p className="text-xs text-on-surface-variant mt-3 leading-relaxed">
-                          Covered call requer que você possua as ações do ativo subjacente na carteira.
+                          Covered call requer que você possua as ações do ativo
+                          subjacente na carteira.
                         </p>
                       )}
                     </div>
@@ -803,7 +870,9 @@ export function UnifiedTradeModal({
                   </span>
                 </div>
                 <div className="flex justify-between text-sm border-t border-outline-variant/10 pt-3">
-                  <span className="text-on-surface-variant">Saldo Após Operação</span>
+                  <span className="text-on-surface-variant">
+                    Saldo Após Operação
+                  </span>
                   <span
                     className={`font-bold ${
                       balanceAfter >= 0 ? 'text-on-surface' : 'text-error'

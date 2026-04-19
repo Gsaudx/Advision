@@ -1,16 +1,22 @@
 import { useState, useMemo } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { ChevronRight, Plus, Wallet, RefreshCw, Search, Filter, ShieldCheck, MessageSquare } from 'lucide-react';
+import {
+  ChevronRight,
+  Plus,
+  Wallet,
+  RefreshCw,
+  Search,
+  Filter,
+  ShieldCheck,
+  MessageSquare,
+} from 'lucide-react';
 import { motion } from 'motion/react';
 import { formatCurrency } from '@/lib/formatters';
 import { LoadingSpinner } from '@/components/ui/LoadingSpinner';
+import { EmptyState } from '@/components/ui/EmptyState';
 import { useClients } from '@/features/clients-page';
 import { useWallets } from '../api';
-import {
-  WalletCard,
-  WalletStatsCard,
-  NewWalletModal,
-} from '../components';
+import { WalletCard, WalletStatsCard, NewWalletModal } from '../components';
 import { useWalletsPageConfig } from './useWalletsPageConfig';
 import type { WalletSummary } from '../types';
 
@@ -93,7 +99,8 @@ export default function WalletsPage() {
               {config.pageTitle}
             </h2>
             <p className="text-on-surface-variant max-w-xl text-sm">
-              Gerencie os ativos e acompanhe o desempenho detalhado das carteiras sob sua custódia.
+              Gerencie os ativos e acompanhe o desempenho detalhado das
+              carteiras sob sua custódia.
             </p>
           </div>
           <div className="flex items-center gap-3 self-start lg:self-auto">
@@ -103,7 +110,10 @@ export default function WalletsPage() {
               className="p-3 bg-surface-container-high rounded-2xl text-on-surface-variant hover:text-on-surface hover:bg-surface-container-highest transition-all disabled:opacity-50"
               title="Atualizar"
             >
-              <RefreshCw size={16} className={isFetching ? 'animate-spin' : ''} />
+              <RefreshCw
+                size={16}
+                className={isFetching ? 'animate-spin' : ''}
+              />
             </button>
             {config.canCreate && (
               <button
@@ -136,7 +146,10 @@ export default function WalletsPage() {
           className="flex flex-col sm:flex-row gap-3"
         >
           <div className="flex items-center bg-surface-container-lowest px-4 py-2.5 rounded-full border border-outline-variant/20 focus-within:border-tertiary transition-all">
-            <Search size={14} className="text-on-surface-variant mr-2 flex-shrink-0" />
+            <Search
+              size={14}
+              className="text-on-surface-variant mr-2 flex-shrink-0"
+            />
             <input
               type="text"
               placeholder="Buscar carteira por nome..."
@@ -147,7 +160,10 @@ export default function WalletsPage() {
           </div>
           {config.showClientFilter && (
             <div className="flex items-center bg-surface-container-lowest px-4 py-2.5 rounded-full border border-outline-variant/20 focus-within:border-tertiary transition-all">
-              <Filter size={14} className="text-on-surface-variant mr-2 flex-shrink-0" />
+              <Filter
+                size={14}
+                className="text-on-surface-variant mr-2 flex-shrink-0"
+              />
               <select
                 value={clientFilter}
                 onChange={(e) => setClientFilter(e.target.value)}
@@ -174,12 +190,10 @@ export default function WalletsPage() {
               <LoadingSpinner size="lg" />
             </div>
           ) : isError ? (
-            <div className="flex flex-col items-center py-16 gap-3">
-              <Wallet className="w-12 h-12 text-on-surface-variant/30" />
-              <p className="text-on-surface-variant text-sm">
-                Erro ao carregar carteiras. Tente novamente.
-              </p>
-            </div>
+            <EmptyState
+              icon={Wallet}
+              message="Erro ao carregar carteiras. Tente novamente."
+            />
           ) : (
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
               {filteredWallets.map((wallet) => (
@@ -202,7 +216,9 @@ export default function WalletsPage() {
                   <div className="w-12 h-12 rounded-2xl bg-surface-container-high flex items-center justify-center text-on-surface-variant mb-6 group-hover:scale-110 group-hover:bg-primary group-hover:text-white transition-all">
                     <Plus size={24} />
                   </div>
-                  <h4 className="text-lg font-bold text-on-surface mb-2">Criar Nova Carteira</h4>
+                  <h4 className="text-lg font-bold text-on-surface mb-2">
+                    Criar Nova Carteira
+                  </h4>
                   <p className="text-sm text-on-surface-variant leading-relaxed max-w-[200px]">
                     Configure um novo portfólio estratégico para este cliente.
                   </p>
@@ -210,9 +226,8 @@ export default function WalletsPage() {
               )}
 
               {filteredWallets.length === 0 && !config.canCreate && (
-                <div className="col-span-full flex flex-col items-center py-16 gap-3">
-                  <Wallet className="w-12 h-12 text-on-surface-variant/30" />
-                  <p className="text-on-surface-variant text-sm">{config.emptyMessage}</p>
+                <div className="col-span-full">
+                  <EmptyState icon={Wallet} message={config.emptyMessage} />
                 </div>
               )}
             </div>
@@ -245,14 +260,18 @@ export default function WalletsPage() {
                 <p className="text-[10px] font-bold text-on-surface-variant uppercase tracking-widest">
                   Ativos Ativos
                 </p>
-                <p className="text-2xl font-headline font-extrabold text-on-surface">— Títulos</p>
+                <p className="text-2xl font-headline font-extrabold text-on-surface">
+                  — Títulos
+                </p>
               </div>
               {/* MOCKUP: Risco Médio — remover quando endpoint retornar esse dado */}
               <div className="space-y-2">
                 <p className="text-[10px] font-bold text-on-surface-variant uppercase tracking-widest">
                   Risco Médio
                 </p>
-                <p className="text-2xl font-headline font-extrabold text-primary">Moderado</p>
+                <p className="text-2xl font-headline font-extrabold text-primary">
+                  Moderado
+                </p>
               </div>
             </div>
           </div>
@@ -267,7 +286,8 @@ export default function WalletsPage() {
                 Private Banking Tier
               </h4>
               <p className="text-sm text-on-surface-variant leading-relaxed">
-                Acesso a taxas preferenciais e fundos exclusivos de liquidez restrita.
+                Acesso a taxas preferenciais e fundos exclusivos de liquidez
+                restrita.
               </p>
             </div>
             <div className="absolute bottom-6 right-6 w-12 h-12 bg-surface-container-lowest/20 rounded-2xl flex items-center justify-center text-on-surface backdrop-blur-sm border border-outline-variant/20 hover:bg-surface-container-lowest/30 transition-colors cursor-pointer">

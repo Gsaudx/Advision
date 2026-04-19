@@ -1,15 +1,24 @@
 import { useState, useMemo } from 'react';
-import { ChevronRight, UserPlus, Users, MoreVertical, Filter, Search } from 'lucide-react';
+import {
+  ChevronRight,
+  UserPlus,
+  Users,
+  MoreVertical,
+  Filter,
+  Search,
+} from 'lucide-react';
+import { Badge } from '@/components/ui/Badge';
+import { EmptyState } from '@/components/ui/EmptyState';
 import { motion } from 'motion/react';
-import type { Client, InviteStatus } from '../types/index.ts';
-import { inviteStatusLabels } from '../types/index.ts';
-import ClientStatsCard from '../components/ClientStatsCard.tsx';
-import ClientModal from '../components/ClientModal.tsx';
-import NewClientModal from '../components/NewClientModal.tsx';
-import DeleteClientDialog from '../components/DeleteClientDialog.tsx';
-import EditClientModal from '../components/EditClientModal.tsx';
+import type { Client, InviteStatus } from '../types';
+import { inviteStatusLabels } from '../types';
+import ClientStatsCard from '../components/ClientStatsCard';
+import ClientModal from '../components/ClientModal';
+import NewClientModal from '../components/NewClientModal';
+import DeleteClientDialog from '../components/DeleteClientDialog';
+import EditClientModal from '../components/EditClientModal';
 import { useClients } from '../api';
-import { LoadingSpinner } from '@/components/ui/LoadingSpinner.tsx';
+import { LoadingSpinner } from '@/components/ui/LoadingSpinner';
 
 type ModalView = 'none' | 'details' | 'edit' | 'delete' | 'new';
 
@@ -26,11 +35,14 @@ const avatarPalette = [
   'bg-secondary-container/50 text-secondary-fixed-dim',
 ];
 
-const inviteStatusBadge: Record<InviteStatus, string> = {
-  PENDING: 'border-outline-variant/30 text-on-surface-variant bg-outline-variant/10',
-  SENT: 'border-secondary-fixed-dim/30 text-secondary-fixed-dim bg-secondary-container/20',
-  ACCEPTED: 'border-tertiary/30 text-tertiary bg-tertiary/10',
-  REJECTED: 'border-error/30 text-error bg-error/10',
+const inviteStatusVariant: Record<
+  InviteStatus,
+  'neutral' | 'neutral' | 'tertiary' | 'error'
+> = {
+  PENDING: 'neutral',
+  SENT: 'neutral',
+  ACCEPTED: 'tertiary',
+  REJECTED: 'error',
 };
 
 export default function ClientsPage() {
@@ -53,7 +65,8 @@ export default function ClientsPage() {
       ? client.clientCode.toLowerCase().includes(normalizedSearch)
       : false;
     const matchesSearch = matchesName || matchesClientCode;
-    const matchesStatus = filterStatus === 'all' || client.inviteStatus === filterStatus;
+    const matchesStatus =
+      filterStatus === 'all' || client.inviteStatus === filterStatus;
     return matchesSearch && matchesStatus;
   });
 
@@ -85,7 +98,11 @@ export default function ClientsPage() {
         onSwitchToDelete={handleSwitchToDelete}
         size="xxl"
       />
-      <NewClientModal isOpen={modalView === 'new'} onClose={handleCloseModal} size="xxl" />
+      <NewClientModal
+        isOpen={modalView === 'new'}
+        onClose={handleCloseModal}
+        size="xxl"
+      />
       <EditClientModal
         key={selectedClient?.id ?? 'edit-client'}
         isOpen={modalView === 'edit'}
@@ -115,7 +132,8 @@ export default function ClientsPage() {
               Gestão de Clientes
             </h2>
             <p className="text-on-surface-variant mt-2 max-w-lg text-sm">
-              Supervisione e gerencie sua carteira de clientes com precisão e clareza.
+              Supervisione e gerencie sua carteira de clientes com precisão e
+              clareza.
             </p>
           </div>
           <button
@@ -147,7 +165,10 @@ export default function ClientsPage() {
           <div className="px-8 py-5 flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 bg-surface-container-low/30 border-b border-outline-variant/10">
             <div className="flex flex-col sm:flex-row gap-3 w-full sm:w-auto">
               <div className="flex items-center bg-surface-container-highest px-4 py-2 rounded-full border border-outline-variant/20 focus-within:border-tertiary transition-all">
-                <Search size={14} className="text-on-surface-variant mr-2 flex-shrink-0" />
+                <Search
+                  size={14}
+                  className="text-on-surface-variant mr-2 flex-shrink-0"
+                />
                 <input
                   type="text"
                   placeholder="Buscar por nome ou código..."
@@ -157,10 +178,15 @@ export default function ClientsPage() {
                 />
               </div>
               <div className="flex items-center bg-surface-container-highest px-4 py-2 rounded-full border border-outline-variant/20 focus-within:border-tertiary transition-all">
-                <Filter size={14} className="text-on-surface-variant mr-2 flex-shrink-0" />
+                <Filter
+                  size={14}
+                  className="text-on-surface-variant mr-2 flex-shrink-0"
+                />
                 <select
                   value={filterStatus}
-                  onChange={(e) => setFilterStatus(e.target.value as 'all' | InviteStatus)}
+                  onChange={(e) =>
+                    setFilterStatus(e.target.value as 'all' | InviteStatus)
+                  }
                   className="bg-transparent border-none focus:ring-0 text-sm font-medium text-on-surface pr-2 outline-none cursor-pointer"
                 >
                   <option value="all">Todos os Status</option>
@@ -173,10 +199,14 @@ export default function ClientsPage() {
             </div>
             <div className="text-on-surface-variant text-sm font-medium whitespace-nowrap">
               Mostrando{' '}
-              <span className="text-on-surface font-bold">{filteredClients.length}</span>
-              {' '}de{' '}
-              <span className="text-on-surface font-bold">{clients.length}</span>
-              {' '}clientes
+              <span className="text-on-surface font-bold">
+                {filteredClients.length}
+              </span>{' '}
+              de{' '}
+              <span className="text-on-surface font-bold">
+                {clients.length}
+              </span>{' '}
+              clientes
             </div>
           </div>
 
@@ -186,17 +216,12 @@ export default function ClientsPage() {
               <LoadingSpinner size="lg" />
             </div>
           ) : isError ? (
-            <div className="flex flex-col items-center py-16 gap-3">
-              <Users className="w-12 h-12 text-on-surface-variant/30" />
-              <p className="text-on-surface-variant text-sm">
-                Erro ao carregar clientes. Tente novamente.
-              </p>
-            </div>
+            <EmptyState
+              icon={Users}
+              message="Erro ao carregar clientes. Tente novamente."
+            />
           ) : filteredClients.length === 0 ? (
-            <div className="flex flex-col items-center py-16 gap-3">
-              <Users className="w-12 h-12 text-on-surface-variant/30" />
-              <p className="text-on-surface-variant text-sm">Nenhum cliente encontrado.</p>
-            </div>
+            <EmptyState icon={Users} message="Nenhum cliente encontrado." />
           ) : (
             <div className="overflow-x-auto overflow-y-auto max-h-[450px]">
               <table className="w-full text-left border-separate border-spacing-0">
@@ -221,7 +246,8 @@ export default function ClientsPage() {
                 </thead>
                 <tbody className="divide-y divide-outline-variant/10">
                   {filteredClients.map((client, index) => {
-                    const avatarColor = avatarPalette[index % avatarPalette.length];
+                    const avatarColor =
+                      avatarPalette[index % avatarPalette.length];
                     return (
                       <tr
                         key={client.id}
@@ -235,21 +261,27 @@ export default function ClientsPage() {
                             >
                               {getInitials(client.name)}
                             </div>
-                            <p className="font-bold text-on-surface">{client.name}</p>
+                            <p className="font-bold text-on-surface">
+                              {client.name}
+                            </p>
                           </div>
                         </td>
                         <td className="px-6 py-7 font-mono text-sm text-on-surface-variant">
                           {client.clientCode}
                         </td>
                         <td className="px-6 py-7">
-                          <span
-                            className={`text-xs px-2.5 py-1 rounded-full font-bold border ${inviteStatusBadge[client.inviteStatus]}`}
+                          <Badge
+                            variant={inviteStatusVariant[client.inviteStatus]}
+                            size="md"
+                            withBorder
                           >
                             {inviteStatusLabels[client.inviteStatus]}
-                          </span>
+                          </Badge>
                         </td>
                         <td className="px-6 py-7 text-sm text-on-surface-variant">
-                          {new Date(client.createdAt).toLocaleDateString('pt-BR')}
+                          {new Date(client.createdAt).toLocaleDateString(
+                            'pt-BR',
+                          )}
                         </td>
                         <td className="px-8 py-7 text-right">
                           <button

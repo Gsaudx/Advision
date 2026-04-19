@@ -32,9 +32,12 @@ const MOCK_ALERTS = [
 ];
 
 const severityStyles = {
-  error:   { border: 'border-error',               label: 'text-error' },
-  success: { border: 'border-tertiary',            label: 'text-tertiary' },
-  info:    { border: 'border-secondary-container', label: 'text-on-surface-variant' },
+  error: { border: 'border-error', label: 'text-error' },
+  success: { border: 'border-tertiary', label: 'text-tertiary' },
+  info: {
+    border: 'border-secondary-container',
+    label: 'text-on-surface-variant',
+  },
 };
 
 export function AlertsPanel() {
@@ -61,14 +64,18 @@ export function AlertsPanel() {
               className={`bg-surface-container-lowest p-4 rounded-2xl border-l-4 ${styles.border}`}
             >
               <div className="flex justify-between items-start mb-1.5">
-                <span className={`text-[10px] font-extrabold uppercase tracking-tighter ${styles.label}`}>
+                <span
+                  className={`text-[10px] font-extrabold uppercase tracking-tighter ${styles.label}`}
+                >
                   {alert.type}
                 </span>
                 <span className="text-[10px] text-on-surface-variant font-medium">
                   {alert.badge}
                 </span>
               </div>
-              <p className="text-sm font-bold text-on-surface mb-1">{alert.title}</p>
+              <p className="text-sm font-bold text-on-surface mb-1">
+                {alert.title}
+              </p>
               <p className="text-xs text-on-surface-variant leading-relaxed">
                 {alert.description}
               </p>

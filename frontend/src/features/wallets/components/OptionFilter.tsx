@@ -47,9 +47,8 @@ export function OptionFilter({
         <div className="flex items-center gap-3">
           {showCounter && (
             <span className="text-[10px] text-on-surface-variant">
-              <span className="font-bold text-on-surface">{resultCount}</span>
-              {' '}de{' '}
-              <span className="font-bold text-on-surface">{totalCount}</span>
+              <span className="font-bold text-on-surface">{resultCount}</span>{' '}
+              de <span className="font-bold text-on-surface">{totalCount}</span>
             </span>
           )}
           {onClearAll && (

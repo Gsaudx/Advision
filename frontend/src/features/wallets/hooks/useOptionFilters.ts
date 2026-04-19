@@ -1,5 +1,9 @@
 import { useState, useMemo } from 'react';
-import type { OptionPosition, ExpiryStatus, OptionType } from '@/features/derivatives';
+import type {
+  OptionPosition,
+  ExpiryStatus,
+  OptionType,
+} from '@/features/derivatives';
 import { calcExpiryStatus } from '@/features/derivatives';
 
 type Direction = 'long' | 'short';
@@ -10,14 +14,21 @@ interface UseOptionFiltersParams {
   currentTime: number;
 }
 
-export function useOptionFilters({ positions, currentTime }: UseOptionFiltersParams) {
+export function useOptionFilters({
+  positions,
+  currentTime,
+}: UseOptionFiltersParams) {
   const [search, setSearch] = useState('');
   const [optionType, setOptionType] = useState<OptionType | null>(null);
   const [direction, setDirection] = useState<Direction | null>(null);
-  const [expiryStatus, setExpiryStatus] = useState<FilterableExpiryStatus | null>(null);
+  const [expiryStatus, setExpiryStatus] =
+    useState<FilterableExpiryStatus | null>(null);
 
   const hasActive =
-    search !== '' || optionType !== null || direction !== null || expiryStatus !== null;
+    search !== '' ||
+    optionType !== null ||
+    direction !== null ||
+    expiryStatus !== null;
 
   const clearAll = () => {
     setSearch('');
@@ -37,11 +48,15 @@ export function useOptionFilters({ positions, currentTime }: UseOptionFiltersPar
         )
           return false;
       }
-      if (optionType && pos.optionDetail.optionType !== optionType) return false;
+      if (optionType && pos.optionDetail.optionType !== optionType)
+        return false;
       if (direction === 'long' && pos.isShort) return false;
       if (direction === 'short' && !pos.isShort) return false;
       if (expiryStatus) {
-        const status = calcExpiryStatus(pos.optionDetail.expirationDate, currentTime);
+        const status = calcExpiryStatus(
+          pos.optionDetail.expirationDate,
+          currentTime,
+        );
         if (status !== expiryStatus) return false;
       }
       return true;

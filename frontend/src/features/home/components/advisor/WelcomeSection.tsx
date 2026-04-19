@@ -15,7 +15,9 @@ export function WelcomeSection({ userName }: WelcomeSectionProps) {
       <h2 className="text-3xl font-headline font-extrabold tracking-tight text-on-surface">
         Bem-vindo, <span className="text-tertiary">{userName}</span>
       </h2>
-      <p className="text-on-surface-variant mt-1 capitalize text-sm">{currentDate}</p>
+      <p className="text-on-surface-variant mt-1 capitalize text-sm">
+        {currentDate}
+      </p>
     </section>
   );
 }

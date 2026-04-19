@@ -16,6 +16,7 @@ import { motion } from 'motion/react';
 import { PieChart, Pie, Cell, ResponsiveContainer } from 'recharts';
 import { formatCurrency, formatDateTime } from '@/lib/formatters';
 import { LoadingSpinner } from '@/components/ui/LoadingSpinner';
+import { EmptyState } from '@/components/ui/EmptyState';
 import { useClients } from '@/features/clients-page';
 import { useWalletById, useTransactions } from '../api';
 import { useWalletProventos } from '@/features/proventos/api';
@@ -38,7 +39,11 @@ import {
   StrategyBuilderModal,
   StrategyHistoryList,
 } from '@/features/derivatives';
-import type { OptionPosition, ExpiryStatus, OptionType } from '@/features/derivatives';
+import type {
+  OptionPosition,
+  ExpiryStatus,
+  OptionType,
+} from '@/features/derivatives';
 import type { CashOperationType, Position, Transaction } from '../types';
 import { transactionTypeLabels } from '../types';
 import { useWalletsPageConfig } from './useWalletsPageConfig';
@@ -270,7 +275,9 @@ export default function WalletPage() {
     openLifecycleModal('expiration', id);
 
   const riskProfile = wallet
-    ? MOCK_RISK_PROFILES[deterministicIndex(wallet.id, MOCK_RISK_PROFILES.length)]
+    ? MOCK_RISK_PROFILES[
+        deterministicIndex(wallet.id, MOCK_RISK_PROFILES.length)
+      ]
     : null;
   const performance = wallet
     ? MOCK_PERFORMANCES[deterministicIndex(wallet.id, MOCK_PERFORMANCES.length)]
@@ -299,18 +306,15 @@ export default function WalletPage() {
 
   if (isError || !wallet) {
     return (
-      <div className="flex flex-col items-center py-32 gap-4">
-        <Wallet className="w-12 h-12 text-on-surface-variant/30" />
-        <p className="text-on-surface-variant">
-          Erro ao carregar carteira. Tente novamente.
-        </p>
-        <button
-          onClick={() => navigate('/wallets')}
-          className="flex items-center gap-2 text-sm text-primary hover:underline"
-        >
-          <ArrowLeft size={14} /> Voltar para Carteiras
-        </button>
-      </div>
+      <EmptyState
+        icon={Wallet}
+        message="Erro ao carregar carteira. Tente novamente."
+        action={{
+          label: '← Voltar para Carteiras',
+          onClick: () => navigate('/wallets'),
+        }}
+        className="py-32"
+      />
     );
   }
 
@@ -526,7 +530,10 @@ export default function WalletPage() {
 
               <div className="space-y-4">
                 {ALLOCATION_DATA.map((item) => (
-                  <div key={item.name} className="flex items-center justify-between">
+                  <div
+                    key={item.name}
+                    className="flex items-center justify-between"
+                  >
                     <div className="flex items-center gap-3">
                       <div
                         className="w-2.5 h-2.5 rounded-full"
@@ -558,7 +565,9 @@ export default function WalletPage() {
                   </h4>
                 </div>
                 <p className="text-lg font-medium leading-relaxed opacity-90">
-                  A alocação atual demonstra boa resiliência à volatilidade. Considere rebalancear 5% de Renda Fixa para Renda Variável no próximo trimestre.
+                  A alocação atual demonstra boa resiliência à volatilidade.
+                  Considere rebalancear 5% de Renda Fixa para Renda Variável no
+                  próximo trimestre.
                 </p>
                 <button className="w-full bg-tertiary text-white py-4 rounded-2xl font-bold text-sm uppercase tracking-widest hover:brightness-110 transition-all shadow-lg shadow-tertiary/20">
                   Agendar Reunião
@@ -566,7 +575,6 @@ export default function WalletPage() {
               </div>
               <div className="absolute -right-10 -bottom-10 w-48 h-48 bg-tertiary/10 rounded-full blur-3xl" />
             </div>
-
           </motion.div>
 
           {/* ── Right Column ── */}
@@ -630,146 +638,170 @@ export default function WalletPage() {
             {/* Sub-tab content: Opções */}
             {subTab === 'options' && (
               <>
-              <ContentPanel className="relative" bodyClassName="p-0">
-                {isLoadingOptions ? (
-                  <div className="flex justify-center py-8">
-                    <LoadingSpinner size="md" />
-                  </div>
-                ) : optionPositionsData?.positions &&
-                  optionPositionsData.positions.length > 0 ? (
-                  <div className="p-6 space-y-4">
-                    <OptionFilter
-                      title="Filtrar posições"
-                      resultCount={filteredOptionPositions.length}
-                      totalCount={optionPositionsData.positions.length}
-                      onClearAll={hasActiveOptionFilters ? handleClearOptionFilters : undefined}
-                    >
-                      <div className="flex flex-col gap-1.5">
-                        <label className="text-[10px] font-bold uppercase tracking-widest text-on-surface-variant">
-                          Buscar
-                        </label>
-                        <div className="relative">
-                          <Search
-                            size={13}
-                            className="absolute left-3 top-1/2 -translate-y-1/2 text-on-surface-variant/50"
-                          />
-                          <input
-                            type="text"
-                            value={optionSearch}
-                            onChange={(e) => setOptionSearch(e.target.value)}
-                            placeholder="Ticker ou ativo base..."
-                            className="w-full pl-8 pr-8 py-2.5 bg-surface-container-low rounded-xl text-sm text-on-surface placeholder:text-on-surface-variant/40 border border-transparent focus:border-outline-variant/20 focus:outline-none transition-colors"
-                          />
-                          {optionSearch && (
-                            <button
-                              onClick={() => setOptionSearch('')}
-                              className="absolute right-2.5 top-1/2 -translate-y-1/2 text-on-surface-variant/50 hover:text-on-surface-variant transition-colors"
-                            >
-                              <X size={12} />
-                            </button>
-                          )}
-                        </div>
-                      </div>
-                      <FilterSelect
-                        label="Tipo"
-                        placeholder="Todos"
-                        options={[
-                          { value: 'CALL', label: 'CALL' },
-                          { value: 'PUT', label: 'PUT' },
-                        ]}
-                        value={optionTypeFilter}
-                        onChange={(v) => setOptionTypeFilter(v as OptionType | null)}
-                      />
-                      <FilterSelect
-                        label="Direção"
-                        placeholder="Todas"
-                        options={[
-                          { value: 'long', label: 'Compra' },
-                          { value: 'short', label: 'Venda' },
-                        ]}
-                        value={directionFilter}
-                        onChange={(v) => setDirectionFilter(v as 'long' | 'short' | null)}
-                      />
-                      <FilterSelect
-                        label="Vencimento"
-                        placeholder="Todos"
-                        options={[
-                          { value: 'valid', label: 'Válida (≤ 30d)' },
-                          { value: 'near', label: 'Próxima (≤ 15d)' },
-                          { value: 'urgent', label: 'Urgente (≤ 7d)' },
-                        ]}
-                        value={expiryStatusFilter}
-                        onChange={(v) =>
-                          setExpiryStatusFilter(
-                            v as Exclude<ExpiryStatus, 'expired' | 'normal'> | null,
-                          )
+                <ContentPanel className="relative" bodyClassName="p-0">
+                  {isLoadingOptions ? (
+                    <div className="flex justify-center py-8">
+                      <LoadingSpinner size="md" />
+                    </div>
+                  ) : optionPositionsData?.positions &&
+                    optionPositionsData.positions.length > 0 ? (
+                    <div className="p-6 space-y-4">
+                      <OptionFilter
+                        title="Filtrar posições"
+                        resultCount={filteredOptionPositions.length}
+                        totalCount={optionPositionsData.positions.length}
+                        onClearAll={
+                          hasActiveOptionFilters
+                            ? handleClearOptionFilters
+                            : undefined
                         }
-                      />
-                    </OptionFilter>
-                    {filteredOptionPositions.length > 0 ? (
-                      <div className="max-h-[320px] overflow-y-auto option-positions-scroll pr-1">
-                        <div className="flex flex-col gap-2">
-                          {filteredOptionPositions.map((position) => (
-                            <OptionPositionCard
-                              key={position.id}
-                              position={position}
-                              currentTime={currentTime}
-                              onClose={
-                                config.canTrade
-                                  ? handleCloseOptionPosition
-                                  : undefined
-                              }
-                              onExercise={
-                                config.canTrade ? handleExerciseOption : undefined
-                              }
-                              onAssignment={
-                                config.canTrade ? handleAssignmentOption : undefined
-                              }
-                              onExpire={
-                                config.canTrade ? handleExpireOption : undefined
-                              }
-                            />
-                          ))}
-                        </div>
-                      </div>
-                    ) : (
-                      <div className="text-center py-10">
-                        <p className="text-on-surface-variant text-sm">
-                          Nenhuma posição corresponde aos filtros aplicados.
-                        </p>
-                      </div>
-                    )}
-                  </div>
-                ) : (
-                  <div className="p-6 text-center py-16">
-                    <LineChart className="w-12 h-12 text-on-surface-variant/30 mx-auto mb-3" />
-                    <p className="text-on-surface-variant mb-4">
-                      Nenhuma posição em opções
-                    </p>
-                    {config.canTrade && (
-                      <button
-                        onClick={() => handleOpenTrade('option', 'BUY')}
-                        className="px-5 py-2.5 bg-primary/10 text-primary rounded-xl hover:bg-primary/20 transition-colors text-sm font-medium"
                       >
-                        Nova Operação de Opção
-                      </button>
-                    )}
-                  </div>
-                )}
-                {isFetchingOptions && !isLoadingOptions && (
-                  <div className="absolute inset-0 bg-surface-container-low/50 flex items-center justify-center rounded-xl">
-                    <LoadingSpinner size="sm" />
-                  </div>
-                )}
-              </ContentPanel>
-              {optionPositionsData?.positions && optionPositionsData.positions.length > 0 && (
-                <UpcomingExpirationsWidget
-                  walletId={walletId!}
-                  onExercise={config.canTrade ? handleExerciseOption : undefined}
-                  onExpire={config.canTrade ? handleExpireOption : undefined}
-                  onAssignment={config.canTrade ? handleAssignmentOption : undefined}
-                />
-              )}
+                        <div className="flex flex-col gap-1.5">
+                          <label className="text-[10px] font-bold uppercase tracking-widest text-on-surface-variant">
+                            Buscar
+                          </label>
+                          <div className="relative">
+                            <Search
+                              size={13}
+                              className="absolute left-3 top-1/2 -translate-y-1/2 text-on-surface-variant/50"
+                            />
+                            <input
+                              type="text"
+                              value={optionSearch}
+                              onChange={(e) => setOptionSearch(e.target.value)}
+                              placeholder="Ticker ou ativo base..."
+                              className="w-full pl-8 pr-8 py-2.5 bg-surface-container-low rounded-xl text-sm text-on-surface placeholder:text-on-surface-variant/40 border border-transparent focus:border-outline-variant/20 focus:outline-none transition-colors"
+                            />
+                            {optionSearch && (
+                              <button
+                                onClick={() => setOptionSearch('')}
+                                className="absolute right-2.5 top-1/2 -translate-y-1/2 text-on-surface-variant/50 hover:text-on-surface-variant transition-colors"
+                              >
+                                <X size={12} />
+                              </button>
+                            )}
+                          </div>
+                        </div>
+                        <FilterSelect
+                          label="Tipo"
+                          placeholder="Todos"
+                          options={[
+                            { value: 'CALL', label: 'CALL' },
+                            { value: 'PUT', label: 'PUT' },
+                          ]}
+                          value={optionTypeFilter}
+                          onChange={(v) =>
+                            setOptionTypeFilter(v as OptionType | null)
+                          }
+                        />
+                        <FilterSelect
+                          label="Direção"
+                          placeholder="Todas"
+                          options={[
+                            { value: 'long', label: 'Compra' },
+                            { value: 'short', label: 'Venda' },
+                          ]}
+                          value={directionFilter}
+                          onChange={(v) =>
+                            setDirectionFilter(v as 'long' | 'short' | null)
+                          }
+                        />
+                        <FilterSelect
+                          label="Vencimento"
+                          placeholder="Todos"
+                          options={[
+                            { value: 'valid', label: 'Válida (≤ 30d)' },
+                            { value: 'near', label: 'Próxima (≤ 15d)' },
+                            { value: 'urgent', label: 'Urgente (≤ 7d)' },
+                          ]}
+                          value={expiryStatusFilter}
+                          onChange={(v) =>
+                            setExpiryStatusFilter(
+                              v as Exclude<
+                                ExpiryStatus,
+                                'expired' | 'normal'
+                              > | null,
+                            )
+                          }
+                        />
+                      </OptionFilter>
+                      {filteredOptionPositions.length > 0 ? (
+                        <div className="max-h-[320px] overflow-y-auto option-positions-scroll pr-1">
+                          <div className="flex flex-col gap-2">
+                            {filteredOptionPositions.map((position) => (
+                              <OptionPositionCard
+                                key={position.id}
+                                position={position}
+                                currentTime={currentTime}
+                                onClose={
+                                  config.canTrade
+                                    ? handleCloseOptionPosition
+                                    : undefined
+                                }
+                                onExercise={
+                                  config.canTrade
+                                    ? handleExerciseOption
+                                    : undefined
+                                }
+                                onAssignment={
+                                  config.canTrade
+                                    ? handleAssignmentOption
+                                    : undefined
+                                }
+                                onExpire={
+                                  config.canTrade
+                                    ? handleExpireOption
+                                    : undefined
+                                }
+                              />
+                            ))}
+                          </div>
+                        </div>
+                      ) : (
+                        <div className="text-center py-10">
+                          <p className="text-on-surface-variant text-sm">
+                            Nenhuma posição corresponde aos filtros aplicados.
+                          </p>
+                        </div>
+                      )}
+                    </div>
+                  ) : (
+                    <div className="p-6 text-center py-16">
+                      <LineChart className="w-12 h-12 text-on-surface-variant/30 mx-auto mb-3" />
+                      <p className="text-on-surface-variant mb-4">
+                        Nenhuma posição em opções
+                      </p>
+                      {config.canTrade && (
+                        <button
+                          onClick={() => handleOpenTrade('option', 'BUY')}
+                          className="px-5 py-2.5 bg-primary/10 text-primary rounded-xl hover:bg-primary/20 transition-colors text-sm font-medium"
+                        >
+                          Nova Operação de Opção
+                        </button>
+                      )}
+                    </div>
+                  )}
+                  {isFetchingOptions && !isLoadingOptions && (
+                    <div className="absolute inset-0 bg-surface-container-low/50 flex items-center justify-center rounded-xl">
+                      <LoadingSpinner size="sm" />
+                    </div>
+                  )}
+                </ContentPanel>
+                {optionPositionsData?.positions &&
+                  optionPositionsData.positions.length > 0 && (
+                    <UpcomingExpirationsWidget
+                      walletId={walletId!}
+                      onExercise={
+                        config.canTrade ? handleExerciseOption : undefined
+                      }
+                      onExpire={
+                        config.canTrade ? handleExpireOption : undefined
+                      }
+                      onAssignment={
+                        config.canTrade ? handleAssignmentOption : undefined
+                      }
+                    />
+                  )}
               </>
             )}
 
