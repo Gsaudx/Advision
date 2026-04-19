@@ -6,28 +6,33 @@
 
 /* ─── Sovereign Design Tokens (RGB channels for Tailwind v3 opacity support) ─── */
 :root {
-  --color-primary:                  16 185 129;
-  --color-primary-container:        0 57 36;
-  --color-on-primary:               255 255 255;
-  --color-tertiary:                 52 211 153;
-  --color-tertiary-fixed-dim:       52 211 153;
-  --color-background:               7 16 28;
-  --color-surface:                  7 16 28;
+  --color-primary: 16 185 129;
+  --color-primary-container: 0 57 36;
+  --color-on-primary: 255 255 255;
+  --color-tertiary: 52 211 153;
+  --color-tertiary-fixed-dim: 52 211 153;
+  --color-background: 7 16 28;
+  --color-surface: 7 16 28;
   --color-surface-container-lowest: 13 27 42;
-  --color-surface-container-low:    17 34 51;
-  --color-surface-container-high:   30 51 71;
-  --color-surface-container-highest:38 62 84;
-  --color-on-surface:               255 255 255;
-  --color-on-surface-variant:       148 163 184;
-  --color-outline-variant:          51 65 85;
-  --color-error:                    252 165 165;
-  --color-error-container:          147 0 10;
-  --color-secondary-fixed-dim:      183 200 225;
-  --color-secondary-container:      30 51 71;
+  --color-surface-container-low: 17 34 51;
+  --color-surface-container-high: 30 51 71;
+  --color-surface-container-highest: 38 62 84;
+  --color-on-surface: 255 255 255;
+  --color-on-surface-variant: 148 163 184;
+  --color-outline-variant: 51 65 85;
+  --color-error: 252 165 165;
+  --color-error-container: 147 0 10;
+  --color-secondary-fixed-dim: 183 200 225;
+  --color-secondary-container: 30 51 71;
 }
 
 @layer base {
-  h1, h2, h3, h4, h5, h6 {
+  h1,
+  h2,
+  h3,
+  h4,
+  h5,
+  h6 {
     font-family: 'Manrope', sans-serif;
   }
 }
