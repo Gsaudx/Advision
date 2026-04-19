@@ -1,31 +1,33 @@
 import { useState, useMemo } from 'react';
-import PageTitle from '@/components/layout/PageTitle';
-import { Search, Plus, Wallet, RefreshCw } from 'lucide-react';
-import ButtonSubmit from '@/components/ui/ButtonSubmit';
-import Select from '@/components/ui/Select';
+import { useNavigate } from 'react-router-dom';
+import {
+  ChevronRight,
+  Plus,
+  Wallet,
+  RefreshCw,
+  Search,
+  Filter,
+  ShieldCheck,
+  MessageSquare,
+} from 'lucide-react';
+import { motion } from 'motion/react';
+import { formatCurrency } from '@/lib/formatters';
 import { LoadingSpinner } from '@/components/ui/LoadingSpinner';
+import { EmptyState } from '@/components/ui/EmptyState';
 import { useClients } from '@/features/clients-page';
 import { useWallets } from '../api';
-import {
-  WalletCard,
-  WalletStatsCard,
-  NewWalletModal,
-  WalletDashboard,
-} from '../components';
+import { WalletCard, WalletStatsCard, NewWalletModal } from '../components';
 import { useWalletsPageConfig } from './useWalletsPageConfig';
 import type { WalletSummary } from '../types';
 
-type ModalView = 'none' | 'new' | 'details';
-
 export default function WalletsPage() {
   const config = useWalletsPageConfig();
+  const navigate = useNavigate();
 
   const [searchTerm, setSearchTerm] = useState('');
   const [clientFilter, setClientFilter] = useState<string>('all');
-  const [modalView, setModalView] = useState<ModalView>('none');
-  const [selectedWalletId, setSelectedWalletId] = useState<string | null>(null);
+  const [showNewModal, setShowNewModal] = useState(false);
 
-  // Determine which clientId to use for the query
   const queryClientId =
     config.fixedClientId ?? (clientFilter !== 'all' ? clientFilter : undefined);
 
@@ -37,20 +39,16 @@ export default function WalletsPage() {
     isFetching,
   } = useWallets({ clientId: queryClientId });
 
-  // Fetch clients for the filter dropdown (only for advisors)
   const { data: clients = [] } = useClients();
 
-  // Create client lookup map
   const clientMap = useMemo(() => {
     const map = new Map<string, string>();
     clients.forEach((client) => map.set(client.id, client.name));
     return map;
   }, [clients]);
 
-  // Filter wallets by search term
   const filteredWallets = useMemo(() => {
     if (!searchTerm.trim()) return wallets;
-
     const normalized = searchTerm.trim().toLowerCase();
     return wallets.filter((wallet) => {
       const matchesName = wallet.name.toLowerCase().includes(normalized);
@@ -60,7 +58,6 @@ export default function WalletsPage() {
     });
   }, [wallets, searchTerm, clientMap]);
 
-  // Client filter options
   const clientOptions = useMemo(() => {
     const options = [{ value: 'all', label: 'Todos os Clientes' }];
     clients.forEach((client) => {
@@ -69,106 +66,136 @@ export default function WalletsPage() {
     return options;
   }, [clients]);
 
+  const totalAUM = useMemo(
+    () => wallets.reduce((acc, w) => acc + w.cashBalance, 0),
+    [wallets],
+  );
+
   const handleOpenWalletDetails = (wallet: WalletSummary) => {
-    setSelectedWalletId(wallet.id);
-    setModalView('details');
+    navigate(`/wallets/${wallet.id}`);
   };
-
-  const handleOpenNewWallet = () => {
-    setSelectedWalletId(null);
-    setModalView('new');
-  };
-
-  const handleCloseModal = () => {
-    setSelectedWalletId(null);
-    setModalView('none');
-  };
-
-  // Get client name for the selected wallet
-  const selectedWallet = wallets.find((w) => w.id === selectedWalletId);
-  const selectedClientName = selectedWallet
-    ? clientMap.get(selectedWallet.clientId)
-    : undefined;
 
   return (
     <>
-      <PageTitle title={config.pageTitle} />
+      <NewWalletModal
+        isOpen={showNewModal}
+        onClose={() => setShowNewModal(false)}
+      />
 
-      {/* New Wallet Modal */}
-      <NewWalletModal isOpen={modalView === 'new'} onClose={handleCloseModal} />
+      <div className="space-y-10">
+        {/* Header Section */}
+        <motion.section
+          initial={{ opacity: 0, y: 20 }}
+          animate={{ opacity: 1, y: 0 }}
+          className="flex flex-col lg:flex-row lg:items-end justify-between gap-6"
+        >
+          <div className="space-y-2">
+            <nav className="flex items-center gap-2 text-[10px] font-bold text-on-surface-variant uppercase tracking-[0.2em]">
+              <span>Wealth Management</span>
+              <ChevronRight size={10} />
+              <span className="text-on-surface">Portfolio</span>
+            </nav>
+            <h2 className="text-4xl font-headline font-extrabold tracking-tight text-on-surface">
+              {config.pageTitle}
+            </h2>
+            <p className="text-on-surface-variant max-w-xl text-sm">
+              Gerencie os ativos e acompanhe o desempenho detalhado das
+              carteiras sob sua custódia.
+            </p>
+          </div>
+          <div className="flex items-center gap-3 self-start lg:self-auto">
+            <button
+              onClick={() => refetch()}
+              disabled={isFetching}
+              className="p-3 bg-surface-container-high rounded-2xl text-on-surface-variant hover:text-on-surface hover:bg-surface-container-highest transition-all disabled:opacity-50"
+              title="Atualizar"
+            >
+              <RefreshCw
+                size={16}
+                className={isFetching ? 'animate-spin' : ''}
+              />
+            </button>
+            {config.canCreate && (
+              <button
+                onClick={() => setShowNewModal(true)}
+                className="flex items-center gap-2 bg-surface-container-high text-on-surface px-6 py-3 rounded-2xl text-sm font-bold hover:bg-surface-container-highest transition-all group"
+              >
+                <div className="bg-on-surface text-surface-container-low rounded-full p-0.5 group-hover:scale-110 transition-transform">
+                  <Plus size={14} />
+                </div>
+                Nova Carteira
+              </button>
+            )}
+          </div>
+        </motion.section>
 
-      {/* Wallet Dashboard Modal */}
-      {selectedWalletId && (
-        <WalletDashboard
-          isOpen={modalView === 'details'}
-          onClose={handleCloseModal}
-          walletId={selectedWalletId}
-          clientName={selectedClientName}
-          canTrade={config.canTrade}
-        />
-      )}
+        {/* Stats */}
+        <motion.div
+          initial={{ opacity: 0, y: 20 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ delay: 0.05 }}
+        >
+          <WalletStatsCard wallets={wallets} />
+        </motion.div>
 
-      <div className="space-y-6">
-        {/* Stats Card */}
-        <WalletStatsCard wallets={wallets} />
-
-        {/* Filters and Actions */}
-        <div className="flex flex-col md:flex-row gap-4 items-center justify-between">
-          <div className="relative flex-1 w-full md:max-w-md">
-            <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 w-5 h-5 text-gray-400" />
+        {/* Search + Filter toolbar */}
+        <motion.div
+          initial={{ opacity: 0, y: 20 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ delay: 0.08 }}
+          className="flex flex-col sm:flex-row gap-3"
+        >
+          <div className="flex items-center bg-surface-container-lowest px-4 py-2.5 rounded-full border border-outline-variant/20 focus-within:border-tertiary transition-all">
+            <Search
+              size={14}
+              className="text-on-surface-variant mr-2 flex-shrink-0"
+            />
             <input
               type="text"
               placeholder="Buscar carteira por nome..."
               value={searchTerm}
               onChange={(e) => setSearchTerm(e.target.value)}
-              className="w-full bg-[#1e1e1e] border border-[#2a2a2a] rounded-lg pl-10 pr-4 py-3 text-white placeholder-gray-500 focus:outline-none focus:border-[#3a3a3a]"
+              className="bg-transparent border-none focus:ring-0 text-sm text-on-surface placeholder-on-surface-variant/50 outline-none w-52"
             />
           </div>
-          <div className="flex gap-3 w-full md:w-auto">
-            {config.showClientFilter && (
-              <Select
+          {config.showClientFilter && (
+            <div className="flex items-center bg-surface-container-lowest px-4 py-2.5 rounded-full border border-outline-variant/20 focus-within:border-tertiary transition-all">
+              <Filter
+                size={14}
+                className="text-on-surface-variant mr-2 flex-shrink-0"
+              />
+              <select
                 value={clientFilter}
-                options={clientOptions}
                 onChange={(e) => setClientFilter(e.target.value)}
-              />
-            )}
-            <button
-              onClick={() => refetch()}
-              disabled={isFetching}
-              className="px-4 py-3 bg-slate-800 border border-slate-700 rounded-lg text-gray-400 hover:text-white hover:border-slate-600 transition-colors disabled:opacity-50"
-              title="Atualizar"
-            >
-              <RefreshCw
-                className={`w-5 h-5 ${isFetching ? 'animate-spin' : ''}`}
-              />
-            </button>
-            {config.canCreate && (
-              <ButtonSubmit
-                icon={<Plus className="w-5 h-5" />}
-                className="!mt-0 !w-auto h-11"
-                onClick={handleOpenNewWallet}
+                className="bg-transparent border-none focus:ring-0 text-sm font-medium text-on-surface pr-2 outline-none cursor-pointer"
               >
-                Nova Carteira
-              </ButtonSubmit>
-            )}
-          </div>
-        </div>
+                {clientOptions.map((opt) => (
+                  <option key={opt.value} value={opt.value}>
+                    {opt.label}
+                  </option>
+                ))}
+              </select>
+            </div>
+          )}
+        </motion.div>
 
-        {/* Content */}
-        {isLoading ? (
-          <div className="flex justify-center py-12">
-            <LoadingSpinner size="lg" />
-          </div>
-        ) : isError ? (
-          <div className="text-center py-12">
-            <Wallet className="w-12 h-12 text-gray-600 mx-auto mb-4" />
-            <p className="text-gray-400">
-              Erro ao carregar carteiras. Tente novamente.
-            </p>
-          </div>
-        ) : (
-          <>
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+        {/* Wallets Grid */}
+        <motion.div
+          initial={{ opacity: 0, y: 20 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ delay: 0.1 }}
+        >
+          {isLoading ? (
+            <div className="flex justify-center py-16">
+              <LoadingSpinner size="lg" />
+            </div>
+          ) : isError ? (
+            <EmptyState
+              icon={Wallet}
+              message="Erro ao carregar carteiras. Tente novamente."
+            />
+          ) : (
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
               {filteredWallets.map((wallet) => (
                 <WalletCard
                   key={wallet.id}
@@ -177,16 +204,97 @@ export default function WalletsPage() {
                   onClick={() => handleOpenWalletDetails(wallet)}
                 />
               ))}
-            </div>
 
-            {filteredWallets.length === 0 && (
-              <div className="text-center py-12">
-                <Wallet className="w-12 h-12 text-gray-600 mx-auto mb-4" />
-                <p className="text-gray-400">{config.emptyMessage}</p>
+              {/* Placeholder card */}
+              {config.canCreate && (
+                <motion.div
+                  whileHover={{ y: -4 }}
+                  transition={{ type: 'spring', stiffness: 300, damping: 20 }}
+                  onClick={() => setShowNewModal(true)}
+                  className="border-2 border-dashed border-outline-variant/30 rounded-[2.5rem] flex flex-col items-center justify-center p-8 text-center cursor-pointer hover:border-primary/50 transition-colors group h-[340px]"
+                >
+                  <div className="w-12 h-12 rounded-2xl bg-surface-container-high flex items-center justify-center text-on-surface-variant mb-6 group-hover:scale-110 group-hover:bg-primary group-hover:text-white transition-all">
+                    <Plus size={24} />
+                  </div>
+                  <h4 className="text-lg font-bold text-on-surface mb-2">
+                    Criar Nova Carteira
+                  </h4>
+                  <p className="text-sm text-on-surface-variant leading-relaxed max-w-[200px]">
+                    Configure um novo portfólio estratégico para este cliente.
+                  </p>
+                </motion.div>
+              )}
+
+              {filteredWallets.length === 0 && !config.canCreate && (
+                <div className="col-span-full">
+                  <EmptyState icon={Wallet} message={config.emptyMessage} />
+                </div>
+              )}
+            </div>
+          )}
+        </motion.div>
+
+        {/* Bottom Section */}
+        <motion.section
+          initial={{ opacity: 0, y: 20 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ delay: 0.15 }}
+          className="grid grid-cols-1 lg:grid-cols-12 gap-6"
+        >
+          {/* Visão Consolidada */}
+          <div className="lg:col-span-8 bg-surface-container-low/50 p-8 rounded-[2.5rem] border border-outline-variant/10">
+            <h4 className="text-xl font-headline font-bold text-on-surface mb-8">
+              Visão Consolidada
+            </h4>
+            <div className="grid grid-cols-1 sm:grid-cols-3 gap-8">
+              <div className="space-y-2">
+                <p className="text-[10px] font-bold text-on-surface-variant uppercase tracking-widest">
+                  Total sob Gestão
+                </p>
+                <p className="text-2xl font-headline font-extrabold text-on-surface">
+                  {formatCurrency(totalAUM)}
+                </p>
               </div>
-            )}
-          </>
-        )}
+              {/* MOCKUP: Ativos Ativos — remover quando endpoint retornar esse dado */}
+              <div className="space-y-2">
+                <p className="text-[10px] font-bold text-on-surface-variant uppercase tracking-widest">
+                  Ativos Ativos
+                </p>
+                <p className="text-2xl font-headline font-extrabold text-on-surface">
+                  — Títulos
+                </p>
+              </div>
+              {/* MOCKUP: Risco Médio — remover quando endpoint retornar esse dado */}
+              <div className="space-y-2">
+                <p className="text-[10px] font-bold text-on-surface-variant uppercase tracking-widest">
+                  Risco Médio
+                </p>
+                <p className="text-2xl font-headline font-extrabold text-primary">
+                  Moderado
+                </p>
+              </div>
+            </div>
+          </div>
+
+          {/* MOCKUP: Private Banking Tier — remover quando funcionalidade estiver disponível */}
+          <div className="lg:col-span-4 bg-primary-container p-8 rounded-[2.5rem] border border-primary/20 relative overflow-hidden flex flex-col justify-between">
+            <div className="relative z-10 w-10 h-10 bg-primary/20 rounded-xl flex items-center justify-center text-primary mb-6">
+              <ShieldCheck size={20} />
+            </div>
+            <div className="relative z-10">
+              <h4 className="text-xl font-headline font-bold text-on-surface mb-2">
+                Private Banking Tier
+              </h4>
+              <p className="text-sm text-on-surface-variant leading-relaxed">
+                Acesso a taxas preferenciais e fundos exclusivos de liquidez
+                restrita.
+              </p>
+            </div>
+            <div className="absolute bottom-6 right-6 w-12 h-12 bg-surface-container-lowest/20 rounded-2xl flex items-center justify-center text-on-surface backdrop-blur-sm border border-outline-variant/20 hover:bg-surface-container-lowest/30 transition-colors cursor-pointer">
+              <MessageSquare size={20} />
+            </div>
+          </div>
+        </motion.section>
       </div>
     </>
   );

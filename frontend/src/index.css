@@ -1,6 +1,41 @@
+@import url('https://fonts.googleapis.com/css2?family=Manrope:wght@400;500;600;700;800&family=Inter:wght@400;500;600&display=swap');
+
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
+
+/* ─── Sovereign Design Tokens (RGB channels for Tailwind v3 opacity support) ─── */
+:root {
+  --color-primary: 16 185 129;
+  --color-primary-container: 0 57 36;
+  --color-on-primary: 255 255 255;
+  --color-tertiary: 52 211 153;
+  --color-tertiary-fixed-dim: 52 211 153;
+  --color-background: 7 16 28;
+  --color-surface: 7 16 28;
+  --color-surface-container-lowest: 13 27 42;
+  --color-surface-container-low: 17 34 51;
+  --color-surface-container-high: 30 51 71;
+  --color-surface-container-highest: 38 62 84;
+  --color-on-surface: 255 255 255;
+  --color-on-surface-variant: 148 163 184;
+  --color-outline-variant: 51 65 85;
+  --color-error: 252 165 165;
+  --color-error-container: 147 0 10;
+  --color-secondary-fixed-dim: 183 200 225;
+  --color-secondary-container: 30 51 71;
+}
+
+@layer base {
+  h1,
+  h2,
+  h3,
+  h4,
+  h5,
+  h6 {
+    font-family: 'Manrope', sans-serif;
+  }
+}
 
 /* Hide number input spinners/arrows */
 input[type='number']::-webkit-outer-spin-button,
@@ -21,21 +56,37 @@ input[type='number'] {
 }
 
 ::-webkit-scrollbar-track {
-  background: rgb(30 41 59); /* slate-800 */
+  background: rgb(15 31 48);
   border-radius: 4px;
 }
 
 ::-webkit-scrollbar-thumb {
-  background: rgb(71 85 105); /* slate-600 */
+  background: rgb(51 65 85);
   border-radius: 4px;
 }
 
 ::-webkit-scrollbar-thumb:hover {
-  background: rgb(100 116 139); /* slate-500 */
+  background: rgb(71 85 105);
 }
 
 /* Firefox scrollbar */
 * {
   scrollbar-width: thin;
-  scrollbar-color: rgb(71 85 105) rgb(30 41 59);
+  scrollbar-color: rgb(51 65 85) rgb(15 31 48);
+}
+
+/* Option positions list — thin, nearly invisible scrollbar */
+.option-positions-scroll::-webkit-scrollbar {
+  width: 4px;
+}
+.option-positions-scroll::-webkit-scrollbar-track {
+  background: transparent;
+}
+.option-positions-scroll::-webkit-scrollbar-thumb {
+  background: rgb(51 65 85 / 0.4);
+  border-radius: 99px;
+}
+.option-positions-scroll {
+  scrollbar-width: thin;
+  scrollbar-color: rgb(51 65 85 / 0.4) transparent;
 }

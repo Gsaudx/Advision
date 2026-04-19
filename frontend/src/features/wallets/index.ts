@@ -9,17 +9,6 @@ export {
   walletsApi,
 } from './api';
 
-// Components
-export {
-  WalletCard,
-  WalletStatsCard,
-  PositionTable,
-  NewWalletModal,
-  CashOperationModal,
-  TradeModal,
-  WalletDashboard,
-} from './components';
-
 // Hooks
 export { useNewWalletForm, useCashOperationForm, useTradeForm } from './hooks';
 
@@ -48,4 +37,5 @@ export {
 
 // Pages
 export { default as WalletsPage } from './pages/WalletsPage';
+export { default as WalletPage } from './pages/WalletPage';
 export { useWalletsPageConfig } from './pages/useWalletsPageConfig';

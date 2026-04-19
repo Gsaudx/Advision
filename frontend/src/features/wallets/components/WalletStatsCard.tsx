@@ -1,71 +1,53 @@
 import { Wallet, Banknote, TrendingUp, PiggyBank } from 'lucide-react';
 import { formatCurrency } from '@/lib/formatters';
 import type { WalletSummary } from '../types';
+import { StatCard } from '@/components/ui/StatCard';
 
 interface WalletStatsCardProps {
   wallets: WalletSummary[];
 }
 
 export function WalletStatsCard({ wallets }: WalletStatsCardProps) {
-  const stats = wallets.reduce(
+  const totals = wallets.reduce(
     (acc, wallet) => ({
-      totalWallets: acc.totalWallets + 1,
-      totalCash: acc.totalCash + wallet.cashBalance,
+      count: acc.count + 1,
+      cash: acc.cash + wallet.cashBalance,
+      value: acc.value + wallet.cashBalance,
     }),
-    { totalWallets: 0, totalCash: 0 },
+    { count: 0, cash: 0, value: 0 },
   );
-
-  const statItems = [
-    {
-      label: 'Total de Carteiras',
-      value: stats.totalWallets.toString(),
-      icon: Wallet,
-      color: 'text-blue-400',
-      bgColor: 'bg-blue-500/20',
-    },
-    {
-      label: 'Saldo em Caixa',
-      value: formatCurrency(stats.totalCash),
-      icon: Banknote,
-      color: 'text-emerald-400',
-      bgColor: 'bg-emerald-500/20',
-    },
-    {
-      label: 'Valor Investido',
-      value: formatCurrency(0), // TODO: Calculate from positions
-      icon: TrendingUp,
-      color: 'text-purple-400',
-      bgColor: 'bg-purple-500/20',
-    },
-    {
-      label: 'Patrimonio Total',
-      value: formatCurrency(stats.totalCash),
-      icon: PiggyBank,
-      color: 'text-amber-400',
-      bgColor: 'bg-amber-500/20',
-    },
-  ];
 
   return (
     <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
-      {statItems.map((item) => (
-        <div
-          key={item.label}
-          className="bg-slate-900 rounded-xl p-6 border border-slate-800"
-        >
-          <div className="flex items-center gap-3">
-            <div
-              className={`w-10 h-10 rounded-lg ${item.bgColor} flex items-center justify-center`}
-            >
-              <item.icon className={`w-5 h-5 ${item.color}`} />
-            </div>
-            <div>
-              <p className="text-gray-400 text-sm">{item.label}</p>
-              <p className={`text-2xl font-bold ${item.color}`}>{item.value}</p>
-            </div>
-          </div>
-        </div>
-      ))}
+      <StatCard
+        label="Total de Carteiras"
+        value={String(totals.count)}
+        icon={Wallet}
+        iconColor="text-primary"
+        iconBg="bg-primary/10"
+      />
+      <StatCard
+        label="Saldo em Caixa"
+        value={formatCurrency(totals.cash)}
+        icon={Banknote}
+        iconColor="text-tertiary"
+        iconBg="bg-tertiary/10"
+      />
+      <StatCard
+        label="Valor Investido"
+        // [MOCKUP] valor fixo — virá do backend quando o cálculo de valor investido (soma de posições) for implementado
+        value={formatCurrency(0)}
+        icon={TrendingUp}
+        iconColor="text-on-surface-variant"
+        iconBg="bg-outline-variant/15"
+      />
+      <StatCard
+        label="Patrimônio Total"
+        value={formatCurrency(totals.value)}
+        icon={PiggyBank}
+        iconColor="text-tertiary"
+        iconBg="bg-tertiary/10"
+      />
     </div>
   );
 }

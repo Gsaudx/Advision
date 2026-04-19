@@ -1,13 +1,26 @@
 import type { AdvisorExpiration } from '../../api';
+import { Badge } from '@/components/ui/Badge';
 
 interface UpcomingDueDatesProps {
   expirations: AdvisorExpiration[];
 }
 
-const statusStyles: Record<AdvisorExpiration['status'], string> = {
-  Proximo: 'bg-amber-500/20 text-amber-400',
-  'Em dia': 'bg-emerald-500/20 text-emerald-400',
-  Vencido: 'bg-rose-500/20 text-rose-400',
+const statusStyles: Record<
+  AdvisorExpiration['status'],
+  { badge: string; row: string }
+> = {
+  Proximo: {
+    badge: 'border-amber-400 text-amber-400 bg-amber-400/5',
+    row: 'hover:bg-amber-400/5',
+  },
+  'Em dia': {
+    badge: 'border-tertiary text-tertiary bg-tertiary/5',
+    row: 'hover:bg-surface-container-high',
+  },
+  Vencido: {
+    badge: 'border-error text-error bg-error/5',
+    row: 'bg-error/5 hover:bg-error/10',
+  },
 };
 
 function formatExpirationDate(dateStr: string): string {
@@ -23,70 +36,122 @@ function formatExpirationDate(dateStr: string): string {
 }
 
 export function UpcomingDueDates({ expirations }: UpcomingDueDatesProps) {
+  if (expirations.length === 0) return null;
+
+  const vencidoCount = expirations.filter((e) => e.status === 'Vencido').length;
+  const proximoCount = expirations.filter((e) => e.status === 'Proximo').length;
+
   return (
-    <div className="bg-slate-900 rounded-xl p-5 border border-slate-800">
-      <h3 className="text-white font-semibold mb-4">Proximos Vencimentos</h3>
-      <div className="overflow-x-auto">
-        {expirations.length === 0 ? (
-          <p className="text-slate-400 text-sm">Nenhum vencimento proximo.</p>
-        ) : (
-          <table className="w-full">
-            <thead>
-              <tr className="text-left text-slate-400 text-sm border-b border-slate-800">
-                <th className="pb-3 font-medium">Ativo</th>
-                <th className="pb-3 font-medium">Cliente</th>
-                <th className="pb-3 font-medium">Carteira</th>
-                <th className="pb-3 font-medium">Tipo</th>
-                <th className="pb-3 font-medium">Vencimento</th>
-                <th className="pb-3 font-medium">Dias</th>
-                <th className="pb-3 font-medium">Status</th>
-              </tr>
-            </thead>
-            <tbody className="text-sm">
-              {expirations.map((item) => (
+    <div className="h-full bg-surface-container-low p-8 rounded-[2rem] flex flex-col border-t-2 border-outline-variant/30">
+      <div className="flex items-start justify-between mb-6 flex-shrink-0">
+        <h4 className="font-headline font-bold text-xl text-on-surface">
+          Próximos Vencimentos
+        </h4>
+        <div className="flex gap-2">
+          {vencidoCount > 0 && (
+            <Badge variant="error" size="md" withBorder>
+              {vencidoCount} vencido{vencidoCount > 1 ? 's' : ''}
+            </Badge>
+          )}
+          {proximoCount > 0 && (
+            <Badge variant="warning" size="md" withBorder>
+              {proximoCount} próximo{proximoCount > 1 ? 's' : ''}
+            </Badge>
+          )}
+        </div>
+      </div>
+      <div className="overflow-auto flex-1">
+        <table className="w-full">
+          <thead>
+            <tr className="text-left text-on-surface-variant text-xs border-b border-outline-variant/20">
+              <th className="pb-3 font-semibold uppercase tracking-wider">
+                Ativo
+              </th>
+              <th className="pb-3 font-semibold uppercase tracking-wider">
+                Cliente
+              </th>
+              <th className="pb-3 font-semibold uppercase tracking-wider">
+                Carteira
+              </th>
+              <th className="pb-3 font-semibold uppercase tracking-wider">
+                Tipo
+              </th>
+              <th className="pb-3 font-semibold uppercase tracking-wider">
+                Vencimento
+              </th>
+              <th className="pb-3 font-semibold uppercase tracking-wider">
+                Dias
+              </th>
+              <th className="pb-3 font-semibold uppercase tracking-wider">
+                Status
+              </th>
+            </tr>
+          </thead>
+          <tbody className="text-sm">
+            {expirations.map((item) => {
+              const styles = statusStyles[item.status];
+              return (
                 <tr
                   key={item.positionId}
-                  className="border-b border-slate-800/50 last:border-0"
+                  className={`border-b border-outline-variant/10 last:border-0 transition-colors ${styles.row}`}
                 >
-                  <td className="py-3 text-white font-medium">
+                  <td className="py-3.5 text-on-surface font-semibold whitespace-nowrap">
                     {item.ticker}
                     {item.isShort && (
-                      <span className="ml-1.5 text-xs text-orange-400">
-                        (V)
-                      </span>
+                      <span className="ml-1.5 text-xs text-amber-400">(V)</span>
                     )}
                   </td>
-                  <td className="py-3 text-slate-300">{item.clientName}</td>
-                  <td className="py-3 text-slate-300">{item.walletName}</td>
-                  <td className="py-3">
-                    <span
-                      className={`text-xs px-1.5 py-0.5 rounded font-medium ${
-                        item.optionType === 'CALL'
-                          ? 'bg-green-600/20 text-green-400'
-                          : 'bg-red-600/20 text-red-400'
-                      }`}
+                  <td className="py-3.5 text-on-surface-variant whitespace-nowrap">
+                    {item.clientName}
+                  </td>
+                  <td className="py-3.5 text-on-surface-variant whitespace-nowrap">
+                    {item.walletName}
+                  </td>
+                  <td className="py-3.5">
+                    <Badge
+                      variant={
+                        item.optionType === 'CALL' ? 'tertiary' : 'error'
+                      }
                     >
                       {item.optionType}
-                    </span>
+                    </Badge>
                   </td>
-                  <td className="py-3 text-slate-300">
+                  <td className="py-3.5 text-on-surface-variant whitespace-nowrap">
                     {formatExpirationDate(item.expirationDate)}
                   </td>
-                  <td className="py-3 text-slate-300">
-                    {item.daysUntilExpiry}d
-                  </td>
-                  <td className="py-3">
+                  <td className="py-3.5 whitespace-nowrap">
                     <span
-                      className={`px-2 py-1 rounded-full text-xs font-medium ${statusStyles[item.status]}`}
+                      className={`font-bold ${
+                        item.daysUntilExpiry <= 3
+                          ? 'text-error'
+                          : item.daysUntilExpiry <= 7
+                            ? 'text-amber-400'
+                            : 'text-on-surface-variant'
+                      }`}
                     >
-                      {item.status}
+                      {item.daysUntilExpiry}d
                     </span>
                   </td>
+                  <td className="py-3.5">
+                    <Badge
+                      variant={
+                        item.status === 'Vencido'
+                          ? 'error'
+                          : item.status === 'Proximo'
+                            ? 'warning'
+                            : 'tertiary'
+                      }
+                      size="md"
+                      withBorder
+                    >
+                      {item.status}
+                    </Badge>
+                  </td>
                 </tr>
-              ))}
-            </tbody>
-          </table>
-        )}
+              );
+            })}
+          </tbody>
+        </table>
       </div>
     </div>
   );

@@ -75,8 +75,8 @@ export const inviteStatusLabels: Record<InviteStatus, string> = {
  * Maps invite status to colors
  */
 export const inviteStatusColors: Record<InviteStatus, string> = {
-  PENDING: 'bg-slate-500/20 text-slate-400',
-  SENT: 'bg-blue-500/20 text-blue-400',
-  ACCEPTED: 'bg-green-500/20 text-green-400',
-  REJECTED: 'bg-red-500/20 text-red-400',
+  PENDING: 'bg-outline-variant/20 text-on-surface-variant',
+  SENT: 'bg-secondary-container/30 text-secondary-fixed-dim',
+  ACCEPTED: 'bg-tertiary/10 text-tertiary',
+  REJECTED: 'bg-error/10 text-error',
 };

@@ -34,88 +34,85 @@ export function ActivityHistoryModal({
   return (
     <>
       <div className="fixed inset-0 z-50 flex items-center justify-center">
-        {/* Backdrop */}
         <div
           className="fixed inset-0 bg-black/50 backdrop-blur-sm"
           onClick={onClose}
         />
-
-        {/* Modal */}
-        <div className="relative z-50 bg-slate-900 border border-slate-700 rounded-xl shadow-2xl max-w-2xl w-full mx-4 max-h-[90vh] flex flex-col animate-fade-in">
-          {/* Header */}
-          <div className="flex items-center justify-between p-4 border-b border-slate-700 flex-shrink-0">
+        <div className="relative z-50 bg-surface-container-lowest border border-outline-variant/20 rounded-3xl shadow-2xl max-w-2xl w-full mx-4 max-h-[90vh] flex flex-col animate-fade-in">
+          <div className="flex items-center justify-between p-6 border-b border-outline-variant/20 flex-shrink-0">
             <div>
-              <h2 className="text-lg font-semibold text-white">
-                Historico de Atividades
+              <h2 className="text-lg font-headline font-bold text-on-surface">
+                Histórico de Atividades
               </h2>
-              <p className="text-sm text-slate-400">
+              <p className="text-sm text-on-surface-variant">
                 {total} {total === 1 ? 'atividade' : 'atividades'} no total
               </p>
             </div>
             <button
               onClick={onClose}
-              className="p-1 rounded-lg text-slate-400 hover:text-white hover:bg-slate-800 transition-colors"
+              className="p-1.5 rounded-xl text-on-surface-variant hover:text-on-surface hover:bg-surface-container-high transition-colors"
             >
               <X className="w-5 h-5" />
             </button>
           </div>
 
-          {/* Body */}
-          <div className="flex-1 overflow-y-auto p-4">
-            <div className="space-y-2">
-              {isLoading ? (
-                <ActivitySkeleton count={10} />
-              ) : data?.items.length === 0 ? (
-                <p className="text-slate-400 text-sm text-center py-8">
-                  Nenhuma atividade encontrada.
-                </p>
-              ) : (
-                data?.items.map((activity) => (
+          <div className="flex-1 overflow-y-auto">
+            {isLoading ? (
+              <ActivitySkeleton count={10} />
+            ) : data?.items.length === 0 ? (
+              <p className="text-on-surface-variant text-sm text-center py-12 px-6">
+                Nenhuma atividade encontrada.
+              </p>
+            ) : (
+              <div className="divide-y divide-outline-variant/10">
+                {data?.items.map((activity) => (
                   <button
                     key={activity.id}
                     onClick={() => setSelectedActivity(activity)}
-                    className="flex items-center justify-between p-3 rounded-lg bg-slate-800/50 hover:bg-slate-800 transition-colors w-full text-left cursor-pointer"
+                    className="flex items-center gap-6 p-6 hover:bg-surface-container-high transition-colors cursor-pointer group w-full text-left"
                   >
-                    <div className="flex items-center gap-3 min-w-0 flex-1">
-                      <div className="w-2 h-2 rounded-full bg-blue-400 flex-shrink-0" />
-                      <div className="min-w-0">
-                        <p className="text-sm text-white truncate">
+                    <div className="flex-1 min-w-0">
+                      <div className="flex justify-between items-start gap-4">
+                        <p className="text-sm font-bold text-on-surface truncate">
                           {activity.action}
                         </p>
-                        <p className="text-xs text-slate-400 truncate">
-                          {getActivityTarget(activity)}
-                        </p>
+                        <span className="text-[10px] font-bold text-on-surface-variant uppercase tracking-widest flex-shrink-0">
+                          {formatTimeAgo(activity.occurredAt)}
+                        </span>
                       </div>
+                      <p className="text-xs text-on-surface-variant truncate">
+                        {getActivityTarget(activity)}
+                      </p>
                     </div>
-                    <span className="text-xs text-slate-500 flex-shrink-0 ml-2">
-                      {formatTimeAgo(activity.occurredAt)}
-                    </span>
+                    <ChevronRight
+                      className="text-outline-variant opacity-0 group-hover:opacity-100 transition-opacity flex-shrink-0"
+                      size={18}
+                    />
                   </button>
-                ))
-              )}
-            </div>
+                ))}
+              </div>
+            )}
           </div>
 
-          {/* Footer with pagination */}
           {totalPages > 1 && (
-            <div className="flex items-center justify-between p-4 border-t border-slate-700 flex-shrink-0">
+            <div className="flex items-center justify-between p-6 border-t border-outline-variant/20 flex-shrink-0">
               <button
                 onClick={() => onPageChange(page - 1)}
                 disabled={page <= 1 || isLoading}
-                className="flex items-center gap-1 px-3 py-1.5 text-sm text-slate-400 hover:text-white hover:bg-slate-800 rounded-lg transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+                className="flex items-center gap-1 px-4 py-2 text-sm text-on-surface-variant hover:text-on-surface hover:bg-surface-container-high rounded-full transition-colors disabled:opacity-50 disabled:cursor-not-allowed font-medium"
               >
                 <ChevronLeft className="w-4 h-4" />
                 Anterior
               </button>
-              <span className="text-sm text-slate-400">
-                Pagina {page} de {totalPages}
+              <span className="text-sm text-on-surface-variant">
+                Página {page} de {totalPages}
               </span>
               <button
                 onClick={() => onPageChange(page + 1)}
                 disabled={page >= totalPages || isLoading}
-                className="flex items-center gap-1 px-3 py-1.5 text-sm text-slate-400 hover:text-white hover:bg-slate-800 rounded-lg transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+                className="flex items-center gap-1 px-4 py-2 text-sm text-on-surface-variant hover:text-on-surface hover:bg-surface-container-high rounded-full transition-colors disabled:opacity-50 disabled:cursor-not-allowed font-medium"
               >
-                Proxima
+                Próxima
                 <ChevronRight className="w-4 h-4" />
               </button>
             </div>
