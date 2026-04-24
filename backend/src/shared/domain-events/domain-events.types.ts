@@ -59,6 +59,13 @@ export const DerivativesEvents = {
 } as const;
 
 /**
+ * Event type constants for StrikeAdjustment aggregate
+ */
+export const StrikeAdjustmentEvents = {
+  STRIKE_ADJUSTED: 'StrikeAdjusted',
+} as const;
+
+/**
  * Union type of all wallet event types
  */
 export type WalletEventType = (typeof WalletEvents)[keyof typeof WalletEvents];
@@ -85,6 +92,12 @@ export type DividendSyncEventType =
  */
 export type DerivativesEventType =
   (typeof DerivativesEvents)[keyof typeof DerivativesEvents];
+
+/**
+ * Union type of all strike adjustment event types
+ */
+export type StrikeAdjustmentEventType =
+  (typeof StrikeAdjustmentEvents)[keyof typeof StrikeAdjustmentEvents];
 
 /**
  * Parameters for recording a domain event
@@ -380,4 +393,23 @@ export interface OptionExpiredPayload {
   wasInTheMoney: boolean;
   strikePrice: number;
   collateralReleased: number;
+}
+
+// ============================================================================
+// STRIKE ADJUSTMENT EVENT PAYLOADS
+// ============================================================================
+
+/**
+ * Payload for StrikeAdjusted event
+ */
+export interface StrikeAdjustedPayload {
+  strikeAdjustmentId: string;
+  walletId: string;
+  positionId: string;
+  ticker: string;
+  underlyingTicker: string;
+  previousStrike: number;
+  newStrike: number;
+  adjustment: number;
+  detectedAt: string;
 }

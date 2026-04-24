@@ -3,3 +3,4 @@ export * from './asset-resolver.service';
 export * from './wallet-access.service';
 export * from './trading.service';
 export * from './wallets.service';
+export * from './strike-adjustment.service';

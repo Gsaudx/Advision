@@ -1,8 +1,8 @@
 import {
-  BadRequestException,
   Controller,
   Get,
   Param,
+  ParseUUIDPipe,
   Post,
   Query,
   UseGuards,
@@ -32,15 +32,6 @@ import {
   type WalletProventosResponse,
   type ProventosSummaryResponse,
 } from '../schemas/dividend-event.schema';
-
-const UUID_REGEX =
-  /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
-
-function assertUuid(value: string, field: string): void {
-  if (!UUID_REGEX.test(value)) {
-    throw new BadRequestException(`${field} deve ser um UUID válido`);
-  }
-}
 
 @ApiTags('Proventos')
 @Controller('proventos')
@@ -82,10 +73,9 @@ export class ProventosController {
     type: ApiErrorResponseDto,
   })
   async getWalletProventos(
-    @Param('walletId') walletId: string,
+    @Param('walletId', ParseUUIDPipe) walletId: string,
     @CurrentUser() actor: CurrentUserData,
   ): Promise<ApiResponseType<WalletProventosResponse>> {
-    assertUuid(walletId, 'walletId');
     await this.walletAccess.verifyWalletAccess(walletId, actor);
     const data = await this.calculationService.getWalletProventos(walletId);
     return ApiResponseDto.success(data);
@@ -110,10 +100,9 @@ export class ProventosController {
     type: ApiErrorResponseDto,
   })
   async getProventosSummary(
-    @Query('walletId') walletId: string,
+    @Query('walletId', ParseUUIDPipe) walletId: string,
     @CurrentUser() actor: CurrentUserData,
   ): Promise<ApiResponseType<ProventosSummaryResponse>> {
-    assertUuid(walletId, 'walletId');
     await this.walletAccess.verifyWalletAccess(walletId, actor);
     const data = await this.calculationService.getSummary(walletId);
     return ApiResponseDto.success(data);

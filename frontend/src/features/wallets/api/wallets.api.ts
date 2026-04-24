@@ -10,6 +10,7 @@ import type {
   AssetPriceResult,
   TransactionList,
   OptionDetailsResult,
+  StrikeAdjustmentResult,
 } from '../types';
 
 export const walletsApi = {
@@ -114,5 +115,25 @@ export const walletsApi = {
       `/wallets/options/${ticker}/details`,
     );
     return response.data.data;
+  },
+
+  getStrikeAdjustments: async (
+    walletId: string,
+  ): Promise<StrikeAdjustmentResult[]> => {
+    const response = await api.get<ApiResponse<StrikeAdjustmentResult[]>>(
+      `/wallets/${walletId}/options/adjustments`,
+    );
+    return response.data.data;
+  },
+
+  markStrikeAdjustmentSeen: async (
+    walletId: string,
+    adjustmentId: string,
+  ): Promise<void> => {
+    await api.patch(`/wallets/${walletId}/options/adjustments/${adjustmentId}/seen`);
+  },
+
+  markAllStrikeAdjustmentsSeen: async (walletId: string): Promise<void> => {
+    await api.patch(`/wallets/${walletId}/options/adjustments/seen-all`);
   },
 };

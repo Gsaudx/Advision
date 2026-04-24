@@ -1,6 +1,7 @@
 import {
   Injectable,
   Inject,
+  Logger,
   NotFoundException,
   ConflictException,
   BadRequestException,
@@ -25,6 +26,7 @@ import { ProventosCalculationService } from '@/modules/proventos/services/proven
 import { MarketDataProvider } from '../providers';
 import { AuditService } from './audit.service';
 import { WalletAccessService } from './wallet-access.service';
+import { StrikeAdjustmentService } from './strike-adjustment.service';
 import type {
   CreateWalletInput,
   CashOperationInput,
@@ -49,6 +51,8 @@ type TransactionWithAsset = Transaction & {
  */
 @Injectable()
 export class WalletsService {
+  private readonly logger = new Logger(WalletsService.name);
+
   constructor(
     private readonly prisma: PrismaService,
     @Inject('MARKET_DATA_PROVIDER')
@@ -57,6 +61,7 @@ export class WalletsService {
     private readonly domainEvents: DomainEventsService,
     private readonly walletAccess: WalletAccessService,
     private readonly proventosCalc: ProventosCalculationService,
+    private readonly strikeAdjustment: StrikeAdjustmentService,
   ) {}
 
   /**
@@ -273,6 +278,10 @@ export class WalletsService {
     const wallet = await this.walletAccess.verifyWalletAccess(walletId, actor);
 
     await this.proventosCalc.ensureProcessed(walletId);
+
+    void this.strikeAdjustment.ensureChecked(walletId).catch((err: unknown) => {
+      this.logger.error(`Strike check failed: ${(err as Error).message}`);
+    });
 
     const positions = await this.prisma.position.findMany({
       where: { walletId, quantity: { not: 0 } },

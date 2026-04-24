@@ -16,3 +16,9 @@ export {
   useOptionDetails,
   optionsQueryKeys,
 } from './useOptionsSearch';
+export {
+  useStrikeAdjustments,
+  useMarkStrikeAdjustmentSeen,
+  useMarkAllStrikeAdjustmentsSeen,
+  strikeAdjustmentQueryKeys,
+} from './useStrikeAdjustments';

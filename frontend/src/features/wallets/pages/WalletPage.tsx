@@ -25,7 +25,7 @@ import { ProventosTab } from '../components/ProventosTab';
 import { CashOperationModal } from '../components/CashOperationModal';
 import { UnifiedTradeModal } from '../components/UnifiedTradeModal';
 import { ContentPanel } from '@/components/ui/ContentPanel';
-import { OptionFilter, FilterSelect } from '../components';
+import { OptionFilter, FilterSelect, StrikeAdjustmentsPanel } from '../components';
 import { useOptionFilters } from '../hooks/useOptionFilters';
 import { Search, X } from 'lucide-react';
 import {
@@ -188,6 +188,7 @@ export default function WalletPage() {
   } = useOptionPositions(walletId!);
 
   const { data: proventosData } = useWalletProventos(walletId!);
+  const [unseenStrikeCount, setUnseenStrikeCount] = useState(0);
 
   const { data: clients = [] } = useClients();
   const clientName = useMemo(() => {
@@ -374,6 +375,11 @@ export default function WalletPage() {
                     {optionPositionsData.positions.length}
                   </span>
                 )}
+              {tab.id === 'options' && unseenStrikeCount > 0 && (
+                <span className="ml-1 px-1.5 py-0.5 text-[10px] bg-error/20 text-error rounded-lg leading-none font-bold">
+                  {unseenStrikeCount}
+                </span>
+              )}
               {subTab === tab.id && (
                 <motion.div
                   layoutId="wallet-subtab"
@@ -802,6 +808,12 @@ export default function WalletPage() {
                       }
                     />
                   )}
+                <StrikeAdjustmentsPanel
+                  walletId={walletId!}
+                  currency={wallet.currency}
+                  isWalletRefreshing={isRefreshing}
+                  onUnseenCountChange={setUnseenStrikeCount}
+                />
               </>
             )}
 

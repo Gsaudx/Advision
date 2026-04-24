@@ -108,6 +108,26 @@ export type TransactionList = {
 export type TransactionType = Transaction['type'];
 
 // ============================================================================
+// Strike Adjustment types
+// ============================================================================
+
+/**
+ * Strike adjustment record returned from the backend.
+ * Will be replaced by derived type from generated api.d.ts after generate:types.
+ */
+export interface StrikeAdjustmentResult {
+  id: string;
+  walletId: string;
+  positionId: string;
+  ticker: string;
+  previousStrike: number;
+  newStrike: number;
+  adjustment: number;
+  detectedAt: string;
+  seenByAdvisor: boolean;
+}
+
+// ============================================================================
 // Frontend-specific types (not from backend)
 // ============================================================================
 

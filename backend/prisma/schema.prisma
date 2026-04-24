@@ -85,6 +85,7 @@ enum AggregateType {
   STRUCTURED_OPERATION
   OPTION_LIFECYCLE
   DIVIDEND_SYNC
+  STRIKE_ADJUSTMENT
 }
 
 enum OperationLegType {
@@ -186,6 +187,7 @@ model Wallet {
   rebalanceLogs         RebalanceLog[]
   structuredOperations  StructuredOperation[]
   dividendPayments      WalletDividendPayment[]
+  strikeAdjustments     StrikeAdjustment[]
 
   @@index([clientId])
   @@map("wallets")
@@ -219,8 +221,9 @@ model OptionDetail {
   strikePrice       Decimal      @db.Decimal(18, 2)
   expirationDate    DateTime     @db.Date
 
-  asset           Asset @relation("AssetOption", fields: [assetId], references: [id], onDelete: Cascade)
-  underlyingAsset Asset @relation("UnderlyingAsset", fields: [underlyingAssetId], references: [id])
+  asset             Asset              @relation("AssetOption", fields: [assetId], references: [id], onDelete: Cascade)
+  underlyingAsset   Asset              @relation("UnderlyingAsset", fields: [underlyingAssetId], references: [id])
+  strikeAdjustments StrikeAdjustment[]
 
   @@index([underlyingAssetId])
   @@index([expirationDate])
@@ -237,13 +240,15 @@ model Position {
   dividendsProcessedAt  DateTime?
   lastDividendDate      DateTime?
   priceAtLastDividend   Decimal?  @db.Decimal(18, 2)
+  strikeCheckedAt       DateTime?
   createdAt             DateTime  @default(now())
   updatedAt             DateTime  @updatedAt
 
-  wallet           Wallet                  @relation(fields: [walletId], references: [id], onDelete: Cascade)
-  asset            Asset                   @relation(fields: [assetId], references: [id])
-  lifecycleEvents  OptionLifecycle[]
-  dividendPayments WalletDividendPayment[]
+  wallet            Wallet                  @relation(fields: [walletId], references: [id], onDelete: Cascade)
+  asset             Asset                   @relation(fields: [assetId], references: [id])
+  lifecycleEvents   OptionLifecycle[]
+  dividendPayments  WalletDividendPayment[]
+  strikeAdjustments StrikeAdjustment[]
 
   @@unique([walletId, assetId])
   @@index([walletId])
@@ -482,4 +487,30 @@ model DividendSyncLog {
   user User? @relation(fields: [userId], references: [id])
 
   @@map("dividend_sync_logs")
+}
+
+// ============================================================================
+// STRIKE ADJUSTMENTS
+// ============================================================================
+
+model StrikeAdjustment {
+  id               String   @id @default(uuid())
+  walletId         String
+  positionId       String
+  optionDetailId   String
+  ticker           String   @db.VarChar(20)
+  previousStrike   Decimal  @db.Decimal(18, 2)
+  newStrike        Decimal  @db.Decimal(18, 2)
+  adjustment       Decimal  @db.Decimal(18, 2)
+  detectedAt       DateTime @default(now())
+  seenByAdvisor    Boolean  @default(false)
+
+  wallet       Wallet       @relation(fields: [walletId], references: [id], onDelete: Cascade)
+  position     Position     @relation(fields: [positionId], references: [id], onDelete: Cascade)
+  optionDetail OptionDetail @relation(fields: [optionDetailId], references: [id], onDelete: Cascade)
+
+  @@index([walletId])
+  @@index([positionId])
+  @@index([detectedAt])
+  @@map("strike_adjustments")
 }

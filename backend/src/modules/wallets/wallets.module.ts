@@ -1,12 +1,13 @@
 import { Module } from '@nestjs/common';
 import { ProventosModule } from '@/modules/proventos/proventos.module';
-import { WalletsController } from './controllers';
+import { WalletsController, StrikeAdjustmentController } from './controllers';
 import {
   WalletsService,
   TradingService,
   WalletAccessService,
   AuditService,
   AssetResolverService,
+  StrikeAdjustmentService,
 } from './services';
 import {
   BrapiMarketService,
@@ -16,7 +17,7 @@ import {
 
 @Module({
   imports: [ProventosModule],
-  controllers: [WalletsController],
+  controllers: [WalletsController, StrikeAdjustmentController],
   providers: [
     // Core services
     WalletAccessService,
@@ -25,6 +26,7 @@ import {
     // Supporting services
     AuditService,
     AssetResolverService,
+    StrikeAdjustmentService,
     // Market data providers
     BrapiMarketService,
     OpLabMarketService,
@@ -40,6 +42,7 @@ import {
     WalletAccessService,
     AuditService,
     AssetResolverService,
+    StrikeAdjustmentService,
     OpLabMarketService,
     CompositeMarketService,
     'MARKET_DATA_PROVIDER',
