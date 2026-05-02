@@ -63,6 +63,7 @@ export class AssetResolverService {
                 optionType: metadata.optionType ?? 'CALL',
                 exerciseType,
                 strikePrice: metadata.strikePrice ?? 0,
+                initialStrike: metadata.strikePrice ?? 0,
                 expirationDate: metadata.expirationDate ?? new Date(),
               },
             },

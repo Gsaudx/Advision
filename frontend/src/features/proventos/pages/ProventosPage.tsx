@@ -60,7 +60,7 @@ export function ProventosPage() {
       <PageTitle title="Proventos" />
 
       <div className="space-y-6">
-        {/* TODO: remove — botão temporário para testar sync com BRAPI */}
+        {/* [SENTINEL] bloco temporário do sync BRAPI comentado — não deletar (contingência de reversão)
         <div className="flex items-center gap-3 p-3 bg-yellow-500/10 border border-yellow-500/30 rounded-lg w-fit">
           <span className="text-yellow-400 text-xs font-medium">[TEMP]</span>
           <button
@@ -72,6 +72,7 @@ export function ProventosPage() {
             {syncing ? 'Sincronizando...' : 'Forçar sync BRAPI'}
           </button>
         </div>
+        */}
         {/* Search */}
         <form
           onSubmit={handleSearch}

@@ -19,10 +19,13 @@ import type {
   Position,
   Asset,
   Transaction,
+  OptionDetail,
 } from '@/generated/prisma/client';
 import type { CurrentUserData } from '@/common/decorators';
 import { ProventosCalculationService } from '@/modules/proventos/services/proventos-calculation.service';
+import { SentinelOptionService } from '@/modules/sentinel/services/sentinel-option.service';
 import { MarketDataProvider } from '../providers';
+import { OpLabMarketService } from '../providers/oplab-market.service';
 import { AuditService } from './audit.service';
 import { WalletAccessService } from './wallet-access.service';
 import type {
@@ -33,10 +36,11 @@ import type {
   PositionResponse,
   TransactionResponse,
   TransactionListResponse,
+  HistoricalPriceResponse,
 } from '../schemas';
 
 type PositionWithAsset = Position & {
-  asset: Asset;
+  asset: Asset & { optionDetail: OptionDetail | null };
 };
 
 type TransactionWithAsset = Transaction & {
@@ -57,6 +61,8 @@ export class WalletsService {
     private readonly domainEvents: DomainEventsService,
     private readonly walletAccess: WalletAccessService,
     private readonly proventosCalc: ProventosCalculationService,
+    private readonly opLabService: OpLabMarketService,
+    private readonly sentinelService: SentinelOptionService,
   ) {}
 
   /**
@@ -86,6 +92,7 @@ export class WalletsService {
     const averagePrice = Number(position.averagePrice);
     const totalCost = quantity * averagePrice;
 
+    const od = position.asset.optionDetail;
     const result: PositionResponse = {
       id: position.id,
       assetId: position.assetId,
@@ -98,6 +105,15 @@ export class WalletsService {
       lastDividendDate: position.lastDividendDate?.toISOString() ?? null,
       priceAtLastDividend: position.priceAtLastDividend
         ? Number(position.priceAtLastDividend)
+        : null,
+      optionDetail: od
+        ? {
+            strikePrice: Number(od.strikePrice),
+            initialStrike: od.initialStrike ? Number(od.initialStrike) : null,
+            expirationDate: od.expirationDate.toISOString().split('T')[0],
+            optionType: od.optionType,
+            exerciseType: od.exerciseType,
+          }
         : null,
     };
 
@@ -272,11 +288,11 @@ export class WalletsService {
   ): Promise<WalletResponse> {
     const wallet = await this.walletAccess.verifyWalletAccess(walletId, actor);
 
-    await this.proventosCalc.ensureProcessed(walletId);
+    // await this.proventosCalc.ensureProcessed(walletId); // [SENTINEL] substituído por SSE trigger no SentinelEventsController
 
     const positions = await this.prisma.position.findMany({
       where: { walletId, quantity: { not: 0 } },
-      include: { asset: true },
+      include: { asset: { include: { optionDetail: true } } },
     });
 
     // Get current prices for all positions
@@ -526,5 +542,42 @@ export class WalletsService {
       type: asset.type,
       exchange: asset.market,
     }));
+  }
+
+  /**
+   * NEGÓCIO: Quando o assessor registra uma compra passada, ele pode não lembrar o preço exato. Este método
+   * sugere automaticamente o valor de mercado naquela data — para ações é o preço de fechamento;
+   * para opções é o prêmio pago e o strike vigente no dia.
+   * TÉCNICO: Resolve o tipo do ativo e delega à OpLab (ação) ou SentinelOptionService (opção) para buscar o dado histórico.
+   */
+  async getHistoricalPrice(ticker: string, date: string): Promise<HistoricalPriceResponse> {
+    const asset = await this.prisma.asset.findUnique({ where: { ticker } });
+
+    if (!asset || asset.type === 'STOCK') {
+      const price = await this.opLabService.getHistoricalClose(ticker, new Date(date));
+      if (!price) return { type: 'STOCK', price: null, message: 'Sem dados para esta data' };
+      return { type: 'STOCK', price };
+    }
+
+    if (asset.type === 'OPTION') {
+      const optDetail = await this.prisma.optionDetail.findUnique({
+        where: { assetId: asset.id },
+        include: { underlyingAsset: true },
+      });
+      if (!optDetail) return { type: 'OPTION', price: null, strike: null };
+
+      const history = await this.sentinelService.fetchHistory(
+        optDetail.underlyingAsset.ticker,
+        date,
+        date,
+        ticker,
+      );
+      if (!history.length) {
+        return { type: 'OPTION', price: null, strike: null, message: 'Sem dados para esta data' };
+      }
+      return { type: 'OPTION', price: history[0].close ?? null, strike: history[0].strike };
+    }
+
+    return { type: 'STOCK', price: null };
   }
 }

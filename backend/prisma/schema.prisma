@@ -42,6 +42,7 @@ enum ExerciseType {
 enum TransactionType {
   BUY
   SELL
+  EXPIRED
   DIVIDEND
   SPLIT
   SUBSCRIPTION
@@ -217,6 +218,7 @@ model OptionDetail {
   optionType        OptionType
   exerciseType      ExerciseType
   strikePrice       Decimal      @db.Decimal(18, 2)
+  initialStrike     Decimal?     @map("initial_strike") @db.Decimal(18, 2)
   expirationDate    DateTime     @db.Date
 
   asset           Asset @relation("AssetOption", fields: [assetId], references: [id], onDelete: Cascade)
@@ -482,4 +484,50 @@ model DividendSyncLog {
   user User? @relation(fields: [userId], references: [id])
 
   @@map("dividend_sync_logs")
+}
+
+// ============================================================================
+// SENTINEL — Opção Sentinela para detecção de proventos via OpLab
+// ============================================================================
+
+enum SentinelStatus {
+  ACTIVE
+  UNAVAILABLE
+}
+
+model SentinelOption {
+  id               String         @id @default(uuid())
+  underlyingSymbol String         @unique @map("underlying_symbol") @db.VarChar(10)
+  optionSymbol     String?        @map("option_symbol") @db.VarChar(20)
+  status           SentinelStatus @default(ACTIVE)
+  initialStrike    Decimal?       @map("initial_strike") @db.Decimal(18, 2)
+  currentStrike    Decimal?       @map("current_strike") @db.Decimal(18, 2)
+  dueDate          DateTime?      @map("due_date") @db.Date
+  monitoringSince  DateTime       @map("monitoring_since") @db.Date
+  lastCheckedAt    DateTime       @map("last_checked_at") @db.Date
+  scanningFrom     DateTime?      @map("scanning_since") @db.Date
+  createdAt        DateTime       @default(now()) @map("created_at")
+  updatedAt        DateTime       @updatedAt @map("updated_at")
+
+  dividendsHistory DividendHistory[]
+
+  @@map("sentinel_options")
+}
+
+model DividendHistory {
+  id               String        @id @default(uuid())
+  underlyingSymbol String        @map("underlying_symbol") @db.VarChar(10)
+  sentinelOptionId String        @map("sentinel_option_id")
+  detectedAt       DateTime      @map("detected_at") @db.Date
+  previousStrike   Decimal       @map("previous_strike") @db.Decimal(18, 2)
+  newStrike        Decimal       @map("new_strike") @db.Decimal(18, 2)
+  dividendAmount   Decimal       @map("dividend_amount") @db.Decimal(18, 8)
+  createdAt        DateTime      @default(now()) @map("created_at")
+
+  sentinelOption SentinelOption @relation(fields: [sentinelOptionId], references: [id])
+
+  @@unique([underlyingSymbol, detectedAt, dividendAmount])
+  @@index([underlyingSymbol])
+  @@index([sentinelOptionId])
+  @@map("dividends_history")
 }

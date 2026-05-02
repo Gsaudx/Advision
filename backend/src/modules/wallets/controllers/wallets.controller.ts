@@ -1,11 +1,15 @@
 import {
   Controller,
   Post,
+  Put,
+  Delete,
   Get,
   Param,
   Body,
   Query,
   UseGuards,
+  HttpCode,
+  Logger,
 } from '@nestjs/common';
 import {
   ApiTags,
@@ -21,6 +25,7 @@ import type { ApiResponse as ApiResponseType } from '@/common/schemas';
 import { CurrentUser, type CurrentUserData } from '@/common/decorators';
 import { RolesGuard } from '@/common/guards';
 import { Roles } from '@/common/decorators';
+import { SentinelOptionService } from '@/modules/sentinel/services/sentinel-option.service'; // [SENTINEL]
 import { WalletsService, TradingService } from '../services';
 import { CompositeMarketService } from '../providers/composite-market.service';
 import {
@@ -32,6 +37,9 @@ import {
   AssetSearchApiResponseDto,
   AssetPriceApiResponseDto,
   TransactionListApiResponseDto,
+  HistoricalPriceApiResponseDto,
+  UpdateTransactionInputDto,
+  ExpireOptionInputDto,
 } from '../schemas';
 import type {
   WalletResponse,
@@ -39,6 +47,9 @@ import type {
   AssetSearchResponse,
   AssetPriceResponse,
   TransactionListResponse,
+  HistoricalPriceResponse,
+  UpdateTransactionInput,
+  ExpireOptionInput,
 } from '../schemas';
 
 @ApiTags('Wallets')
@@ -46,10 +57,13 @@ import type {
 @UseGuards(AuthGuard('jwt'), RolesGuard)
 @ApiCookieAuth()
 export class WalletsController {
+  private readonly logger = new Logger(WalletsController.name);
+
   constructor(
     private readonly walletsService: WalletsService,
     private readonly tradingService: TradingService,
     private readonly marketService: CompositeMarketService,
+    private readonly sentinelService: SentinelOptionService, // [SENTINEL]
   ) {}
 
   @Post()
@@ -284,6 +298,20 @@ export class WalletsController {
     return ApiResponseDto.success(data);
   }
 
+  @Get('assets/:ticker/historical-price')
+  @Roles('ADVISOR', 'ADMIN')
+  @ApiOperation({ summary: 'Preço histórico do ativo em uma data específica' })
+  @ApiParam({ name: 'ticker', description: 'Ticker do ativo' })
+  @ApiQuery({ name: 'date', required: true, description: 'Data no formato YYYY-MM-DD' })
+  @ApiResponse({ status: 200, description: 'Preço histórico', type: HistoricalPriceApiResponseDto })
+  async getHistoricalPrice(
+    @Param('ticker') ticker: string,
+    @Query('date') date: string,
+  ): Promise<ApiResponseType<HistoricalPriceResponse>> {
+    const data = await this.walletsService.getHistoricalPrice(ticker.toUpperCase(), date);
+    return ApiResponseDto.success(data);
+  }
+
   @Get('assets/:ticker/price')
   @Roles('ADVISOR', 'ADMIN')
   @ApiOperation({
@@ -347,6 +375,22 @@ export class WalletsController {
   ): Promise<ApiResponseType<WalletResponse>> {
     const data = await this.walletsService.getDashboard(id, user);
     return ApiResponseDto.success(data);
+  }
+
+  // [SENTINEL] Dispara verificação da sentinela para a carteira (fire-and-forget).
+  @Post(':id/sentinel/check')
+  @HttpCode(202)
+  @Roles('ADVISOR', 'ADMIN', 'CLIENT')
+  @ApiOperation({ summary: 'Dispara verificação da sentinela para a carteira' })
+  async triggerSentinelCheck(
+    @Param('id') id: string,
+    @CurrentUser() user: CurrentUserData,
+  ): Promise<{ ok: boolean }> {
+    await this.walletsService.findOne(id, user); // verifica acesso
+    this.sentinelService.checkWalletSentinels(id).catch((e: unknown) => {
+      console.error('[SENTINEL] checkWalletSentinels falhou:', e);
+    });
+    return { ok: true };
   }
 
   @Get(':id/transactions')
@@ -484,6 +528,26 @@ export class WalletsController {
     @CurrentUser() user: CurrentUserData,
   ): Promise<ApiResponseType<WalletResponse>> {
     await this.tradingService.buy(id, body, user);
+
+    // M1+M2: Cria sentinela e dispara varredura retroativa se necessário — fire-and-forget encadeado
+    // (sequential para evitar race condition: sentinela deve existir antes do retroactiveScan)
+    (async () => {
+      try {
+        const sentinelTicker = await this.sentinelService.resolveUnderlyingTicker(body.ticker);
+        if (!sentinelTicker) return;
+        await this.sentinelService.checkSentinel(sentinelTicker, id);
+        const purchaseDate = new Date(body.date);
+        const today = new Date();
+        today.setHours(0, 0, 0, 0);
+        if (purchaseDate < today) {
+          await this.sentinelService.triggerRetroactiveScanIfNeeded(sentinelTicker, purchaseDate, id);
+        }
+        await this.sentinelService.propagateDividendsToWallet(id);
+      } catch (err) {
+        this.logger.error(`[M1+M2] Sentinel chain failed for ${body.ticker}`, err);
+      }
+    })();
+
     const data = await this.walletsService.getDashboard(id, user);
     return ApiResponseDto.success(data, 'Compra realizada com sucesso');
   }
@@ -528,5 +592,54 @@ export class WalletsController {
     await this.tradingService.sell(id, body, user);
     const data = await this.walletsService.getDashboard(id, user);
     return ApiResponseDto.success(data, 'Venda realizada com sucesso');
+  }
+
+  @Put(':id/transactions/:txId')
+  @Roles('ADVISOR', 'ADMIN')
+  @ApiOperation({ summary: 'Editar transação', description: 'Atualiza data, preço ou quantidade de uma transação existente.' })
+  @ApiParam({ name: 'id', description: 'ID da carteira' })
+  @ApiParam({ name: 'txId', description: 'ID da transação' })
+  @ApiResponse({ status: 200, description: 'Transação atualizada', type: WalletApiResponseDto })
+  async updateTransaction(
+    @Param('id') id: string,
+    @Param('txId') txId: string,
+    @Body() body: UpdateTransactionInputDto,
+    @CurrentUser() user: CurrentUserData,
+  ): Promise<ApiResponseType<WalletResponse>> {
+    await this.tradingService.updateTransaction(id, txId, body as UpdateTransactionInput, user);
+    const data = await this.walletsService.getDashboard(id, user);
+    return ApiResponseDto.success(data, 'Transação atualizada');
+  }
+
+  @Delete(':id/transactions/:txId')
+  @HttpCode(200)
+  @Roles('ADVISOR', 'ADMIN')
+  @ApiOperation({ summary: 'Deletar transação', description: 'Remove uma transação e reverte seu efeito na carteira.' })
+  @ApiParam({ name: 'id', description: 'ID da carteira' })
+  @ApiParam({ name: 'txId', description: 'ID da transação' })
+  @ApiResponse({ status: 200, description: 'Transação removida', type: WalletApiResponseDto })
+  async deleteTransaction(
+    @Param('id') id: string,
+    @Param('txId') txId: string,
+    @CurrentUser() user: CurrentUserData,
+  ): Promise<ApiResponseType<WalletResponse>> {
+    await this.tradingService.deleteTransaction(id, txId, user);
+    const data = await this.walletsService.getDashboard(id, user);
+    return ApiResponseDto.success(data, 'Transação removida');
+  }
+
+  @Post(':id/trade/expire')
+  @Roles('ADVISOR', 'ADMIN')
+  @ApiOperation({ summary: 'Registrar opção como vencida', description: 'Cria transação EXPIRED (preço = 0) e zera a posição.' })
+  @ApiParam({ name: 'id', description: 'ID da carteira' })
+  @ApiResponse({ status: 200, description: 'Opção registrada como vencida', type: WalletApiResponseDto })
+  async expireOption(
+    @Param('id') id: string,
+    @Body() body: ExpireOptionInputDto,
+    @CurrentUser() user: CurrentUserData,
+  ): Promise<ApiResponseType<WalletResponse>> {
+    await this.tradingService.expireOption(id, body as ExpireOptionInput, user);
+    const data = await this.walletsService.getDashboard(id, user);
+    return ApiResponseDto.success(data, 'Opção registrada como vencida');
   }
 }

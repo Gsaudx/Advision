@@ -12,6 +12,13 @@ import type {
   OptionDetailsResult,
 } from '../types';
 
+export interface SentinelStatusItem {
+  ticker: string;
+  status: 'ACTIVE' | 'UNAVAILABLE' | 'NOT_MONITORED';
+  monitoringSince: string | null;
+  scanningSince: string | null;
+}
+
 export const walletsApi = {
   getAll: async (clientId?: string): Promise<WalletSummary[]> => {
     const params = clientId ? { clientId } : {};
@@ -115,4 +122,30 @@ export const walletsApi = {
     );
     return response.data.data;
   },
+
+  getSentinelStatus: async (walletId: string): Promise<SentinelStatusItem[]> => {
+    const response = await api.get<SentinelStatusItem[]>(
+      `/wallets/${walletId}/sentinel/status`,
+    );
+    return response.data;
+  },
+
+  getHistoricalPrice: async (ticker: string, date: string): Promise<HistoricalPriceResponse> => {
+    const response = await api.get<ApiResponse<HistoricalPriceResponse>>(
+      `/wallets/assets/${ticker}/historical-price`,
+      { params: { date } },
+    );
+    return response.data.data;
+  },
+
+  expireOption: async (walletId: string, data: { ticker: string; expiredAt: string }): Promise<void> => {
+    await api.post(`/wallets/${walletId}/trade/expire`, data);
+  },
 };
+
+export interface HistoricalPriceResponse {
+  type: 'STOCK' | 'OPTION';
+  price: number | null;
+  strike?: number | null;
+  message?: string;
+}

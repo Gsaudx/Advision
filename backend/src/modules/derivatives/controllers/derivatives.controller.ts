@@ -8,6 +8,7 @@ import {
   UseGuards,
   HttpCode,
   HttpStatus,
+  Logger,
 } from '@nestjs/common';
 import {
   ApiTags,
@@ -19,6 +20,7 @@ import {
 } from '@nestjs/swagger';
 import { AuthGuard } from '@nestjs/passport';
 import { CurrentUser, type CurrentUserData } from '@/common/decorators';
+import { SentinelOptionService } from '@/modules/sentinel/services/sentinel-option.service';
 import { DerivativesService } from '../services';
 import {
   BuyOptionInputDto,
@@ -33,7 +35,12 @@ import {
 @UseGuards(AuthGuard('jwt'))
 @Controller('wallets/:walletId/options')
 export class DerivativesController {
-  constructor(private readonly derivativesService: DerivativesService) {}
+  private readonly logger = new Logger(DerivativesController.name);
+
+  constructor(
+    private readonly derivativesService: DerivativesService,
+    private readonly sentinelService: SentinelOptionService,
+  ) {}
 
   @Get()
   @ApiOperation({ summary: 'List all option positions for a wallet' })
@@ -67,6 +74,25 @@ export class DerivativesController {
     @CurrentUser() actor: CurrentUserData,
   ) {
     const data = await this.derivativesService.buyOption(walletId, dto, actor);
+
+    // M1+M2: Cria sentinela e dispara varredura retroativa se necessário — fire-and-forget encadeado
+    (async () => {
+      try {
+        const sentinelTicker = await this.sentinelService.resolveUnderlyingTicker(dto.ticker);
+        if (!sentinelTicker) return;
+        await this.sentinelService.checkSentinel(sentinelTicker, walletId);
+        const purchaseDate = new Date(dto.date);
+        const today = new Date();
+        today.setHours(0, 0, 0, 0);
+        if (purchaseDate < today) {
+          await this.sentinelService.triggerRetroactiveScanIfNeeded(sentinelTicker, purchaseDate, walletId);
+        }
+        await this.sentinelService.propagateDividendsToWallet(walletId);
+      } catch (err) {
+        this.logger.error(`[M1+M2] Sentinel chain failed for ${dto.ticker}`, err);
+      }
+    })();
+
     return { success: true, data };
   }
 

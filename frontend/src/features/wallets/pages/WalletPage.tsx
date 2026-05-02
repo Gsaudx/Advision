@@ -1,4 +1,4 @@
-import { useState, useMemo } from 'react';
+import { useState, useMemo, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import {
   ArrowLeft,
@@ -18,6 +18,7 @@ import { formatCurrency, formatDateTime } from '@/lib/formatters';
 import { LoadingSpinner } from '@/components/ui/LoadingSpinner';
 import { EmptyState } from '@/components/ui/EmptyState';
 import { useClients } from '@/features/clients-page';
+import { useQueryClient } from '@tanstack/react-query';
 import { useWalletById, useTransactions } from '../api';
 import { useWalletProventos } from '@/features/proventos/api';
 import { PositionTable } from '../components/PositionTable';
@@ -47,6 +48,7 @@ import type {
 import type { CashOperationType, Position, Transaction } from '../types';
 import { transactionTypeLabels } from '../types';
 import { useWalletsPageConfig } from './useWalletsPageConfig';
+import { useSentinelStatus } from '../api';
 type SubTab = 'positions' | 'options' | 'strategies';
 type PillTab = 'operations' | 'proventos' | 'ativos';
 type LifecycleAction = 'close' | 'exercise' | 'assignment' | 'expiration';
@@ -167,6 +169,7 @@ export default function WalletPage() {
   const { walletId } = useParams<{ walletId: string }>();
   const navigate = useNavigate();
   const config = useWalletsPageConfig();
+  const queryClient = useQueryClient();
 
   const {
     data: wallet,
@@ -188,6 +191,49 @@ export default function WalletPage() {
   } = useOptionPositions(walletId!);
 
   const { data: proventosData } = useWalletProventos(walletId!);
+  const { statusMap: sentinelStatusMap } = useSentinelStatus(walletId);
+
+  // [SENTINEL] Abre conexão SSE ao carregar a carteira.
+  // Aguarda notificação da sentinela e atualiza proventos se necessário.
+  useEffect(() => {
+    if (!walletId) return;
+
+    const eventSource = new EventSource(
+      `${import.meta.env.VITE_API_URL ?? 'http://localhost:3000'}/wallets/${walletId}/events`,
+      { withCredentials: true },
+    );
+
+    eventSource.onmessage = (e: MessageEvent) => {
+      const event = JSON.parse(e.data as string) as { type: string };
+
+      if (event.type === 'dividends_updated') {
+        void queryClient.invalidateQueries({
+          queryKey: ['walletProventos', walletId],
+        });
+        void queryClient.invalidateQueries({
+          queryKey: ['wallet', walletId],
+        });
+        void queryClient.invalidateQueries({
+          queryKey: ['option-positions', walletId],
+        });
+        void queryClient.invalidateQueries({
+          queryKey: ['expirations', walletId],
+        });
+      }
+
+      if (event.type === 'dividends_updated' || event.type === 'check_complete') {
+        eventSource.close();
+      }
+    };
+
+    eventSource.onerror = () => {
+      eventSource.close();
+    };
+
+    return () => {
+      eventSource.close();
+    };
+  }, [walletId, queryClient]);
 
   const { data: clients = [] } = useClients();
   const clientName = useMemo(() => {
@@ -609,12 +655,13 @@ export default function WalletPage() {
               >
                 {pillTab === 'ativos' && (
                   <PositionTable
-                    positions={wallet.positions}
+                    positions={wallet.positions.filter((p) => p.type === 'STOCK')}
                     currency={wallet.currency}
                     canTrade={config.canTrade}
                     onSellClick={handleSellPosition}
                     isLoading={isRefreshing}
                     proventos={proventosData?.items}
+                    sentinelStatusMap={sentinelStatusMap}
                   />
                 )}
                 {pillTab === 'operations' && (
@@ -832,7 +879,7 @@ export default function WalletPage() {
         walletId={walletId!}
         walletName={wallet.name}
         currentBalance={wallet.cashBalance}
-        positions={wallet.positions}
+        positions={wallet.positions.filter((p) => p.type === 'STOCK')}
         currency={wallet.currency}
         initialInstrument={tradeInitial.instrument}
         initialDirection={tradeInitial.direction}

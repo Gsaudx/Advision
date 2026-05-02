@@ -1,0 +1,19 @@
+-- Rename camelCase columns to snake_case in sentinel_options
+ALTER TABLE "sentinel_options" RENAME COLUMN "underlyingSymbol" TO "underlying_symbol";
+ALTER TABLE "sentinel_options" RENAME COLUMN "optionSymbol" TO "option_symbol";
+ALTER TABLE "sentinel_options" RENAME COLUMN "initialStrike" TO "initial_strike";
+ALTER TABLE "sentinel_options" RENAME COLUMN "currentStrike" TO "current_strike";
+ALTER TABLE "sentinel_options" RENAME COLUMN "dueDate" TO "due_date";
+ALTER TABLE "sentinel_options" RENAME COLUMN "monitoringSince" TO "monitoring_since";
+ALTER TABLE "sentinel_options" RENAME COLUMN "lastCheckedAt" TO "last_checked_at";
+ALTER TABLE "sentinel_options" RENAME COLUMN "createdAt" TO "created_at";
+ALTER TABLE "sentinel_options" RENAME COLUMN "updatedAt" TO "updated_at";
+
+-- Rename camelCase columns to snake_case in dividends_history
+ALTER TABLE "dividends_history" RENAME COLUMN "underlyingSymbol" TO "underlying_symbol";
+ALTER TABLE "dividends_history" RENAME COLUMN "sentinelOptionId" TO "sentinel_option_id";
+ALTER TABLE "dividends_history" RENAME COLUMN "detectedAt" TO "detected_at";
+ALTER TABLE "dividends_history" RENAME COLUMN "previousStrike" TO "previous_strike";
+ALTER TABLE "dividends_history" RENAME COLUMN "newStrike" TO "new_strike";
+ALTER TABLE "dividends_history" RENAME COLUMN "dividendAmount" TO "dividend_amount";
+ALTER TABLE "dividends_history" RENAME COLUMN "createdAt" TO "created_at";

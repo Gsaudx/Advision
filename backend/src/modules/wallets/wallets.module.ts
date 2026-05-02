@@ -1,5 +1,6 @@
 import { Module } from '@nestjs/common';
 import { ProventosModule } from '@/modules/proventos/proventos.module';
+import { SentinelModule } from '@/modules/sentinel/sentinel.module';
 import { WalletsController } from './controllers';
 import {
   WalletsService,
@@ -15,7 +16,7 @@ import {
 } from './providers';
 
 @Module({
-  imports: [ProventosModule],
+  imports: [ProventosModule, SentinelModule], // [SENTINEL]
   controllers: [WalletsController],
   providers: [
     // Core services
@@ -43,6 +44,7 @@ import {
     OpLabMarketService,
     CompositeMarketService,
     'MARKET_DATA_PROVIDER',
+    SentinelModule,
   ],
 })
 export class WalletsModule {}
