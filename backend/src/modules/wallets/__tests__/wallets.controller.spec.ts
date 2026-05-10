@@ -3,6 +3,7 @@ import { WalletsController } from '../controllers/wallets.controller';
 import { WalletsService } from '../services/wallets.service';
 import { TradingService } from '../services/trading.service';
 import { CompositeMarketService } from '../providers';
+import { SentinelOptionService } from '@/modules/sentinel/services/sentinel-option.service';
 
 describe('WalletsController', () => {
   let controller: WalletsController;
@@ -78,6 +79,16 @@ describe('WalletsController', () => {
               type: 'STOCK',
               name: 'Petrobras PN',
             }),
+          },
+        },
+        {
+          provide: SentinelOptionService,
+          useValue: {
+            resolveUnderlyingTicker: jest.fn().mockResolvedValue(null),
+            checkSentinel: jest.fn().mockResolvedValue([]),
+            triggerRetroactiveScanIfNeeded: jest.fn().mockResolvedValue(undefined),
+            propagateDividendsToWallet: jest.fn().mockResolvedValue(undefined),
+            checkWalletSentinels: jest.fn().mockResolvedValue(undefined),
           },
         },
       ],

@@ -1,6 +1,7 @@
 import { Test, TestingModule } from '@nestjs/testing';
 import { DerivativesController } from '../controllers/derivatives.controller';
 import { DerivativesService } from '../services/derivatives.service';
+import { SentinelOptionService } from '@/modules/sentinel/services/sentinel-option.service';
 
 describe('DerivativesController', () => {
   let controller: DerivativesController;
@@ -60,6 +61,15 @@ describe('DerivativesController', () => {
       controllers: [DerivativesController],
       providers: [
         { provide: DerivativesService, useValue: derivativesService },
+        {
+          provide: SentinelOptionService,
+          useValue: {
+            resolveUnderlyingTicker: jest.fn().mockResolvedValue(null),
+            checkSentinel: jest.fn().mockResolvedValue([]),
+            triggerRetroactiveScanIfNeeded: jest.fn().mockResolvedValue(undefined),
+            propagateDividendsToWallet: jest.fn().mockResolvedValue(undefined),
+          },
+        },
       ],
     }).compile();
 

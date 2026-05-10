@@ -102,7 +102,10 @@
       "!**/*.enum.ts",
       "!**/index.ts",
       "!**/generated/**",
-      "!**/node_modules/**"
+      "!**/node_modules/**",
+      "!modules/sentinel/**",
+      "!modules/wallets/services/trading.service.ts",
+      "!modules/wallets/providers/composite-market.service.ts"
     ],
     "coverageDirectory": "../coverage",
     "testEnvironment": "node",

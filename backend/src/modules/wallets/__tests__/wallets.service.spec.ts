@@ -7,6 +7,8 @@ import {
 import { WalletsService } from '../services/wallets.service';
 import { WalletAccessService } from '../services/wallet-access.service';
 import { ProventosCalculationService } from '@/modules/proventos/services/proventos-calculation.service';
+import { OpLabMarketService } from '../providers/oplab-market.service';
+import { SentinelOptionService } from '@/modules/sentinel/services/sentinel-option.service';
 
 // Use Prisma-compatible Decimal mock (simply a number that works with Decimal.js)
 // Decimal.js accepts numbers directly, so we use numbers for cashBalance
@@ -196,6 +198,21 @@ describe('WalletsService', () => {
         {
           provide: ProventosCalculationService,
           useValue: { ensureProcessed: jest.fn().mockResolvedValue(undefined) },
+        },
+        {
+          provide: OpLabMarketService,
+          useValue: { getHistoricalClose: jest.fn().mockResolvedValue(null) },
+        },
+        {
+          provide: SentinelOptionService,
+          useValue: {
+            checkWalletSentinels: jest.fn().mockResolvedValue(undefined),
+            propagateDividendsToWallet: jest.fn().mockResolvedValue(undefined),
+            resolveUnderlyingTicker: jest.fn().mockResolvedValue(null),
+            checkSentinel: jest.fn().mockResolvedValue([]),
+            triggerRetroactiveScanIfNeeded: jest.fn().mockResolvedValue(undefined),
+            fetchHistory: jest.fn().mockResolvedValue([]),
+          },
         },
       ],
     }).compile();
