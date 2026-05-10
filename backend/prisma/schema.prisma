@@ -220,6 +220,7 @@ model OptionDetail {
   strikePrice       Decimal      @db.Decimal(18, 2)
   initialStrike     Decimal?     @map("initial_strike") @db.Decimal(18, 2)
   expirationDate    DateTime     @db.Date
+  contractSize      Int          @default(100) @map("contract_size")
 
   asset           Asset @relation("AssetOption", fields: [assetId], references: [id], onDelete: Cascade)
   underlyingAsset Asset @relation("UnderlyingAsset", fields: [underlyingAssetId], references: [id])

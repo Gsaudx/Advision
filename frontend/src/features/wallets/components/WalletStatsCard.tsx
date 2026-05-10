@@ -12,10 +12,25 @@ export function WalletStatsCard({ wallets }: WalletStatsCardProps) {
     (acc, wallet) => ({
       count: acc.count + 1,
       cash: acc.cash + wallet.cashBalance,
-      value: acc.value + wallet.cashBalance,
+      invested: acc.invested + wallet.totalInvested,
+      total: acc.total + wallet.totalValue,
+      pnl: acc.pnl + wallet.totalPnl,
     }),
-    { count: 0, cash: 0, value: 0 },
+    { count: 0, cash: 0, invested: 0, total: 0, pnl: 0 },
   );
+
+  const pnlIconColor =
+    totals.pnl > 0
+      ? 'text-tertiary'
+      : totals.pnl < 0
+        ? 'text-error'
+        : 'text-on-surface-variant';
+  const pnlIconBg =
+    totals.pnl > 0
+      ? 'bg-tertiary/10'
+      : totals.pnl < 0
+        ? 'bg-error/10'
+        : 'bg-outline-variant/15';
 
   return (
     <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
@@ -34,16 +49,15 @@ export function WalletStatsCard({ wallets }: WalletStatsCardProps) {
         iconBg="bg-tertiary/10"
       />
       <StatCard
-        label="Valor Investido"
-        // [MOCKUP] valor fixo — virá do backend quando o cálculo de valor investido (soma de posições) for implementado
-        value={formatCurrency(0)}
+        label="Lucro/Prejuízo"
+        value={`${totals.pnl > 0 ? '+' : ''}${formatCurrency(totals.pnl)}`}
         icon={TrendingUp}
-        iconColor="text-on-surface-variant"
-        iconBg="bg-outline-variant/15"
+        iconColor={pnlIconColor}
+        iconBg={pnlIconBg}
       />
       <StatCard
         label="Patrimônio Total"
-        value={formatCurrency(totals.value)}
+        value={formatCurrency(totals.total)}
         icon={PiggyBank}
         iconColor="text-tertiary"
         iconBg="bg-tertiary/10"

@@ -33,11 +33,15 @@ export class SentinelEventsController {
 
   @Get(':id/sentinel/status')
   @Roles('ADVISOR', 'ADMIN', 'CLIENT')
-  @ApiOperation({ summary: 'Retorna status de monitoramento sentinela por ativo da carteira' })
+  @ApiOperation({
+    summary: 'Retorna status de monitoramento sentinela por ativo da carteira',
+  })
   async sentinelStatus(
     @Param('id') walletId: string,
     @CurrentUser() user: CurrentUserData,
-  ): Promise<{ ticker: string; status: string; monitoringSince: string | null }[]> {
+  ): Promise<
+    { ticker: string; status: string; monitoringSince: string | null }[]
+  > {
     if (!UUID_REGEX.test(walletId)) {
       throw new BadRequestException('walletId deve ser um UUID válido');
     }
@@ -47,7 +51,9 @@ export class SentinelEventsController {
 
   @Sse(':id/events')
   @Roles('ADVISOR', 'ADMIN', 'CLIENT')
-  @ApiOperation({ summary: 'Stream SSE de eventos da sentinela para uma carteira' })
+  @ApiOperation({
+    summary: 'Stream SSE de eventos da sentinela para uma carteira',
+  })
   async events(
     @Param('id') walletId: string,
     @CurrentUser() user: CurrentUserData,

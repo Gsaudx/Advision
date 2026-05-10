@@ -8,6 +8,7 @@ import {
   WalletAccessService,
   AuditService,
   AssetResolverService,
+  PerformanceService,
 } from './services';
 import {
   BrapiMarketService,
@@ -23,6 +24,7 @@ import {
     WalletAccessService,
     WalletsService,
     TradingService,
+    PerformanceService,
     // Supporting services
     AuditService,
     AssetResolverService,
@@ -38,6 +40,7 @@ import {
   exports: [
     WalletsService,
     TradingService,
+    PerformanceService,
     WalletAccessService,
     AuditService,
     AssetResolverService,

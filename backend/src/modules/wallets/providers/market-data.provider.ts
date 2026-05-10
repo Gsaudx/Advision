@@ -16,6 +16,7 @@ export interface AssetMetadata {
   expirationDate?: Date;
   optionType?: 'CALL' | 'PUT';
   exerciseType?: 'AMERICAN' | 'EUROPEAN';
+  contractSize?: number;
 }
 
 /**

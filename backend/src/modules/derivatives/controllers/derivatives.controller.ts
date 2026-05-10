@@ -78,18 +78,26 @@ export class DerivativesController {
     // M1+M2: Cria sentinela e dispara varredura retroativa se necessário — fire-and-forget encadeado
     void (async () => {
       try {
-        const sentinelTicker = await this.sentinelService.resolveUnderlyingTicker(dto.ticker);
+        const sentinelTicker =
+          await this.sentinelService.resolveUnderlyingTicker(dto.ticker);
         if (!sentinelTicker) return;
         await this.sentinelService.checkSentinel(sentinelTicker, walletId);
         const purchaseDate = new Date(dto.date);
         const today = new Date();
         today.setHours(0, 0, 0, 0);
         if (purchaseDate < today) {
-          await this.sentinelService.triggerRetroactiveScanIfNeeded(sentinelTicker, purchaseDate, walletId);
+          await this.sentinelService.triggerRetroactiveScanIfNeeded(
+            sentinelTicker,
+            purchaseDate,
+            walletId,
+          );
         }
         await this.sentinelService.propagateDividendsToWallet(walletId);
       } catch (err) {
-        this.logger.error(`[M1+M2] Sentinel chain failed for ${dto.ticker}`, err);
+        this.logger.error(
+          `[M1+M2] Sentinel chain failed for ${dto.ticker}`,
+          err,
+        );
       }
     })();
 

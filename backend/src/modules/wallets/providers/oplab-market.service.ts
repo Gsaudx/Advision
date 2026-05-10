@@ -52,6 +52,7 @@ interface OpLabOptionSeries {
   theta?: number;
   vega?: number;
   rho?: number;
+  contract_size?: number;
 }
 
 interface OpLabSpotInfo {
@@ -81,7 +82,6 @@ interface OpLabQuote {
 interface OpLabSearchResponse {
   data: OpLabInstrument[];
 }
-
 
 /**
  * Actual OpLab series response format - nested structure
@@ -351,6 +351,7 @@ export class OpLabMarketService extends MarketDataProvider {
         expirationDate: cachedOption.due_date
           ? new Date(cachedOption.due_date)
           : undefined,
+        contractSize: cachedOption.contract_size,
       };
     }
 
@@ -381,6 +382,7 @@ export class OpLabMarketService extends MarketDataProvider {
         exerciseType: 'AMERICAN', // B3 options are typically American
         strikePrice: option.strike,
         expirationDate: option.due_date ? new Date(option.due_date) : undefined,
+        contractSize: option.contract_size,
       };
     } catch (error) {
       this.logger.error(
@@ -496,10 +498,9 @@ export class OpLabMarketService extends MarketDataProvider {
       d.setDate(d.getDate() - offset);
       const dateStr = d.toISOString().split('T')[0];
       try {
-        const data = await this.makeRequest<{ data?: Array<{ close?: number }> }>(
-          `/market/historical/${symbol}/1d`,
-          { from: dateStr, to: dateStr },
-        );
+        const data = await this.makeRequest<{
+          data?: Array<{ close?: number }>;
+        }>(`/market/historical/${symbol}/1d`, { from: dateStr, to: dateStr });
         if (data?.data?.length && data.data[0].close != null) {
           return data.data[0].close;
         }
@@ -508,7 +509,9 @@ export class OpLabMarketService extends MarketDataProvider {
       }
     }
 
-    this.logger.warn(`No historical close found for ${ticker} near ${date.toISOString().split('T')[0]}`);
+    this.logger.warn(
+      `No historical close found for ${ticker} near ${date.toISOString().split('T')[0]}`,
+    );
     return null;
   }
 
@@ -638,6 +641,7 @@ export class OpLabMarketService extends MarketDataProvider {
                 bid: strikeData.call.bid,
                 ask: strikeData.call.ask,
                 volume: strikeData.call.volume,
+                contract_size: strikeData.call.contract_size,
                 spot: {
                   symbol: data.symbol,
                   name: data.name,
@@ -658,6 +662,7 @@ export class OpLabMarketService extends MarketDataProvider {
                 bid: strikeData.put.bid,
                 ask: strikeData.put.ask,
                 volume: strikeData.put.volume,
+                contract_size: strikeData.put.contract_size,
                 spot: {
                   symbol: data.symbol,
                   name: data.name,

@@ -6,6 +6,7 @@ import {
 } from '@nestjs/common';
 import { WalletsService } from '../services/wallets.service';
 import { WalletAccessService } from '../services/wallet-access.service';
+import { PerformanceService } from '../services/performance.service';
 import { ProventosCalculationService } from '@/modules/proventos/services/proventos-calculation.service';
 import { OpLabMarketService } from '../providers/oplab-market.service';
 import { SentinelOptionService } from '@/modules/sentinel/services/sentinel-option.service';
@@ -210,8 +211,33 @@ describe('WalletsService', () => {
             propagateDividendsToWallet: jest.fn().mockResolvedValue(undefined),
             resolveUnderlyingTicker: jest.fn().mockResolvedValue(null),
             checkSentinel: jest.fn().mockResolvedValue([]),
-            triggerRetroactiveScanIfNeeded: jest.fn().mockResolvedValue(undefined),
+            triggerRetroactiveScanIfNeeded: jest
+              .fn()
+              .mockResolvedValue(undefined),
             fetchHistory: jest.fn().mockResolvedValue([]),
+          },
+        },
+        {
+          provide: PerformanceService,
+          useValue: {
+            computePerformance: jest.fn().mockResolvedValue({
+              walletId: 'wallet-123',
+              realized: 0,
+              unrealized: 0,
+              dividends: 0,
+              total: 0,
+              totalInvested: 0,
+              totalPercent: 0,
+              byAsset: [],
+            }),
+            computeTotals: jest.fn().mockResolvedValue({
+              realized: 0,
+              unrealized: 0,
+              dividends: 0,
+              total: 0,
+              totalInvested: 0,
+              totalPercent: 0,
+            }),
           },
         },
       ],
@@ -295,6 +321,8 @@ describe('WalletsService', () => {
   describe('findAll', () => {
     it('returns wallets for advisor', async () => {
       prisma.wallet.findMany.mockResolvedValue([baseWallet]);
+      prisma.position.findMany.mockResolvedValue([]);
+      marketData.getBatchPrices.mockResolvedValue({});
 
       const result = await service.findAll(advisorUser);
 
@@ -308,10 +336,14 @@ describe('WalletsService', () => {
       });
       expect(result).toHaveLength(1);
       expect(result[0].name).toBe('Test Wallet');
+      expect(result[0].totalValue).toBe(10000);
+      expect(result[0].totalPositionsValue).toBe(0);
     });
 
     it('filters by clientId when provided', async () => {
       prisma.wallet.findMany.mockResolvedValue([baseWallet]);
+      prisma.position.findMany.mockResolvedValue([]);
+      marketData.getBatchPrices.mockResolvedValue({});
 
       await service.findAll(advisorUser, 'client-123');
 
@@ -324,6 +356,18 @@ describe('WalletsService', () => {
         },
         orderBy: { createdAt: 'desc' },
       });
+    });
+
+    it('enriches each wallet with totalPositionsValue from open positions', async () => {
+      prisma.wallet.findMany.mockResolvedValue([baseWallet]);
+      prisma.position.findMany.mockResolvedValue([basePosition]);
+      marketData.getBatchPrices.mockResolvedValue({ PETR4: 35 });
+
+      const result = await service.findAll(advisorUser);
+
+      // 100 PETR4 × 35 = 3500
+      expect(result[0].totalPositionsValue).toBe(3500);
+      expect(result[0].totalValue).toBe(13500); // cash 10000 + positions 3500
     });
   });
 
