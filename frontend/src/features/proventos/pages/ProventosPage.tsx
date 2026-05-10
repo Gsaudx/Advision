@@ -1,9 +1,11 @@
 import { useState } from 'react';
-import { Search, TrendingUp, RefreshCw } from 'lucide-react';
+import { Search, TrendingUp } from 'lucide-react';
+// [SENTINEL] RefreshCw removido — usado apenas no bloco de sync BRAPI comentado abaixo
 import PageTitle from '@/components/layout/PageTitle';
 import { LoadingSpinner } from '@/components/ui/LoadingSpinner';
 import { useProventos } from '../api';
-import { proventosApi } from '../api/proventos.api';
+// [SENTINEL] proventosApi removido — usado apenas em handleForceSync comentado abaixo
+// import { proventosApi } from '../api/proventos.api';
 
 const PAGE_SIZE = 20;
 
@@ -21,7 +23,8 @@ export function ProventosPage() {
   const [tickerInput, setTickerInput] = useState('');
   const [ticker, setTicker] = useState('');
   const [skip, setSkip] = useState(0);
-  const [syncing, setSyncing] = useState(false);
+  // [SENTINEL] syncing removido — usado apenas em handleForceSync comentado abaixo
+  // const [syncing, setSyncing] = useState(false);
 
   const { data, isLoading, isError, refetch } = useProventos({
     ticker,
@@ -39,15 +42,16 @@ export function ProventosPage() {
     setSkip(0);
   };
 
-  const handleForceSync = async () => {
-    setSyncing(true);
-    try {
-      await proventosApi.forceSync();
-      await refetch();
-    } finally {
-      setSyncing(false);
-    }
-  };
+  // [SENTINEL] handleForceSync comentado — contingência de reversão para sync BRAPI
+  // const handleForceSync = async () => {
+  //   setSyncing(true);
+  //   try {
+  //     await proventosApi.forceSync();
+  //     await refetch();
+  //   } finally {
+  //     setSyncing(false);
+  //   }
+  // };
 
   const handleClear = () => {
     setTickerInput('');

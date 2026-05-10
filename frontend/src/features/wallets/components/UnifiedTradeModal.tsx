@@ -60,8 +60,10 @@ export function UnifiedTradeModal({
   // Sync instrument/direction when modal opens with initial values
   useEffect(() => {
     if (isOpen) {
-      setInstrument(initialInstrument);
-      setDirection(initialDirection);
+      setTimeout(() => {
+        setInstrument(initialInstrument);
+        setDirection(initialDirection);
+      }, 0);
     }
   }, [isOpen, initialInstrument, initialDirection]);
 
@@ -146,11 +148,13 @@ export function UnifiedTradeModal({
   // Auto-fill price for asset
   useEffect(() => {
     if (assetPriceData?.price) {
-      setAssetFormData((prev) => ({
-        ...prev,
-        price: assetPriceData.price.toFixed(2),
-      }));
-      setAssetErrors((prev) => ({ ...prev, price: '' }));
+      setTimeout(() => {
+        setAssetFormData((prev) => ({
+          ...prev,
+          price: assetPriceData.price.toFixed(2),
+        }));
+        setAssetErrors((prev) => ({ ...prev, price: '' }));
+      }, 0);
     }
   }, [assetPriceData, setAssetFormData, setAssetErrors]);
 
@@ -214,10 +218,12 @@ export function UnifiedTradeModal({
   // Auto-fill premium
   useEffect(() => {
     if (optionPriceData?.price != null && !isPremiumManual) {
-      setOptionFormData((prev) => ({
-        ...prev,
-        premium: optionPriceData.price.toFixed(2),
-      }));
+      setTimeout(() => {
+        setOptionFormData((prev) => ({
+          ...prev,
+          premium: optionPriceData.price.toFixed(2),
+        }));
+      }, 0);
     }
   }, [optionPriceData, isPremiumManual]);
 
@@ -265,13 +271,15 @@ export function UnifiedTradeModal({
   // TÉCNICO: Aplica o dado histórico retornado pela API nos campos do formulário correto (asset ou option).
   useEffect(() => {
     if (!historicalData || !isRetroactiveDate) return;
-    if (historicalData.price != null && instrument === 'asset') {
-      setAssetFormData((prev) => ({ ...prev, price: historicalData.price!.toFixed(2) }));
-    }
-    if (historicalData.price != null && instrument === 'option') {
-      setOptionFormData((prev) => ({ ...prev, premium: historicalData.price!.toFixed(2) }));
-      setIsPremiumManual(false);
-    }
+    setTimeout(() => {
+      if (historicalData.price != null && instrument === 'asset') {
+        setAssetFormData((prev) => ({ ...prev, price: historicalData.price!.toFixed(2) }));
+      }
+      if (historicalData.price != null && instrument === 'option') {
+        setOptionFormData((prev) => ({ ...prev, premium: historicalData.price!.toFixed(2) }));
+        setIsPremiumManual(false);
+      }
+    }, 0);
   }, [historicalData, isRetroactiveDate, instrument]);
 
   const handleOptionChange = (
