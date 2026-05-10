@@ -238,16 +238,6 @@ function PositionRow({
               Monitorado desde {formatDate(sentinelStatus.monitoringSince)}
             </span>
           )}
-          {position.type === 'OPTION' &&
-            position.optionDetail?.initialStrike != null &&
-            position.optionDetail.strikePrice < position.optionDetail.initialStrike && (
-              <span className="inline-flex items-center px-1.5 py-0.5 rounded text-xs bg-secondary/10 text-secondary mt-0.5 w-fit">
-                Ajustado por proventos
-                <span className="text-on-surface-variant ml-1">
-                  (original: {formatCurrency(position.optionDetail.initialStrike)})
-                </span>
-              </span>
-            )}
         </div>
       </td>
       <td className="px-4 py-3 text-right">

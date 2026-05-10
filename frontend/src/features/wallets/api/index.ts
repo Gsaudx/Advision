@@ -19,4 +19,5 @@ export {
 export { useSentinelStatus } from './useSentinelStatus';
 export { useHistoricalPrice } from './useHistoricalPrice';
 export { useExpireOption } from './useExpireOption';
+export { useUpdateTransaction, useDeleteTransaction } from './useUpdateTransaction';
 export type { SentinelStatusItem, HistoricalPriceResponse } from './wallets.api';

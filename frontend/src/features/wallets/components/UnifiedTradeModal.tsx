@@ -318,6 +318,8 @@ export function UnifiedTradeModal({
     if (!optionFormData.premium || isNaN(prem) || prem <= 0)
       newErrors.premium = 'Prêmio deve ser positivo';
     if (!optionFormData.date) newErrors.date = 'Data é obrigatória';
+    else if (localExpiryDate && optionFormData.date.slice(0, 10) > localExpiryDate)
+      newErrors.date = 'Data não pode ser posterior ao vencimento da opção';
     setOptionErrors(newErrors);
     return Object.keys(newErrors).length === 0;
   };
@@ -483,6 +485,11 @@ export function UnifiedTradeModal({
   const displayStrike = optionDetails?.strike ?? selectedOption?.strike;
   const displayExpiration =
     optionDetails?.expirationDate ?? selectedOption?.expirationDate;
+  // Convert to local date (YYYY-MM-DD) to match what the UI shows the user,
+  // since OpLab stores due_date as midnight UTC which is the previous day in Brazil (UTC-3).
+  const localExpiryDate = displayExpiration
+    ? new Date(displayExpiration).toLocaleDateString('sv')
+    : null;
 
   const formatExpDate = (dateStr?: string): string => {
     if (!dateStr) return '';
@@ -775,6 +782,11 @@ export function UnifiedTradeModal({
                         Buscando preço histórico…
                       </p>
                     )}
+                    {!isFetchingHistorical && isRetroactiveDate && instrument === 'asset' && historicalData?.price == null && historicalDateStr.length > 0 && (
+                      <p className="text-[10px] text-amber-600 mt-1">
+                        Preço histórico indisponível para esta data — digite manualmente.
+                      </p>
+                    )}
                     {assetErrors.date && (
                       <p className="text-error text-xs mt-1">
                         {assetErrors.date}
@@ -956,7 +968,7 @@ export function UnifiedTradeModal({
                       type="datetime-local"
                       value={optionFormData.date}
                       onChange={handleOptionDateChange}
-                      max={displayExpiration ? displayExpiration.slice(0, 16) : undefined}
+                      max={localExpiryDate ? `${localExpiryDate}T23:59` : undefined}
                       disabled={isPending}
                       className={`w-full bg-surface-container-lowest border rounded-xl py-3.5 px-4 text-sm text-on-surface focus:outline-none focus:ring-1 focus:ring-primary focus:border-primary transition-colors ${
                         optionErrors.date
@@ -968,6 +980,11 @@ export function UnifiedTradeModal({
                       <p className="text-[10px] text-on-surface-variant mt-1 flex items-center gap-1">
                         <LoadingSpinner size="sm" />
                         Buscando prêmio histórico…
+                      </p>
+                    )}
+                    {!isFetchingHistorical && isRetroactiveDate && instrument === 'option' && historicalData?.price == null && historicalDateStr.length > 0 && (
+                      <p className="text-[10px] text-amber-600 mt-1">
+                        Prêmio histórico indisponível para esta data — digite manualmente.
                       </p>
                     )}
                     {optionErrors.date && (

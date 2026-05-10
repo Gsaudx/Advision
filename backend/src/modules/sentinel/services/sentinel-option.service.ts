@@ -795,6 +795,10 @@ export class SentinelOptionService {
       await this.emitDividendsUpdatedForTicker(ticker);
     } catch (error) {
       this.logger.error(`[M2] Erro em retroactiveScan(${ticker}): ${(error as Error).message}`);
+      await this.prisma.sentinelOption.update({
+        where: { id: sentinel.id },
+        data: { scanningFrom: null },
+      });
     }
   }
 
@@ -861,7 +865,7 @@ export class SentinelOptionService {
     }
 
     const sorted = [...grouped.entries()].sort((a, b) => b[1].length - a[1].length);
-    const [, bestEntries] = sorted[0];
+    const [bestSymbol, bestEntries] = sorted[0];
     bestEntries.sort((a, b) => a.time.localeCompare(b.time));
 
     await this.detectDividendsInEntries(ticker, sentinelId, bestEntries, walletId);

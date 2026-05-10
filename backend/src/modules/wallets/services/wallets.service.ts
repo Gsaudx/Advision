@@ -566,18 +566,42 @@ export class WalletsService {
       });
       if (!optDetail) return { type: 'OPTION', price: null, strike: null };
 
-      const history = await this.sentinelService.fetchHistory(
-        optDetail.underlyingAsset.ticker,
-        date,
-        date,
-        ticker,
-      );
+      let history: Awaited<ReturnType<typeof this.sentinelService.fetchHistory>> = [];
+      try {
+        history = await this.sentinelService.fetchHistory(
+          optDetail.underlyingAsset.ticker,
+          date,
+          date,
+          ticker,
+        );
+      } catch {
+        return { type: 'OPTION', price: null, strike: null, message: 'Sem dados para esta data' };
+      }
       if (!history.length) {
         return { type: 'OPTION', price: null, strike: null, message: 'Sem dados para esta data' };
       }
-      return { type: 'OPTION', price: history[0].close ?? null, strike: history[0].strike };
+      return { type: 'OPTION', price: history[0].premium ?? null, strike: history[0].strike };
     }
 
     return { type: 'STOCK', price: null };
+  }
+
+  async getOptionDetailsFromDb(ticker: string): Promise<{
+    symbol: string;
+    strike: number;
+    due_date: string;
+    type: 'CALL' | 'PUT';
+  } | null> {
+    const asset = await this.prisma.asset.findUnique({
+      where: { ticker: ticker.toUpperCase() },
+      include: { optionDetail: true },
+    });
+    if (!asset?.optionDetail) return null;
+    return {
+      symbol: asset.ticker,
+      strike: Number(asset.optionDetail.strikePrice),
+      due_date: asset.optionDetail.expirationDate.toISOString(),
+      type: asset.optionDetail.optionType as 'CALL' | 'PUT',
+    };
   }
 }

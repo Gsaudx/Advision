@@ -141,6 +141,18 @@ export const walletsApi = {
   expireOption: async (walletId: string, data: { ticker: string; expiredAt: string }): Promise<void> => {
     await api.post(`/wallets/${walletId}/trade/expire`, data);
   },
+
+  updateTransaction: async (
+    walletId: string,
+    txId: string,
+    data: { date?: string; price?: number; quantity?: number },
+  ): Promise<void> => {
+    await api.put(`/wallets/${walletId}/transactions/${txId}`, data);
+  },
+
+  deleteTransaction: async (walletId: string, txId: string): Promise<void> => {
+    await api.delete(`/wallets/${walletId}/transactions/${txId}`);
+  },
 };
 
 export interface HistoricalPriceResponse {

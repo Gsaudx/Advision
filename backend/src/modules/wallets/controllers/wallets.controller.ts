@@ -277,7 +277,9 @@ export class WalletsController {
       vega?: number;
     } | null>
   > {
-    const details = await this.marketService.getOptionDetails(ticker);
+    const details =
+      (await this.marketService.getOptionDetails(ticker)) ??
+      (await this.walletsService.getOptionDetailsFromDb(ticker));
 
     if (!details) {
       return ApiResponseDto.success(null);
@@ -288,11 +290,11 @@ export class WalletsController {
       strike: details.strike,
       expirationDate: details.due_date,
       type: details.type,
-      impliedVolatility: details.implied_volatility,
-      delta: details.delta,
-      gamma: details.gamma,
-      theta: details.theta,
-      vega: details.vega,
+      impliedVolatility: (details as { implied_volatility?: number }).implied_volatility,
+      delta: (details as { delta?: number }).delta,
+      gamma: (details as { gamma?: number }).gamma,
+      theta: (details as { theta?: number }).theta,
+      vega: (details as { vega?: number }).vega,
     };
 
     return ApiResponseDto.success(data);

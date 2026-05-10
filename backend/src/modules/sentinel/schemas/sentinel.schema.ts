@@ -22,7 +22,7 @@ export interface OpLabHistoricalEntry {
   symbol: string;
   time: string; // ISO date "2026-04-23T00:00:00.000Z"
   strike: number;
-  close?: number;  // prêmio de fechamento da opção
+  premium?: number; // prêmio de fechamento da opção
   due_date: string;
   type: 'CALL' | 'PUT';
   spot: { price: number; symbol: string };

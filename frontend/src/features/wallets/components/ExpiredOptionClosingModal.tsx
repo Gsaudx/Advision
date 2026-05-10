@@ -1,8 +1,9 @@
 import { useState, useEffect } from 'react';
+import { useQuery } from '@tanstack/react-query';
 import { AnimatePresence, motion } from 'motion/react';
 import { LoadingSpinner } from '@/components/ui/LoadingSpinner';
 import { formatDate } from '@/lib/formatters';
-import { useHistoricalPrice } from '../api';
+import { walletsApi } from '../api/wallets.api';
 
 interface ExpiredOptionClosingModalProps {
   isOpen: boolean;
@@ -24,18 +25,27 @@ export function ExpiredOptionClosingModal({
   const [closingType, setClosingType] = useState<'expired' | 'sold' | null>(null);
   const [saleDate, setSaleDate] = useState('');
   const [salePrice, setSalePrice] = useState('');
+  const [priceUnavailable, setPriceUnavailable] = useState(false);
 
-  const { data: historicalData, isFetching: isFetchingPrice } = useHistoricalPrice(
-    ticker,
-    saleDate,
-    closingType === 'sold' && saleDate.length > 0,
-  );
+  // Query exclusiva do modal — gcTime:0 garante que o cache é descartado ao fechar (sem vazar para D.7b)
+  const { data: historicalData, isFetching: isFetchingPrice } = useQuery({
+    queryKey: ['modalSalePrice', ticker, saleDate],
+    queryFn: () => walletsApi.getHistoricalPrice(ticker, saleDate),
+    enabled: closingType === 'sold' && saleDate.length > 0,
+    staleTime: 0,
+    gcTime: 0,
+  });
 
   useEffect(() => {
-    if (historicalData?.price != null) {
-      setSalePrice(historicalData.price.toFixed(2));
+    if (!isFetchingPrice && closingType === 'sold' && saleDate.length > 0) {
+      if (historicalData?.price != null) {
+        setSalePrice(historicalData.price.toFixed(2));
+        setPriceUnavailable(false);
+      } else if (historicalData !== undefined) {
+        setPriceUnavailable(true);
+      }
     }
-  }, [historicalData]);
+  }, [historicalData, isFetchingPrice, closingType, saleDate]);
 
   // Reset state when modal closes
   useEffect(() => {
@@ -43,6 +53,7 @@ export function ExpiredOptionClosingModal({
       setClosingType(null);
       setSaleDate('');
       setSalePrice('');
+      setPriceUnavailable(false);
     }
   }, [isOpen]);
 
@@ -117,7 +128,7 @@ export function ExpiredOptionClosingModal({
                   <input
                     type="date"
                     value={saleDate}
-                    onChange={(e) => setSaleDate(e.target.value)}
+                    onChange={(e) => { setSaleDate(e.target.value); setSalePrice(''); setPriceUnavailable(false); }}
                     min={purchaseDate.slice(0, 10)}
                     max={dueDate}
                     className="w-full bg-surface-container-lowest border border-outline-variant/10 rounded-xl py-3 px-4 text-sm text-on-surface focus:outline-none focus:ring-1 focus:ring-primary"
@@ -147,6 +158,11 @@ export function ExpiredOptionClosingModal({
                       </div>
                     )}
                   </div>
+                  {priceUnavailable && !isFetchingPrice && (
+                    <p className="text-[10px] text-amber-600 mt-1">
+                      Prêmio histórico indisponível — digite manualmente.
+                    </p>
+                  )}
                 </div>
               </div>
             )}

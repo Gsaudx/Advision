@@ -85,6 +85,7 @@ export const OptionDetailResponseSchema = z.object({
   optionType: z.nativeEnum(OptionType),
   exerciseType: z.nativeEnum(ExerciseType),
   strikePrice: z.number(),
+  initialStrike: z.number().nullable(),
   expirationDate: z.string(),
   underlyingTicker: z.string(),
 });
