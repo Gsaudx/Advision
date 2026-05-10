@@ -8,6 +8,7 @@ import {
 import type { Position } from '../types';
 import { assetTypeLabels } from '../types';
 import type { WalletProvento } from '@/features/proventos/types';
+import type { SentinelStatusItem } from '../api';
 
 interface PositionTableProps {
   positions: Position[];
@@ -16,6 +17,7 @@ interface PositionTableProps {
   onSellClick?: (position: Position) => void;
   isLoading?: boolean;
   proventos?: WalletProvento[];
+  sentinelStatusMap?: Map<string, SentinelStatusItem>;
 }
 
 function SkeletonRow() {
@@ -78,6 +80,7 @@ export function PositionTable({
   onSellClick,
   isLoading = false,
   proventos = [],
+  sentinelStatusMap,
 }: PositionTableProps) {
   if (!isLoading && positions.length === 0) {
     return (
@@ -139,6 +142,11 @@ export function PositionTable({
                       ? getUpcomingPayment(position.ticker, proventos)
                       : null
                   }
+                  sentinelStatus={
+                    position.type === 'STOCK'
+                      ? sentinelStatusMap?.get(position.ticker)
+                      : undefined
+                  }
                 />
               ))
             )}
@@ -155,6 +163,7 @@ interface PositionRowProps {
   canTrade?: boolean;
   onSellClick?: (position: Position) => void;
   upcomingPayment?: string | null;
+  sentinelStatus?: SentinelStatusItem;
 }
 
 function PositionRow({
@@ -163,6 +172,7 @@ function PositionRow({
   canTrade,
   onSellClick,
   upcomingPayment,
+  sentinelStatus,
 }: PositionRowProps) {
   const profitLoss = position.profitLoss ?? 0;
   const profitLossPercent = position.profitLossPercent ?? 0;
@@ -210,6 +220,28 @@ function PositionRow({
               Provento a ser pago: {formatDate(upcomingPayment)}
             </span>
           )}
+          {sentinelStatus?.status === 'UNAVAILABLE' && (
+            <span className="inline-flex items-center px-1.5 py-0.5 rounded text-xs bg-on-surface-variant/10 text-on-surface-variant mt-0.5 w-fit">
+              Sem monitoramento de proventos
+            </span>
+          )}
+          {sentinelStatus?.status === 'ACTIVE' &&
+            sentinelStatus.scanningSince && (
+              <span className="inline-flex items-center px-1.5 py-0.5 rounded text-xs bg-tertiary/20 text-tertiary mt-0.5 w-fit">
+                Calculando proventos desde{' '}
+                {formatDate(sentinelStatus.scanningSince)}…
+              </span>
+            )}
+          {sentinelStatus?.status === 'ACTIVE' &&
+            !sentinelStatus.scanningSince &&
+            sentinelStatus.monitoringSince && (
+              <span
+                className="inline-flex items-center px-1.5 py-0.5 rounded text-xs bg-tertiary/10 text-tertiary/70 mt-0.5 w-fit"
+                title={`Monitorando desde ${formatDate(sentinelStatus.monitoringSince)}`}
+              >
+                Monitorado desde {formatDate(sentinelStatus.monitoringSince)}
+              </span>
+            )}
         </div>
       </td>
       <td className="px-4 py-3 text-right">

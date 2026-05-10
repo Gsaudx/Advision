@@ -1,9 +1,11 @@
 import { useState } from 'react';
-import { Search, TrendingUp, RefreshCw } from 'lucide-react';
+import { Search, TrendingUp } from 'lucide-react';
+// [SENTINEL] RefreshCw removido — usado apenas no bloco de sync BRAPI comentado abaixo
 import PageTitle from '@/components/layout/PageTitle';
 import { LoadingSpinner } from '@/components/ui/LoadingSpinner';
 import { useProventos } from '../api';
-import { proventosApi } from '../api/proventos.api';
+// [SENTINEL] proventosApi removido — usado apenas em handleForceSync comentado abaixo
+// import { proventosApi } from '../api/proventos.api';
 
 const PAGE_SIZE = 20;
 
@@ -21,9 +23,10 @@ export function ProventosPage() {
   const [tickerInput, setTickerInput] = useState('');
   const [ticker, setTicker] = useState('');
   const [skip, setSkip] = useState(0);
-  const [syncing, setSyncing] = useState(false);
+  // [SENTINEL] syncing removido — usado apenas em handleForceSync comentado abaixo
+  // const [syncing, setSyncing] = useState(false);
 
-  const { data, isLoading, isError, refetch } = useProventos({
+  const { data, isLoading, isError } = useProventos({
     ticker,
     skip,
     take: PAGE_SIZE,
@@ -39,15 +42,16 @@ export function ProventosPage() {
     setSkip(0);
   };
 
-  const handleForceSync = async () => {
-    setSyncing(true);
-    try {
-      await proventosApi.forceSync();
-      await refetch();
-    } finally {
-      setSyncing(false);
-    }
-  };
+  // [SENTINEL] handleForceSync comentado — contingência de reversão para sync BRAPI
+  // const handleForceSync = async () => {
+  //   setSyncing(true);
+  //   try {
+  //     await proventosApi.forceSync();
+  //     await refetch();
+  //   } finally {
+  //     setSyncing(false);
+  //   }
+  // };
 
   const handleClear = () => {
     setTickerInput('');
@@ -60,7 +64,7 @@ export function ProventosPage() {
       <PageTitle title="Proventos" />
 
       <div className="space-y-6">
-        {/* TODO: remove — botão temporário para testar sync com BRAPI */}
+        {/* [SENTINEL] bloco temporário do sync BRAPI comentado — não deletar (contingência de reversão)
         <div className="flex items-center gap-3 p-3 bg-yellow-500/10 border border-yellow-500/30 rounded-lg w-fit">
           <span className="text-yellow-400 text-xs font-medium">[TEMP]</span>
           <button
@@ -72,6 +76,7 @@ export function ProventosPage() {
             {syncing ? 'Sincronizando...' : 'Forçar sync BRAPI'}
           </button>
         </div>
+        */}
         {/* Search */}
         <form
           onSubmit={handleSearch}

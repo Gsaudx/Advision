@@ -82,14 +82,6 @@ interface OpLabSearchResponse {
   data: OpLabInstrument[];
 }
 
-interface OpLabCandle {
-  time: string;
-  open?: number;
-  high?: number;
-  low?: number;
-  close?: number;
-  volume?: number;
-}
 
 /**
  * Actual OpLab series response format - nested structure
@@ -229,7 +221,11 @@ export class OpLabMarketService extends MarketDataProvider {
 
     if (!response.ok) {
       const errorText = await response.text().catch(() => 'Unknown error');
-      this.logger.error(`OpLab API error ${response.status}: ${errorText}`);
+      if (response.status === 404) {
+        this.logger.warn(`OpLab API 404 for ${endpoint}: ${errorText}`);
+      } else {
+        this.logger.error(`OpLab API error ${response.status}: ${errorText}`);
+      }
       throw new Error(`OpLab API error: ${response.status}`);
     }
 
@@ -486,31 +482,34 @@ export class OpLabMarketService extends MarketDataProvider {
   }
 
   /**
-   * Get the closing price of a stock on a specific date.
-   * Uses smooth=true so holidays return the previous trading day's close.
-   * Returns null if the API is not configured or no data is found.
+   * Get the closing price of an instrument on a specific date.
+   * Uses GET /v3/market/historical/{symbol}/1d which returns OHLCV data.
+   * If the date falls on a weekend/holiday (empty data array), tries up to
+   * 3 previous calendar days to find the last available trading day.
    */
   async getHistoricalClose(ticker: string, date: Date): Promise<number | null> {
     if (!this.accessToken) return null;
 
-    const dateStr = date.toISOString().split('T')[0];
-    const from = `${dateStr}T00:00:00`;
-    const to = `${dateStr}T23:59:59`;
-
-    try {
-      const candles = await this.makeRequest<OpLabCandle[]>(
-        `/market/instruments/${ticker.toUpperCase()}/candles/1d`,
-        { from, to, smooth: 'true', df: 'iso' },
-      );
-
-      if (!Array.isArray(candles) || candles.length === 0) return null;
-      return candles[0].close ?? null;
-    } catch (error) {
-      this.logger.warn(
-        `Failed to fetch historical close for ${ticker} on ${dateStr}: ${(error as Error).message}`,
-      );
-      return null;
+    const symbol = ticker.toUpperCase();
+    for (let offset = 0; offset <= 3; offset++) {
+      const d = new Date(date);
+      d.setDate(d.getDate() - offset);
+      const dateStr = d.toISOString().split('T')[0];
+      try {
+        const data = await this.makeRequest<{ data?: Array<{ close?: number }> }>(
+          `/market/historical/${symbol}/1d`,
+          { from: dateStr, to: dateStr },
+        );
+        if (data?.data?.length && data.data[0].close != null) {
+          return data.data[0].close;
+        }
+      } catch {
+        // non-2xx response — try previous day
+      }
     }
+
+    this.logger.warn(`No historical close found for ${ticker} near ${date.toISOString().split('T')[0]}`);
+    return null;
   }
 
   /**

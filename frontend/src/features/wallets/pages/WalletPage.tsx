@@ -1,4 +1,4 @@
-import { useState, useMemo } from 'react';
+import { useState, useMemo, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import {
   ArrowLeft,
@@ -18,7 +18,13 @@ import { formatCurrency, formatDateTime } from '@/lib/formatters';
 import { LoadingSpinner } from '@/components/ui/LoadingSpinner';
 import { EmptyState } from '@/components/ui/EmptyState';
 import { useClients } from '@/features/clients-page';
-import { useWalletById, useTransactions } from '../api';
+import { useQueryClient } from '@tanstack/react-query';
+import {
+  useWalletById,
+  useTransactions,
+  useUpdateTransaction,
+  useDeleteTransaction,
+} from '../api';
 import { useWalletProventos } from '@/features/proventos/api';
 import { PositionTable } from '../components/PositionTable';
 import { ProventosTab } from '../components/ProventosTab';
@@ -27,7 +33,7 @@ import { UnifiedTradeModal } from '../components/UnifiedTradeModal';
 import { ContentPanel } from '@/components/ui/ContentPanel';
 import { OptionFilter, FilterSelect } from '../components';
 import { useOptionFilters } from '../hooks/useOptionFilters';
-import { Search, X } from 'lucide-react';
+import { Search, X, Pencil, Trash2 } from 'lucide-react';
 import {
   useOptionPositions,
   OptionPositionCard,
@@ -47,6 +53,7 @@ import type {
 import type { CashOperationType, Position, Transaction } from '../types';
 import { transactionTypeLabels } from '../types';
 import { useWalletsPageConfig } from './useWalletsPageConfig';
+import { useSentinelStatus } from '../api';
 type SubTab = 'positions' | 'options' | 'strategies';
 type PillTab = 'operations' | 'proventos' | 'ativos';
 type LifecycleAction = 'close' | 'exercise' | 'assignment' | 'expiration';
@@ -66,15 +73,145 @@ const ALLOCATION_DATA = [
   { name: 'Renda Fixa', value: 25, color: '#94a3b8' },
 ];
 
+function EditTransactionModal({
+  tx,
+  currency,
+  walletId,
+  onClose,
+}: {
+  tx: Transaction;
+  currency: string;
+  walletId: string;
+  onClose: () => void;
+}) {
+  const canEditPrice = tx.type === 'BUY' || tx.type === 'SELL';
+  const [date, setDate] = useState(
+    new Date(tx.executedAt).toISOString().slice(0, 16),
+  );
+  const [price, setPrice] = useState(tx.price?.toString() ?? '');
+  const [quantity, setQuantity] = useState(tx.quantity?.toString() ?? '');
+  const updateMutation = useUpdateTransaction(walletId);
+
+  const handleSubmit = (e: React.FormEvent) => {
+    e.preventDefault();
+    const payload: { date?: string; price?: number; quantity?: number } = {};
+    if (date) payload.date = new Date(date).toISOString();
+    if (canEditPrice && price) payload.price = parseFloat(price);
+    if (canEditPrice && quantity) payload.quantity = parseInt(quantity, 10);
+    updateMutation.mutate(
+      { txId: tx.id, data: payload },
+      { onSuccess: onClose },
+    );
+  };
+
+  return (
+    <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
+      <div
+        className="absolute inset-0 bg-background/80 backdrop-blur-md"
+        onClick={onClose}
+      />
+      <div className="relative bg-surface-container-low w-full max-w-sm rounded-3xl p-8 shadow-xl border border-outline-variant/10">
+        <h3 className="text-lg font-bold text-on-surface mb-1">
+          Editar transação
+        </h3>
+        <p className="text-xs text-on-surface-variant mb-6">
+          {transactionTypeLabels[tx.type] ?? tx.type} · {tx.ticker ?? '—'}
+        </p>
+        <form onSubmit={handleSubmit} className="space-y-4">
+          <div>
+            <label className="text-[10px] font-bold text-on-surface-variant uppercase tracking-wider block mb-1">
+              Data
+            </label>
+            <input
+              type="datetime-local"
+              value={date}
+              onChange={(e) => setDate(e.target.value)}
+              className="w-full bg-surface-container-lowest border border-outline-variant/10 rounded-xl py-3 px-4 text-sm text-on-surface focus:outline-none focus:ring-1 focus:ring-primary"
+            />
+          </div>
+          {canEditPrice && (
+            <>
+              <div>
+                <label className="text-[10px] font-bold text-on-surface-variant uppercase tracking-wider block mb-1">
+                  Preço ({currency})
+                </label>
+                <input
+                  type="number"
+                  step="0.01"
+                  min="0.01"
+                  value={price}
+                  onChange={(e) => setPrice(e.target.value)}
+                  className="w-full bg-surface-container-lowest border border-outline-variant/10 rounded-xl py-3 px-4 text-sm text-on-surface focus:outline-none focus:ring-1 focus:ring-primary"
+                />
+              </div>
+              <div>
+                <label className="text-[10px] font-bold text-on-surface-variant uppercase tracking-wider block mb-1">
+                  Quantidade
+                </label>
+                <input
+                  type="number"
+                  step="1"
+                  min="1"
+                  value={quantity}
+                  onChange={(e) => setQuantity(e.target.value)}
+                  className="w-full bg-surface-container-lowest border border-outline-variant/10 rounded-xl py-3 px-4 text-sm text-on-surface focus:outline-none focus:ring-1 focus:ring-primary"
+                />
+              </div>
+            </>
+          )}
+          <div className="flex gap-3 pt-2">
+            <button
+              type="button"
+              onClick={onClose}
+              className="flex-1 py-3 rounded-2xl text-sm text-on-surface-variant border border-outline-variant/20"
+            >
+              Cancelar
+            </button>
+            <button
+              type="submit"
+              disabled={updateMutation.isPending}
+              className="flex-1 py-3 rounded-2xl text-sm font-bold bg-primary text-on-primary disabled:opacity-40 flex items-center justify-center gap-2"
+            >
+              {updateMutation.isPending ? (
+                <LoadingSpinner size="sm" />
+              ) : (
+                'Salvar'
+              )}
+            </button>
+          </div>
+          {updateMutation.isError && (
+            <p className="text-error text-xs text-center">
+              Erro ao salvar — tente novamente.
+            </p>
+          )}
+        </form>
+      </div>
+    </div>
+  );
+}
+
 function OperationsTable({
   transactions,
   currency,
   isLoading,
+  walletId,
 }: {
   transactions: Transaction[];
   currency: string;
   isLoading?: boolean;
+  walletId: string;
 }) {
+  const [editingTx, setEditingTx] = useState<Transaction | null>(null);
+  const [deletingTx, setDeletingTx] = useState<Transaction | null>(null);
+  const deleteMutation = useDeleteTransaction(walletId);
+
+  const handleDeleteConfirm = () => {
+    if (!deletingTx) return;
+    deleteMutation.mutate(deletingTx.id, {
+      onSuccess: () => setDeletingTx(null),
+    });
+  };
+
   if (isLoading) {
     return (
       <div className="flex justify-center py-8">
@@ -93,73 +230,158 @@ function OperationsTable({
     );
   }
 
+  const isEditable = (tx: Transaction) =>
+    tx.type === 'BUY' || tx.type === 'SELL';
+  const isDeletable = (tx: Transaction) =>
+    tx.type === 'BUY' || tx.type === 'SELL' || tx.type === 'OPTION_EXPIRY';
+
   return (
-    <div className="overflow-x-auto">
-      <table className="w-full text-left">
-        <thead className="sticky top-0 bg-surface-container-lowest z-10">
-          <tr className="text-on-surface-variant text-[10px] uppercase font-bold tracking-widest border-b border-outline-variant/5">
-            <th className="px-6 py-4">Data</th>
-            <th className="px-4 py-4">Tipo</th>
-            <th className="px-4 py-4">Ativo</th>
-            <th className="px-4 py-4">Qtd</th>
-            <th className="px-4 py-4">Preço</th>
-            <th className="px-6 py-4 text-right">Total</th>
-          </tr>
-        </thead>
-        <tbody className="text-sm divide-y divide-outline-variant/5">
-          {transactions.map((tx) => (
-            <tr
-              key={tx.id}
-              className="hover:bg-surface-container-low/30 transition-colors"
-            >
-              <td className="px-6 py-5 text-on-surface-variant font-medium">
-                {new Date(tx.executedAt).toLocaleDateString('pt-BR', {
-                  day: '2-digit',
-                  month: 'short',
-                  year: 'numeric',
-                })}
-              </td>
-              <td className="px-4 py-5">
-                <span
-                  className={`inline-flex items-center px-3 py-1 rounded-full text-[10px] font-bold ${
-                    tx.type === 'BUY' || tx.type === 'DEPOSIT'
-                      ? 'bg-tertiary/10 text-tertiary'
-                      : tx.type === 'SELL' || tx.type === 'WITHDRAWAL'
-                        ? 'bg-error/10 text-error'
-                        : 'bg-outline-variant/20 text-on-surface-variant'
-                  }`}
-                >
-                  {transactionTypeLabels[tx.type] ?? tx.type}
-                </span>
-              </td>
-              <td className="px-4 py-5">
-                {tx.ticker ? (
-                  <div className="flex items-center gap-3">
-                    <div className="w-9 h-9 rounded-xl bg-surface-container-low flex items-center justify-center font-bold text-on-surface text-[10px]">
-                      {tx.ticker.substring(0, 4)}
-                    </div>
-                    <span className="font-bold text-on-surface text-xs uppercase">
-                      {tx.ticker}
-                    </span>
-                  </div>
-                ) : (
-                  <span className="text-on-surface-variant">—</span>
-                )}
-              </td>
-              <td className="px-4 py-5 font-bold text-on-surface">
-                {tx.quantity ?? '—'}
-              </td>
-              <td className="px-4 py-5 font-medium text-on-surface-variant">
-                {tx.price ? formatCurrency(tx.price, currency) : '—'}
-              </td>
-              <td className="px-6 py-5 text-right font-bold text-on-surface">
-                {formatCurrency(tx.totalValue, currency)}
-              </td>
+    <>
+      <div className="overflow-x-auto">
+        <table className="w-full text-left">
+          <thead className="sticky top-0 bg-surface-container-lowest z-10">
+            <tr className="text-on-surface-variant text-[10px] uppercase font-bold tracking-widest border-b border-outline-variant/5">
+              <th className="px-6 py-4">Data</th>
+              <th className="px-4 py-4">Tipo</th>
+              <th className="px-4 py-4">Ativo</th>
+              <th className="px-4 py-4">Qtd</th>
+              <th className="px-4 py-4">Preço</th>
+              <th className="px-6 py-4 text-right">Total</th>
+              <th className="px-4 py-4" />
             </tr>
-          ))}
-        </tbody>
-      </table>
-    </div>
+          </thead>
+          <tbody className="text-sm divide-y divide-outline-variant/5">
+            {transactions.map((tx) => (
+              <tr
+                key={tx.id}
+                className="hover:bg-surface-container-low/30 transition-colors"
+              >
+                <td className="px-6 py-5 text-on-surface-variant font-medium">
+                  {new Date(tx.executedAt).toLocaleDateString('pt-BR', {
+                    day: '2-digit',
+                    month: 'short',
+                    year: 'numeric',
+                  })}
+                </td>
+                <td className="px-4 py-5">
+                  <span
+                    className={`inline-flex items-center px-3 py-1 rounded-full text-[10px] font-bold ${
+                      tx.type === 'BUY' || tx.type === 'DEPOSIT'
+                        ? 'bg-tertiary/10 text-tertiary'
+                        : tx.type === 'SELL' || tx.type === 'WITHDRAWAL'
+                          ? 'bg-error/10 text-error'
+                          : 'bg-outline-variant/20 text-on-surface-variant'
+                    }`}
+                  >
+                    {transactionTypeLabels[tx.type] ?? tx.type}
+                  </span>
+                </td>
+                <td className="px-4 py-5">
+                  {tx.ticker ? (
+                    <div className="flex items-center gap-3">
+                      <div className="w-9 h-9 rounded-xl bg-surface-container-low flex items-center justify-center font-bold text-on-surface text-[10px]">
+                        {tx.ticker.substring(0, 4)}
+                      </div>
+                      <span className="font-bold text-on-surface text-xs uppercase">
+                        {tx.ticker}
+                      </span>
+                    </div>
+                  ) : (
+                    <span className="text-on-surface-variant">—</span>
+                  )}
+                </td>
+                <td className="px-4 py-5 font-bold text-on-surface">
+                  {tx.quantity ?? '—'}
+                </td>
+                <td className="px-4 py-5 font-medium text-on-surface-variant">
+                  {tx.price ? formatCurrency(tx.price, currency) : '—'}
+                </td>
+                <td className="px-6 py-5 text-right font-bold text-on-surface">
+                  {formatCurrency(tx.totalValue, currency)}
+                </td>
+                <td className="px-4 py-5">
+                  <div className="flex items-center gap-1 justify-end">
+                    {isEditable(tx) && (
+                      <button
+                        onClick={() => setEditingTx(tx)}
+                        className="p-1.5 rounded-lg text-on-surface-variant hover:text-primary hover:bg-primary/10 transition-colors"
+                        title="Editar"
+                      >
+                        <Pencil size={14} />
+                      </button>
+                    )}
+                    {isDeletable(tx) && (
+                      <button
+                        onClick={() => setDeletingTx(tx)}
+                        disabled={deleteMutation.isPending}
+                        className="p-1.5 rounded-lg text-on-surface-variant hover:text-error hover:bg-error/10 transition-colors disabled:opacity-40"
+                        title="Deletar"
+                      >
+                        <Trash2 size={14} />
+                      </button>
+                    )}
+                  </div>
+                </td>
+              </tr>
+            ))}
+          </tbody>
+        </table>
+      </div>
+      {editingTx && (
+        <EditTransactionModal
+          tx={editingTx}
+          currency={currency}
+          walletId={walletId}
+          onClose={() => setEditingTx(null)}
+        />
+      )}
+      {deletingTx && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
+          <div
+            className="absolute inset-0 bg-background/80 backdrop-blur-md"
+            onClick={() => !deleteMutation.isPending && setDeletingTx(null)}
+          />
+          <div className="relative bg-surface-container-low w-full max-w-sm rounded-3xl p-8 shadow-xl border border-outline-variant/10">
+            <h3 className="text-lg font-bold text-on-surface mb-2">
+              Confirmar exclusão
+            </h3>
+            <p className="text-sm text-on-surface-variant mb-1">
+              Tem certeza que deseja excluir esta transação?
+            </p>
+            <p className="text-sm font-semibold text-on-surface mb-6">
+              {transactionTypeLabels[deletingTx.type] ?? deletingTx.type}
+              {deletingTx.ticker ? ` · ${deletingTx.ticker}` : ''}
+              {deletingTx.price
+                ? ` · ${formatCurrency(deletingTx.price, currency)}`
+                : ''}
+            </p>
+            <p className="text-xs text-on-surface-variant/60 mb-6">
+              Esta ação reverterá o efeito da transação na posição e no saldo.
+            </p>
+            <div className="flex gap-3">
+              <button
+                onClick={() => setDeletingTx(null)}
+                disabled={deleteMutation.isPending}
+                className="flex-1 py-3 rounded-2xl text-sm text-on-surface-variant border border-outline-variant/20 disabled:opacity-40"
+              >
+                Cancelar
+              </button>
+              <button
+                onClick={handleDeleteConfirm}
+                disabled={deleteMutation.isPending}
+                className="flex-1 py-3 rounded-2xl text-sm font-bold bg-error text-white disabled:opacity-40 flex items-center justify-center gap-2"
+              >
+                {deleteMutation.isPending ? (
+                  <LoadingSpinner size="sm" />
+                ) : (
+                  'Excluir'
+                )}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+    </>
   );
 }
 
@@ -167,6 +389,7 @@ export default function WalletPage() {
   const { walletId } = useParams<{ walletId: string }>();
   const navigate = useNavigate();
   const config = useWalletsPageConfig();
+  const queryClient = useQueryClient();
 
   const {
     data: wallet,
@@ -188,6 +411,52 @@ export default function WalletPage() {
   } = useOptionPositions(walletId!);
 
   const { data: proventosData } = useWalletProventos(walletId!);
+  const { statusMap: sentinelStatusMap } = useSentinelStatus(walletId);
+
+  // [SENTINEL] Abre conexão SSE ao carregar a carteira.
+  // Aguarda notificação da sentinela e atualiza proventos se necessário.
+  useEffect(() => {
+    if (!walletId) return;
+
+    const eventSource = new EventSource(
+      `${import.meta.env.VITE_API_URL ?? 'http://localhost:3000'}/wallets/${walletId}/events`,
+      { withCredentials: true },
+    );
+
+    eventSource.onmessage = (e: MessageEvent) => {
+      const event = JSON.parse(e.data as string) as { type: string };
+
+      if (event.type === 'dividends_updated') {
+        void queryClient.invalidateQueries({
+          queryKey: ['walletProventos', walletId],
+        });
+        void queryClient.invalidateQueries({
+          queryKey: ['wallet', walletId],
+        });
+        void queryClient.invalidateQueries({
+          queryKey: ['option-positions', walletId],
+        });
+        void queryClient.invalidateQueries({
+          queryKey: ['expirations', walletId],
+        });
+      }
+
+      if (
+        event.type === 'dividends_updated' ||
+        event.type === 'check_complete'
+      ) {
+        eventSource.close();
+      }
+    };
+
+    eventSource.onerror = () => {
+      eventSource.close();
+    };
+
+    return () => {
+      eventSource.close();
+    };
+  }, [walletId, queryClient]);
 
   const { data: clients = [] } = useClients();
   const clientName = useMemo(() => {
@@ -609,12 +878,15 @@ export default function WalletPage() {
               >
                 {pillTab === 'ativos' && (
                   <PositionTable
-                    positions={wallet.positions}
+                    positions={wallet.positions.filter(
+                      (p) => p.type === 'STOCK',
+                    )}
                     currency={wallet.currency}
                     canTrade={config.canTrade}
                     onSellClick={handleSellPosition}
                     isLoading={isRefreshing}
                     proventos={proventosData?.items}
+                    sentinelStatusMap={sentinelStatusMap}
                   />
                 )}
                 {pillTab === 'operations' && (
@@ -622,6 +894,7 @@ export default function WalletPage() {
                     transactions={transactions?.items ?? []}
                     currency={wallet.currency}
                     isLoading={isLoadingTransactions}
+                    walletId={walletId!}
                   />
                 )}
                 {pillTab === 'proventos' && (
@@ -832,7 +1105,7 @@ export default function WalletPage() {
         walletId={walletId!}
         walletName={wallet.name}
         currentBalance={wallet.cashBalance}
-        positions={wallet.positions}
+        positions={wallet.positions.filter((p) => p.type === 'STOCK')}
         currency={wallet.currency}
         initialInstrument={tradeInitial.instrument}
         initialDirection={tradeInitial.direction}

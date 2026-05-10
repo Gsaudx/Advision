@@ -25,6 +25,13 @@ export type WalletSummary = NonNullable<
 export type Position = Wallet['positions'][number] & {
   lastDividendDate?: string | null;
   priceAtLastDividend?: number | null;
+  optionDetail?: {
+    strikePrice: number;
+    initialStrike: number | null;
+    expirationDate: string;
+    optionType: string;
+    exerciseType: string;
+  } | null;
 };
 
 /**

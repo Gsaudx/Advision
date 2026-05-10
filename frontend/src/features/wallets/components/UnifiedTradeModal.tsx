@@ -16,7 +16,10 @@ import {
   useSellAsset,
   useAssetPrice,
   useOptionDetails,
+  useHistoricalPrice,
+  useExpireOption,
 } from '../api';
+import { ExpiredOptionClosingModal } from './ExpiredOptionClosingModal';
 import { formatCurrency } from '@/lib/formatters';
 import { getApiErrorMessage } from '@/lib/api-error';
 import { TickerAutocomplete } from './TickerAutocomplete';
@@ -57,10 +60,24 @@ export function UnifiedTradeModal({
   // Sync instrument/direction when modal opens with initial values
   useEffect(() => {
     if (isOpen) {
-      setInstrument(initialInstrument);
-      setDirection(initialDirection);
+      setTimeout(() => {
+        setInstrument(initialInstrument);
+        setDirection(initialDirection);
+      }, 0);
     }
   }, [isOpen, initialInstrument, initialDirection]);
+
+  // ── Expired option closing state ──
+  const [showExpiredModal, setShowExpiredModal] = useState(false);
+  const [pendingOptionData, setPendingOptionData] = useState<{
+    ticker: string;
+    quantity: string;
+    premium: string;
+    date: string;
+    covered: boolean;
+  } | null>(null);
+
+  const expireOptionMutation = useExpireOption();
 
   // ── Asset trade state ──
   const buyAssetMutation = useBuyAsset();
@@ -72,6 +89,8 @@ export function UnifiedTradeModal({
     null,
   );
   const [tickerForAssetPrice, setTickerForAssetPrice] = useState('');
+  const [historicalDateStr, setHistoricalDateStr] = useState('');
+  const [isRetroactiveDate, setIsRetroactiveDate] = useState(false);
 
   const { data: assetPriceData, isLoading: isAssetPriceLoading } =
     useAssetPrice(tickerForAssetPrice, tickerForAssetPrice.length > 0);
@@ -129,11 +148,13 @@ export function UnifiedTradeModal({
   // Auto-fill price for asset
   useEffect(() => {
     if (assetPriceData?.price) {
-      setAssetFormData((prev) => ({
-        ...prev,
-        price: assetPriceData.price.toFixed(2),
-      }));
-      setAssetErrors((prev) => ({ ...prev, price: '' }));
+      setTimeout(() => {
+        setAssetFormData((prev) => ({
+          ...prev,
+          price: assetPriceData.price.toFixed(2),
+        }));
+        setAssetErrors((prev) => ({ ...prev, price: '' }));
+      }, 0);
     }
   }, [assetPriceData, setAssetFormData, setAssetErrors]);
 
@@ -197,12 +218,77 @@ export function UnifiedTradeModal({
   // Auto-fill premium
   useEffect(() => {
     if (optionPriceData?.price != null && !isPremiumManual) {
-      setOptionFormData((prev) => ({
-        ...prev,
-        premium: optionPriceData.price.toFixed(2),
-      }));
+      setTimeout(() => {
+        setOptionFormData((prev) => ({
+          ...prev,
+          premium: optionPriceData.price.toFixed(2),
+        }));
+      }, 0);
     }
   }, [optionPriceData, isPremiumManual]);
+
+  // Historical price lookup (D.3/D.4 — retroactive date)
+  const activeTicker =
+    instrument === 'asset' ? assetFormData.ticker : optionFormData.ticker;
+  const { data: historicalData, isFetching: isFetchingHistorical } =
+    useHistoricalPrice(
+      activeTicker,
+      historicalDateStr,
+      isRetroactiveDate && historicalDateStr.length > 0,
+    );
+
+  // NEGÓCIO: Quando o assessor muda a data de compra para um dia no passado, o sistema busca automaticamente
+  // o preço de mercado daquele dia para poupar o assessor de ter que pesquisar manualmente.
+  // TÉCNICO: Detecta se a data selecionada é retroativa e, se sim, ativa a busca de preço histórico via hook.
+  const handleAssetDateChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    handleAssetChange(e);
+    const selected = new Date(e.target.value);
+    const today = new Date();
+    today.setHours(0, 0, 0, 0);
+    if (selected < today && assetFormData.ticker) {
+      setHistoricalDateStr(e.target.value.slice(0, 10));
+      setIsRetroactiveDate(true);
+    } else {
+      setIsRetroactiveDate(false);
+      setHistoricalDateStr('');
+    }
+  };
+
+  const handleOptionDateChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    handleOptionChange(e);
+    const selected = new Date(e.target.value);
+    const today = new Date();
+    today.setHours(0, 0, 0, 0);
+    if (selected < today && optionFormData.ticker) {
+      setHistoricalDateStr(e.target.value.slice(0, 10));
+      setIsRetroactiveDate(true);
+    } else {
+      setIsRetroactiveDate(false);
+      setHistoricalDateStr('');
+    }
+  };
+
+  // NEGÓCIO: Assim que o preço histórico chega, preenche o campo de preço (ação) ou prêmio (opção) no formulário,
+  // evitando que o assessor precise digitar um valor que o sistema já conhece.
+  // TÉCNICO: Aplica o dado histórico retornado pela API nos campos do formulário correto (asset ou option).
+  useEffect(() => {
+    if (!historicalData || !isRetroactiveDate) return;
+    setTimeout(() => {
+      if (historicalData.price != null && instrument === 'asset') {
+        setAssetFormData((prev) => ({
+          ...prev,
+          price: historicalData.price!.toFixed(2),
+        }));
+      }
+      if (historicalData.price != null && instrument === 'option') {
+        setOptionFormData((prev) => ({
+          ...prev,
+          premium: historicalData.price!.toFixed(2),
+        }));
+        setIsPremiumManual(false);
+      }
+    }, 0);
+  }, [historicalData, isRetroactiveDate, instrument, setAssetFormData]);
 
   const handleOptionChange = (
     e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>,
@@ -248,13 +334,92 @@ export function UnifiedTradeModal({
     if (!optionFormData.premium || isNaN(prem) || prem <= 0)
       newErrors.premium = 'Prêmio deve ser positivo';
     if (!optionFormData.date) newErrors.date = 'Data é obrigatória';
+    else if (
+      localExpiryDate &&
+      optionFormData.date.slice(0, 10) > localExpiryDate
+    )
+      newErrors.date = 'Data não pode ser posterior ao vencimento da opção';
     setOptionErrors(newErrors);
     return Object.keys(newErrors).length === 0;
+  };
+
+  const handleExpiredModalConfirm = (
+    closingDate: string,
+    closingType: 'expired' | 'sold',
+    salePrice?: number,
+  ) => {
+    if (!pendingOptionData) return;
+    setShowExpiredModal(false);
+
+    const qty = parseInt(pendingOptionData.quantity, 10);
+    const prem = parseFloat(pendingOptionData.premium);
+    const ticker = pendingOptionData.ticker.toUpperCase();
+
+    buyOptionMutation.mutate(
+      {
+        walletId,
+        data: {
+          ticker,
+          quantity: qty,
+          premium: prem,
+          date: new Date(pendingOptionData.date).toISOString(),
+          idempotencyKey: generateIdempotencyKey(),
+        },
+      },
+      {
+        onSuccess: () => {
+          if (closingType === 'expired') {
+            expireOptionMutation.mutate(
+              { walletId, data: { ticker, expiredAt: closingDate } },
+              {
+                onSuccess: () => {
+                  setPendingOptionData(null);
+                  handleClose();
+                },
+              },
+            );
+          } else {
+            sellOptionMutation.mutate(
+              {
+                walletId,
+                data: {
+                  ticker,
+                  quantity: qty,
+                  premium: salePrice ?? 0,
+                  date: new Date(closingDate).toISOString(),
+                  covered: false,
+                  idempotencyKey: generateIdempotencyKey(),
+                },
+              },
+              {
+                onSuccess: () => {
+                  setPendingOptionData(null);
+                  handleClose();
+                },
+              },
+            );
+          }
+        },
+      },
+    );
   };
 
   const handleOptionSubmit = (e: React.FormEvent) => {
     e.preventDefault();
     if (!validateOption()) return;
+
+    const today = new Date();
+    today.setHours(0, 0, 0, 0);
+    if (
+      direction === 'BUY' &&
+      displayExpiration &&
+      new Date(displayExpiration) < today
+    ) {
+      setPendingOptionData({ ...optionFormData });
+      setShowExpiredModal(true);
+      return;
+    }
+
     const qty = parseInt(optionFormData.quantity, 10);
     const prem = parseFloat(optionFormData.premium);
     if (direction === 'BUY') {
@@ -295,7 +460,9 @@ export function UnifiedTradeModal({
 
   // ── Shared ──
   const isPending =
-    activeAssetMutation.isPending || activeOptionMutation.isPending;
+    activeAssetMutation.isPending ||
+    activeOptionMutation.isPending ||
+    expireOptionMutation.isPending;
 
   const assetApiError = activeAssetMutation.isError
     ? getApiErrorMessage(activeAssetMutation.error)
@@ -318,10 +485,13 @@ export function UnifiedTradeModal({
     setOptionErrors({});
     setSelectedOption(null);
     setIsPremiumManual(false);
+    setShowExpiredModal(false);
+    setPendingOptionData(null);
     buyAssetMutation.reset();
     sellAssetMutation.reset();
     buyOptionMutation.reset();
     sellOptionMutation.reset();
+    expireOptionMutation.reset();
   };
 
   const handleClose = () => {
@@ -344,6 +514,11 @@ export function UnifiedTradeModal({
   const displayStrike = optionDetails?.strike ?? selectedOption?.strike;
   const displayExpiration =
     optionDetails?.expirationDate ?? selectedOption?.expirationDate;
+  // Convert to local date (YYYY-MM-DD) to match what the UI shows the user,
+  // since OpLab stores due_date as midnight UTC which is the previous day in Brazil (UTC-3).
+  const localExpiryDate = displayExpiration
+    ? new Date(displayExpiration).toLocaleDateString('sv')
+    : null;
 
   const formatExpDate = (dateStr?: string): string => {
     if (!dateStr) return '';
@@ -622,7 +797,7 @@ export function UnifiedTradeModal({
                       name="date"
                       type="datetime-local"
                       value={assetFormData.date}
-                      onChange={handleAssetChange}
+                      onChange={handleAssetDateChange}
                       disabled={isPending}
                       className={`w-full bg-surface-container-lowest border rounded-xl py-3.5 px-4 text-sm text-on-surface focus:outline-none focus:ring-1 focus:ring-primary focus:border-primary transition-colors ${
                         assetErrors.date
@@ -630,6 +805,22 @@ export function UnifiedTradeModal({
                           : 'border-outline-variant/10'
                       }`}
                     />
+                    {isFetchingHistorical && instrument === 'asset' && (
+                      <p className="text-[10px] text-on-surface-variant mt-1 flex items-center gap-1">
+                        <LoadingSpinner size="sm" />
+                        Buscando preço histórico…
+                      </p>
+                    )}
+                    {!isFetchingHistorical &&
+                      isRetroactiveDate &&
+                      instrument === 'asset' &&
+                      historicalData?.price == null &&
+                      historicalDateStr.length > 0 && (
+                        <p className="text-[10px] text-amber-600 mt-1">
+                          Preço histórico indisponível para esta data — digite
+                          manualmente.
+                        </p>
+                      )}
                     {assetErrors.date && (
                       <p className="text-error text-xs mt-1">
                         {assetErrors.date}
@@ -810,7 +1001,10 @@ export function UnifiedTradeModal({
                       name="date"
                       type="datetime-local"
                       value={optionFormData.date}
-                      onChange={handleOptionChange}
+                      onChange={handleOptionDateChange}
+                      max={
+                        localExpiryDate ? `${localExpiryDate}T23:59` : undefined
+                      }
                       disabled={isPending}
                       className={`w-full bg-surface-container-lowest border rounded-xl py-3.5 px-4 text-sm text-on-surface focus:outline-none focus:ring-1 focus:ring-primary focus:border-primary transition-colors ${
                         optionErrors.date
@@ -818,6 +1012,22 @@ export function UnifiedTradeModal({
                           : 'border-outline-variant/10'
                       }`}
                     />
+                    {isFetchingHistorical && instrument === 'option' && (
+                      <p className="text-[10px] text-on-surface-variant mt-1 flex items-center gap-1">
+                        <LoadingSpinner size="sm" />
+                        Buscando prêmio histórico…
+                      </p>
+                    )}
+                    {!isFetchingHistorical &&
+                      isRetroactiveDate &&
+                      instrument === 'option' &&
+                      historicalData?.price == null &&
+                      historicalDateStr.length > 0 && (
+                        <p className="text-[10px] text-amber-600 mt-1">
+                          Prêmio histórico indisponível para esta data — digite
+                          manualmente.
+                        </p>
+                      )}
                     {optionErrors.date && (
                       <p className="text-error text-xs mt-1">
                         {optionErrors.date}
@@ -906,6 +1116,17 @@ export function UnifiedTradeModal({
             </div>
           </motion.div>
         </motion.div>
+      )}
+
+      {showExpiredModal && pendingOptionData && displayExpiration && (
+        <ExpiredOptionClosingModal
+          isOpen={showExpiredModal}
+          ticker={pendingOptionData.ticker.toUpperCase()}
+          dueDate={displayExpiration.slice(0, 10)}
+          purchaseDate={pendingOptionData.date.slice(0, 10)}
+          onConfirm={handleExpiredModalConfirm}
+          onCancel={() => setShowExpiredModal(false)}
+        />
       )}
     </AnimatePresence>
   );

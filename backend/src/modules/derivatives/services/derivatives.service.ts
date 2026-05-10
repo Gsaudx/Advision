@@ -39,6 +39,7 @@ type PositionWithAssetAndOption = Position & {
       optionType: 'CALL' | 'PUT';
       exerciseType: 'AMERICAN' | 'EUROPEAN';
       strikePrice: Decimal;
+      initialStrike: Decimal | null;
       expirationDate: Date;
       underlyingAsset: Asset;
     } | null;
@@ -84,6 +85,9 @@ export class DerivativesService {
         optionType: position.asset.optionDetail!.optionType,
         exerciseType: position.asset.optionDetail!.exerciseType,
         strikePrice: Number(position.asset.optionDetail!.strikePrice),
+        initialStrike: position.asset.optionDetail!.initialStrike
+          ? Number(position.asset.optionDetail!.initialStrike)
+          : null,
         expirationDate:
           position.asset.optionDetail!.expirationDate.toISOString(),
         underlyingTicker: position.asset.optionDetail!.underlyingAsset.ticker,

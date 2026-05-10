@@ -1200,6 +1200,7 @@ export interface components {
             /** @enum {string} */
             exerciseType: 'AMERICAN' | 'EUROPEAN';
             strikePrice: number;
+            initialStrike: number | null;
             expirationDate: string;
             underlyingTicker: string;
           };

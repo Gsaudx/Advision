@@ -7,6 +7,7 @@ import { WalletsModule } from '@/modules/wallets';
 import { ActivityModule } from '@/modules/activity';
 import { DerivativesModule } from '@/modules/derivatives';
 import { ProventosModule } from '@/modules/proventos/proventos.module';
+import { SentinelModule } from '@/modules/sentinel/sentinel.module'; // [SENTINEL]
 
 @Module({
   imports: [
@@ -18,6 +19,7 @@ import { ProventosModule } from '@/modules/proventos/proventos.module';
     ActivityModule,
     DerivativesModule,
     ProventosModule,
+    SentinelModule, // [SENTINEL]
   ],
 })
 export class AppModule {}

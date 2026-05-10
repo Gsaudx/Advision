@@ -110,6 +110,13 @@ export const PositionResponseSchema = z.object({
   collateralBlocked: z.number().nullable().optional(),
   lastDividendDate: z.string().nullable().optional(),
   priceAtLastDividend: z.number().nullable().optional(),
+  optionDetail: z.object({
+    strikePrice: z.number(),
+    initialStrike: z.number().nullable(),
+    expirationDate: z.string(),
+    optionType: z.string(),
+    exerciseType: z.string(),
+  }).nullable().optional(),
 });
 export type PositionResponse = z.infer<typeof PositionResponseSchema>;
 
@@ -234,3 +241,39 @@ export type AssetPriceResponse = z.infer<typeof AssetPriceResponseSchema>;
 export class AssetPriceApiResponseDto extends createZodDto(
   createApiResponseSchema(AssetPriceResponseSchema),
 ) {}
+
+/**
+ * Historical price response for a specific date
+ */
+export const HistoricalPriceResponseSchema = z.object({
+  type: z.enum(['STOCK', 'OPTION']),
+  price: z.number().nullable(),
+  strike: z.number().nullable().optional(),
+  message: z.string().optional(),
+});
+export type HistoricalPriceResponse = z.infer<typeof HistoricalPriceResponseSchema>;
+
+export class HistoricalPriceApiResponseDto extends createZodDto(
+  createApiResponseSchema(HistoricalPriceResponseSchema),
+) {}
+
+/**
+ * Update transaction input schema
+ */
+export const UpdateTransactionInputSchema = z.object({
+  date: z.string().optional(),
+  price: z.number().positive().optional(),
+  quantity: z.number().positive().optional(),
+});
+export type UpdateTransactionInput = z.infer<typeof UpdateTransactionInputSchema>;
+export class UpdateTransactionInputDto extends createZodDto(UpdateTransactionInputSchema) {}
+
+/**
+ * Expire option input schema
+ */
+export const ExpireOptionInputSchema = z.object({
+  ticker: z.string().min(1).toUpperCase(),
+  expiredAt: z.string(),
+});
+export type ExpireOptionInput = z.infer<typeof ExpireOptionInputSchema>;
+export class ExpireOptionInputDto extends createZodDto(ExpireOptionInputSchema) {}

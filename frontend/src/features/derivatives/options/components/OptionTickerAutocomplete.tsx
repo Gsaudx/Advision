@@ -20,7 +20,7 @@ interface OptionTickerAutocompleteProps {
   hideLabel?: boolean;
 }
 
-type SearchStep = 'underlying' | 'option';
+type SearchStep = 'underlying' | 'option' | 'manual';
 
 export function OptionTickerAutocomplete({
   value,
@@ -43,6 +43,7 @@ export function OptionTickerAutocomplete({
   const [optionTypeFilter, setOptionTypeFilter] = useState<OptionType | null>(
     null,
   );
+  const [manualTicker, setManualTicker] = useState(value);
   const containerRef = useRef<HTMLDivElement>(null);
   const inputRef = useRef<HTMLInputElement>(null);
 
@@ -102,8 +103,22 @@ export function OptionTickerAutocomplete({
     setSelectedUnderlying(null);
     setOptionTypeFilter(null);
     setUnderlyingQuery('');
+    setManualTicker('');
     onChange('');
     inputRef.current?.focus();
+  };
+
+  const handleEnterManualMode = () => {
+    setSearchStep('manual');
+    setManualTicker('');
+    onChange('');
+    setIsOpen(false);
+  };
+
+  const handleManualTickerChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const v = e.target.value.toUpperCase();
+    setManualTicker(v);
+    onChange(v);
   };
 
   const handleFocus = () => {
@@ -194,6 +209,19 @@ export function OptionTickerAutocomplete({
           <span className="text-xs text-zinc-400">Selecione a opção</span>
         </div>
       )}
+      {searchStep === 'manual' && (
+        <div className="flex items-center gap-2 mb-2">
+          <button
+            type="button"
+            onClick={handleBackToUnderlying}
+            disabled={disabled}
+            className="flex items-center gap-1 text-xs text-blue-400 hover:text-blue-300 transition-colors disabled:opacity-50"
+          >
+            <X size={12} />
+            Digitação manual
+          </button>
+        </div>
+      )}
 
       {/* Search input */}
       {searchStep === 'underlying' ? (
@@ -216,6 +244,34 @@ export function OptionTickerAutocomplete({
             } ${disabled ? 'opacity-50 cursor-not-allowed' : ''}`}
             autoComplete="off"
           />
+        </div>
+      ) : searchStep === 'manual' ? (
+        <div className="relative">
+          <input
+            type="text"
+            value={manualTicker}
+            onChange={handleManualTickerChange}
+            placeholder="Ex: PETRD320W5"
+            disabled={disabled}
+            autoFocus
+            className={`w-full px-3 py-2 bg-zinc-800 border rounded-md text-white placeholder-zinc-500 focus:outline-none focus:ring-2 focus:ring-blue-500 ${
+              error ? 'border-red-500' : 'border-zinc-700'
+            } ${disabled ? 'opacity-50 cursor-not-allowed' : ''}`}
+            autoComplete="off"
+          />
+          {manualTicker && (
+            <button
+              type="button"
+              onClick={() => {
+                setManualTicker('');
+                onChange('');
+              }}
+              disabled={disabled}
+              className="absolute right-2 top-1/2 -translate-y-1/2 text-zinc-500 hover:text-zinc-300 transition-colors disabled:opacity-50"
+            >
+              <X size={14} />
+            </button>
+          )}
         </div>
       ) : (
         <div className="relative flex items-center gap-1">
@@ -290,6 +346,15 @@ export function OptionTickerAutocomplete({
                     ))}
                 </ul>
               )}
+              <div className="border-t border-zinc-700 px-4 py-2">
+                <button
+                  type="button"
+                  onClick={handleEnterManualMode}
+                  className="text-xs text-zinc-400 hover:text-blue-400 transition-colors"
+                >
+                  Digitar ticker da opção manualmente
+                </button>
+              </div>
             </div>
           ) : (
             // Option selection with filters
@@ -394,6 +459,15 @@ export function OptionTickerAutocomplete({
                     ))}
                   </ul>
                 )}
+              </div>
+              <div className="border-t border-zinc-700 px-4 py-2">
+                <button
+                  type="button"
+                  onClick={handleEnterManualMode}
+                  className="text-xs text-zinc-400 hover:text-blue-400 transition-colors"
+                >
+                  Opção não está na lista? Digitar manualmente
+                </button>
               </div>
             </>
           )}
