@@ -26,7 +26,7 @@ export function ProventosPage() {
   // [SENTINEL] syncing removido — usado apenas em handleForceSync comentado abaixo
   // const [syncing, setSyncing] = useState(false);
 
-  const { data, isLoading, isError, refetch } = useProventos({
+  const { data, isLoading, isError } = useProventos({
     ticker,
     skip,
     take: PAGE_SIZE,

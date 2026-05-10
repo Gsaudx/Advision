@@ -280,7 +280,7 @@ export function UnifiedTradeModal({
         setIsPremiumManual(false);
       }
     }, 0);
-  }, [historicalData, isRetroactiveDate, instrument]);
+  }, [historicalData, isRetroactiveDate, instrument, setAssetFormData]);
 
   const handleOptionChange = (
     e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>,
