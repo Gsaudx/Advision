@@ -865,7 +865,7 @@ export class SentinelOptionService {
     }
 
     const sorted = [...grouped.entries()].sort((a, b) => b[1].length - a[1].length);
-    const [bestSymbol, bestEntries] = sorted[0];
+    const [, bestEntries] = sorted[0];
     bestEntries.sort((a, b) => a.time.localeCompare(b.time));
 
     await this.detectDividendsInEntries(ticker, sentinelId, bestEntries, walletId);

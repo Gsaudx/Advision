@@ -533,7 +533,7 @@ export class WalletsController {
 
     // M1+M2: Cria sentinela e dispara varredura retroativa se necessário — fire-and-forget encadeado
     // (sequential para evitar race condition: sentinela deve existir antes do retroactiveScan)
-    (async () => {
+    void (async () => {
       try {
         const sentinelTicker = await this.sentinelService.resolveUnderlyingTicker(body.ticker);
         if (!sentinelTicker) return;

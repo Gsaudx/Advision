@@ -579,7 +579,7 @@ export class TradingService {
           : tx.asset?.optionDetail?.underlyingAsset?.ticker;
 
       if (ticker) {
-        (async () => {
+        void (async () => {
           try {
             await this.sentinelService.checkSentinel(ticker, walletId);
             await this.sentinelService.triggerRetroactiveScanIfNeeded(ticker, newDate, walletId);

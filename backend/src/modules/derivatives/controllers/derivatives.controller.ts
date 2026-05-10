@@ -76,7 +76,7 @@ export class DerivativesController {
     const data = await this.derivativesService.buyOption(walletId, dto, actor);
 
     // M1+M2: Cria sentinela e dispara varredura retroativa se necessário — fire-and-forget encadeado
-    (async () => {
+    void (async () => {
       try {
         const sentinelTicker = await this.sentinelService.resolveUnderlyingTicker(dto.ticker);
         if (!sentinelTicker) return;
