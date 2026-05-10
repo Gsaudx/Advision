@@ -225,19 +225,23 @@ function PositionRow({
               Sem monitoramento de proventos
             </span>
           )}
-          {sentinelStatus?.status === 'ACTIVE' && sentinelStatus.scanningSince && (
-            <span className="inline-flex items-center px-1.5 py-0.5 rounded text-xs bg-tertiary/20 text-tertiary mt-0.5 w-fit">
-              Calculando proventos desde {formatDate(sentinelStatus.scanningSince)}…
-            </span>
-          )}
-          {sentinelStatus?.status === 'ACTIVE' && !sentinelStatus.scanningSince && sentinelStatus.monitoringSince && (
-            <span
-              className="inline-flex items-center px-1.5 py-0.5 rounded text-xs bg-tertiary/10 text-tertiary/70 mt-0.5 w-fit"
-              title={`Monitorando desde ${formatDate(sentinelStatus.monitoringSince)}`}
-            >
-              Monitorado desde {formatDate(sentinelStatus.monitoringSince)}
-            </span>
-          )}
+          {sentinelStatus?.status === 'ACTIVE' &&
+            sentinelStatus.scanningSince && (
+              <span className="inline-flex items-center px-1.5 py-0.5 rounded text-xs bg-tertiary/20 text-tertiary mt-0.5 w-fit">
+                Calculando proventos desde{' '}
+                {formatDate(sentinelStatus.scanningSince)}…
+              </span>
+            )}
+          {sentinelStatus?.status === 'ACTIVE' &&
+            !sentinelStatus.scanningSince &&
+            sentinelStatus.monitoringSince && (
+              <span
+                className="inline-flex items-center px-1.5 py-0.5 rounded text-xs bg-tertiary/10 text-tertiary/70 mt-0.5 w-fit"
+                title={`Monitorando desde ${formatDate(sentinelStatus.monitoringSince)}`}
+              >
+                Monitorado desde {formatDate(sentinelStatus.monitoringSince)}
+              </span>
+            )}
         </div>
       </td>
       <td className="px-4 py-3 text-right">

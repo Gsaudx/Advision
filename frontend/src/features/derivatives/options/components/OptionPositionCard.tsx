@@ -259,11 +259,13 @@ export function OptionPositionCard({
           />
         </div>
         {position.optionDetail.initialStrike != null &&
-          position.optionDetail.strikePrice < position.optionDetail.initialStrike && (
+          position.optionDetail.strikePrice <
+            position.optionDetail.initialStrike && (
             <span className="flex items-center gap-[5px] text-[10px] text-amber-600 font-medium">
               ↓ Ajustado por proventos
               <span className="text-on-surface-variant font-normal">
-                · original: {formatCurrency(position.optionDetail.initialStrike)}
+                · original:{' '}
+                {formatCurrency(position.optionDetail.initialStrike)}
               </span>
             </span>
           )}

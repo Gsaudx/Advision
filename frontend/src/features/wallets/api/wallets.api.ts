@@ -123,14 +123,19 @@ export const walletsApi = {
     return response.data.data;
   },
 
-  getSentinelStatus: async (walletId: string): Promise<SentinelStatusItem[]> => {
+  getSentinelStatus: async (
+    walletId: string,
+  ): Promise<SentinelStatusItem[]> => {
     const response = await api.get<SentinelStatusItem[]>(
       `/wallets/${walletId}/sentinel/status`,
     );
     return response.data;
   },
 
-  getHistoricalPrice: async (ticker: string, date: string): Promise<HistoricalPriceResponse> => {
+  getHistoricalPrice: async (
+    ticker: string,
+    date: string,
+  ): Promise<HistoricalPriceResponse> => {
     const response = await api.get<ApiResponse<HistoricalPriceResponse>>(
       `/wallets/assets/${ticker}/historical-price`,
       { params: { date } },
@@ -138,7 +143,10 @@ export const walletsApi = {
     return response.data.data;
   },
 
-  expireOption: async (walletId: string, data: { ticker: string; expiredAt: string }): Promise<void> => {
+  expireOption: async (
+    walletId: string,
+    data: { ticker: string; expiredAt: string },
+  ): Promise<void> => {
     await api.post(`/wallets/${walletId}/trade/expire`, data);
   },
 

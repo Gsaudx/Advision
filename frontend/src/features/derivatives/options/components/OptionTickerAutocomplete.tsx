@@ -262,7 +262,10 @@ export function OptionTickerAutocomplete({
           {manualTicker && (
             <button
               type="button"
-              onClick={() => { setManualTicker(''); onChange(''); }}
+              onClick={() => {
+                setManualTicker('');
+                onChange('');
+              }}
               disabled={disabled}
               className="absolute right-2 top-1/2 -translate-y-1/2 text-zinc-500 hover:text-zinc-300 transition-colors disabled:opacity-50"
             >

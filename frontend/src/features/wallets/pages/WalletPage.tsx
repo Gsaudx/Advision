@@ -19,7 +19,12 @@ import { LoadingSpinner } from '@/components/ui/LoadingSpinner';
 import { EmptyState } from '@/components/ui/EmptyState';
 import { useClients } from '@/features/clients-page';
 import { useQueryClient } from '@tanstack/react-query';
-import { useWalletById, useTransactions, useUpdateTransaction, useDeleteTransaction } from '../api';
+import {
+  useWalletById,
+  useTransactions,
+  useUpdateTransaction,
+  useDeleteTransaction,
+} from '../api';
 import { useWalletProventos } from '@/features/proventos/api';
 import { PositionTable } from '../components/PositionTable';
 import { ProventosTab } from '../components/ProventosTab';
@@ -101,9 +106,14 @@ function EditTransactionModal({
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
-      <div className="absolute inset-0 bg-background/80 backdrop-blur-md" onClick={onClose} />
+      <div
+        className="absolute inset-0 bg-background/80 backdrop-blur-md"
+        onClick={onClose}
+      />
       <div className="relative bg-surface-container-low w-full max-w-sm rounded-3xl p-8 shadow-xl border border-outline-variant/10">
-        <h3 className="text-lg font-bold text-on-surface mb-1">Editar transação</h3>
+        <h3 className="text-lg font-bold text-on-surface mb-1">
+          Editar transação
+        </h3>
         <p className="text-xs text-on-surface-variant mb-6">
           {transactionTypeLabels[tx.type] ?? tx.type} · {tx.ticker ?? '—'}
         </p>
@@ -162,7 +172,11 @@ function EditTransactionModal({
               disabled={updateMutation.isPending}
               className="flex-1 py-3 rounded-2xl text-sm font-bold bg-primary text-on-primary disabled:opacity-40 flex items-center justify-center gap-2"
             >
-              {updateMutation.isPending ? <LoadingSpinner size="sm" /> : 'Salvar'}
+              {updateMutation.isPending ? (
+                <LoadingSpinner size="sm" />
+              ) : (
+                'Salvar'
+              )}
             </button>
           </div>
           {updateMutation.isError && (
@@ -193,7 +207,9 @@ function OperationsTable({
 
   const handleDeleteConfirm = () => {
     if (!deletingTx) return;
-    deleteMutation.mutate(deletingTx.id, { onSuccess: () => setDeletingTx(null) });
+    deleteMutation.mutate(deletingTx.id, {
+      onSuccess: () => setDeletingTx(null),
+    });
   };
 
   if (isLoading) {
@@ -214,7 +230,8 @@ function OperationsTable({
     );
   }
 
-  const isEditable = (tx: Transaction) => tx.type === 'BUY' || tx.type === 'SELL';
+  const isEditable = (tx: Transaction) =>
+    tx.type === 'BUY' || tx.type === 'SELL';
   const isDeletable = (tx: Transaction) =>
     tx.type === 'BUY' || tx.type === 'SELL' || tx.type === 'OPTION_EXPIRY';
 
@@ -325,14 +342,18 @@ function OperationsTable({
             onClick={() => !deleteMutation.isPending && setDeletingTx(null)}
           />
           <div className="relative bg-surface-container-low w-full max-w-sm rounded-3xl p-8 shadow-xl border border-outline-variant/10">
-            <h3 className="text-lg font-bold text-on-surface mb-2">Confirmar exclusão</h3>
+            <h3 className="text-lg font-bold text-on-surface mb-2">
+              Confirmar exclusão
+            </h3>
             <p className="text-sm text-on-surface-variant mb-1">
               Tem certeza que deseja excluir esta transação?
             </p>
             <p className="text-sm font-semibold text-on-surface mb-6">
               {transactionTypeLabels[deletingTx.type] ?? deletingTx.type}
               {deletingTx.ticker ? ` · ${deletingTx.ticker}` : ''}
-              {deletingTx.price ? ` · ${formatCurrency(deletingTx.price, currency)}` : ''}
+              {deletingTx.price
+                ? ` · ${formatCurrency(deletingTx.price, currency)}`
+                : ''}
             </p>
             <p className="text-xs text-on-surface-variant/60 mb-6">
               Esta ação reverterá o efeito da transação na posição e no saldo.
@@ -350,7 +371,11 @@ function OperationsTable({
                 disabled={deleteMutation.isPending}
                 className="flex-1 py-3 rounded-2xl text-sm font-bold bg-error text-white disabled:opacity-40 flex items-center justify-center gap-2"
               >
-                {deleteMutation.isPending ? <LoadingSpinner size="sm" /> : 'Excluir'}
+                {deleteMutation.isPending ? (
+                  <LoadingSpinner size="sm" />
+                ) : (
+                  'Excluir'
+                )}
               </button>
             </div>
           </div>
@@ -416,7 +441,10 @@ export default function WalletPage() {
         });
       }
 
-      if (event.type === 'dividends_updated' || event.type === 'check_complete') {
+      if (
+        event.type === 'dividends_updated' ||
+        event.type === 'check_complete'
+      ) {
         eventSource.close();
       }
     };
@@ -850,7 +878,9 @@ export default function WalletPage() {
               >
                 {pillTab === 'ativos' && (
                   <PositionTable
-                    positions={wallet.positions.filter((p) => p.type === 'STOCK')}
+                    positions={wallet.positions.filter(
+                      (p) => p.type === 'STOCK',
+                    )}
                     currency={wallet.currency}
                     canTrade={config.canTrade}
                     onSellClick={handleSellPosition}

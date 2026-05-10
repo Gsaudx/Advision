@@ -10,11 +10,17 @@ interface ExpiredOptionClosingModalProps {
   ticker: string;
   dueDate: string;
   purchaseDate: string;
-  onConfirm: (closingDate: string, closingType: 'expired' | 'sold', salePrice?: number) => void;
+  onConfirm: (
+    closingDate: string,
+    closingType: 'expired' | 'sold',
+    salePrice?: number,
+  ) => void;
   onCancel: () => void;
 }
 
-export function ExpiredOptionClosingModal(props: ExpiredOptionClosingModalProps) {
+export function ExpiredOptionClosingModal(
+  props: ExpiredOptionClosingModalProps,
+) {
   return (
     <AnimatePresence>
       {props.isOpen && <ExpiredOptionModalContent {...props} />}
@@ -30,7 +36,9 @@ function ExpiredOptionModalContent({
   onConfirm,
   onCancel,
 }: ExpiredOptionClosingModalProps) {
-  const [closingType, setClosingType] = useState<'expired' | 'sold' | null>(null);
+  const [closingType, setClosingType] = useState<'expired' | 'sold' | null>(
+    null,
+  );
   const [saleDate, setSaleDate] = useState('');
   // Tracks manual user input; empty string means "use the auto-filled value"
   const [manualPrice, setManualPrice] = useState('');
@@ -139,7 +147,9 @@ function ExpiredOptionModalContent({
               <label className="text-[10px] font-bold text-on-surface-variant uppercase tracking-wider block mb-2">
                 Prêmio recebido (R$)
                 {isFetchingPrice && (
-                  <span className="ml-1 normal-case font-medium text-primary/70">buscando…</span>
+                  <span className="ml-1 normal-case font-medium text-primary/70">
+                    buscando…
+                  </span>
                 )}
               </label>
               <div className="relative">

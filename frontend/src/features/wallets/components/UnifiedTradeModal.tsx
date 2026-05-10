@@ -228,12 +228,14 @@ export function UnifiedTradeModal({
   }, [optionPriceData, isPremiumManual]);
 
   // Historical price lookup (D.3/D.4 — retroactive date)
-  const activeTicker = instrument === 'asset' ? assetFormData.ticker : optionFormData.ticker;
-  const { data: historicalData, isFetching: isFetchingHistorical } = useHistoricalPrice(
-    activeTicker,
-    historicalDateStr,
-    isRetroactiveDate && historicalDateStr.length > 0,
-  );
+  const activeTicker =
+    instrument === 'asset' ? assetFormData.ticker : optionFormData.ticker;
+  const { data: historicalData, isFetching: isFetchingHistorical } =
+    useHistoricalPrice(
+      activeTicker,
+      historicalDateStr,
+      isRetroactiveDate && historicalDateStr.length > 0,
+    );
 
   // NEGÓCIO: Quando o assessor muda a data de compra para um dia no passado, o sistema busca automaticamente
   // o preço de mercado daquele dia para poupar o assessor de ter que pesquisar manualmente.
@@ -273,10 +275,16 @@ export function UnifiedTradeModal({
     if (!historicalData || !isRetroactiveDate) return;
     setTimeout(() => {
       if (historicalData.price != null && instrument === 'asset') {
-        setAssetFormData((prev) => ({ ...prev, price: historicalData.price!.toFixed(2) }));
+        setAssetFormData((prev) => ({
+          ...prev,
+          price: historicalData.price!.toFixed(2),
+        }));
       }
       if (historicalData.price != null && instrument === 'option') {
-        setOptionFormData((prev) => ({ ...prev, premium: historicalData.price!.toFixed(2) }));
+        setOptionFormData((prev) => ({
+          ...prev,
+          premium: historicalData.price!.toFixed(2),
+        }));
         setIsPremiumManual(false);
       }
     }, 0);
@@ -326,7 +334,10 @@ export function UnifiedTradeModal({
     if (!optionFormData.premium || isNaN(prem) || prem <= 0)
       newErrors.premium = 'Prêmio deve ser positivo';
     if (!optionFormData.date) newErrors.date = 'Data é obrigatória';
-    else if (localExpiryDate && optionFormData.date.slice(0, 10) > localExpiryDate)
+    else if (
+      localExpiryDate &&
+      optionFormData.date.slice(0, 10) > localExpiryDate
+    )
       newErrors.date = 'Data não pode ser posterior ao vencimento da opção';
     setOptionErrors(newErrors);
     return Object.keys(newErrors).length === 0;
@@ -360,7 +371,12 @@ export function UnifiedTradeModal({
           if (closingType === 'expired') {
             expireOptionMutation.mutate(
               { walletId, data: { ticker, expiredAt: closingDate } },
-              { onSuccess: () => { setPendingOptionData(null); handleClose(); } },
+              {
+                onSuccess: () => {
+                  setPendingOptionData(null);
+                  handleClose();
+                },
+              },
             );
           } else {
             sellOptionMutation.mutate(
@@ -375,7 +391,12 @@ export function UnifiedTradeModal({
                   idempotencyKey: generateIdempotencyKey(),
                 },
               },
-              { onSuccess: () => { setPendingOptionData(null); handleClose(); } },
+              {
+                onSuccess: () => {
+                  setPendingOptionData(null);
+                  handleClose();
+                },
+              },
             );
           }
         },
@@ -790,11 +811,16 @@ export function UnifiedTradeModal({
                         Buscando preço histórico…
                       </p>
                     )}
-                    {!isFetchingHistorical && isRetroactiveDate && instrument === 'asset' && historicalData?.price == null && historicalDateStr.length > 0 && (
-                      <p className="text-[10px] text-amber-600 mt-1">
-                        Preço histórico indisponível para esta data — digite manualmente.
-                      </p>
-                    )}
+                    {!isFetchingHistorical &&
+                      isRetroactiveDate &&
+                      instrument === 'asset' &&
+                      historicalData?.price == null &&
+                      historicalDateStr.length > 0 && (
+                        <p className="text-[10px] text-amber-600 mt-1">
+                          Preço histórico indisponível para esta data — digite
+                          manualmente.
+                        </p>
+                      )}
                     {assetErrors.date && (
                       <p className="text-error text-xs mt-1">
                         {assetErrors.date}
@@ -976,7 +1002,9 @@ export function UnifiedTradeModal({
                       type="datetime-local"
                       value={optionFormData.date}
                       onChange={handleOptionDateChange}
-                      max={localExpiryDate ? `${localExpiryDate}T23:59` : undefined}
+                      max={
+                        localExpiryDate ? `${localExpiryDate}T23:59` : undefined
+                      }
                       disabled={isPending}
                       className={`w-full bg-surface-container-lowest border rounded-xl py-3.5 px-4 text-sm text-on-surface focus:outline-none focus:ring-1 focus:ring-primary focus:border-primary transition-colors ${
                         optionErrors.date
@@ -990,11 +1018,16 @@ export function UnifiedTradeModal({
                         Buscando prêmio histórico…
                       </p>
                     )}
-                    {!isFetchingHistorical && isRetroactiveDate && instrument === 'option' && historicalData?.price == null && historicalDateStr.length > 0 && (
-                      <p className="text-[10px] text-amber-600 mt-1">
-                        Prêmio histórico indisponível para esta data — digite manualmente.
-                      </p>
-                    )}
+                    {!isFetchingHistorical &&
+                      isRetroactiveDate &&
+                      instrument === 'option' &&
+                      historicalData?.price == null &&
+                      historicalDateStr.length > 0 && (
+                        <p className="text-[10px] text-amber-600 mt-1">
+                          Prêmio histórico indisponível para esta data — digite
+                          manualmente.
+                        </p>
+                      )}
                     {optionErrors.date && (
                       <p className="text-error text-xs mt-1">
                         {optionErrors.date}

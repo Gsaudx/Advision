@@ -13,7 +13,9 @@ export function useUpdateTransaction(walletId: string) {
       data: { date?: string; price?: number; quantity?: number };
     }) => walletsApi.updateTransaction(walletId, txId, data),
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: transactionQueryKeys.byWallet(walletId) });
+      queryClient.invalidateQueries({
+        queryKey: transactionQueryKeys.byWallet(walletId),
+      });
       queryClient.invalidateQueries({ queryKey: ['wallet', walletId] });
     },
   });
@@ -24,7 +26,9 @@ export function useDeleteTransaction(walletId: string) {
   return useMutation({
     mutationFn: (txId: string) => walletsApi.deleteTransaction(walletId, txId),
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: transactionQueryKeys.byWallet(walletId) });
+      queryClient.invalidateQueries({
+        queryKey: transactionQueryKeys.byWallet(walletId),
+      });
       queryClient.invalidateQueries({ queryKey: ['wallet', walletId] });
     },
   });
