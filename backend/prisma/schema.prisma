@@ -46,8 +46,6 @@ enum TransactionType {
   DIVIDEND
   SPLIT
   SUBSCRIPTION
-  DEPOSIT
-  WITHDRAWAL
   OPTION_EXERCISE
   OPTION_ASSIGNMENT
   OPTION_EXPIRY
@@ -170,15 +168,13 @@ model Client {
 }
 
 model Wallet {
-  id                String   @id @default(uuid())
-  clientId          String
-  name              String
-  description       String?
-  currency          String   @default("BRL") @db.VarChar(3)
-  cashBalance       Decimal  @default(0) @db.Decimal(18, 2)
-  blockedCollateral Decimal  @default(0) @db.Decimal(18, 2)
-  createdAt         DateTime @default(now())
-  updatedAt         DateTime @updatedAt
+  id          String   @id @default(uuid())
+  clientId    String
+  name        String
+  description String?
+  currency    String   @default("BRL") @db.VarChar(3)
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
 
   client                Client                @relation(fields: [clientId], references: [id], onDelete: Cascade)
   positions             Position[]

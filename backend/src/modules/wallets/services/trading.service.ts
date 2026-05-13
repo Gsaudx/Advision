@@ -187,23 +187,6 @@ export class TradingService {
           break;
         }
 
-        // Deduct from cash balance using atomic update
-        const cashUpdateResult = await tx.wallet.updateMany({
-          where: {
-            id: walletId,
-            cashBalance: { gte: totalCost.toNumber() },
-          },
-          data: {
-            cashBalance: { decrement: totalCost.toNumber() },
-          },
-        });
-
-        if (cashUpdateResult.count === 0) {
-          throw new BadRequestException(
-            `Saldo insuficiente. Necessario: R$ ${totalCost.toFixed(2)}`,
-          );
-        }
-
         // Create transaction record
         const tx_record = await tx.transaction.create({
           data: {
@@ -412,14 +395,6 @@ export class TradingService {
           break;
         }
 
-        // Add to cash balance
-        await tx.wallet.update({
-          where: { id: walletId },
-          data: {
-            cashBalance: { increment: totalProceeds.toNumber() },
-          },
-        });
-
         // Create transaction record
         const tx_record = await tx.transaction.create({
           data: {
@@ -522,7 +497,7 @@ export class TradingService {
    * NEGÓCIO: Corrige uma operação já lançada. Se o preço ou quantidade mudar, o saldo em caixa da carteira
    * é ajustado pela diferença. Se a data recuar para o passado, o sistema rastreia proventos do período.
    * Se for uma opção e a data mudou, o strike vigente naquele dia é buscado e atualizado.
-   * TÉCNICO: Edita data, preço e/ou quantidade de uma transação existente, ajustando cashBalance e recalculando a posição.
+   * TÉCNICO: Edita data, preço e/ou quantidade de uma transação existente, recalculando a posição.
    */
   async updateTransaction(
     walletId: string,
@@ -549,25 +524,6 @@ export class TradingService {
         ...(data.quantity !== undefined && { quantity: data.quantity }),
       },
     });
-
-    if (tx.type === 'BUY') {
-      const diff = oldCost.minus(newCost);
-      if (!diff.isZero()) {
-        await this.prisma.wallet.update({
-          where: { id: walletId },
-          data: { cashBalance: { increment: diff.toNumber() } },
-        });
-      }
-    } else if (tx.type === 'SELL') {
-      const diff = newCost.minus(oldCost);
-      if (!diff.isZero()) {
-        await this.prisma.wallet.update({
-          where: { id: walletId },
-          data: { cashBalance: { increment: diff.toNumber() } },
-        });
-      }
-    }
-    // EXPIRED: noop (preço sempre 0)
 
     await this.recalculatePosition(walletId, tx.assetId!);
 
@@ -628,20 +584,6 @@ export class TradingService {
     if (!tx || tx.walletId !== walletId) throw new NotFoundException('Transação não encontrada');
 
     await this.prisma.transaction.delete({ where: { id: txId } });
-
-    const txCost = new Decimal(tx.price ?? 0).times(tx.quantity ?? 0);
-    if (tx.type === 'BUY') {
-      await this.prisma.wallet.update({
-        where: { id: walletId },
-        data: { cashBalance: { increment: txCost.toNumber() } },
-      });
-    } else if (tx.type === 'SELL') {
-      await this.prisma.wallet.update({
-        where: { id: walletId },
-        data: { cashBalance: { decrement: txCost.toNumber() } },
-      });
-    }
-    // EXPIRED: price = 0, cashBalance não é afetado
 
     const remaining = await this.recalculatePosition(walletId, tx.assetId!);
 

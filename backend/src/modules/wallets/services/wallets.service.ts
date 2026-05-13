@@ -1,18 +1,13 @@
 import {
   Injectable,
   Inject,
-  NotFoundException,
-  ConflictException,
   BadRequestException,
 } from '@nestjs/common';
-import { Decimal } from 'decimal.js';
 import { PrismaService } from '@/shared/prisma/prisma.service';
 import {
   DomainEventsService,
   WalletEvents,
   type WalletCreatedPayload,
-  type CashDepositedPayload,
-  type CashWithdrawnPayload,
 } from '@/shared/domain-events';
 import type {
   Wallet,
@@ -30,7 +25,6 @@ import { AuditService } from './audit.service';
 import { WalletAccessService } from './wallet-access.service';
 import type {
   CreateWalletInput,
-  CashOperationInput,
   WalletResponse,
   WalletSummaryResponse,
   PositionResponse,
@@ -75,7 +69,6 @@ export class WalletsService {
       name: wallet.name,
       description: wallet.description,
       currency: wallet.currency,
-      cashBalance: Number(wallet.cashBalance),
       createdAt: wallet.createdAt.toISOString(),
       updatedAt: wallet.updatedAt.toISOString(),
     };
@@ -165,44 +158,16 @@ export class WalletsService {
   ): Promise<WalletResponse> {
     await this.walletAccess.verifyClientAccess(data.clientId, actor);
 
-    const hasInitialDeposit =
-      data.initialCashBalance !== undefined && data.initialCashBalance > 0;
-
     const wallet = await this.prisma.$transaction(async (tx) => {
-      // Create wallet
       const newWallet = await tx.wallet.create({
         data: {
           clientId: data.clientId,
           name: data.name,
           description: data.description,
           currency: data.currency ?? 'BRL',
-          cashBalance: data.initialCashBalance ?? 0,
         },
       });
 
-      // Create initial deposit transaction if applicable
-      if (hasInitialDeposit) {
-        const initialDepositTransaction = await tx.transaction.create({
-          data: {
-            walletId: newWallet.id,
-            type: 'DEPOSIT',
-            totalValue: data.initialCashBalance!,
-            executedAt: new Date(),
-            notes: 'Deposito inicial',
-          },
-        });
-
-        await this.auditService.log(tx, {
-          tableName: 'transactions',
-          recordId: initialDepositTransaction.id,
-          action: 'CREATE',
-          actorId: actor.id,
-          actorRole: actor.role,
-          context: { type: 'INITIAL_DEPOSIT', amount: data.initialCashBalance },
-        });
-      }
-
-      // Audit wallet creation
       await this.auditService.log(tx, {
         tableName: 'wallets',
         recordId: newWallet.id,
@@ -212,11 +177,10 @@ export class WalletsService {
         snapshotAfter: {
           id: newWallet.id,
           name: newWallet.name,
-          cashBalance: Number(newWallet.cashBalance),
+          currency: newWallet.currency,
         },
       });
 
-      // Domain event: WalletCreated
       await this.domainEvents.record<WalletCreatedPayload>(tx, {
         aggregateType: 'WALLET',
         aggregateId: newWallet.id,
@@ -226,7 +190,6 @@ export class WalletsService {
           clientId: newWallet.clientId,
           name: newWallet.name,
           currency: newWallet.currency,
-          initialCashBalance: Number(newWallet.cashBalance),
         },
         actorId: actor.id,
         actorRole: actor.role,
@@ -239,7 +202,10 @@ export class WalletsService {
       ...this.formatWalletSummary(wallet),
       positions: [],
       totalPositionsValue: 0,
-      totalValue: Number(wallet.cashBalance),
+      totalValue: 0,
+      totalCostBasis: 0,
+      totalMarketValue: 0,
+      totalUnrealizedPL: 0,
     };
   }
 
@@ -310,150 +276,26 @@ export class WalletsService {
       (sum, p) => sum + (p.currentValue ?? p.totalCost),
       0,
     );
-    const cashBalance = Number(wallet.cashBalance);
-    const totalValue = cashBalance + totalPositionsValue;
+    const totalCostBasis = formattedPositions.reduce(
+      (sum, p) => sum + p.totalCost,
+      0,
+    );
+    const totalMarketValue = formattedPositions.reduce(
+      (sum, p) => sum + (p.currentValue ?? p.totalCost),
+      0,
+    );
+    const totalUnrealizedPL = totalMarketValue - totalCostBasis;
+    const totalValue = totalMarketValue;
 
     return {
       ...this.formatWalletSummary(wallet),
       positions: formattedPositions,
       totalPositionsValue,
       totalValue,
+      totalCostBasis,
+      totalMarketValue,
+      totalUnrealizedPL,
     };
-  }
-
-  /**
-   * Perform a cash operation (deposit or withdrawal)
-   */
-  async cashOperation(
-    walletId: string,
-    data: CashOperationInput,
-    actor: CurrentUserData,
-  ): Promise<WalletResponse> {
-    // Verify access first (before any other checks)
-    await this.walletAccess.verifyWalletAccess(walletId, actor);
-
-    // Check idempotency BEFORE transaction
-    const existing = await this.prisma.transaction.findUnique({
-      where: {
-        walletId_idempotencyKey: {
-          walletId,
-          idempotencyKey: data.idempotencyKey,
-        },
-      },
-    });
-
-    if (existing) {
-      throw new ConflictException('Operação duplicada');
-    }
-
-    try {
-      await this.prisma.$transaction(async (tx) => {
-        // Ensure wallet exists before applying atomic updates.
-        const wallet = await tx.wallet.findUnique({
-          where: { id: walletId },
-        });
-
-        if (!wallet) {
-          throw new NotFoundException('Carteira nao encontrada');
-        }
-
-        const amount = new Decimal(data.amount);
-        let updatedWallet: Wallet;
-
-        if (data.type === 'DEPOSIT') {
-          updatedWallet = await tx.wallet.update({
-            where: { id: walletId },
-            data: { cashBalance: { increment: amount.toNumber() } },
-          });
-        } else {
-          const updateResult = await tx.wallet.updateMany({
-            where: { id: walletId, cashBalance: { gte: amount.toNumber() } },
-            data: { cashBalance: { decrement: amount.toNumber() } },
-          });
-
-          if (updateResult.count === 0) {
-            throw new BadRequestException('Saldo insuficiente para saque');
-          }
-
-          const refreshedWallet = await tx.wallet.findUnique({
-            where: { id: walletId },
-          });
-
-          if (!refreshedWallet) {
-            throw new NotFoundException('Carteira nao encontrada');
-          }
-
-          updatedWallet = refreshedWallet;
-        }
-
-        const updatedBalance = new Decimal(updatedWallet.cashBalance);
-        const previousBalance =
-          data.type === 'DEPOSIT'
-            ? updatedBalance.minus(amount)
-            : updatedBalance.plus(amount);
-
-        // Create transaction
-        await tx.transaction.create({
-          data: {
-            walletId,
-            type: data.type,
-            totalValue: data.amount,
-            executedAt: data.date,
-            idempotencyKey: data.idempotencyKey,
-          },
-        });
-
-        // Audit log
-        await this.auditService.log(tx, {
-          tableName: 'wallets',
-          recordId: walletId,
-          action: 'UPDATE',
-          actorId: actor.id,
-          actorRole: actor.role,
-          snapshotBefore: { cashBalance: previousBalance.toNumber() },
-          snapshotAfter: { cashBalance: updatedBalance.toNumber() },
-          context: { operation: data.type, amount: data.amount },
-        });
-
-        // Domain event: CashDeposited or CashWithdrawn
-        if (data.type === 'DEPOSIT') {
-          await this.domainEvents.record<CashDepositedPayload>(tx, {
-            aggregateType: 'WALLET',
-            aggregateId: walletId,
-            eventType: WalletEvents.CASH_DEPOSITED,
-            payload: {
-              walletId,
-              amount: data.amount,
-              previousBalance: previousBalance.toNumber(),
-              newBalance: updatedBalance.toNumber(),
-            },
-            actorId: actor.id,
-            actorRole: actor.role,
-          });
-        } else {
-          await this.domainEvents.record<CashWithdrawnPayload>(tx, {
-            aggregateType: 'WALLET',
-            aggregateId: walletId,
-            eventType: WalletEvents.CASH_WITHDRAWN,
-            payload: {
-              walletId,
-              amount: data.amount,
-              previousBalance: previousBalance.toNumber(),
-              newBalance: updatedBalance.toNumber(),
-            },
-            actorId: actor.id,
-            actorRole: actor.role,
-          });
-        }
-      });
-    } catch (error) {
-      if (this.walletAccess.isIdempotencyConflict(error)) {
-        throw new ConflictException('Operação duplicada');
-      }
-      throw error;
-    }
-
-    return this.getDashboard(walletId, actor);
   }
 
   /**

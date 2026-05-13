@@ -18,37 +18,11 @@ export const CreateWalletInputSchema = z.object({
     .max(100, 'Nome deve ter no máximo 100 caracteres'),
   description: z.string().max(500).optional(),
   currency: z.string().length(3).optional().default('BRL'),
-  initialCashBalance: z
-    .number()
-    .nonnegative('Saldo inicial deve ser positivo ou zero')
-    .optional(),
 });
 export class CreateWalletInputDto extends createZodDto(
   CreateWalletInputSchema,
 ) {}
 export type CreateWalletInput = z.infer<typeof CreateWalletInputSchema>;
-
-/**
- * Cash operation types
- */
-export const CashOperationType = z.enum(['DEPOSIT', 'WITHDRAWAL']);
-export type CashOperationType = z.infer<typeof CashOperationType>;
-
-/**
- * Schema for cash operations (deposit/withdrawal)
- */
-export const CashOperationInputSchema = z.object({
-  type: CashOperationType,
-  amount: z.number().positive('Valor deve ser positivo'),
-  date: z
-    .string()
-    .datetime({ message: 'Data inválida (formato ISO esperado)' }),
-  idempotencyKey: z.string().min(1, 'Chave de idempotência obrigatória'),
-});
-export class CashOperationInputDto extends createZodDto(
-  CashOperationInputSchema,
-) {}
-export type CashOperationInput = z.infer<typeof CashOperationInputSchema>;
 
 /**
  * Schema for trade operations (buy/sell)
@@ -129,7 +103,6 @@ export const WalletSummaryResponseSchema = z.object({
   name: z.string(),
   description: z.string().nullable(),
   currency: z.string(),
-  cashBalance: z.number(),
   createdAt: z.string(),
   updatedAt: z.string(),
 });
@@ -142,6 +115,9 @@ export const WalletResponseSchema = WalletSummaryResponseSchema.extend({
   positions: z.array(PositionResponseSchema),
   totalPositionsValue: z.number(),
   totalValue: z.number(),
+  totalCostBasis: z.number(),
+  totalMarketValue: z.number(),
+  totalUnrealizedPL: z.number(),
 });
 export type WalletResponse = z.infer<typeof WalletResponseSchema>;
 

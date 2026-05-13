@@ -30,7 +30,6 @@ import { WalletsService, TradingService } from '../services';
 import { CompositeMarketService } from '../providers/composite-market.service';
 import {
   CreateWalletInputDto,
-  CashOperationInputDto,
   TradeInputDto,
   WalletApiResponseDto,
   WalletListApiResponseDto,
@@ -450,46 +449,6 @@ export class WalletsController {
       cursor,
     );
     return ApiResponseDto.success(data);
-  }
-
-  @Post(':id/cash')
-  @Roles('ADVISOR', 'ADMIN')
-  @ApiOperation({
-    summary: 'Operação de caixa',
-    description: 'Realiza depósito ou saque na carteira.',
-  })
-  @ApiParam({ name: 'id', description: 'ID da carteira' })
-  @ApiResponse({
-    status: 200,
-    description: 'Operação realizada com sucesso',
-    type: WalletApiResponseDto,
-  })
-  @ApiResponse({
-    status: 400,
-    description: 'Saldo insuficiente ou dados inválidos',
-    type: ApiErrorResponseDto,
-  })
-  @ApiResponse({
-    status: 403,
-    description: 'Sem permissão para operar esta carteira',
-    type: ApiErrorResponseDto,
-  })
-  @ApiResponse({
-    status: 409,
-    description: 'Operação duplicada (idempotencyKey já utilizada)',
-    type: ApiErrorResponseDto,
-  })
-  async cashOperation(
-    @Param('id') id: string,
-    @Body() body: CashOperationInputDto,
-    @CurrentUser() user: CurrentUserData,
-  ): Promise<ApiResponseType<WalletResponse>> {
-    const data = await this.walletsService.cashOperation(id, body, user);
-    const message =
-      body.type === 'DEPOSIT'
-        ? 'Depósito realizado com sucesso'
-        : 'Saque realizado com sucesso';
-    return ApiResponseDto.success(data, message);
   }
 
   @Post(':id/trade/buy')
