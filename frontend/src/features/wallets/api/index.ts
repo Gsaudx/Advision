@@ -1,6 +1,7 @@
 export { walletsApi } from './wallets.api';
 export { useWallets } from './useWallets';
 export { useWalletById } from './useWalletById';
+export { useWalletPerformance } from './useWalletPerformance';
 export { useCreateWallet } from './useCreateWallet';
 export { useBuyAsset } from './useBuyAsset';
 export { useSellAsset } from './useSellAsset';

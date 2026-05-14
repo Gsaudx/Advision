@@ -26,13 +26,18 @@ import { CurrentUser, type CurrentUserData } from '@/common/decorators';
 import { RolesGuard } from '@/common/guards';
 import { Roles } from '@/common/decorators';
 import { SentinelOptionService } from '@/modules/sentinel/services/sentinel-option.service'; // [SENTINEL]
-import { WalletsService, TradingService } from '../services';
+import {
+  WalletsService,
+  TradingService,
+  PerformanceService,
+} from '../services';
 import { CompositeMarketService } from '../providers/composite-market.service';
 import {
   CreateWalletInputDto,
   TradeInputDto,
   WalletApiResponseDto,
   WalletListApiResponseDto,
+  WalletPerformanceApiResponseDto,
   AssetSearchApiResponseDto,
   AssetPriceApiResponseDto,
   TransactionListApiResponseDto,
@@ -43,6 +48,7 @@ import {
 import type {
   WalletResponse,
   WalletSummaryResponse,
+  WalletPerformanceResponse,
   AssetSearchResponse,
   AssetPriceResponse,
   TransactionListResponse,
@@ -61,6 +67,7 @@ export class WalletsController {
   constructor(
     private readonly walletsService: WalletsService,
     private readonly tradingService: TradingService,
+    private readonly performanceService: PerformanceService,
     private readonly marketService: CompositeMarketService,
     private readonly sentinelService: SentinelOptionService, // [SENTINEL]
   ) {}
@@ -289,7 +296,8 @@ export class WalletsController {
       strike: details.strike,
       expirationDate: details.due_date,
       type: details.type,
-      impliedVolatility: (details as { implied_volatility?: number }).implied_volatility,
+      impliedVolatility: (details as { implied_volatility?: number })
+        .implied_volatility,
       delta: (details as { delta?: number }).delta,
       gamma: (details as { gamma?: number }).gamma,
       theta: (details as { theta?: number }).theta,
@@ -303,13 +311,24 @@ export class WalletsController {
   @Roles('ADVISOR', 'ADMIN')
   @ApiOperation({ summary: 'Preço histórico do ativo em uma data específica' })
   @ApiParam({ name: 'ticker', description: 'Ticker do ativo' })
-  @ApiQuery({ name: 'date', required: true, description: 'Data no formato YYYY-MM-DD' })
-  @ApiResponse({ status: 200, description: 'Preço histórico', type: HistoricalPriceApiResponseDto })
+  @ApiQuery({
+    name: 'date',
+    required: true,
+    description: 'Data no formato YYYY-MM-DD',
+  })
+  @ApiResponse({
+    status: 200,
+    description: 'Preço histórico',
+    type: HistoricalPriceApiResponseDto,
+  })
   async getHistoricalPrice(
     @Param('ticker') ticker: string,
     @Query('date') date: string,
   ): Promise<ApiResponseType<HistoricalPriceResponse>> {
-    const data = await this.walletsService.getHistoricalPrice(ticker.toUpperCase(), date);
+    const data = await this.walletsService.getHistoricalPrice(
+      ticker.toUpperCase(),
+      date,
+    );
     return ApiResponseDto.success(data);
   }
 
@@ -375,6 +394,38 @@ export class WalletsController {
     @CurrentUser() user: CurrentUserData,
   ): Promise<ApiResponseType<WalletResponse>> {
     const data = await this.walletsService.getDashboard(id, user);
+    return ApiResponseDto.success(data);
+  }
+
+  @Get(':id/performance')
+  @Roles('ADVISOR', 'ADMIN', 'CLIENT')
+  @ApiOperation({
+    summary: 'Performance da carteira',
+    description:
+      'Retorna lucro/prejuízo realizado, não realizado e proventos recebidos, com breakdown por ativo. Rentabilidade % calculada sobre o custo investido (Σ totalCost das posições abertas).',
+  })
+  @ApiParam({ name: 'id', description: 'ID da carteira' })
+  @ApiResponse({
+    status: 200,
+    description: 'Performance consolidada',
+    type: WalletPerformanceApiResponseDto,
+  })
+  @ApiResponse({
+    status: 403,
+    description: 'Sem permissão para acessar esta carteira',
+    type: ApiErrorResponseDto,
+  })
+  @ApiResponse({
+    status: 404,
+    description: 'Carteira não encontrada',
+    type: ApiErrorResponseDto,
+  })
+  async getPerformance(
+    @Param('id') id: string,
+    @CurrentUser() user: CurrentUserData,
+  ): Promise<ApiResponseType<WalletPerformanceResponse>> {
+    await this.walletsService.findOne(id, user);
+    const data = await this.performanceService.computePerformance(id);
     return ApiResponseDto.success(data);
   }
 
@@ -494,18 +545,26 @@ export class WalletsController {
     // (sequential para evitar race condition: sentinela deve existir antes do retroactiveScan)
     void (async () => {
       try {
-        const sentinelTicker = await this.sentinelService.resolveUnderlyingTicker(body.ticker);
+        const sentinelTicker =
+          await this.sentinelService.resolveUnderlyingTicker(body.ticker);
         if (!sentinelTicker) return;
         await this.sentinelService.checkSentinel(sentinelTicker, id);
         const purchaseDate = new Date(body.date);
         const today = new Date();
         today.setHours(0, 0, 0, 0);
         if (purchaseDate < today) {
-          await this.sentinelService.triggerRetroactiveScanIfNeeded(sentinelTicker, purchaseDate, id);
+          await this.sentinelService.triggerRetroactiveScanIfNeeded(
+            sentinelTicker,
+            purchaseDate,
+            id,
+          );
         }
         await this.sentinelService.propagateDividendsToWallet(id);
       } catch (err) {
-        this.logger.error(`[M1+M2] Sentinel chain failed for ${body.ticker}`, err);
+        this.logger.error(
+          `[M1+M2] Sentinel chain failed for ${body.ticker}`,
+          err,
+        );
       }
     })();
 
@@ -557,17 +616,30 @@ export class WalletsController {
 
   @Put(':id/transactions/:txId')
   @Roles('ADVISOR', 'ADMIN')
-  @ApiOperation({ summary: 'Editar transação', description: 'Atualiza data, preço ou quantidade de uma transação existente.' })
+  @ApiOperation({
+    summary: 'Editar transação',
+    description:
+      'Atualiza data, preço ou quantidade de uma transação existente.',
+  })
   @ApiParam({ name: 'id', description: 'ID da carteira' })
   @ApiParam({ name: 'txId', description: 'ID da transação' })
-  @ApiResponse({ status: 200, description: 'Transação atualizada', type: WalletApiResponseDto })
+  @ApiResponse({
+    status: 200,
+    description: 'Transação atualizada',
+    type: WalletApiResponseDto,
+  })
   async updateTransaction(
     @Param('id') id: string,
     @Param('txId') txId: string,
     @Body() body: UpdateTransactionInputDto,
     @CurrentUser() user: CurrentUserData,
   ): Promise<ApiResponseType<WalletResponse>> {
-    await this.tradingService.updateTransaction(id, txId, body as UpdateTransactionInput, user);
+    await this.tradingService.updateTransaction(
+      id,
+      txId,
+      body as UpdateTransactionInput,
+      user,
+    );
     const data = await this.walletsService.getDashboard(id, user);
     return ApiResponseDto.success(data, 'Transação atualizada');
   }
@@ -575,10 +647,17 @@ export class WalletsController {
   @Delete(':id/transactions/:txId')
   @HttpCode(200)
   @Roles('ADVISOR', 'ADMIN')
-  @ApiOperation({ summary: 'Deletar transação', description: 'Remove uma transação e reverte seu efeito na carteira.' })
+  @ApiOperation({
+    summary: 'Deletar transação',
+    description: 'Remove uma transação e reverte seu efeito na carteira.',
+  })
   @ApiParam({ name: 'id', description: 'ID da carteira' })
   @ApiParam({ name: 'txId', description: 'ID da transação' })
-  @ApiResponse({ status: 200, description: 'Transação removida', type: WalletApiResponseDto })
+  @ApiResponse({
+    status: 200,
+    description: 'Transação removida',
+    type: WalletApiResponseDto,
+  })
   async deleteTransaction(
     @Param('id') id: string,
     @Param('txId') txId: string,
@@ -591,9 +670,16 @@ export class WalletsController {
 
   @Post(':id/trade/expire')
   @Roles('ADVISOR', 'ADMIN')
-  @ApiOperation({ summary: 'Registrar opção como vencida', description: 'Cria transação EXPIRED (preço = 0) e zera a posição.' })
+  @ApiOperation({
+    summary: 'Registrar opção como vencida',
+    description: 'Cria transação EXPIRED (preço = 0) e zera a posição.',
+  })
   @ApiParam({ name: 'id', description: 'ID da carteira' })
-  @ApiResponse({ status: 200, description: 'Opção registrada como vencida', type: WalletApiResponseDto })
+  @ApiResponse({
+    status: 200,
+    description: 'Opção registrada como vencida',
+    type: WalletApiResponseDto,
+  })
   async expireOption(
     @Param('id') id: string,
     @Body() body: ExpireOptionInputDto,

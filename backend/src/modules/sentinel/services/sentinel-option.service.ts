@@ -2,7 +2,10 @@ import { Injectable, Logger } from '@nestjs/common';
 import { Decimal } from 'decimal.js';
 import { PrismaService } from '@/shared/prisma/prisma.service';
 import { SseService } from './sse.service';
-import type { SentinelOption, DividendHistory } from '@/generated/prisma/client';
+import type {
+  SentinelOption,
+  DividendHistory,
+} from '@/generated/prisma/client';
 import type {
   OpLabOptionFlat,
   OpLabHistoricalEntry,
@@ -31,7 +34,9 @@ export class SentinelOptionService {
    * Qualquer exceção aqui é capturada internamente — nunca afeta o usuário.
    */
   async checkWalletSentinels(walletId: string): Promise<void> {
-    process.stdout.write(`[SENTINEL-SVC] checkWalletSentinels iniciado walletId=${walletId}\n`);
+    process.stdout.write(
+      `[SENTINEL-SVC] checkWalletSentinels iniciado walletId=${walletId}\n`,
+    );
     try {
       // Inclui underlyingAsset das opções para poder verificar dividendos mesmo em
       // carteiras que têm opções mas não possuem a ação subjacente diretamente.
@@ -71,7 +76,9 @@ export class SentinelOptionService {
         ),
       ];
 
-      const allMonitoredSymbols = [...new Set([...stockSymbols, ...optionUnderlyingSymbols])];
+      const allMonitoredSymbols = [
+        ...new Set([...stockSymbols, ...optionUnderlyingSymbols]),
+      ];
 
       this.logger.log(
         `[SENTINEL] walletId=${walletId} posições=${positions.length} STOCK=${stockSymbols.join(',')} OPT_UNDERLYING=${optionUnderlyingSymbols.join(',')}`,
@@ -100,7 +107,7 @@ export class SentinelOptionService {
         });
 
         newDividendsDetected = results.some(
-          (r) => r.status === 'fulfilled' && (r.value as DividendHistory[]).length > 0,
+          (r) => r.status === 'fulfilled' && r.value.length > 0,
         );
       }
 
@@ -115,7 +122,9 @@ export class SentinelOptionService {
       });
 
       if (newDividendsDetected || hasDividendHistory > 0) {
-        this.logger.log(`[SENTINEL] Proventos aplicados para carteira ${walletId}`);
+        this.logger.log(
+          `[SENTINEL] Proventos aplicados para carteira ${walletId}`,
+        );
         this.sseService.emit(walletId, { type: 'dividends_updated' });
       } else {
         this.sseService.emit(walletId, { type: 'check_complete' });
@@ -135,7 +144,10 @@ export class SentinelOptionService {
    * Retorna a lista de novos eventos de dividendo detectados nesta verificação.
    * Se nada mudou ou a verificação foi pulada, retorna array vazio.
    */
-  async checkSentinel(underlyingSymbol: string, walletId: string): Promise<DividendHistory[]> {
+  async checkSentinel(
+    underlyingSymbol: string,
+    walletId: string,
+  ): Promise<DividendHistory[]> {
     const symbol = underlyingSymbol.toUpperCase();
     const today = new Date();
     today.setHours(0, 0, 0, 0);
@@ -305,7 +317,11 @@ export class SentinelOptionService {
             });
             newEvents.push(event);
             if (walletId) {
-              await this.propagateStrikeAdjustments(walletId, sentinel.underlyingSymbol, new Decimal(diff));
+              await this.propagateStrikeAdjustments(
+                walletId,
+                sentinel.underlyingSymbol,
+                new Decimal(diff),
+              );
             }
             this.logger.log(
               `Dividendo detectado: ${sentinel.underlyingSymbol} R$${diff.toFixed(4)} em ${detectedAt.toISOString().split('T')[0]}`,
@@ -468,9 +484,14 @@ export class SentinelOptionService {
    * E posterior ao monitoring_since da sentinela.
    * Reconstrói a quantidade histórica do ativo em cada data-ex e persiste o pagamento.
    */
-  async getWalletSentinelStatus(
-    walletId: string,
-  ): Promise<{ ticker: string; status: string; monitoringSince: string | null; scanningSince: string | null }[]> {
+  async getWalletSentinelStatus(walletId: string): Promise<
+    {
+      ticker: string;
+      status: string;
+      monitoringSince: string | null;
+      scanningSince: string | null;
+    }[]
+  > {
     const allPositions = await this.prisma.position.findMany({
       where: { walletId },
       include: { asset: true },
@@ -486,8 +507,10 @@ export class SentinelOptionService {
         return {
           ticker: p.asset.ticker,
           status: sentinel?.status ?? 'NOT_MONITORED',
-          monitoringSince: sentinel?.monitoringSince?.toISOString().split('T')[0] ?? null,
-          scanningSince: sentinel?.scanningFrom?.toISOString().split('T')[0] ?? null,
+          monitoringSince:
+            sentinel?.monitoringSince?.toISOString().split('T')[0] ?? null,
+          scanningSince:
+            sentinel?.scanningFrom?.toISOString().split('T')[0] ?? null,
         };
       }),
     );
@@ -630,7 +653,9 @@ export class SentinelOptionService {
         (sum, d) => sum.plus(new Decimal(d.dividendAmount.toString())),
         new Decimal(0),
       );
-      const expectedStrike = new Decimal(od.initialStrike.toString()).minus(totalAdjustment);
+      const expectedStrike = new Decimal(od.initialStrike.toString()).minus(
+        totalAdjustment,
+      );
       const currentStrike = new Decimal(od.strikePrice.toString());
 
       if (!expectedStrike.equals(currentStrike)) {
@@ -684,7 +709,9 @@ export class SentinelOptionService {
       await this.prisma.optionDetail.update({
         where: { id: od.id },
         data: {
-          strikePrice: new Decimal(od.strikePrice.toString()).minus(dividendAmount),
+          strikePrice: new Decimal(od.strikePrice.toString()).minus(
+            dividendAmount,
+          ),
           // Não atualizar initialStrike — é o valor original da compra, não muda com proventos
         },
       });
@@ -765,7 +792,11 @@ export class SentinelOptionService {
    * TÉCNICO: Orquestra a varredura retroativa dividindo o período em chunks anuais, processando cada um em sequência
    * e, ao final, atualizando a data de cobertura da sentinela e notificando todas as carteiras afetadas via SSE.
    */
-  async retroactiveScan(ticker: string, fromDate: Date, walletId: string): Promise<void> {
+  async retroactiveScan(
+    ticker: string,
+    fromDate: Date,
+    walletId: string,
+  ): Promise<void> {
     const sentinel = await this.prisma.sentinelOption.findUnique({
       where: { underlyingSymbol: ticker },
     });
@@ -782,9 +813,18 @@ export class SentinelOptionService {
     });
 
     try {
-      const chunks = this.buildAnnualChunks(effectiveFrom, sentinel.monitoringSince);
+      const chunks = this.buildAnnualChunks(
+        effectiveFrom,
+        sentinel.monitoringSince,
+      );
       for (const chunk of chunks) {
-        await this.processRetroactiveChunk(ticker, sentinel.id, chunk.from, chunk.to, walletId);
+        await this.processRetroactiveChunk(
+          ticker,
+          sentinel.id,
+          chunk.from,
+          chunk.to,
+          walletId,
+        );
       }
 
       await this.prisma.sentinelOption.update({
@@ -794,7 +834,9 @@ export class SentinelOptionService {
 
       await this.emitDividendsUpdatedForTicker(ticker);
     } catch (error) {
-      this.logger.error(`[M2] Erro em retroactiveScan(${ticker}): ${(error as Error).message}`);
+      this.logger.error(
+        `[M2] Erro em retroactiveScan(${ticker}): ${(error as Error).message}`,
+      );
       await this.prisma.sentinelOption.update({
         where: { id: sentinel.id },
         data: { scanningFrom: null },
@@ -823,7 +865,10 @@ export class SentinelOptionService {
    * Dividir por ano garante que cada consulta seja pequena, tolerante a falhas e recomeçável se a OpLab cair.
    * TÉCNICO: Divide o intervalo [from, to] em fatias anuais (01/01–31/12) para limitar cada chamada à OpLab.
    */
-  private buildAnnualChunks(from: Date, to: Date): { from: string; to: string }[] {
+  private buildAnnualChunks(
+    from: Date,
+    to: Date,
+  ): { from: string; to: string }[] {
     const MIN_DATE = new Date('2020-01-01');
     const effectiveFrom = from < MIN_DATE ? MIN_DATE : new Date(from);
     const chunks: { from: string; to: string }[] = [];
@@ -831,7 +876,8 @@ export class SentinelOptionService {
 
     while (cursor < to) {
       const yearEnd = new Date(cursor.getFullYear(), 11, 31);
-      const chunkEnd = yearEnd < to ? yearEnd : new Date(to.getTime() - 86400000);
+      const chunkEnd =
+        yearEnd < to ? yearEnd : new Date(to.getTime() - 86400000);
       chunks.push({
         from: cursor.toISOString().split('T')[0],
         to: chunkEnd.toISOString().split('T')[0],
@@ -864,11 +910,18 @@ export class SentinelOptionService {
       grouped.set(entry.symbol, arr);
     }
 
-    const sorted = [...grouped.entries()].sort((a, b) => b[1].length - a[1].length);
+    const sorted = [...grouped.entries()].sort(
+      (a, b) => b[1].length - a[1].length,
+    );
     const [, bestEntries] = sorted[0];
     bestEntries.sort((a, b) => a.time.localeCompare(b.time));
 
-    await this.detectDividendsInEntries(ticker, sentinelId, bestEntries, walletId);
+    await this.detectDividendsInEntries(
+      ticker,
+      sentinelId,
+      bestEntries,
+      walletId,
+    );
 
     const lastEntryTime = bestEntries[bestEntries.length - 1].time.slice(0, 10);
     if (lastEntryTime < to && sorted.length > 1) {
@@ -877,7 +930,12 @@ export class SentinelOptionService {
         .filter((e) => e.time.slice(0, 10) > lastEntryTime)
         .sort((a, b) => a.time.localeCompare(b.time));
       if (remaining.length > 0) {
-        await this.detectDividendsInEntries(ticker, sentinelId, remaining, walletId);
+        await this.detectDividendsInEntries(
+          ticker,
+          sentinelId,
+          remaining,
+          walletId,
+        );
       }
     }
   }
@@ -913,7 +971,11 @@ export class SentinelOptionService {
               dividendAmount: new Decimal(diff),
             },
           });
-          await this.propagateStrikeAdjustments(walletId, ticker, new Decimal(diff));
+          await this.propagateStrikeAdjustments(
+            walletId,
+            ticker,
+            new Decimal(diff),
+          );
         } catch (e) {
           if ((e as { code?: string }).code !== 'P2002') throw e;
         }
@@ -937,7 +999,9 @@ export class SentinelOptionService {
       headers: { 'Access-Token': this.accessToken },
     });
     if (!response.ok) {
-      throw new Error(`OpLab /historical/${spot} sem symbol retornou ${response.status}`);
+      throw new Error(
+        `OpLab /historical/${spot} sem symbol retornou ${response.status}`,
+      );
     }
     return response.json() as Promise<OpLabHistoricalEntry[]>;
   }
@@ -952,7 +1016,9 @@ export class SentinelOptionService {
     const asset = await this.prisma.asset.findUnique({
       where: { ticker },
       include: {
-        optionDetail: { include: { underlyingAsset: { select: { ticker: true } } } },
+        optionDetail: {
+          include: { underlyingAsset: { select: { ticker: true } } },
+        },
       },
     });
     if (!asset) return null;

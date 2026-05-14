@@ -2,6 +2,7 @@ import { Test, TestingModule } from '@nestjs/testing';
 import { WalletsController } from '../controllers/wallets.controller';
 import { WalletsService } from '../services/wallets.service';
 import { TradingService } from '../services/trading.service';
+import { PerformanceService } from '../services/performance.service';
 import { CompositeMarketService } from '../providers';
 import { SentinelOptionService } from '@/modules/sentinel/services/sentinel-option.service';
 
@@ -27,16 +28,24 @@ describe('WalletsController', () => {
     name: 'Test Wallet',
     description: null,
     currency: 'BRL',
+    totalPositionsValue: 0,
+    totalValue: 0,
+    totalInvested: 0,
+    totalPnl: 0,
+    totalPnlPercent: 0,
     createdAt: '2024-01-01T00:00:00.000Z',
     updatedAt: '2024-01-01T00:00:00.000Z',
     positions: [],
-    totalPositionsValue: 0,
-    totalValue: 10000,
+    concentration: { byAsset: [], byType: [], bySector: [] },
   };
 
   let tradingService: {
     buy: jest.Mock;
     sell: jest.Mock;
+  };
+  let performanceService: {
+    computePerformance: jest.Mock;
+    computeTotals: jest.Mock;
   };
 
   beforeEach(async () => {
@@ -53,6 +62,27 @@ describe('WalletsController', () => {
       sell: jest.fn(),
     };
 
+    performanceService = {
+      computePerformance: jest.fn().mockResolvedValue({
+        walletId: 'wallet-123',
+        realized: 0,
+        unrealized: 0,
+        dividends: 0,
+        total: 0,
+        totalInvested: 0,
+        totalPercent: 0,
+        byAsset: [],
+      }),
+      computeTotals: jest.fn().mockResolvedValue({
+        realized: 0,
+        unrealized: 0,
+        dividends: 0,
+        total: 0,
+        totalInvested: 0,
+        totalPercent: 0,
+      }),
+    };
+
     const module: TestingModule = await Test.createTestingModule({
       controllers: [WalletsController],
       providers: [
@@ -63,6 +93,10 @@ describe('WalletsController', () => {
         {
           provide: TradingService,
           useValue: tradingService,
+        },
+        {
+          provide: PerformanceService,
+          useValue: performanceService,
         },
         {
           provide: CompositeMarketService,
@@ -83,7 +117,9 @@ describe('WalletsController', () => {
           useValue: {
             resolveUnderlyingTicker: jest.fn().mockResolvedValue(null),
             checkSentinel: jest.fn().mockResolvedValue([]),
-            triggerRetroactiveScanIfNeeded: jest.fn().mockResolvedValue(undefined),
+            triggerRetroactiveScanIfNeeded: jest
+              .fn()
+              .mockResolvedValue(undefined),
             propagateDividendsToWallet: jest.fn().mockResolvedValue(undefined),
             checkWalletSentinels: jest.fn().mockResolvedValue(undefined),
           },

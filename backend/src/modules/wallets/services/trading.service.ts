@@ -23,7 +23,11 @@ import { MarketDataProvider } from '../providers';
 import { AssetResolverService } from './asset-resolver.service';
 import { AuditService } from './audit.service';
 import { WalletAccessService } from './wallet-access.service';
-import type { TradeInput, UpdateTransactionInput, ExpireOptionInput } from '../schemas';
+import type {
+  TradeInput,
+  UpdateTransactionInput,
+  ExpireOptionInput,
+} from '../schemas';
 
 /**
  * Service responsible for trading operations (buy/sell).
@@ -509,12 +513,19 @@ export class TradingService {
 
     const tx = await this.prisma.transaction.findUnique({
       where: { id: txId },
-      include: { asset: { include: { optionDetail: { include: { underlyingAsset: true } } } } },
+      include: {
+        asset: {
+          include: { optionDetail: { include: { underlyingAsset: true } } },
+        },
+      },
     });
-    if (!tx || tx.walletId !== walletId) throw new NotFoundException('Transação não encontrada');
+    if (!tx || tx.walletId !== walletId)
+      throw new NotFoundException('Transação não encontrada');
 
     const oldCost = new Decimal(tx.price ?? 0).times(tx.quantity ?? 0);
-    const newCost = new Decimal(data.price ?? tx.price ?? 0).times(data.quantity ?? tx.quantity ?? 0);
+    const newCost = new Decimal(data.price ?? tx.price ?? 0).times(
+      data.quantity ?? tx.quantity ?? 0,
+    );
 
     await this.prisma.transaction.update({
       where: { id: txId },
@@ -538,18 +549,33 @@ export class TradingService {
         void (async () => {
           try {
             await this.sentinelService.checkSentinel(ticker, walletId);
-            await this.sentinelService.triggerRetroactiveScanIfNeeded(ticker, newDate, walletId);
+            await this.sentinelService.triggerRetroactiveScanIfNeeded(
+              ticker,
+              newDate,
+              walletId,
+            );
           } catch (err) {
-            this.logger.error(`[M2] Sentinel chain failed on updateTransaction for ${ticker}`, err);
+            this.logger.error(
+              `[M2] Sentinel chain failed on updateTransaction for ${ticker}`,
+              err,
+            );
           }
         })();
       }
 
-      if (tx.asset?.type === 'OPTION' && tx.asset.optionDetail?.underlyingAsset) {
+      if (
+        tx.asset?.type === 'OPTION' &&
+        tx.asset.optionDetail?.underlyingAsset
+      ) {
         const dateStr = newDate.toISOString().split('T')[0];
         const underlying = tx.asset.optionDetail.underlyingAsset.ticker;
         try {
-          const history = await this.sentinelService.fetchHistory(underlying, dateStr, dateStr, tx.asset.ticker);
+          const history = await this.sentinelService.fetchHistory(
+            underlying,
+            dateStr,
+            dateStr,
+            tx.asset.ticker,
+          );
           if (history.length) {
             await this.prisma.optionDetail.update({
               where: { assetId: tx.assetId! },
@@ -580,8 +606,11 @@ export class TradingService {
   ): Promise<void> {
     await this.walletAccess.verifyWalletAccess(walletId, actor);
 
-    const tx = await this.prisma.transaction.findUnique({ where: { id: txId } });
-    if (!tx || tx.walletId !== walletId) throw new NotFoundException('Transação não encontrada');
+    const tx = await this.prisma.transaction.findUnique({
+      where: { id: txId },
+    });
+    if (!tx || tx.walletId !== walletId)
+      throw new NotFoundException('Transação não encontrada');
 
     await this.prisma.transaction.delete({ where: { id: txId } });
 
@@ -589,7 +618,9 @@ export class TradingService {
 
     if (remaining === 0) {
       await this.prisma.position
-        .delete({ where: { walletId_assetId: { walletId, assetId: tx.assetId! } } })
+        .delete({
+          where: { walletId_assetId: { walletId, assetId: tx.assetId! } },
+        })
         .catch(() => {});
     }
 
@@ -608,8 +639,11 @@ export class TradingService {
   ): Promise<void> {
     await this.walletAccess.verifyWalletAccess(walletId, actor);
 
-    const asset = await this.prisma.asset.findUnique({ where: { ticker: data.ticker } });
-    if (!asset) throw new NotFoundException(`Ativo não encontrado: ${data.ticker}`);
+    const asset = await this.prisma.asset.findUnique({
+      where: { ticker: data.ticker },
+    });
+    if (!asset)
+      throw new NotFoundException(`Ativo não encontrado: ${data.ticker}`);
 
     const position = await this.prisma.position.findUnique({
       where: { walletId_assetId: { walletId, assetId: asset.id } },
@@ -631,7 +665,9 @@ export class TradingService {
     const remaining = await this.recalculatePosition(walletId, asset.id);
     if (remaining === 0) {
       await this.prisma.position
-        .delete({ where: { walletId_assetId: { walletId, assetId: asset.id } } })
+        .delete({
+          where: { walletId_assetId: { walletId, assetId: asset.id } },
+        })
         .catch(() => {});
     }
   }
@@ -642,7 +678,10 @@ export class TradingService {
    * TÉCNICO: Relê todas as transações BUY/SELL/EXPIRED do ativo e recalcula quantity e averagePrice na posição.
    * Retorna a quantity resultante (0 indica que a posição pode ser removida).
    */
-  private async recalculatePosition(walletId: string, assetId: string): Promise<number> {
+  private async recalculatePosition(
+    walletId: string,
+    assetId: string,
+  ): Promise<number> {
     const txs = await this.prisma.transaction.findMany({
       where: { walletId, assetId, type: { in: ['BUY', 'SELL', 'EXPIRED'] } },
       orderBy: { executedAt: 'asc' },
@@ -653,7 +692,9 @@ export class TradingService {
 
     for (const t of txs) {
       if (t.type === 'BUY') {
-        totalCost = totalCost.plus(new Decimal(t.quantity!.toString()).times(t.price!.toString()));
+        totalCost = totalCost.plus(
+          new Decimal(t.quantity!.toString()).times(t.price!.toString()),
+        );
         qty = qty.plus(t.quantity!.toString());
       } else {
         qty = qty.minus(t.quantity!.toString());

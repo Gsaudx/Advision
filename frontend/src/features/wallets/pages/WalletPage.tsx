@@ -3,7 +3,6 @@ import { useParams, useNavigate } from 'react-router-dom';
 import {
   ArrowLeft,
   ChevronRight,
-  TrendingUp,
   Wallet,
   LineChart,
   LayoutGrid,
@@ -11,7 +10,6 @@ import {
   ShieldCheck,
 } from 'lucide-react';
 import { motion } from 'motion/react';
-import { PieChart, Pie, Cell, ResponsiveContainer } from 'recharts';
 import { formatCurrency, formatDateTime } from '@/lib/formatters';
 import { LoadingSpinner } from '@/components/ui/LoadingSpinner';
 import { EmptyState } from '@/components/ui/EmptyState';
@@ -19,6 +17,7 @@ import { useClients } from '@/features/clients-page';
 import { useQueryClient } from '@tanstack/react-query';
 import {
   useWalletById,
+  useWalletPerformance,
   useTransactions,
   useUpdateTransaction,
   useDeleteTransaction,
@@ -27,6 +26,8 @@ import { useWalletProventos } from '@/features/proventos/api';
 import { PositionTable } from '../components/PositionTable';
 import { ProventosTab } from '../components/ProventosTab';
 import { UnifiedTradeModal } from '../components/UnifiedTradeModal';
+import { PerformancePanel } from '../components/PerformancePanel';
+import { ConcentrationPanel } from '../components/ConcentrationPanel';
 import { ContentPanel } from '@/components/ui/ContentPanel';
 import { OptionFilter, FilterSelect } from '../components';
 import { useOptionFilters } from '../hooks/useOptionFilters';
@@ -54,21 +55,6 @@ import { useSentinelStatus } from '../api';
 type SubTab = 'positions' | 'options' | 'strategies';
 type PillTab = 'operations' | 'proventos' | 'ativos';
 type LifecycleAction = 'close' | 'exercise' | 'assignment' | 'expiration';
-
-// MOCKUP: riskProfile e performance30d — remover quando endpoint retornar esses dados
-const MOCK_RISK_PROFILES = ['MODERADA', 'AGRESSIVA', 'CONSERVADORA'] as const;
-const MOCK_PERFORMANCES = [4.2, -1.8, 7.3, 2.1, -0.5, 5.6];
-
-function deterministicIndex(id: string, length: number): number {
-  return id.split('').reduce((acc, c) => acc + c.charCodeAt(0), 0) % length;
-}
-
-// MOCKUP: Asset Allocation — remover quando endpoint retornar composição da carteira
-const ALLOCATION_DATA = [
-  { name: 'Renda Variável', value: 45, color: '#10b981' },
-  { name: 'Imóveis (FII)', value: 30, color: '#0a2540' },
-  { name: 'Renda Fixa', value: 25, color: '#94a3b8' },
-];
 
 function EditTransactionModal({
   tx,
@@ -396,6 +382,9 @@ export default function WalletPage() {
     isFetching,
   } = useWalletById(walletId!);
 
+  const { data: performance, isLoading: isLoadingPerformance } =
+    useWalletPerformance(walletId);
+
   const isRefreshing = isFetching && !isLoading;
 
   const { data: transactions, isLoading: isLoadingTransactions } =
@@ -429,6 +418,9 @@ export default function WalletPage() {
         });
         void queryClient.invalidateQueries({
           queryKey: ['wallet', walletId],
+        });
+        void queryClient.invalidateQueries({
+          queryKey: ['wallet', walletId, 'performance'],
         });
         void queryClient.invalidateQueries({
           queryKey: ['option-positions', walletId],
@@ -531,16 +523,6 @@ export default function WalletPage() {
     openLifecycleModal('assignment', id);
   const handleExpireOption = (id: string) =>
     openLifecycleModal('expiration', id);
-
-  const riskProfile = wallet
-    ? MOCK_RISK_PROFILES[
-        deterministicIndex(wallet.id, MOCK_RISK_PROFILES.length)
-      ]
-    : null;
-  const performance = wallet
-    ? MOCK_PERFORMANCES[deterministicIndex(wallet.id, MOCK_PERFORMANCES.length)]
-    : 0;
-  const isPositivePerf = performance >= 0;
 
   const subTabs: { id: SubTab; label: string; icon: React.ElementType }[] = [
     { id: 'positions', label: 'Ações', icon: LayoutGrid },
@@ -654,19 +636,6 @@ export default function WalletPage() {
               <h2 className="text-4xl font-headline font-extrabold tracking-tight text-on-surface">
                 {wallet.name}
               </h2>
-              {riskProfile && (
-                <span
-                  className={`px-3 py-1 rounded-full text-[10px] font-bold uppercase tracking-wider ${
-                    riskProfile === 'AGRESSIVA'
-                      ? 'bg-error/10 text-error'
-                      : riskProfile === 'CONSERVADORA'
-                        ? 'bg-primary/10 text-primary'
-                        : 'bg-outline-variant/20 text-on-surface-variant'
-                  }`}
-                >
-                  {riskProfile}
-                </span>
-              )}
               {config.canTrade && (
                 <>
                   <button
@@ -696,31 +665,33 @@ export default function WalletPage() {
             <p className="text-[10px] font-bold text-on-surface-variant uppercase tracking-widest">
               Patrimônio Líquido
             </p>
-            <div className="flex items-center justify-end gap-3">
-              <h3 className="text-4xl font-headline font-extrabold text-on-surface tracking-tighter">
-                {formatCurrency(wallet.totalValue, wallet.currency)}
-              </h3>
-              <div
-                className={`flex items-center gap-1 px-2 py-1 rounded-lg text-xs font-bold ${
-                  isPositivePerf
-                    ? 'bg-tertiary/10 text-tertiary'
-                    : 'bg-error/10 text-error'
-                }`}
-              >
-                <TrendingUp size={14} />
-                {isPositivePerf ? '+' : ''}
-                {performance}%
-                <span className="opacity-60 ml-1 font-medium text-[10px]">
-                  30D
-                </span>
-              </div>
-            </div>
+            <h3 className="text-4xl font-headline font-extrabold text-on-surface tracking-tighter">
+              {formatCurrency(wallet.totalValue, wallet.currency)}
+            </h3>
+            <p className="text-xs text-on-surface-variant">
+              Caixa {formatCurrency(wallet.cashBalance, wallet.currency)} ·
+              Investido{' '}
+              {formatCurrency(wallet.totalPositionsValue, wallet.currency)}
+            </p>
             {dataUpdatedAt && (
               <p className="text-xs text-on-surface-variant/40">
                 {formatDateTime(new Date(dataUpdatedAt))}
               </p>
             )}
           </div>
+        </motion.section>
+
+        {/* Performance Panel */}
+        <motion.section
+          initial={{ opacity: 0, y: 20 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ delay: 0.06 }}
+        >
+          <PerformancePanel
+            performance={performance}
+            currency={wallet.currency}
+            isLoading={isLoadingPerformance}
+          />
         </motion.section>
 
         {/* Main Content Grid */}
@@ -732,68 +703,15 @@ export default function WalletPage() {
             transition={{ delay: 0.08 }}
             className="lg:col-span-4 space-y-8"
           >
-            {/* MOCKUP: Asset Allocation — remover quando endpoint retornar composição da carteira */}
-            <div className="bg-surface-container-lowest p-8 rounded-[2.5rem] shadow-sm border border-outline-variant/5">
-              <div className="flex justify-between items-start mb-8">
-                <h3 className="text-lg font-headline font-bold text-on-surface">
-                  Asset Allocation
-                </h3>
-                <span className="bg-tertiary/5 text-tertiary px-3 py-1 rounded-full text-[10px] font-bold uppercase tracking-tighter">
-                  Diversificado
-                </span>
-              </div>
-
-              <div className="h-56 w-full relative mb-8">
-                <ResponsiveContainer width="100%" height="100%">
-                  <PieChart>
-                    <Pie
-                      data={ALLOCATION_DATA}
-                      cx="50%"
-                      cy="50%"
-                      innerRadius={64}
-                      outerRadius={88}
-                      paddingAngle={8}
-                      dataKey="value"
-                      stroke="none"
-                    >
-                      {ALLOCATION_DATA.map((entry, index) => (
-                        <Cell key={`cell-${index}`} fill={entry.color} />
-                      ))}
-                    </Pie>
-                  </PieChart>
-                </ResponsiveContainer>
-                <div className="absolute inset-0 flex flex-col items-center justify-center pointer-events-none">
-                  <p className="text-3xl font-headline font-extrabold text-on-surface">
-                    3
-                  </p>
-                  <p className="text-[10px] uppercase font-bold text-on-surface-variant tracking-widest">
-                    Classes
-                  </p>
-                </div>
-              </div>
-
-              <div className="space-y-4">
-                {ALLOCATION_DATA.map((item) => (
-                  <div
-                    key={item.name}
-                    className="flex items-center justify-between"
-                  >
-                    <div className="flex items-center gap-3">
-                      <div
-                        className="w-2.5 h-2.5 rounded-full"
-                        style={{ backgroundColor: item.color }}
-                      />
-                      <span className="text-sm font-bold text-on-surface">
-                        {item.name}
-                      </span>
-                    </div>
-                    <span className="text-sm font-bold text-on-surface-variant">
-                      {item.value}%
-                    </span>
-                  </div>
-                ))}
-              </div>
-            </div>
+            <ConcentrationPanel
+              byAsset={wallet.concentration.byAsset}
+              byType={wallet.concentration.byType}
+              bySector={wallet.concentration.bySector}
+              positions={wallet.positions}
+              performance={performance}
+              currency={wallet.currency}
+              totalPositionsValue={wallet.totalPositionsValue}
+            />
 
             {/*
              * MOCKUP: Advisor Insight — texto fixo temporário.

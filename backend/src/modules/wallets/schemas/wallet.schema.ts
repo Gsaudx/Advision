@@ -77,6 +77,7 @@ export const PositionResponseSchema = z.object({
   ticker: z.string(),
   name: z.string(),
   type: z.nativeEnum(AssetType),
+  sector: z.string().nullable().optional(),
   quantity: z.number(),
   averagePrice: z.number(),
   currentPrice: z.number().optional(),
@@ -84,21 +85,26 @@ export const PositionResponseSchema = z.object({
   currentValue: z.number().optional(),
   profitLoss: z.number().optional(),
   profitLossPercent: z.number().optional(),
+  weightPercent: z.number().optional(),
   collateralBlocked: z.number().nullable().optional(),
   lastDividendDate: z.string().nullable().optional(),
   priceAtLastDividend: z.number().nullable().optional(),
-  optionDetail: z.object({
-    strikePrice: z.number(),
-    initialStrike: z.number().nullable(),
-    expirationDate: z.string(),
-    optionType: z.string(),
-    exerciseType: z.string(),
-  }).nullable().optional(),
+  optionDetail: z
+    .object({
+      strikePrice: z.number(),
+      initialStrike: z.number().nullable(),
+      expirationDate: z.string(),
+      optionType: z.string(),
+      exerciseType: z.string(),
+      contractSize: z.number(),
+    })
+    .nullable()
+    .optional(),
 });
 export type PositionResponse = z.infer<typeof PositionResponseSchema>;
 
 /**
- * Wallet summary response schema
+ * Wallet summary response schema (list endpoint, enriched with aggregates)
  */
 export const WalletSummaryResponseSchema = z.object({
   id: z.string().uuid(),
@@ -106,13 +112,39 @@ export const WalletSummaryResponseSchema = z.object({
   name: z.string(),
   description: z.string().nullable(),
   currency: z.string(),
+  totalPositionsValue: z.number(),
+  totalValue: z.number(),
+  totalInvested: z.number(),
+  totalPnl: z.number(),
+  totalPnlPercent: z.number(),
   createdAt: z.string(),
   updatedAt: z.string(),
 });
 export type WalletSummaryResponse = z.infer<typeof WalletSummaryResponseSchema>;
 
 /**
- * Full wallet response with positions and calculated values
+ * Concentration breakdown item (asset / type / sector)
+ */
+export const ConcentrationItemSchema = z.object({
+  key: z.string(),
+  label: z.string(),
+  value: z.number(),
+  percent: z.number(),
+});
+export type ConcentrationItem = z.infer<typeof ConcentrationItemSchema>;
+
+/**
+ * Concentration breakdown over invested positions only (cash excluded)
+ */
+export const WalletConcentrationSchema = z.object({
+  byAsset: z.array(ConcentrationItemSchema),
+  byType: z.array(ConcentrationItemSchema),
+  bySector: z.array(ConcentrationItemSchema),
+});
+export type WalletConcentration = z.infer<typeof WalletConcentrationSchema>;
+
+/**
+ * Full wallet response with positions, aggregates and concentration
  */
 export const WalletResponseSchema = WalletSummaryResponseSchema.extend({
   positions: z.array(PositionResponseSchema),
@@ -121,8 +153,41 @@ export const WalletResponseSchema = WalletSummaryResponseSchema.extend({
   totalCostBasis: z.number(),
   totalMarketValue: z.number(),
   totalUnrealizedPL: z.number(),
+  concentration: WalletConcentrationSchema,
 });
 export type WalletResponse = z.infer<typeof WalletResponseSchema>;
+
+/**
+ * Per-asset performance breakdown
+ */
+export const PerformanceByAssetSchema = z.object({
+  assetId: z.string().uuid(),
+  ticker: z.string(),
+  name: z.string(),
+  type: z.nativeEnum(AssetType),
+  realized: z.number(),
+  unrealized: z.number(),
+  dividends: z.number(),
+  total: z.number(),
+});
+export type PerformanceByAsset = z.infer<typeof PerformanceByAssetSchema>;
+
+/**
+ * Wallet performance response: realized + unrealized + dividends, with breakdown
+ */
+export const WalletPerformanceResponseSchema = z.object({
+  walletId: z.string().uuid(),
+  realized: z.number(),
+  unrealized: z.number(),
+  dividends: z.number(),
+  total: z.number(),
+  totalInvested: z.number(),
+  totalPercent: z.number(),
+  byAsset: z.array(PerformanceByAssetSchema),
+});
+export type WalletPerformanceResponse = z.infer<
+  typeof WalletPerformanceResponseSchema
+>;
 
 /**
  * Wallet list response schema
@@ -144,6 +209,10 @@ export class WalletSummaryApiResponseDto extends createZodDto(
 
 export class WalletListApiResponseDto extends createZodDto(
   createApiResponseSchema(WalletListResponseSchema),
+) {}
+
+export class WalletPerformanceApiResponseDto extends createZodDto(
+  createApiResponseSchema(WalletPerformanceResponseSchema),
 ) {}
 
 export class TransactionApiResponseDto extends createZodDto(
@@ -230,7 +299,9 @@ export const HistoricalPriceResponseSchema = z.object({
   strike: z.number().nullable().optional(),
   message: z.string().optional(),
 });
-export type HistoricalPriceResponse = z.infer<typeof HistoricalPriceResponseSchema>;
+export type HistoricalPriceResponse = z.infer<
+  typeof HistoricalPriceResponseSchema
+>;
 
 export class HistoricalPriceApiResponseDto extends createZodDto(
   createApiResponseSchema(HistoricalPriceResponseSchema),
@@ -244,8 +315,12 @@ export const UpdateTransactionInputSchema = z.object({
   price: z.number().positive().optional(),
   quantity: z.number().positive().optional(),
 });
-export type UpdateTransactionInput = z.infer<typeof UpdateTransactionInputSchema>;
-export class UpdateTransactionInputDto extends createZodDto(UpdateTransactionInputSchema) {}
+export type UpdateTransactionInput = z.infer<
+  typeof UpdateTransactionInputSchema
+>;
+export class UpdateTransactionInputDto extends createZodDto(
+  UpdateTransactionInputSchema,
+) {}
 
 /**
  * Expire option input schema
@@ -255,4 +330,6 @@ export const ExpireOptionInputSchema = z.object({
   expiredAt: z.string(),
 });
 export type ExpireOptionInput = z.infer<typeof ExpireOptionInputSchema>;
-export class ExpireOptionInputDto extends createZodDto(ExpireOptionInputSchema) {}
+export class ExpireOptionInputDto extends createZodDto(
+  ExpireOptionInputSchema,
+) {}

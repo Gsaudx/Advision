@@ -23,8 +23,11 @@ import { MarketDataProvider } from '../providers';
 import { OpLabMarketService } from '../providers/oplab-market.service';
 import { AuditService } from './audit.service';
 import { WalletAccessService } from './wallet-access.service';
+import { PerformanceService } from './performance.service';
 import type {
   CreateWalletInput,
+  ConcentrationItem,
+  WalletConcentration,
   WalletResponse,
   WalletSummaryResponse,
   PositionResponse,
@@ -57,41 +60,64 @@ export class WalletsService {
     private readonly proventosCalc: ProventosCalculationService,
     private readonly opLabService: OpLabMarketService,
     private readonly sentinelService: SentinelOptionService,
+    private readonly performanceService: PerformanceService,
   ) {}
 
   /**
-   * Format a wallet for API response
+   * Format a wallet summary for API response. Aggregates default to zero when not provided
+   * (e.g. right after creation, before positions exist).
    */
-  private formatWalletSummary(wallet: Wallet): WalletSummaryResponse {
+  private formatWalletSummary(
+    wallet: Wallet,
+    aggregates?: {
+      totalPositionsValue: number;
+      totalInvested: number;
+      totalPnl: number;
+      totalPnlPercent: number;
+    },
+  ): WalletSummaryResponse {
+    const totalPositionsValue = aggregates?.totalPositionsValue ?? 0;
     return {
       id: wallet.id,
       clientId: wallet.clientId,
       name: wallet.name,
       description: wallet.description,
       currency: wallet.currency,
+      totalPositionsValue,
+      totalValue: totalPositionsValue,
+      totalInvested: aggregates?.totalInvested ?? 0,
+      totalPnl: aggregates?.totalPnl ?? 0,
+      totalPnlPercent: aggregates?.totalPnlPercent ?? 0,
       createdAt: wallet.createdAt.toISOString(),
       updatedAt: wallet.updatedAt.toISOString(),
     };
   }
 
   /**
-   * Format a position for API response with current prices
+   * Format a position for API response with current prices and weight in the wallet.
+   *
+   * Para opções, position.quantity é o número de contratos e position.averagePrice é o prêmio
+   * por ação. Multiplica-se pelo `optionDetail.contractSize` (lote do contrato — geralmente 100
+   * no B3, mas pode variar após eventos corporativos) para obter custo e valor a mercado reais.
    */
   private formatPosition(
     position: PositionWithAsset,
-    currentPrice?: number,
+    currentPrice: number | undefined,
+    totalPositionsValue: number,
   ): PositionResponse {
     const quantity = Number(position.quantity);
     const averagePrice = Number(position.averagePrice);
-    const totalCost = quantity * averagePrice;
-
     const od = position.asset.optionDetail;
+    const multiplier = od ? od.contractSize : 1;
+    const totalCost = quantity * averagePrice * multiplier;
+
     const result: PositionResponse = {
       id: position.id,
       assetId: position.assetId,
       ticker: position.asset.ticker,
       name: position.asset.name,
       type: position.asset.type,
+      sector: position.asset.sector,
       quantity,
       averagePrice,
       totalCost,
@@ -106,6 +132,7 @@ export class WalletsService {
             expirationDate: od.expirationDate.toISOString().split('T')[0],
             optionType: od.optionType,
             exerciseType: od.exerciseType,
+            contractSize: od.contractSize,
           }
         : null,
     };
@@ -114,9 +141,9 @@ export class WalletsService {
       const referencePrice = position.priceAtLastDividend
         ? Number(position.priceAtLastDividend)
         : averagePrice;
-      const referenceCost = quantity * referencePrice;
+      const referenceCost = quantity * referencePrice * multiplier;
 
-      const currentValue = quantity * currentPrice;
+      const currentValue = quantity * currentPrice * multiplier;
       const profitLoss = currentValue - referenceCost;
       const profitLossPercent =
         referenceCost > 0 ? (profitLoss / referenceCost) * 100 : 0;
@@ -125,9 +152,81 @@ export class WalletsService {
       result.currentValue = currentValue;
       result.profitLoss = profitLoss;
       result.profitLossPercent = profitLossPercent;
+      result.weightPercent =
+        totalPositionsValue > 0
+          ? (currentValue / totalPositionsValue) * 100
+          : 0;
     }
 
     return result;
+  }
+
+  /**
+   * Build concentration breakdowns over invested positions only (cash excluded).
+   */
+  private buildConcentration(
+    positions: PositionResponse[],
+    totalPositionsValue: number,
+  ): WalletConcentration {
+    if (totalPositionsValue <= 0 || positions.length === 0) {
+      return { byAsset: [], byType: [], bySector: [] };
+    }
+
+    const valueOf = (p: PositionResponse): number =>
+      p.currentValue ?? p.totalCost;
+
+    const byAsset: ConcentrationItem[] = positions
+      .map((p) => {
+        const value = valueOf(p);
+        return {
+          key: p.ticker,
+          label: p.ticker,
+          value,
+          percent: (value / totalPositionsValue) * 100,
+        };
+      })
+      .sort((a, b) => b.value - a.value);
+
+    const byType = this.groupConcentration(
+      positions,
+      totalPositionsValue,
+      (p) => (p.type === 'STOCK' ? 'STOCK' : 'OPTION'),
+    ).map((item) => ({
+      ...item,
+      label: item.key === 'STOCK' ? 'Ações' : 'Opções',
+    }));
+
+    const bySector = this.groupConcentration(
+      positions,
+      totalPositionsValue,
+      (p) => p.sector ?? 'Sem setor',
+    );
+
+    return { byAsset, byType, bySector };
+  }
+
+  private groupConcentration(
+    positions: PositionResponse[],
+    totalPositionsValue: number,
+    keyFn: (p: PositionResponse) => string,
+  ): ConcentrationItem[] {
+    const valueOf = (p: PositionResponse): number =>
+      p.currentValue ?? p.totalCost;
+
+    const groups = new Map<string, number>();
+    for (const p of positions) {
+      const key = keyFn(p);
+      groups.set(key, (groups.get(key) ?? 0) + valueOf(p));
+    }
+
+    return Array.from(groups.entries())
+      .map(([key, value]) => ({
+        key,
+        label: key,
+        value,
+        percent: (value / totalPositionsValue) * 100,
+      }))
+      .sort((a, b) => b.value - a.value);
   }
 
   /**
@@ -206,11 +305,13 @@ export class WalletsService {
       totalCostBasis: 0,
       totalMarketValue: 0,
       totalUnrealizedPL: 0,
+      concentration: { byAsset: [], byType: [], bySector: [] },
     };
   }
 
   /**
-   * List all wallets accessible by the actor
+   * List all wallets accessible by the actor, enriched with totalValue / totalPnl aggregates.
+   * Fetches batched prices once across all tickers and runs performance totals in parallel.
    */
   async findAll(
     actor: CurrentUserData,
@@ -231,7 +332,61 @@ export class WalletsService {
       orderBy: { createdAt: 'desc' },
     });
 
-    return wallets.map((wallet) => this.formatWalletSummary(wallet));
+    if (wallets.length === 0) return [];
+
+    const walletIds = wallets.map((w) => w.id);
+    const positions = await this.prisma.position.findMany({
+      where: { walletId: { in: walletIds }, quantity: { not: 0 } },
+      include: { asset: { include: { optionDetail: true } } },
+    });
+
+    const uniqueTickers = Array.from(
+      new Set(positions.map((p) => p.asset.ticker)),
+    );
+    const prices =
+      uniqueTickers.length > 0
+        ? await this.marketData.getBatchPrices(uniqueTickers)
+        : {};
+
+    const positionsByWallet = new Map<string, typeof positions>();
+    for (const position of positions) {
+      const list = positionsByWallet.get(position.walletId) ?? [];
+      list.push(position);
+      positionsByWallet.set(position.walletId, list);
+    }
+
+    const totalsByWallet = await Promise.all(
+      wallets.map(async (wallet) => {
+        const walletPositions = positionsByWallet.get(wallet.id) ?? [];
+        const totalPositionsValue = walletPositions.reduce((sum, p) => {
+          const price = prices[p.asset.ticker];
+          const qty = Number(p.quantity);
+          const multiplier = p.asset.optionDetail?.contractSize ?? 1;
+          if (price !== undefined) return sum + qty * price * multiplier;
+          return sum + qty * Number(p.averagePrice) * multiplier;
+        }, 0);
+
+        const totals = await this.performanceService.computeTotals(wallet.id, {
+          openPositions: walletPositions,
+          prices,
+        });
+
+        return {
+          walletId: wallet.id,
+          totalPositionsValue,
+          totalInvested: totals.totalInvested,
+          totalPnl: totals.total,
+          totalPnlPercent: totals.totalPercent,
+        };
+      }),
+    );
+
+    const aggregatesById = new Map(totalsByWallet.map((t) => [t.walletId, t]));
+
+    return wallets.map((wallet) => {
+      const aggregates = aggregatesById.get(wallet.id);
+      return this.formatWalletSummary(wallet, aggregates);
+    });
   }
 
   /**
@@ -246,7 +401,7 @@ export class WalletsService {
   }
 
   /**
-   * Get wallet dashboard with positions and current market prices
+   * Get wallet dashboard with positions, current prices, aggregates and concentration.
    */
   async getDashboard(
     walletId: string,
@@ -261,20 +416,35 @@ export class WalletsService {
       include: { asset: { include: { optionDetail: true } } },
     });
 
-    // Get current prices for all positions
     const tickers = positions.map((p) => p.asset.ticker);
     const prices =
       tickers.length > 0 ? await this.marketData.getBatchPrices(tickers) : {};
 
-    // Format positions with prices
+    // First pass: compute totalPositionsValue so we can derive weightPercent on the second pass
+    const totalPositionsValue = positions.reduce((sum, position) => {
+      const price = prices[position.asset.ticker];
+      const qty = Number(position.quantity);
+      const multiplier = position.asset.optionDetail?.contractSize ?? 1;
+      if (price !== undefined) return sum + qty * price * multiplier;
+      return sum + qty * Number(position.averagePrice) * multiplier;
+    }, 0);
+
     const formattedPositions = positions.map((position) =>
-      this.formatPosition(position, prices[position.asset.ticker]),
+      this.formatPosition(
+        position,
+        prices[position.asset.ticker],
+        totalPositionsValue,
+      ),
     );
 
-    // Calculate totals
-    const totalPositionsValue = formattedPositions.reduce(
-      (sum, p) => sum + (p.currentValue ?? p.totalCost),
-      0,
+    const totals = await this.performanceService.computeTotals(walletId, {
+      openPositions: positions,
+      prices,
+    });
+
+    const concentration = this.buildConcentration(
+      formattedPositions,
+      totalPositionsValue,
     );
     const totalCostBasis = formattedPositions.reduce(
       (sum, p) => sum + p.totalCost,
@@ -288,13 +458,19 @@ export class WalletsService {
     const totalValue = totalMarketValue;
 
     return {
-      ...this.formatWalletSummary(wallet),
+      ...this.formatWalletSummary(wallet, {
+        totalPositionsValue,
+        totalInvested: totals.totalInvested,
+        totalPnl: totals.total,
+        totalPnlPercent: totals.totalPercent,
+      }),
       positions: formattedPositions,
       totalPositionsValue,
       totalValue,
       totalCostBasis,
       totalMarketValue,
       totalUnrealizedPL,
+      concentration,
     };
   }
 
@@ -392,12 +568,23 @@ export class WalletsService {
    * para opções é o prêmio pago e o strike vigente no dia.
    * TÉCNICO: Resolve o tipo do ativo e delega à OpLab (ação) ou SentinelOptionService (opção) para buscar o dado histórico.
    */
-  async getHistoricalPrice(ticker: string, date: string): Promise<HistoricalPriceResponse> {
+  async getHistoricalPrice(
+    ticker: string,
+    date: string,
+  ): Promise<HistoricalPriceResponse> {
     const asset = await this.prisma.asset.findUnique({ where: { ticker } });
 
     if (!asset || asset.type === 'STOCK') {
-      const price = await this.opLabService.getHistoricalClose(ticker, new Date(date));
-      if (!price) return { type: 'STOCK', price: null, message: 'Sem dados para esta data' };
+      const price = await this.opLabService.getHistoricalClose(
+        ticker,
+        new Date(date),
+      );
+      if (!price)
+        return {
+          type: 'STOCK',
+          price: null,
+          message: 'Sem dados para esta data',
+        };
       return { type: 'STOCK', price };
     }
 
@@ -408,7 +595,9 @@ export class WalletsService {
       });
       if (!optDetail) return { type: 'OPTION', price: null, strike: null };
 
-      let history: Awaited<ReturnType<typeof this.sentinelService.fetchHistory>> = [];
+      let history: Awaited<
+        ReturnType<typeof this.sentinelService.fetchHistory>
+      > = [];
       try {
         history = await this.sentinelService.fetchHistory(
           optDetail.underlyingAsset.ticker,
@@ -417,12 +606,26 @@ export class WalletsService {
           ticker,
         );
       } catch {
-        return { type: 'OPTION', price: null, strike: null, message: 'Sem dados para esta data' };
+        return {
+          type: 'OPTION',
+          price: null,
+          strike: null,
+          message: 'Sem dados para esta data',
+        };
       }
       if (!history.length) {
-        return { type: 'OPTION', price: null, strike: null, message: 'Sem dados para esta data' };
+        return {
+          type: 'OPTION',
+          price: null,
+          strike: null,
+          message: 'Sem dados para esta data',
+        };
       }
-      return { type: 'OPTION', price: history[0].premium ?? null, strike: history[0].strike };
+      return {
+        type: 'OPTION',
+        price: history[0].premium ?? null,
+        strike: history[0].strike,
+      };
     }
 
     return { type: 'STOCK', price: null };
