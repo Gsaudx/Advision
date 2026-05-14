@@ -66,6 +66,14 @@ const transactionConfig: Record<TransactionType, TransactionStyle> = {
     valuePrefix: '-',
     valueColor: 'text-error',
   },
+  EXPIRED: {
+    icon: Hourglass,
+    bgColor: 'bg-surface-container-high',
+    iconColor: 'text-on-surface-variant',
+    borderColor: 'border-outline-variant/30',
+    valuePrefix: '',
+    valueColor: 'text-on-surface-variant',
+  },
   DIVIDEND: {
     icon: TrendingUp,
     bgColor: 'bg-tertiary/20',

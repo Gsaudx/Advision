@@ -48,7 +48,8 @@ export class AssetResolverService {
     // 5. Upsert asset (handles race conditions)
     try {
       if (metadata.type === 'OPTION' && underlyingAssetId) {
-        // Create option with option detail
+        // Create option with option detail. contractSize defaults to 100 (B3 standard) when
+        // the provider couldn't surface it — this is the safe fallback for legacy / brapi data.
         const asset = await this.prisma.asset.upsert({
           where: { ticker },
           create: {
@@ -65,6 +66,9 @@ export class AssetResolverService {
                 strikePrice: metadata.strikePrice ?? 0,
                 initialStrike: metadata.strikePrice ?? 0,
                 expirationDate: metadata.expirationDate ?? new Date(),
+                ...(metadata.contractSize !== undefined && {
+                  contractSize: metadata.contractSize,
+                }),
               },
             },
           },

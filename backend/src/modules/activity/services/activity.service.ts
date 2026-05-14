@@ -1,5 +1,6 @@
-import { Injectable } from '@nestjs/common';
+import { Injectable, Inject } from '@nestjs/common';
 import { PrismaService } from '@/shared/prisma/prisma.service';
+import { MarketDataProvider } from '@/modules/wallets/providers';
 import type {
   ActivityList,
   ActivityItem,
@@ -98,7 +99,11 @@ function getDescription(eventType: string, payload: unknown): string {
 
 @Injectable()
 export class ActivityService {
-  constructor(private readonly prisma: PrismaService) {}
+  constructor(
+    private readonly prisma: PrismaService,
+    @Inject('MARKET_DATA_PROVIDER')
+    private readonly marketData: MarketDataProvider,
+  ) {}
 
   /**
    * Get recent activity for an advisor (all their clients' events)
@@ -216,7 +221,7 @@ export class ActivityService {
   }
 
   /**
-   * Get dashboard metrics for an advisor
+   * Get dashboard metrics for an advisor. totalWalletValue includes cash + positions at market.
    */
   async getAdvisorMetrics(advisorId: string): Promise<AdvisorMetrics> {
     // Count clients
@@ -224,7 +229,7 @@ export class ActivityService {
       where: { advisorId },
     });
 
-    // Get all wallets for advisor's clients and sum cash balances
+    // Get all wallets for advisor's clients
     const wallets = await this.prisma.wallet.findMany({
       where: {
         client: { advisorId },
@@ -235,12 +240,40 @@ export class ActivityService {
       },
     });
 
+    const walletIds = wallets.map((w) => w.id);
+
+    // Add market value of open positions to the cash balances. For options the contract
+    // multiplier (`optionDetail.contractSize`) is part of the SSOT and must be included.
+    const positions =
+      walletIds.length > 0
+        ? await this.prisma.position.findMany({
+            where: { walletId: { in: walletIds }, quantity: { not: 0 } },
+            include: { asset: { include: { optionDetail: true } } },
+          })
+        : [];
+
+    const uniqueTickers = Array.from(
+      new Set(positions.map((p) => p.asset.ticker)),
+    );
+    const prices =
+      uniqueTickers.length > 0
+        ? await this.marketData.getBatchPrices(uniqueTickers)
+        : {};
+
+    const totalPositionsValue = positions.reduce((sum, p) => {
+      const price = prices[p.asset.ticker];
+      const qty = Number(p.quantity);
+      const multiplier = p.asset.optionDetail?.contractSize ?? 1;
+      if (price !== undefined) return sum + qty * price * multiplier;
+      return sum + qty * Number(p.averagePrice) * multiplier;
+    }, 0);
+
     const totalCashBalance = wallets.reduce(
       (sum, w) => sum + Number(w.cashBalance),
       0,
     );
 
-    const walletIds = wallets.map((w) => w.id);
+    const totalWalletValue = totalCashBalance + totalPositionsValue;
 
     // Count pending structured operations
     const pendingOperationsCount =
@@ -280,7 +313,7 @@ export class ActivityService {
 
     return {
       clientCount,
-      totalWalletValue: totalCashBalance,
+      totalWalletValue,
       pendingOperationsCount,
       expiringOptionsCount,
     };

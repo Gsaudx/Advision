@@ -7,11 +7,12 @@ import {
   RefreshCw,
   Search,
   Filter,
-  ShieldCheck,
-  MessageSquare,
+  TrendingUp,
+  TrendingDown,
+  Minus,
 } from 'lucide-react';
 import { motion } from 'motion/react';
-import { formatCurrency } from '@/lib/formatters';
+import { formatCurrency, formatPercent } from '@/lib/formatters';
 import { LoadingSpinner } from '@/components/ui/LoadingSpinner';
 import { EmptyState } from '@/components/ui/EmptyState';
 import { useClients } from '@/features/clients-page';
@@ -66,10 +67,41 @@ export default function WalletsPage() {
     return options;
   }, [clients]);
 
-  const totalAUM = useMemo(
-    () => wallets.reduce((acc, w) => acc + w.cashBalance, 0),
+  const consolidated = useMemo(
+    () =>
+      wallets.reduce(
+        (acc, w) => ({
+          totalValue: acc.totalValue + w.totalValue,
+          invested: acc.invested + w.totalInvested,
+          pnl: acc.pnl + w.totalPnl,
+        }),
+        { totalValue: 0, invested: 0, pnl: 0 },
+      ),
     [wallets],
   );
+
+  const consolidatedPnlPercent =
+    consolidated.invested > 0
+      ? (consolidated.pnl / consolidated.invested) * 100
+      : 0;
+  const pnlTone =
+    consolidated.pnl > 0
+      ? 'positive'
+      : consolidated.pnl < 0
+        ? 'negative'
+        : 'neutral';
+  const PnlIcon =
+    pnlTone === 'positive'
+      ? TrendingUp
+      : pnlTone === 'negative'
+        ? TrendingDown
+        : Minus;
+  const pnlToneClass =
+    pnlTone === 'positive'
+      ? 'text-tertiary'
+      : pnlTone === 'negative'
+        ? 'text-error'
+        : 'text-on-surface-variant';
 
   const handleOpenWalletDetails = (wallet: WalletSummary) => {
     navigate(`/wallets/${wallet.id}`);
@@ -234,15 +266,14 @@ export default function WalletsPage() {
           )}
         </motion.div>
 
-        {/* Bottom Section */}
-        <motion.section
-          initial={{ opacity: 0, y: 20 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ delay: 0.15 }}
-          className="grid grid-cols-1 lg:grid-cols-12 gap-6"
-        >
-          {/* Visão Consolidada */}
-          <div className="lg:col-span-8 bg-surface-container-low/50 p-8 rounded-[2.5rem] border border-outline-variant/10">
+        {/* Visão Consolidada */}
+        {wallets.length > 0 && (
+          <motion.section
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ delay: 0.15 }}
+            className="bg-surface-container-low/50 p-8 rounded-[2.5rem] border border-outline-variant/10"
+          >
             <h4 className="text-xl font-headline font-bold text-on-surface mb-8">
               Visão Consolidada
             </h4>
@@ -252,49 +283,38 @@ export default function WalletsPage() {
                   Total sob Gestão
                 </p>
                 <p className="text-2xl font-headline font-extrabold text-on-surface">
-                  {formatCurrency(totalAUM)}
+                  {formatCurrency(consolidated.totalValue)}
                 </p>
               </div>
-              {/* MOCKUP: Ativos Ativos — remover quando endpoint retornar esse dado */}
               <div className="space-y-2">
                 <p className="text-[10px] font-bold text-on-surface-variant uppercase tracking-widest">
-                  Ativos Ativos
+                  Capital Investido
                 </p>
                 <p className="text-2xl font-headline font-extrabold text-on-surface">
-                  — Títulos
+                  {formatCurrency(consolidated.invested)}
                 </p>
               </div>
-              {/* MOCKUP: Risco Médio — remover quando endpoint retornar esse dado */}
               <div className="space-y-2">
                 <p className="text-[10px] font-bold text-on-surface-variant uppercase tracking-widest">
-                  Risco Médio
+                  Lucro / Prejuízo
                 </p>
-                <p className="text-2xl font-headline font-extrabold text-primary">
-                  Moderado
+                <div className="flex items-center gap-2">
+                  <PnlIcon size={18} className={pnlToneClass} />
+                  <p
+                    className={`text-2xl font-headline font-extrabold ${pnlToneClass}`}
+                  >
+                    {consolidated.pnl > 0 ? '+' : ''}
+                    {formatCurrency(consolidated.pnl)}
+                  </p>
+                </div>
+                <p className={`text-xs font-medium ${pnlToneClass}`}>
+                  {consolidatedPnlPercent > 0 ? '+' : ''}
+                  {formatPercent(consolidatedPnlPercent)} sobre custo
                 </p>
               </div>
             </div>
-          </div>
-
-          {/* MOCKUP: Private Banking Tier — remover quando funcionalidade estiver disponível */}
-          <div className="lg:col-span-4 bg-primary-container p-8 rounded-[2.5rem] border border-primary/20 relative overflow-hidden flex flex-col justify-between">
-            <div className="relative z-10 w-10 h-10 bg-primary/20 rounded-xl flex items-center justify-center text-primary mb-6">
-              <ShieldCheck size={20} />
-            </div>
-            <div className="relative z-10">
-              <h4 className="text-xl font-headline font-bold text-on-surface mb-2">
-                Private Banking Tier
-              </h4>
-              <p className="text-sm text-on-surface-variant leading-relaxed">
-                Acesso a taxas preferenciais e fundos exclusivos de liquidez
-                restrita.
-              </p>
-            </div>
-            <div className="absolute bottom-6 right-6 w-12 h-12 bg-surface-container-lowest/20 rounded-2xl flex items-center justify-center text-on-surface backdrop-blur-sm border border-outline-variant/20 hover:bg-surface-container-lowest/30 transition-colors cursor-pointer">
-              <MessageSquare size={20} />
-            </div>
-          </div>
-        </motion.section>
+          </motion.section>
+        )}
       </div>
     </>
   );

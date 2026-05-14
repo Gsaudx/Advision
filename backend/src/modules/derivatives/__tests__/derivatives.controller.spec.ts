@@ -66,7 +66,9 @@ describe('DerivativesController', () => {
           useValue: {
             resolveUnderlyingTicker: jest.fn().mockResolvedValue(null),
             checkSentinel: jest.fn().mockResolvedValue([]),
-            triggerRetroactiveScanIfNeeded: jest.fn().mockResolvedValue(undefined),
+            triggerRetroactiveScanIfNeeded: jest
+              .fn()
+              .mockResolvedValue(undefined),
             propagateDividendsToWallet: jest.fn().mockResolvedValue(undefined),
           },
         },

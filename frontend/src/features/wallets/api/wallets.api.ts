@@ -3,6 +3,7 @@ import type { ApiResponse } from '@/types/api-response';
 import type {
   Wallet,
   WalletSummary,
+  WalletPerformance,
   CreateWalletInput,
   CashOperationInput,
   TradeInput,
@@ -30,6 +31,13 @@ export const walletsApi = {
 
   getById: async (id: string): Promise<Wallet> => {
     const response = await api.get<ApiResponse<Wallet>>(`/wallets/${id}`);
+    return response.data.data;
+  },
+
+  getPerformance: async (id: string): Promise<WalletPerformance> => {
+    const response = await api.get<ApiResponse<WalletPerformance>>(
+      `/wallets/${id}/performance`,
+    );
     return response.data.data;
   },
 

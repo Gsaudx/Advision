@@ -104,6 +104,63 @@ export interface paths {
     patch?: never;
     trace?: never;
   };
+  '/proventos/sync': {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    get?: never;
+    put?: never;
+    /** [TEMP] Força sync de proventos da BRAPI */
+    post: operations['ProventosController_forceSync'];
+    delete?: never;
+    options?: never;
+    head?: never;
+    patch?: never;
+    trace?: never;
+  };
+  '/proventos/wallet/{walletId}': {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    /**
+     * Proventos detalhados de uma carteira
+     * @description Calcula e retorna todos os eventos de dividendo recebidos pelas posições STOCK da carteira, com a quantidade histórica e total recebido por evento.
+     */
+    get: operations['ProventosController_getWalletProventos'];
+    put?: never;
+    post?: never;
+    delete?: never;
+    options?: never;
+    head?: never;
+    patch?: never;
+    trace?: never;
+  };
+  '/proventos/summary': {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    /**
+     * Resumo de proventos por ticker de uma carteira
+     * @description Retorna os totais de proventos recebidos agrupados por ticker.
+     */
+    get: operations['ProventosController_getProventosSummary'];
+    put?: never;
+    post?: never;
+    delete?: never;
+    options?: never;
+    head?: never;
+    patch?: never;
+    trace?: never;
+  };
   '/proventos': {
     parameters: {
       query?: never;
@@ -308,6 +365,23 @@ export interface paths {
     patch?: never;
     trace?: never;
   };
+  '/wallets/assets/{ticker}/historical-price': {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    /** Preço histórico do ativo em uma data específica */
+    get: operations['WalletsController_getHistoricalPrice'];
+    put?: never;
+    post?: never;
+    delete?: never;
+    options?: never;
+    head?: never;
+    patch?: never;
+    trace?: never;
+  };
   '/wallets/assets/{ticker}/price': {
     parameters: {
       query?: never;
@@ -342,6 +416,43 @@ export interface paths {
     get: operations['WalletsController_findOne'];
     put?: never;
     post?: never;
+    delete?: never;
+    options?: never;
+    head?: never;
+    patch?: never;
+    trace?: never;
+  };
+  '/wallets/{id}/performance': {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    /**
+     * Performance da carteira
+     * @description Retorna lucro/prejuízo realizado, não realizado e proventos recebidos, com breakdown por ativo. Rentabilidade % calculada sobre o custo investido (Σ totalCost das posições abertas).
+     */
+    get: operations['WalletsController_getPerformance'];
+    put?: never;
+    post?: never;
+    delete?: never;
+    options?: never;
+    head?: never;
+    patch?: never;
+    trace?: never;
+  };
+  '/wallets/{id}/sentinel/check': {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    get?: never;
+    put?: never;
+    /** Dispara verificação da sentinela para a carteira */
+    post: operations['WalletsController_triggerSentinelCheck'];
     delete?: never;
     options?: never;
     head?: never;
@@ -422,6 +533,84 @@ export interface paths {
      * @description Executa uma ordem de venda de um ativo.
      */
     post: operations['WalletsController_sell'];
+    delete?: never;
+    options?: never;
+    head?: never;
+    patch?: never;
+    trace?: never;
+  };
+  '/wallets/{id}/transactions/{txId}': {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    get?: never;
+    /**
+     * Editar transação
+     * @description Atualiza data, preço ou quantidade de uma transação existente.
+     */
+    put: operations['WalletsController_updateTransaction'];
+    post?: never;
+    /**
+     * Deletar transação
+     * @description Remove uma transação e reverte seu efeito na carteira.
+     */
+    delete: operations['WalletsController_deleteTransaction'];
+    options?: never;
+    head?: never;
+    patch?: never;
+    trace?: never;
+  };
+  '/wallets/{id}/trade/expire': {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    get?: never;
+    put?: never;
+    /**
+     * Registrar opção como vencida
+     * @description Cria transação EXPIRED (preço = 0) e zera a posição.
+     */
+    post: operations['WalletsController_expireOption'];
+    delete?: never;
+    options?: never;
+    head?: never;
+    patch?: never;
+    trace?: never;
+  };
+  '/wallets/{id}/sentinel/status': {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    /** Retorna status de monitoramento sentinela por ativo da carteira */
+    get: operations['SentinelEventsController_sentinelStatus'];
+    put?: never;
+    post?: never;
+    delete?: never;
+    options?: never;
+    head?: never;
+    patch?: never;
+    trace?: never;
+  };
+  '/wallets/{id}/events': {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    /** Stream SSE de eventos da sentinela para uma carteira */
+    get: operations['SentinelEventsController_events'];
+    put?: never;
+    post?: never;
     delete?: never;
     options?: never;
     head?: never;
@@ -841,6 +1030,36 @@ export interface components {
       email: string;
       password: string;
     };
+    WalletProventosApiResponseDto: {
+      /** @enum {boolean} */
+      success: true;
+      data?: {
+        /** Format: uuid */
+        walletId: string;
+        items: {
+          ticker: string;
+          dividendType: string | null;
+          exDividendDate: string;
+          paymentDate: string | null;
+          valuePerShare: number;
+          quantityAtDate: number;
+          totalReceived: number;
+        }[];
+        totalReceived: number;
+      };
+      message?: string;
+    };
+    ProventosSummaryApiResponseDto: {
+      /** @enum {boolean} */
+      success: true;
+      data?: {
+        ticker: string;
+        totalReceived: number;
+        eventsCount: number;
+        lastDividendDate: string | null;
+      }[];
+      message?: string;
+    };
     DividendEventListApiResponseDto: {
       /** @enum {boolean} */
       success: true;
@@ -960,6 +1179,11 @@ export interface components {
         description: string | null;
         currency: string;
         cashBalance: number;
+        totalPositionsValue: number;
+        totalValue: number;
+        totalInvested: number;
+        totalPnl: number;
+        totalPnlPercent: number;
         createdAt: string;
         updatedAt: string;
         positions: {
@@ -971,6 +1195,7 @@ export interface components {
           name: string;
           /** @enum {string} */
           type: 'STOCK' | 'OPTION';
+          sector?: string | null;
           quantity: number;
           averagePrice: number;
           currentPrice?: number;
@@ -978,10 +1203,39 @@ export interface components {
           currentValue?: number;
           profitLoss?: number;
           profitLossPercent?: number;
+          weightPercent?: number;
           collateralBlocked?: number | null;
+          lastDividendDate?: string | null;
+          priceAtLastDividend?: number | null;
+          optionDetail?: {
+            strikePrice: number;
+            initialStrike: number | null;
+            expirationDate: string;
+            optionType: string;
+            exerciseType: string;
+            contractSize: number;
+          } | null;
         }[];
-        totalPositionsValue: number;
-        totalValue: number;
+        concentration: {
+          byAsset: {
+            key: string;
+            label: string;
+            value: number;
+            percent: number;
+          }[];
+          byType: {
+            key: string;
+            label: string;
+            value: number;
+            percent: number;
+          }[];
+          bySector: {
+            key: string;
+            label: string;
+            value: number;
+            percent: number;
+          }[];
+        };
       };
       message?: string;
     };
@@ -997,6 +1251,11 @@ export interface components {
         description: string | null;
         currency: string;
         cashBalance: number;
+        totalPositionsValue: number;
+        totalValue: number;
+        totalInvested: number;
+        totalPnl: number;
+        totalPnlPercent: number;
         createdAt: string;
         updatedAt: string;
       }[];
@@ -1018,6 +1277,18 @@ export interface components {
       }[];
       message?: string;
     };
+    HistoricalPriceApiResponseDto: {
+      /** @enum {boolean} */
+      success: true;
+      data?: {
+        /** @enum {string} */
+        type: 'STOCK' | 'OPTION';
+        price: number | null;
+        strike?: number | null;
+        message?: string;
+      };
+      message?: string;
+    };
     AssetPriceApiResponseDto: {
       /** @enum {boolean} */
       success: true;
@@ -1026,6 +1297,33 @@ export interface components {
         price: number;
         name?: string;
         type?: string;
+      };
+      message?: string;
+    };
+    WalletPerformanceApiResponseDto: {
+      /** @enum {boolean} */
+      success: true;
+      data?: {
+        /** Format: uuid */
+        walletId: string;
+        realized: number;
+        unrealized: number;
+        dividends: number;
+        total: number;
+        totalInvested: number;
+        totalPercent: number;
+        byAsset: {
+          /** Format: uuid */
+          assetId: string;
+          ticker: string;
+          name: string;
+          /** @enum {string} */
+          type: 'STOCK' | 'OPTION';
+          realized: number;
+          unrealized: number;
+          dividends: number;
+          total: number;
+        }[];
       };
       message?: string;
     };
@@ -1044,6 +1342,7 @@ export interface components {
           type:
             | 'BUY'
             | 'SELL'
+            | 'EXPIRED'
             | 'DIVIDEND'
             | 'SPLIT'
             | 'SUBSCRIPTION'
@@ -1080,6 +1379,15 @@ export interface components {
       price: number;
       /** Format: date-time */
       date: string;
+      idempotencyKey: string;
+    };
+    UpdateTransactionInputDto: {
+      date?: string;
+      price?: number;
+      quantity?: number;
+    };
+    ExpireOptionInputDto: {
+      notes?: string;
       idempotencyKey: string;
     };
     ActivityListApiResponseDto: {
@@ -1557,10 +1865,6 @@ export interface components {
       };
       message?: string;
     };
-    ExpireOptionInputDto: {
-      notes?: string;
-      idempotencyKey: string;
-    };
     ExpirationResultApiResponseDto: {
       /** @enum {boolean} */
       success: true;
@@ -1743,14 +2047,95 @@ export interface operations {
       };
     };
   };
+  ProventosController_forceSync: {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    requestBody?: never;
+    responses: {
+      /** @description Sync disparado */
+      201: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content?: never;
+      };
+    };
+  };
+  ProventosController_getWalletProventos: {
+    parameters: {
+      query?: never;
+      header?: never;
+      path: {
+        walletId: string;
+      };
+      cookie?: never;
+    };
+    requestBody?: never;
+    responses: {
+      /** @description Proventos calculados */
+      200: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/json': components['schemas']['WalletProventosApiResponseDto'];
+        };
+      };
+      /** @description Nao autenticado */
+      401: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/json': components['schemas']['ApiErrorResponseDto'];
+        };
+      };
+    };
+  };
+  ProventosController_getProventosSummary: {
+    parameters: {
+      query: {
+        /** @description ID da carteira */
+        walletId: string;
+      };
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    requestBody?: never;
+    responses: {
+      /** @description Resumo de proventos */
+      200: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/json': components['schemas']['ProventosSummaryApiResponseDto'];
+        };
+      };
+      /** @description Nao autenticado */
+      401: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/json': components['schemas']['ApiErrorResponseDto'];
+        };
+      };
+    };
+  };
   ProventosController_findAll: {
     parameters: {
       query?: {
-        /** @description Filtrar por ticker do ativo (ex: PETR4) */
+        /** @description Filtrar por ticker (ex: PETR4) */
         ticker?: string;
-        /** @description Numero de registros a pular para paginacao (padrao: 0) */
+        /** @description Registros a pular (padrao: 0) */
         skip?: string;
-        /** @description Numero de registros a retornar (padrao: 20, maximo: 100) */
+        /** @description Registros a retornar (padrao: 20, max: 100) */
         take?: string;
       };
       header?: never;
@@ -2257,6 +2642,32 @@ export interface operations {
       };
     };
   };
+  WalletsController_getHistoricalPrice: {
+    parameters: {
+      query: {
+        /** @description Data no formato YYYY-MM-DD */
+        date: string;
+      };
+      header?: never;
+      path: {
+        /** @description Ticker do ativo */
+        ticker: string;
+      };
+      cookie?: never;
+    };
+    requestBody?: never;
+    responses: {
+      /** @description Preço histórico */
+      200: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/json': components['schemas']['HistoricalPriceApiResponseDto'];
+        };
+      };
+    };
+  };
   WalletsController_getAssetPrice: {
     parameters: {
       query?: never;
@@ -2327,6 +2738,66 @@ export interface operations {
         content: {
           'application/json': components['schemas']['ApiErrorResponseDto'];
         };
+      };
+    };
+  };
+  WalletsController_getPerformance: {
+    parameters: {
+      query?: never;
+      header?: never;
+      path: {
+        /** @description ID da carteira */
+        id: string;
+      };
+      cookie?: never;
+    };
+    requestBody?: never;
+    responses: {
+      /** @description Performance consolidada */
+      200: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/json': components['schemas']['WalletPerformanceApiResponseDto'];
+        };
+      };
+      /** @description Sem permissão para acessar esta carteira */
+      403: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/json': components['schemas']['ApiErrorResponseDto'];
+        };
+      };
+      /** @description Carteira não encontrada */
+      404: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/json': components['schemas']['ApiErrorResponseDto'];
+        };
+      };
+    };
+  };
+  WalletsController_triggerSentinelCheck: {
+    parameters: {
+      query?: never;
+      header?: never;
+      path: {
+        id: string;
+      };
+      cookie?: never;
+    };
+    requestBody?: never;
+    responses: {
+      202: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content?: never;
       };
     };
   };
@@ -2562,6 +3033,125 @@ export interface operations {
         content: {
           'application/json': components['schemas']['ApiErrorResponseDto'];
         };
+      };
+    };
+  };
+  WalletsController_updateTransaction: {
+    parameters: {
+      query?: never;
+      header?: never;
+      path: {
+        /** @description ID da carteira */
+        id: string;
+        /** @description ID da transação */
+        txId: string;
+      };
+      cookie?: never;
+    };
+    requestBody: {
+      content: {
+        'application/json': components['schemas']['UpdateTransactionInputDto'];
+      };
+    };
+    responses: {
+      /** @description Transação atualizada */
+      200: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/json': components['schemas']['WalletApiResponseDto'];
+        };
+      };
+    };
+  };
+  WalletsController_deleteTransaction: {
+    parameters: {
+      query?: never;
+      header?: never;
+      path: {
+        /** @description ID da carteira */
+        id: string;
+        /** @description ID da transação */
+        txId: string;
+      };
+      cookie?: never;
+    };
+    requestBody?: never;
+    responses: {
+      /** @description Transação removida */
+      200: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/json': components['schemas']['WalletApiResponseDto'];
+        };
+      };
+    };
+  };
+  WalletsController_expireOption: {
+    parameters: {
+      query?: never;
+      header?: never;
+      path: {
+        /** @description ID da carteira */
+        id: string;
+      };
+      cookie?: never;
+    };
+    requestBody: {
+      content: {
+        'application/json': components['schemas']['ExpireOptionInputDto'];
+      };
+    };
+    responses: {
+      /** @description Opção registrada como vencida */
+      200: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/json': components['schemas']['WalletApiResponseDto'];
+        };
+      };
+    };
+  };
+  SentinelEventsController_sentinelStatus: {
+    parameters: {
+      query?: never;
+      header?: never;
+      path: {
+        id: string;
+      };
+      cookie?: never;
+    };
+    requestBody?: never;
+    responses: {
+      200: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content?: never;
+      };
+    };
+  };
+  SentinelEventsController_events: {
+    parameters: {
+      query?: never;
+      header?: never;
+      path: {
+        id: string;
+      };
+      cookie?: never;
+    };
+    requestBody?: never;
+    responses: {
+      200: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content?: never;
       };
     };
   };

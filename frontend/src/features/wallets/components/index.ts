@@ -1,6 +1,8 @@
 export { WalletCard } from './WalletCard';
 export { WalletStatsCard } from './WalletStatsCard';
 export { PositionTable } from './PositionTable';
+export { PerformancePanel } from './PerformancePanel';
+export { ConcentrationPanel } from './ConcentrationPanel';
 export { NewWalletModal } from './NewWalletModal';
 export { CashOperationModal } from './CashOperationModal';
 export { TickerAutocomplete } from './TickerAutocomplete';

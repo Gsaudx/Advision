@@ -40,6 +40,23 @@ export type Position = Wallet['positions'][number] & {
 export type AssetType = Position['type'];
 
 /**
+ * Concentration breakdown returned in the wallet dashboard
+ */
+export type ConcentrationItem = Wallet['concentration']['byAsset'][number];
+
+/**
+ * Wallet performance response (realized + unrealized + dividends)
+ */
+export type WalletPerformance = NonNullable<
+  components['schemas']['WalletPerformanceApiResponseDto']['data']
+>;
+
+/**
+ * Per-asset performance breakdown item
+ */
+export type PerformanceByAsset = WalletPerformance['byAsset'][number];
+
+/**
  * Input for creating a new wallet
  */
 export type CreateWalletInput = components['schemas']['CreateWalletInputDto'];
@@ -163,6 +180,7 @@ export type TradeType = 'BUY' | 'SELL';
 export const transactionTypeLabels: Record<TransactionType, string> = {
   BUY: 'Compra',
   SELL: 'Venda',
+  EXPIRED: 'Vencida',
   DEPOSIT: 'Depósito',
   WITHDRAWAL: 'Saque',
   DIVIDEND: 'Dividendo',
@@ -179,6 +197,7 @@ export const transactionTypeLabels: Record<TransactionType, string> = {
 export const transactionTypeColors: Record<TransactionType, string> = {
   BUY: 'text-blue-400',
   SELL: 'text-orange-400',
+  EXPIRED: 'text-gray-400',
   DEPOSIT: 'text-green-400',
   WITHDRAWAL: 'text-red-400',
   DIVIDEND: 'text-emerald-400',
