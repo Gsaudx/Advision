@@ -11,7 +11,6 @@ import {
   MessageSquare,
 } from 'lucide-react';
 import { motion } from 'motion/react';
-import { formatCurrency } from '@/lib/formatters';
 import { LoadingSpinner } from '@/components/ui/LoadingSpinner';
 import { EmptyState } from '@/components/ui/EmptyState';
 import { useClients } from '@/features/clients-page';
@@ -65,11 +64,6 @@ export default function WalletsPage() {
     });
     return options;
   }, [clients]);
-
-  const totalAUM = useMemo(
-    () => wallets.reduce((acc, w) => acc + w.cashBalance, 0),
-    [wallets],
-  );
 
   const handleOpenWalletDetails = (wallet: WalletSummary) => {
     navigate(`/wallets/${wallet.id}`);
@@ -247,14 +241,6 @@ export default function WalletsPage() {
               Visão Consolidada
             </h4>
             <div className="grid grid-cols-1 sm:grid-cols-3 gap-8">
-              <div className="space-y-2">
-                <p className="text-[10px] font-bold text-on-surface-variant uppercase tracking-widest">
-                  Total sob Gestão
-                </p>
-                <p className="text-2xl font-headline font-extrabold text-on-surface">
-                  {formatCurrency(totalAUM)}
-                </p>
-              </div>
               {/* MOCKUP: Ativos Ativos — remover quando endpoint retornar esse dado */}
               <div className="space-y-2">
                 <p className="text-[10px] font-bold text-on-surface-variant uppercase tracking-widest">

@@ -21,7 +21,6 @@ interface OptionTradeModalProps {
   tradeType: TradeType;
   walletId: string;
   walletName: string;
-  currentBalance: number;
   currency?: string;
 }
 
@@ -31,7 +30,6 @@ export function OptionTradeModal({
   tradeType,
   walletId,
   walletName,
-  currentBalance,
 }: OptionTradeModalProps) {
   const buyMutation = useBuyOption();
   const sellMutation = useSellOption();
@@ -215,10 +213,6 @@ export function OptionTradeModal({
   const quantity = parseInt(formData.quantity, 10) || 0;
   const premium = parseFloat(formData.premium) || 0;
   const totalValue = quantity * premium * CONTRACT_SIZE;
-  const balanceAfter = isBuy
-    ? currentBalance - totalValue
-    : currentBalance + totalValue;
-
   const formatExpirationDate = (dateStr?: string): string => {
     if (!dateStr) return '';
     try {
@@ -281,14 +275,6 @@ export function OptionTradeModal({
             <p className="text-red-400 text-sm">{apiErrorMessage}</p>
           </div>
         )}
-
-        {/* Current Balance */}
-        <div className="p-3 bg-slate-800 rounded-lg">
-          <p className="text-sm text-gray-500">Saldo Disponivel</p>
-          <p className="text-lg font-semibold text-emerald-400">
-            {formatCurrency(currentBalance)}
-          </p>
-        </div>
 
         {/* Ticker - New Option Autocomplete */}
         <div className="flex flex-col gap-1.5">
@@ -487,14 +473,6 @@ export function OptionTradeModal({
             >
               {isBuy ? '-' : '+'}
               {formatCurrency(totalValue)}
-            </span>
-          </div>
-          <div className="flex justify-between border-t border-slate-700 pt-2">
-            <span className="text-sm text-gray-500">Saldo Após Operação</span>
-            <span
-              className={`text-sm font-semibold ${balanceAfter >= 0 ? 'text-white' : 'text-red-400'}`}
-            >
-              {formatCurrency(balanceAfter)}
             </span>
           </div>
         </div>

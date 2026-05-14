@@ -225,14 +225,6 @@ export function AssignmentModal({
               {formatCurrency(settlementAmount)}
             </span>
           </div>
-          {position.collateralBlocked && (
-            <div className="flex justify-between">
-              <span className="text-sm text-gray-500">Margem liberada</span>
-              <span className="text-sm font-semibold text-emerald-400">
-                +{formatCurrency(position.collateralBlocked)}
-              </span>
-            </div>
-          )}
         </div>
 
         {/* Footer */}

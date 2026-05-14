@@ -719,12 +719,6 @@ export function StrategyBuilderModal({
                 </div>
               )}
               <div>
-                <span className="text-xs text-gray-500">Margem Necessaria</span>
-                <p className="text-sm text-white">
-                  {formatCurrency(preview.riskProfile.marginRequired)}
-                </p>
-              </div>
-              <div>
                 <span className="text-xs text-gray-500">Custo Total</span>
                 <p className="text-sm font-semibold text-white">
                   {formatCurrency(preview.totalCost)}

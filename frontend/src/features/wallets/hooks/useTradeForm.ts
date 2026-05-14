@@ -6,7 +6,6 @@ import { generateIdempotencyKey } from '@/lib/utils';
 
 interface UseTradeFormProps {
   tradeType: TradeType;
-  currentBalance: number;
   positions: Position[];
   onSubmit: (data: TradeInput) => void;
 }
@@ -22,7 +21,6 @@ function getInitialFormData(): TradeFormData {
 
 export function useTradeForm({
   tradeType,
-  currentBalance,
   positions,
   onSubmit,
 }: UseTradeFormProps) {
@@ -69,7 +67,6 @@ export function useTradeForm({
 
     const quantity = parseFloat(formData.quantity);
     const price = parseFloat(formData.price);
-    const total = quantity * price;
 
     const validations = [
       {
@@ -93,6 +90,11 @@ export function useTradeForm({
         inputName: 'quantity',
       },
       {
+        isInvalid: !Number.isInteger(quantity),
+        message: 'A quantidade deve ser um número inteiro.',
+        inputName: 'quantity',
+      },
+      {
         isInvalid: !formData.price || isNaN(price),
         message: 'Digite um preco valido.',
         inputName: 'price',
@@ -101,11 +103,6 @@ export function useTradeForm({
         isInvalid: price <= 0,
         message: 'O preco deve ser maior que zero.',
         inputName: 'price',
-      },
-      {
-        isInvalid: tradeType === 'BUY' && total > currentBalance,
-        message: `Saldo insuficiente. Disponivel: R$ ${currentBalance.toFixed(2)}`,
-        inputName: 'quantity',
       },
       {
         isInvalid: tradeType === 'SELL' && !selectedPosition,

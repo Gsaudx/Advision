@@ -45,16 +45,6 @@ export type AssetType = Position['type'];
 export type CreateWalletInput = components['schemas']['CreateWalletInputDto'];
 
 /**
- * Input for cash operations (deposit/withdrawal)
- */
-export type CashOperationInput = components['schemas']['CashOperationInputDto'];
-
-/**
- * Cash operation type enum
- */
-export type CashOperationType = CashOperationInput['type'];
-
-/**
  * Input for trade operations (buy/sell)
  */
 export type TradeInput = components['schemas']['TradeInputDto'];
@@ -126,16 +116,6 @@ export interface WalletFormData {
   name: string;
   description: string;
   currency: string;
-  initialCashBalance: string;
-}
-
-/**
- * Form data used in the CashOperationModal
- */
-export interface CashOperationFormData {
-  type: CashOperationType;
-  amount: string;
-  date: string;
 }
 
 /**
@@ -163,8 +143,7 @@ export type TradeType = 'BUY' | 'SELL';
 export const transactionTypeLabels: Record<TransactionType, string> = {
   BUY: 'Compra',
   SELL: 'Venda',
-  DEPOSIT: 'Depósito',
-  WITHDRAWAL: 'Saque',
+  EXPIRED: 'Expirado',
   DIVIDEND: 'Dividendo',
   SPLIT: 'Desdobramento',
   SUBSCRIPTION: 'Subscrição',
@@ -179,22 +158,13 @@ export const transactionTypeLabels: Record<TransactionType, string> = {
 export const transactionTypeColors: Record<TransactionType, string> = {
   BUY: 'text-blue-400',
   SELL: 'text-orange-400',
-  DEPOSIT: 'text-green-400',
-  WITHDRAWAL: 'text-red-400',
+  EXPIRED: 'text-gray-400',
   DIVIDEND: 'text-emerald-400',
   SPLIT: 'text-purple-400',
   SUBSCRIPTION: 'text-cyan-400',
   OPTION_EXERCISE: 'text-indigo-400',
   OPTION_ASSIGNMENT: 'text-amber-400',
   OPTION_EXPIRY: 'text-gray-400',
-};
-
-/**
- * Maps cash operation type to display text
- */
-export const cashOperationLabels: Record<CashOperationType, string> = {
-  DEPOSIT: 'Depósito',
-  WITHDRAWAL: 'Saque',
 };
 
 /**

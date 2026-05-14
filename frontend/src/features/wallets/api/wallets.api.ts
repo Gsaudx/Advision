@@ -4,7 +4,6 @@ import type {
   Wallet,
   WalletSummary,
   CreateWalletInput,
-  CashOperationInput,
   TradeInput,
   AssetSearchResult,
   AssetPriceResult,
@@ -35,17 +34,6 @@ export const walletsApi = {
 
   create: async (data: CreateWalletInput): Promise<Wallet> => {
     const response = await api.post<ApiResponse<Wallet>>('/wallets', data);
-    return response.data.data;
-  },
-
-  cashOperation: async (
-    walletId: string,
-    data: CashOperationInput,
-  ): Promise<Wallet> => {
-    const response = await api.post<ApiResponse<Wallet>>(
-      `/wallets/${walletId}/cash`,
-      data,
-    );
     return response.data.data;
   },
 

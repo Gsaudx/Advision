@@ -33,7 +33,10 @@ export const TradeInputSchema = z.object({
     .min(1, 'Ticker obrigatorio')
     .max(20, 'Ticker deve ter no máximo 20 caracteres')
     .toUpperCase(),
-  quantity: z.number().positive('Quantidade deve ser positiva'),
+  quantity: z
+    .number()
+    .int('Quantidade deve ser um número inteiro')
+    .positive('Quantidade deve ser positiva'),
   price: z.number().positive('Preço deve ser positivo'),
   date: z
     .string()

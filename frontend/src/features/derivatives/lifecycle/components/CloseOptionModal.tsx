@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { XCircle, X, AlertTriangle } from 'lucide-react';
+import { XCircle, X } from 'lucide-react';
 import ModalBase from '@/components/layout/ModalBase';
 import { LoadingSpinner } from '@/components/ui/LoadingSpinner';
 import { getApiErrorMessage } from '@/lib/api-error';
@@ -14,7 +14,6 @@ interface CloseOptionModalProps {
   onClose: () => void;
   position: OptionPosition;
   walletId: string;
-  walletCashBalance?: number;
 }
 
 export function CloseOptionModal({
@@ -22,7 +21,6 @@ export function CloseOptionModal({
   onClose,
   position,
   walletId,
-  walletCashBalance,
 }: CloseOptionModalProps) {
   const closeMutation = useCloseOption();
   const [premium, setPremium] = useState('');
@@ -211,23 +209,6 @@ export function CloseOptionModal({
             </span>
           </div>
         </div>
-
-        {/* Insufficient balance warning for short positions (BTC) */}
-        {position.isShort &&
-          walletCashBalance !== undefined &&
-          totalValue > walletCashBalance && (
-            <div className="p-3 bg-amber-500/10 border border-amber-500/20 rounded-lg flex items-start gap-2">
-              <AlertTriangle
-                size={16}
-                className="text-amber-400 mt-0.5 shrink-0"
-              />
-              <p className="text-amber-400 text-sm">
-                Saldo insuficiente para fechar esta posicao. Custo:{' '}
-                {formatCurrency(totalValue)}, Disponivel:{' '}
-                {formatCurrency(walletCashBalance)}.
-              </p>
-            </div>
-          )}
 
         {/* Footer */}
         <div className="flex justify-end gap-3 mt-2 pt-4 border-t border-slate-800">

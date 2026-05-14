@@ -1,6 +1,5 @@
 import { motion } from 'motion/react';
 import { TrendingUp, TrendingDown } from 'lucide-react';
-import { formatCurrency } from '@/lib/formatters';
 import type { WalletSummary } from '../types';
 
 // MOCKUP: riskProfile, performance30d e sparkline — remover quando endpoint retornar esses dados
@@ -67,15 +66,6 @@ export function WalletCard({ wallet, clientName, ...props }: WalletCardProps) {
         </div>
 
         <div className="space-y-4">
-          <div className="space-y-1">
-            <p className="text-[10px] font-bold text-on-surface-variant uppercase tracking-widest">
-              Patrimônio Líquido
-            </p>
-            <h4 className="text-3xl font-headline font-extrabold text-on-surface tracking-tighter">
-              {formatCurrency(wallet.cashBalance, wallet.currency)}
-            </h4>
-          </div>
-
           <div className="pt-4 border-t border-outline-variant/10 flex items-center justify-between">
             <div>
               <p className="text-[10px] font-bold text-on-surface-variant uppercase tracking-widest mb-1">
