@@ -224,23 +224,24 @@ export class ActivityService {
       where: { advisorId },
     });
 
-    // Get all wallets for advisor's clients and sum cash balances
+    // Get all wallets for advisor's clients
     const wallets = await this.prisma.wallet.findMany({
-      where: {
-        client: { advisorId },
-      },
-      select: {
-        id: true,
-        cashBalance: true,
-      },
+      where: { client: { advisorId } },
+      select: { id: true },
     });
 
-    const totalCashBalance = wallets.reduce(
-      (sum, w) => sum + Number(w.cashBalance),
+    const walletIds = wallets.map((w) => w.id);
+
+    // Calculate total wallet value as sum of cost basis across all positions
+    const positions = await this.prisma.position.findMany({
+      where: { wallet: { client: { advisorId } } },
+      select: { quantity: true, averagePrice: true },
+    });
+
+    const totalWalletValue = positions.reduce(
+      (sum, p) => sum + Number(p.quantity) * Number(p.averagePrice),
       0,
     );
-
-    const walletIds = wallets.map((w) => w.id);
 
     // Count pending structured operations
     const pendingOperationsCount =
@@ -280,7 +281,7 @@ export class ActivityService {
 
     return {
       clientCount,
-      totalWalletValue: totalCashBalance,
+      totalWalletValue,
       pendingOperationsCount,
       expiringOptionsCount,
     };

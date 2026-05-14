@@ -84,7 +84,6 @@ export const ExerciseResultResponseSchema = z.object({
   underlyingQuantity: z.number(),
   strikePrice: z.number(),
   totalCost: z.number(),
-  cashBalanceAfter: z.number(),
 });
 export type ExerciseResultResponse = z.infer<
   typeof ExerciseResultResponseSchema
@@ -102,8 +101,6 @@ export const AssignmentResultResponseSchema = z.object({
   underlyingQuantity: z.number(),
   strikePrice: z.number(),
   settlementAmount: z.number(),
-  cashBalanceAfter: z.number(),
-  collateralReleased: z.number(),
 });
 export type AssignmentResultResponse = z.infer<
   typeof AssignmentResultResponseSchema
@@ -118,7 +115,6 @@ export const ExpirationResultResponseSchema = z.object({
   positionId: z.string().uuid(),
   ticker: z.string(),
   wasInTheMoney: z.boolean(),
-  collateralReleased: z.number(),
 });
 export type ExpirationResultResponse = z.infer<
   typeof ExpirationResultResponseSchema

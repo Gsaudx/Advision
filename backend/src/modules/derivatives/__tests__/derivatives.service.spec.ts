@@ -282,53 +282,6 @@ describe('DerivativesService', () => {
         service.buyOption('wallet-123', buyInput, advisorUser),
       ).rejects.toThrow(BadRequestException);
     });
-
-    it('throws BadRequestException on insufficient cash', async () => {
-      walletAccess.verifyWalletAccess.mockResolvedValue(mockWallet);
-      prisma.transaction.findUnique.mockResolvedValue(null);
-      assetResolver.ensureAssetExists.mockResolvedValue(mockOptionAsset);
-      prisma.optionDetail.findUnique.mockResolvedValue(mockOptionDetail);
-
-      const mockTx = {
-        wallet: {
-          findUnique: jest.fn().mockResolvedValue(mockWallet),
-          updateMany: jest.fn().mockResolvedValue({ count: 0 }), // No rows updated = insufficient
-        },
-      };
-
-      prisma.$transaction.mockImplementation((callback) => callback(mockTx));
-
-      await expect(
-        service.buyOption('wallet-123', buyInput, advisorUser),
-      ).rejects.toThrow(BadRequestException);
-    });
-
-    it('throws BadRequestException when cash is blocked by collateral', async () => {
-      walletAccess.verifyWalletAccess.mockResolvedValue(mockWallet);
-      prisma.transaction.findUnique.mockResolvedValue(null);
-      assetResolver.ensureAssetExists.mockResolvedValue(mockOptionAsset);
-      prisma.optionDetail.findUnique.mockResolvedValue(mockOptionDetail);
-
-      // totalCost = 1.5 * 100 * 10 = 1500
-      // cashBalance = 2000, blockedCollateral = 1000 => available = 1000 < 1500
-      const walletWithCollateral = {
-        ...mockWallet,
-        cashBalance: 2000,
-        blockedCollateral: 1000,
-      };
-
-      const mockTx = {
-        wallet: {
-          findUnique: jest.fn().mockResolvedValue(walletWithCollateral),
-        },
-      };
-
-      prisma.$transaction.mockImplementation((callback) => callback(mockTx));
-
-      await expect(
-        service.buyOption('wallet-123', buyInput, advisorUser),
-      ).rejects.toThrow(BadRequestException);
-    });
   });
 
   describe('sellOption', () => {
@@ -378,44 +331,7 @@ describe('DerivativesService', () => {
         data: expect.objectContaining({
           quantity: -10,
           averagePrice: 1.5,
-          collateralBlocked: 0,
         }),
-      });
-    });
-
-    it('blocks collateral for short PUT options', async () => {
-      const putOptionDetail = {
-        ...mockOptionDetail,
-        optionType: 'PUT',
-      };
-
-      walletAccess.verifyWalletAccess.mockResolvedValue(mockWallet);
-      prisma.transaction.findUnique.mockResolvedValue(null);
-      assetResolver.ensureAssetExists.mockResolvedValue(mockOptionAsset);
-      prisma.optionDetail.findUnique.mockResolvedValue(putOptionDetail);
-
-      const mockTx = {
-        wallet: {
-          findUnique: jest.fn().mockResolvedValue(mockWallet),
-          update: jest.fn().mockResolvedValue(mockWallet),
-        },
-        position: {
-          findUnique: jest.fn().mockResolvedValue(null),
-          create: jest.fn().mockResolvedValue({ id: 'pos-123' }),
-        },
-        transaction: {
-          create: jest.fn().mockResolvedValue({ id: 'tx-123' }),
-        },
-      };
-
-      prisma.$transaction.mockImplementation((callback) => callback(mockTx));
-
-      await service.sellOption('wallet-123', sellInput, advisorUser);
-
-      // Collateral for PUT: strike * CONTRACT_SIZE * quantity = 24 * 100 * 10 = 24000
-      expect(mockTx.wallet.update).toHaveBeenCalledWith({
-        where: { id: 'wallet-123' },
-        data: { blockedCollateral: { increment: 24000 } },
       });
     });
 
@@ -447,35 +363,6 @@ describe('DerivativesService', () => {
       ).rejects.toThrow(BadRequestException);
     });
 
-    it('throws BadRequestException on insufficient collateral for PUT', async () => {
-      const putOptionDetail = {
-        ...mockOptionDetail,
-        optionType: 'PUT',
-      };
-
-      const lowBalanceWallet = {
-        ...mockWallet,
-        cashBalance: 10000, // Not enough for 24000 collateral
-        blockedCollateral: 0,
-      };
-
-      walletAccess.verifyWalletAccess.mockResolvedValue(lowBalanceWallet);
-      prisma.transaction.findUnique.mockResolvedValue(null);
-      assetResolver.ensureAssetExists.mockResolvedValue(mockOptionAsset);
-      prisma.optionDetail.findUnique.mockResolvedValue(putOptionDetail);
-
-      const mockTx = {
-        wallet: {
-          findUnique: jest.fn().mockResolvedValue(lowBalanceWallet),
-        },
-      };
-
-      prisma.$transaction.mockImplementation((callback) => callback(mockTx));
-
-      await expect(
-        service.sellOption('wallet-123', sellInput, advisorUser),
-      ).rejects.toThrow(BadRequestException);
-    });
   });
 
   describe('closeOptionPosition', () => {
@@ -515,97 +402,6 @@ describe('DerivativesService', () => {
         optionDetail: mockOptionDetail,
       },
     };
-
-    it('closes long position partially and adds cash', async () => {
-      walletAccess.verifyWalletAccess.mockResolvedValue(mockWallet);
-      prisma.transaction.findUnique.mockResolvedValue(null);
-      prisma.position.findFirst.mockResolvedValue(mockLongPosition);
-
-      const mockTx = {
-        wallet: {
-          update: jest.fn().mockResolvedValue(mockWallet),
-          updateMany: jest.fn().mockResolvedValue({ count: 1 }),
-        },
-        position: {
-          update: jest.fn().mockResolvedValue({ id: 'pos-long' }),
-        },
-        transaction: {
-          create: jest.fn().mockResolvedValue({ id: 'tx-123' }),
-        },
-        optionLifecycle: {
-          create: jest.fn().mockResolvedValue({ id: 'lifecycle-123' }),
-        },
-      };
-
-      prisma.$transaction.mockImplementation((callback) => callback(mockTx));
-
-      const result = await service.closeOptionPosition(
-        'wallet-123',
-        'pos-long',
-        closeInput,
-        advisorUser,
-      );
-
-      expect(result.status).toBe('EXECUTED');
-      expect(result.quantity).toBe(5);
-      expect(result.totalValue).toBe(1000); // 2.0 * 100 * 5
-
-      // Long position sell adds cash
-      expect(mockTx.wallet.update).toHaveBeenCalledWith({
-        where: { id: 'wallet-123' },
-        data: { cashBalance: { increment: 1000 } },
-      });
-
-      // Position reduced from 10 to 5
-      expect(mockTx.position.update).toHaveBeenCalledWith({
-        where: { id: 'pos-long' },
-        data: { quantity: 5, collateralBlocked: null },
-      });
-    });
-
-    it('closes short position and releases collateral proportionally', async () => {
-      walletAccess.verifyWalletAccess.mockResolvedValue(mockWallet);
-      prisma.transaction.findUnique.mockResolvedValue(null);
-      prisma.position.findFirst.mockResolvedValue(mockShortPosition);
-
-      const mockTx = {
-        wallet: {
-          findUnique: jest.fn().mockResolvedValue(mockWallet),
-          update: jest.fn().mockResolvedValue(mockWallet),
-          updateMany: jest.fn().mockResolvedValue({ count: 1 }),
-        },
-        position: {
-          update: jest.fn().mockResolvedValue({ id: 'pos-short' }),
-        },
-        transaction: {
-          create: jest.fn().mockResolvedValue({ id: 'tx-123' }),
-        },
-        optionLifecycle: {
-          create: jest.fn().mockResolvedValue({ id: 'lifecycle-123' }),
-        },
-      };
-
-      prisma.$transaction.mockImplementation((callback) => callback(mockTx));
-
-      await service.closeOptionPosition(
-        'wallet-123',
-        'pos-short',
-        closeInput,
-        advisorUser,
-      );
-
-      // Short position buy to close deducts cash
-      expect(mockTx.wallet.updateMany).toHaveBeenCalledWith({
-        where: { id: 'wallet-123', cashBalance: { gte: 1000 } },
-        data: { cashBalance: { decrement: 1000 } },
-      });
-
-      // Collateral released: 24000 * 5/10 = 12000
-      expect(mockTx.wallet.update).toHaveBeenCalledWith({
-        where: { id: 'wallet-123' },
-        data: { blockedCollateral: { decrement: 12000 } },
-      });
-    });
 
     it('deletes position when fully closed', async () => {
       const fullCloseInput = { ...closeInput, quantity: 10 };
@@ -673,36 +469,6 @@ describe('DerivativesService', () => {
       ).rejects.toThrow(BadRequestException);
     });
 
-    it('throws BadRequestException when short BTC cash is blocked by collateral', async () => {
-      walletAccess.verifyWalletAccess.mockResolvedValue(mockWallet);
-      prisma.transaction.findUnique.mockResolvedValue(null);
-      prisma.position.findFirst.mockResolvedValue(mockShortPosition);
-
-      // totalValue = 2.0 * 100 * 5 = 1000
-      // cashBalance = 1500, blockedCollateral = 1000 => available = 500 < 1000
-      const walletWithCollateral = {
-        ...mockWallet,
-        cashBalance: 1500,
-        blockedCollateral: 1000,
-      };
-
-      const mockTx = {
-        wallet: {
-          findUnique: jest.fn().mockResolvedValue(walletWithCollateral),
-        },
-      };
-
-      prisma.$transaction.mockImplementation((callback) => callback(mockTx));
-
-      await expect(
-        service.closeOptionPosition(
-          'wallet-123',
-          'pos-short',
-          closeInput,
-          advisorUser,
-        ),
-      ).rejects.toThrow(BadRequestException);
-    });
   });
 
   describe('getOptionPositions', () => {
@@ -777,7 +543,6 @@ describe('DerivativesService', () => {
       const shortPos = result.positions.find((p) => p.id === 'pos-2');
       expect(shortPos!.isShort).toBe(true);
       expect(shortPos!.quantity).toBe(5);
-      expect(shortPos!.collateralBlocked).toBe(12000);
 
       // Summary
       expect(result.totalPremiumPaid).toBe(1500); // 1.5 * 100 * 10

@@ -112,7 +112,6 @@ export const StrategyRiskProfileSchema = z.object({
   maxGain: z.number().nullable(),
   breakEvenPoints: z.array(z.number()),
   netPremium: z.number(),
-  marginRequired: z.number(),
   isDebitStrategy: z.boolean(),
 });
 export type StrategyRiskProfile = z.infer<typeof StrategyRiskProfileSchema>;

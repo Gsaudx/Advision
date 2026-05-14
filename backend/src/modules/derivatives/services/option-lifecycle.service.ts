@@ -131,36 +131,9 @@ export class OptionLifecycleService {
 
     try {
       result = await this.prisma.$transaction(async (tx) => {
-        const wallet = await tx.wallet.findUnique({ where: { id: walletId } });
-
-        if (!wallet) {
-          throw new NotFoundException('Carteira nao encontrada');
-        }
-
         let underlyingPositionId: string | null = null;
 
         if (optionDetail.optionType === 'CALL') {
-          const availableCash = new Decimal(wallet.cashBalance).minus(
-            wallet.blockedCollateral,
-          );
-
-          if (availableCash.lt(totalCost)) {
-            throw new BadRequestException(
-              `Saldo insuficiente para exercer CALL. Necessario: ${totalCost.toFixed(2)}`,
-            );
-          }
-
-          const cashUpdateResult = await tx.wallet.updateMany({
-            where: { id: walletId, cashBalance: { gte: totalCost } },
-            data: { cashBalance: { decrement: totalCost } },
-          });
-
-          if (cashUpdateResult.count === 0) {
-            throw new BadRequestException(
-              `Saldo insuficiente para exercer CALL. Necessario: ${totalCost.toFixed(2)}`,
-            );
-          }
-
           const existingUnderlyingPosition = await tx.position.findUnique({
             where: {
               walletId_assetId: {
@@ -227,11 +200,6 @@ export class OptionLifecycleService {
             });
           }
 
-          await tx.wallet.update({
-            where: { id: walletId },
-            data: { cashBalance: { increment: totalCost } },
-          });
-
           underlyingPositionId = existingUnderlyingPosition.id;
         }
 
@@ -269,10 +237,6 @@ export class OptionLifecycleService {
             data: { quantity: newOptionQty },
           });
         }
-
-        const updatedWallet = await tx.wallet.findUnique({
-          where: { id: walletId },
-        });
 
         await this.auditService.log(tx, {
           tableName: 'option_lifecycle',
@@ -316,7 +280,6 @@ export class OptionLifecycleService {
           underlyingQuantity,
           strikePrice,
           totalCost,
-          cashBalanceAfter: Number(updatedWallet!.cashBalance),
         };
       });
     } catch (error) {
@@ -366,14 +329,7 @@ export class OptionLifecycleService {
 
     try {
       result = await this.prisma.$transaction(async (tx) => {
-        const wallet = await tx.wallet.findUnique({ where: { id: walletId } });
-
-        if (!wallet) {
-          throw new NotFoundException('Carteira nao encontrada');
-        }
-
         let underlyingPositionId: string | null = null;
-        let collateralReleased = 0;
 
         if (optionDetail.optionType === 'CALL') {
           const existingUnderlyingPosition = await tx.position.findUnique({
@@ -408,34 +364,8 @@ export class OptionLifecycleService {
             });
           }
 
-          await tx.wallet.update({
-            where: { id: walletId },
-            data: { cashBalance: { increment: settlementAmount } },
-          });
-
           underlyingPositionId = existingUnderlyingPosition.id;
         } else {
-          const availableCash = new Decimal(wallet.cashBalance).minus(
-            wallet.blockedCollateral,
-          );
-
-          if (availableCash.lt(settlementAmount)) {
-            throw new BadRequestException(
-              `Saldo insuficiente para assignment de PUT. Necessario: ${settlementAmount.toFixed(2)}`,
-            );
-          }
-
-          const cashUpdateResult = await tx.wallet.updateMany({
-            where: { id: walletId, cashBalance: { gte: settlementAmount } },
-            data: { cashBalance: { decrement: settlementAmount } },
-          });
-
-          if (cashUpdateResult.count === 0) {
-            throw new BadRequestException(
-              `Saldo insuficiente para assignment de PUT. Necessario: ${settlementAmount.toFixed(2)}`,
-            );
-          }
-
           const existingUnderlyingPosition = await tx.position.findUnique({
             where: {
               walletId_assetId: {
@@ -470,16 +400,6 @@ export class OptionLifecycleService {
             underlyingPositionId = existingUnderlyingPosition.id;
           }
 
-          if (position.collateralBlocked) {
-            const collateralPerContract =
-              Number(position.collateralBlocked) / absQty;
-            collateralReleased = collateralPerContract * data.quantity;
-
-            await tx.wallet.update({
-              where: { id: walletId },
-              data: { blockedCollateral: { decrement: collateralReleased } },
-            });
-          }
         }
 
         const transaction = await tx.transaction.create({
@@ -524,10 +444,6 @@ export class OptionLifecycleService {
           });
         }
 
-        const updatedWallet = await tx.wallet.findUnique({
-          where: { id: walletId },
-        });
-
         await this.auditService.log(tx, {
           tableName: 'option_lifecycle',
           recordId: lifecycle.id,
@@ -555,8 +471,6 @@ export class OptionLifecycleService {
             contracts: data.quantity,
             underlyingQuantity,
             strikePrice,
-            settlementAmount,
-            collateralReleased,
           },
           actorId: actor.id,
           actorRole: actor.role,
@@ -571,8 +485,6 @@ export class OptionLifecycleService {
           underlyingQuantity,
           strikePrice,
           settlementAmount,
-          cashBalanceAfter: Number(updatedWallet!.cashBalance),
-          collateralReleased,
         };
       });
     } catch (error) {
@@ -636,16 +548,6 @@ export class OptionLifecycleService {
 
     try {
       result = await this.prisma.$transaction(async (tx) => {
-        let collateralReleased = 0;
-
-        if (isShort && position.collateralBlocked) {
-          collateralReleased = Number(position.collateralBlocked);
-          await tx.wallet.update({
-            where: { id: walletId },
-            data: { blockedCollateral: { decrement: collateralReleased } },
-          });
-        }
-
         const transaction = await tx.transaction.create({
           data: {
             walletId,
@@ -701,7 +603,6 @@ export class OptionLifecycleService {
             wasShort: isShort,
             wasInTheMoney,
             strikePrice: Number(optionDetail.strikePrice),
-            collateralReleased,
           },
           actorId: actor.id,
           actorRole: actor.role,
@@ -715,7 +616,6 @@ export class OptionLifecycleService {
           positionId: position.id,
           ticker: position.asset.ticker,
           wasInTheMoney,
-          collateralReleased,
         };
       });
     } catch (error) {

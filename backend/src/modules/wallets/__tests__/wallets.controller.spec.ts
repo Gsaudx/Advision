@@ -11,7 +11,6 @@ describe('WalletsController', () => {
     create: jest.Mock;
     findAll: jest.Mock;
     getDashboard: jest.Mock;
-    cashOperation: jest.Mock;
     buy: jest.Mock;
     sell: jest.Mock;
   };
@@ -28,7 +27,6 @@ describe('WalletsController', () => {
     name: 'Test Wallet',
     description: null,
     currency: 'BRL',
-    cashBalance: 10000,
     createdAt: '2024-01-01T00:00:00.000Z',
     updatedAt: '2024-01-01T00:00:00.000Z',
     positions: [],
@@ -46,7 +44,6 @@ describe('WalletsController', () => {
       create: jest.fn(),
       findAll: jest.fn(),
       getDashboard: jest.fn(),
-      cashOperation: jest.fn(),
       buy: jest.fn(),
       sell: jest.fn(),
     };
@@ -155,44 +152,6 @@ describe('WalletsController', () => {
         'wallet-123',
         advisorUser,
       );
-    });
-  });
-
-  describe('cashOperation', () => {
-    it('performs deposit and returns success message', async () => {
-      walletsService.cashOperation.mockResolvedValue(mockWalletResponse);
-
-      const result = await controller.cashOperation(
-        'wallet-123',
-        {
-          type: 'DEPOSIT',
-          amount: 1000,
-          date: '2024-01-15T10:00:00.000Z',
-          idempotencyKey: 'dep-123',
-        },
-        advisorUser,
-      );
-
-      expect(result.success).toBe(true);
-      expect(result.message).toBe('Depósito realizado com sucesso');
-    });
-
-    it('performs withdrawal and returns success message', async () => {
-      walletsService.cashOperation.mockResolvedValue(mockWalletResponse);
-
-      const result = await controller.cashOperation(
-        'wallet-123',
-        {
-          type: 'WITHDRAWAL',
-          amount: 500,
-          date: '2024-01-15T10:00:00.000Z',
-          idempotencyKey: 'with-123',
-        },
-        advisorUser,
-      );
-
-      expect(result.success).toBe(true);
-      expect(result.message).toBe('Saque realizado com sucesso');
     });
   });
 

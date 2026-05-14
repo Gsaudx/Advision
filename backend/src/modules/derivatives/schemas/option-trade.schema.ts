@@ -108,7 +108,6 @@ export const OptionPositionResponseSchema = z.object({
   profitLoss: z.number().optional(),
   profitLossPercent: z.number().optional(),
   isShort: z.boolean(),
-  collateralBlocked: z.number().optional(),
   optionDetail: OptionDetailResponseSchema,
 });
 export type OptionPositionResponse = z.infer<

@@ -278,21 +278,6 @@ describe('OptionLifecycleService', () => {
         );
       });
 
-      it('throws BadRequestException when insufficient cash for CALL exercise', async () => {
-        walletAccess.verifyWalletAccess.mockResolvedValue(mockWallet);
-        prisma.position.findFirst.mockResolvedValue(mockLongCallPosition);
-        prisma.wallet.findUnique.mockResolvedValue(mockWallet);
-        prisma.wallet.updateMany.mockResolvedValue({ count: 0 });
-
-        await expect(
-          service.exerciseOption(
-            'wallet-123',
-            'position-123',
-            { idempotencyKey: 'exercise-no-cash' },
-            mockActor,
-          ),
-        ).rejects.toThrow(BadRequestException);
-      });
     });
 
     describe('PUT exercise', () => {
@@ -489,29 +474,6 @@ describe('OptionLifecycleService', () => {
         ).rejects.toThrow(BadRequestException);
       });
 
-      it('throws BadRequestException when CALL exercise cash is blocked by collateral', async () => {
-        walletAccess.verifyWalletAccess.mockResolvedValue(mockWallet);
-        prisma.position.findFirst.mockResolvedValue(mockLongCallPosition);
-
-        // totalCost = 24 * 1000 = 24000
-        // cashBalance = 30000, blockedCollateral = 10000 => available = 20000 < 24000
-        const walletWithCollateral = {
-          ...mockWallet,
-          cashBalance: 30000,
-          blockedCollateral: 10000,
-        };
-        prisma.wallet.findUnique.mockResolvedValue(walletWithCollateral);
-
-        await expect(
-          service.exerciseOption(
-            'wallet-123',
-            'position-123',
-            { idempotencyKey: 'exercise-blocked-collateral' },
-            mockActor,
-          ),
-        ).rejects.toThrow(BadRequestException);
-      });
-
       it('throws ConflictException on duplicate idempotency key', async () => {
         walletAccess.verifyWalletAccess.mockResolvedValue(mockWallet);
         walletAccess.isIdempotencyConflict.mockReturnValue(true);
@@ -599,46 +561,6 @@ describe('OptionLifecycleService', () => {
         );
 
         expect(result.event).toBe('ASSIGNED');
-        expect(result.collateralReleased).toBe(12000);
-      });
-
-      it('throws BadRequestException when insufficient cash for PUT assignment', async () => {
-        walletAccess.verifyWalletAccess.mockResolvedValue(mockWallet);
-        prisma.position.findFirst.mockResolvedValue(mockShortPutPosition);
-        prisma.wallet.findUnique.mockResolvedValue(mockWallet);
-        prisma.wallet.updateMany.mockResolvedValue({ count: 0 });
-
-        await expect(
-          service.handleAssignment(
-            'wallet-123',
-            'position-short-put-123',
-            { quantity: 5, idempotencyKey: 'assign-put-no-cash' },
-            mockActor,
-          ),
-        ).rejects.toThrow(BadRequestException);
-      });
-
-      it('throws BadRequestException when PUT assignment cash is blocked by collateral', async () => {
-        walletAccess.verifyWalletAccess.mockResolvedValue(mockWallet);
-        prisma.position.findFirst.mockResolvedValue(mockShortPutPosition);
-
-        // settlementAmount = 24 * 500 = 12000
-        // cashBalance = 15000, blockedCollateral = 5000 => available = 10000 < 12000
-        const walletWithCollateral = {
-          ...mockWallet,
-          cashBalance: 15000,
-          blockedCollateral: 5000,
-        };
-        prisma.wallet.findUnique.mockResolvedValue(walletWithCollateral);
-
-        await expect(
-          service.handleAssignment(
-            'wallet-123',
-            'position-short-put-123',
-            { quantity: 5, idempotencyKey: 'assign-put-blocked-collateral' },
-            mockActor,
-          ),
-        ).rejects.toThrow(BadRequestException);
       });
     });
 
@@ -783,30 +705,6 @@ describe('OptionLifecycleService', () => {
 
       expect(result.event).toBe('EXPIRED_ITM');
       expect(result.wasInTheMoney).toBe(true);
-    });
-
-    it('releases collateral for short position expiration', async () => {
-      walletAccess.verifyWalletAccess.mockResolvedValue(mockWallet);
-      prisma.position.findFirst.mockResolvedValue(expiredShortPosition);
-      marketData.getBatchPrices.mockResolvedValue({ PETR4: 30 });
-      prisma.wallet.update.mockResolvedValue(mockWallet);
-      prisma.transaction.create.mockResolvedValue({ id: 'tx-expire-123' });
-      prisma.position.delete.mockResolvedValue({});
-      prisma.optionLifecycle.create.mockResolvedValue({ id: 'lifecycle-123' });
-
-      const result = await service.processExpiration(
-        'wallet-123',
-        'position-short-put-123',
-        { idempotencyKey: 'expire-short-123' },
-        mockActor,
-      );
-
-      expect(result.collateralReleased).toBe(24000);
-      expect(prisma.wallet.update).toHaveBeenCalledWith(
-        expect.objectContaining({
-          data: { blockedCollateral: { decrement: 24000 } },
-        }),
-      );
     });
 
     it('throws BadRequestException when option has not expired yet', async () => {

@@ -144,56 +144,6 @@ export class StrategyExecutorService {
     try {
       result = await this.prisma.$transaction(
         async (tx) => {
-          const wallet = await tx.wallet.findUnique({
-            where: { id: walletId },
-          });
-
-          if (!wallet) {
-            throw new NotFoundException('Carteira nao encontrada');
-          }
-
-          if (isDebitStrategy) {
-            const requiredCash = Math.abs(netPremium);
-            const availableCash = new Decimal(wallet.cashBalance).minus(
-              wallet.blockedCollateral,
-            );
-
-            if (availableCash.lt(requiredCash)) {
-              throw new BadRequestException(
-                `Saldo insuficiente. Disponivel: ${availableCash.toFixed(2)}, Necessario: ${requiredCash.toFixed(2)}`,
-              );
-            }
-          }
-
-          let marginRequired = 0;
-          for (const leg of data.legs) {
-            if (leg.legType === OperationLegType.SELL_PUT) {
-              const asset = resolvedAssets.get(leg.ticker);
-              if (asset) {
-                const optionDetail = await tx.optionDetail.findUnique({
-                  where: { assetId: asset.id },
-                });
-                if (optionDetail) {
-                  marginRequired +=
-                    Number(optionDetail.strikePrice) *
-                    CONTRACT_SIZE *
-                    leg.quantity;
-                }
-              }
-            }
-          }
-
-          if (marginRequired > 0) {
-            const availableCash = new Decimal(wallet.cashBalance).minus(
-              wallet.blockedCollateral,
-            );
-            if (availableCash.lt(marginRequired)) {
-              throw new BadRequestException(
-                `Margem insuficiente para venda de PUT. Necessario: ${marginRequired.toFixed(2)}`,
-              );
-            }
-          }
-
           const structuredOp = await tx.structuredOperation.create({
             data: {
               walletId,
@@ -360,25 +310,6 @@ export class StrategyExecutorService {
             }
           }
 
-          if (isDebitStrategy) {
-            await tx.wallet.update({
-              where: { id: walletId },
-              data: { cashBalance: { decrement: Math.abs(netPremium) } },
-            });
-          } else {
-            await tx.wallet.update({
-              where: { id: walletId },
-              data: { cashBalance: { increment: netPremium } },
-            });
-          }
-
-          if (marginRequired > 0) {
-            await tx.wallet.update({
-              where: { id: walletId },
-              data: { blockedCollateral: { increment: marginRequired } },
-            });
-          }
-
           await tx.structuredOperation.update({
             where: { id: structuredOp.id },
             data: {
@@ -411,7 +342,6 @@ export class StrategyExecutorService {
               legsCount: data.legs.length,
               netPremium,
               isDebitStrategy,
-              marginRequired,
               correlationId: structuredOp.correlationId!,
             },
             actorId: actor.id,

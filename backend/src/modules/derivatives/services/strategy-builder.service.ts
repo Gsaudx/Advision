@@ -289,7 +289,6 @@ export class StrategyBuilderService {
     let maxLoss: number | null = null;
     let maxGain: number | null = null;
     const breakEvenPoints: number[] = [];
-    let marginRequired = 0;
 
     const optionLegs = legs.filter(
       (l) =>
@@ -330,12 +329,6 @@ export class StrategyBuilderService {
           } else {
             maxLoss = null;
             maxGain = Math.abs(netPremium);
-
-            const detail = optionDetails.get(leg.ticker);
-            if (detail && leg.legType === OperationLegType.SELL_PUT) {
-              marginRequired =
-                detail.strikePrice * CONTRACT_SIZE * leg.quantity;
-            }
           }
         }
         break;
@@ -398,21 +391,11 @@ export class StrategyBuilderService {
         }
     }
 
-    for (const leg of legs) {
-      if (leg.legType === OperationLegType.SELL_PUT) {
-        const detail = optionDetails.get(leg.ticker);
-        if (detail) {
-          marginRequired += detail.strikePrice * CONTRACT_SIZE * leg.quantity;
-        }
-      }
-    }
-
     return {
       maxLoss,
       maxGain,
       breakEvenPoints,
       netPremium,
-      marginRequired,
       isDebitStrategy,
     };
   }
