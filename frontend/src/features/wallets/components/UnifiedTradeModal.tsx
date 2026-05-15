@@ -33,7 +33,6 @@ interface UnifiedTradeModalProps {
   onClose: () => void;
   walletId: string;
   walletName: string;
-  currentBalance: number;
   positions: Position[];
   currency?: string;
   initialInstrument?: InstrumentType;
@@ -46,7 +45,6 @@ export function UnifiedTradeModal({
   onClose,
   walletId,
   walletName,
-  currentBalance,
   positions,
   currency = 'BRL',
   initialInstrument = 'asset',
@@ -107,7 +105,6 @@ export function UnifiedTradeModal({
     setErrors: setAssetErrors,
   } = useTradeForm({
     tradeType: direction,
-    currentBalance,
     positions,
     onSubmit: (data) => {
       activeAssetMutation.mutate(
@@ -170,13 +167,8 @@ export function UnifiedTradeModal({
     setAssetErrors((prev) => ({ ...prev, ticker: '' }));
   };
 
-  const assetPrice = parseFloat(assetFormData.price) || 0;
   const maxAssetQuantity =
-    direction === 'BUY'
-      ? assetPrice > 0
-        ? Math.floor(currentBalance / assetPrice)
-        : 0
-      : (selectedPosition?.quantity ?? 0);
+    direction === 'SELL' ? (selectedPosition?.quantity ?? 0) : 0;
 
   const handleMaxQuantity = () => {
     if (maxAssetQuantity > 0) {
@@ -535,10 +527,6 @@ export function UnifiedTradeModal({
 
   const totalValue =
     instrument === 'asset' ? assetTotalValue : optionTotalValue;
-  const balanceAfter =
-    direction === 'BUY'
-      ? currentBalance - totalValue
-      : currentBalance + totalValue;
 
   const submitLabel =
     direction === 'BUY'
@@ -656,16 +644,6 @@ export function UnifiedTradeModal({
                 </div>
               )}
 
-              {/* Saldo disponível */}
-              <div className="p-4 bg-surface-container-high rounded-2xl">
-                <p className="text-[10px] font-bold text-on-surface-variant uppercase tracking-[0.15em]">
-                  Saldo Disponível
-                </p>
-                <p className="text-lg font-headline font-bold text-tertiary mt-1">
-                  {formatCurrency(currentBalance, currency)}
-                </p>
-              </div>
-
               {/* ── Asset form ── */}
               {instrument === 'asset' && (
                 <form
@@ -720,14 +698,16 @@ export function UnifiedTradeModal({
                               : 'border-outline-variant/10'
                           }`}
                         />
-                        <button
-                          type="button"
-                          onClick={handleMaxQuantity}
-                          disabled={isPending || maxAssetQuantity === 0}
-                          className="absolute right-2 top-1/2 -translate-y-1/2 px-2 py-1 text-[10px] font-bold rounded-lg bg-surface-container-high text-primary hover:bg-surface-container-highest transition-colors disabled:opacity-40"
-                        >
-                          MAX
-                        </button>
+                        {direction === 'SELL' && (
+                          <button
+                            type="button"
+                            onClick={handleMaxQuantity}
+                            disabled={isPending || maxAssetQuantity === 0}
+                            className="absolute right-2 top-1/2 -translate-y-1/2 px-2 py-1 text-[10px] font-bold rounded-lg bg-surface-container-high text-primary hover:bg-surface-container-highest transition-colors disabled:opacity-40"
+                          >
+                            MAX
+                          </button>
+                        )}
                       </div>
                       {assetErrors.quantity && (
                         <p className="text-error text-xs mt-1">
@@ -1077,18 +1057,6 @@ export function UnifiedTradeModal({
                   >
                     {direction === 'BUY' ? '−' : '+'}
                     {formatCurrency(totalValue, currency)}
-                  </span>
-                </div>
-                <div className="flex justify-between text-sm border-t border-outline-variant/10 pt-3">
-                  <span className="text-on-surface-variant">
-                    Saldo Após Operação
-                  </span>
-                  <span
-                    className={`font-bold ${
-                      balanceAfter >= 0 ? 'text-on-surface' : 'text-error'
-                    }`}
-                  >
-                    {formatCurrency(balanceAfter, currency)}
                   </span>
                 </div>
               </div>

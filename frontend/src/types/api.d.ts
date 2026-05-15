@@ -422,26 +422,6 @@ export interface paths {
     patch?: never;
     trace?: never;
   };
-  '/wallets/{id}/performance': {
-    parameters: {
-      query?: never;
-      header?: never;
-      path?: never;
-      cookie?: never;
-    };
-    /**
-     * Performance da carteira
-     * @description Retorna lucro/prejuízo realizado, não realizado e proventos recebidos, com breakdown por ativo. Rentabilidade % calculada sobre o custo investido (Σ totalCost das posições abertas).
-     */
-    get: operations['WalletsController_getPerformance'];
-    put?: never;
-    post?: never;
-    delete?: never;
-    options?: never;
-    head?: never;
-    patch?: never;
-    trace?: never;
-  };
   '/wallets/{id}/sentinel/check': {
     parameters: {
       query?: never;
@@ -473,26 +453,6 @@ export interface paths {
     get: operations['WalletsController_getTransactions'];
     put?: never;
     post?: never;
-    delete?: never;
-    options?: never;
-    head?: never;
-    patch?: never;
-    trace?: never;
-  };
-  '/wallets/{id}/cash': {
-    parameters: {
-      query?: never;
-      header?: never;
-      path?: never;
-      cookie?: never;
-    };
-    get?: never;
-    put?: never;
-    /**
-     * Operação de caixa
-     * @description Realiza depósito ou saque na carteira.
-     */
-    post: operations['WalletsController_cashOperation'];
     delete?: never;
     options?: never;
     head?: never;
@@ -1165,7 +1125,6 @@ export interface components {
       description?: string;
       /** @default BRL */
       currency: string;
-      initialCashBalance?: number;
     };
     WalletApiResponseDto: {
       /** @enum {boolean} */
@@ -1178,12 +1137,6 @@ export interface components {
         name: string;
         description: string | null;
         currency: string;
-        cashBalance: number;
-        totalPositionsValue: number;
-        totalValue: number;
-        totalInvested: number;
-        totalPnl: number;
-        totalPnlPercent: number;
         createdAt: string;
         updatedAt: string;
         positions: {
@@ -1204,7 +1157,6 @@ export interface components {
           profitLoss?: number;
           profitLossPercent?: number;
           weightPercent?: number;
-          collateralBlocked?: number | null;
           lastDividendDate?: string | null;
           priceAtLastDividend?: number | null;
           optionDetail?: {
@@ -1216,6 +1168,14 @@ export interface components {
             contractSize: number;
           } | null;
         }[];
+        totalPositionsValue: number;
+        totalValue: number;
+        totalInvested: number;
+        totalPnl: number;
+        totalPnlPercent: number;
+        totalCostBasis: number;
+        totalMarketValue: number;
+        totalUnrealizedPL: number;
         concentration: {
           byAsset: {
             key: string;
@@ -1250,7 +1210,6 @@ export interface components {
         name: string;
         description: string | null;
         currency: string;
-        cashBalance: number;
         totalPositionsValue: number;
         totalValue: number;
         totalInvested: number;
@@ -1259,6 +1218,33 @@ export interface components {
         createdAt: string;
         updatedAt: string;
       }[];
+      message?: string;
+    };
+    WalletPerformanceApiResponseDto: {
+      /** @enum {boolean} */
+      success: true;
+      data?: {
+        /** Format: uuid */
+        walletId: string;
+        realized: number;
+        unrealized: number;
+        dividends: number;
+        total: number;
+        totalInvested: number;
+        totalPercent: number;
+        byAsset: {
+          /** Format: uuid */
+          assetId: string;
+          ticker: string;
+          name: string;
+          /** @enum {string} */
+          type: 'STOCK' | 'OPTION';
+          realized: number;
+          unrealized: number;
+          dividends: number;
+          total: number;
+        }[];
+      };
       message?: string;
     };
     AssetSearchApiResponseDto: {
@@ -1300,33 +1286,6 @@ export interface components {
       };
       message?: string;
     };
-    WalletPerformanceApiResponseDto: {
-      /** @enum {boolean} */
-      success: true;
-      data?: {
-        /** Format: uuid */
-        walletId: string;
-        realized: number;
-        unrealized: number;
-        dividends: number;
-        total: number;
-        totalInvested: number;
-        totalPercent: number;
-        byAsset: {
-          /** Format: uuid */
-          assetId: string;
-          ticker: string;
-          name: string;
-          /** @enum {string} */
-          type: 'STOCK' | 'OPTION';
-          realized: number;
-          unrealized: number;
-          dividends: number;
-          total: number;
-        }[];
-      };
-      message?: string;
-    };
     TransactionListApiResponseDto: {
       /** @enum {boolean} */
       success: true;
@@ -1346,8 +1305,6 @@ export interface components {
             | 'DIVIDEND'
             | 'SPLIT'
             | 'SUBSCRIPTION'
-            | 'DEPOSIT'
-            | 'WITHDRAWAL'
             | 'OPTION_EXERCISE'
             | 'OPTION_ASSIGNMENT'
             | 'OPTION_EXPIRY';
@@ -1364,14 +1321,6 @@ export interface components {
         nextCursor: string | null;
       };
       message?: string;
-    };
-    CashOperationInputDto: {
-      /** @enum {string} */
-      type: 'DEPOSIT' | 'WITHDRAWAL';
-      amount: number;
-      /** Format: date-time */
-      date: string;
-      idempotencyKey: string;
     };
     TradeInputDto: {
       ticker: string;
@@ -1501,7 +1450,6 @@ export interface components {
           profitLoss?: number;
           profitLossPercent?: number;
           isShort: boolean;
-          collateralBlocked?: number;
           optionDetail: {
             /** @enum {string} */
             optionType: 'CALL' | 'PUT';
@@ -1769,7 +1717,6 @@ export interface components {
           maxGain: number | null;
           breakEvenPoints: number[];
           netPremium: number;
-          marginRequired: number;
           isDebitStrategy: boolean;
         };
         totalCost: number;
@@ -1829,7 +1776,6 @@ export interface components {
         underlyingQuantity: number;
         strikePrice: number;
         totalCost: number;
-        cashBalanceAfter: number;
       };
       message?: string;
     };
@@ -1860,8 +1806,6 @@ export interface components {
         underlyingQuantity: number;
         strikePrice: number;
         settlementAmount: number;
-        cashBalanceAfter: number;
-        collateralReleased: number;
       };
       message?: string;
     };
@@ -1883,7 +1827,6 @@ export interface components {
         positionId: string;
         ticker: string;
         wasInTheMoney: boolean;
-        collateralReleased: number;
       };
       message?: string;
     };
@@ -2741,47 +2684,6 @@ export interface operations {
       };
     };
   };
-  WalletsController_getPerformance: {
-    parameters: {
-      query?: never;
-      header?: never;
-      path: {
-        /** @description ID da carteira */
-        id: string;
-      };
-      cookie?: never;
-    };
-    requestBody?: never;
-    responses: {
-      /** @description Performance consolidada */
-      200: {
-        headers: {
-          [name: string]: unknown;
-        };
-        content: {
-          'application/json': components['schemas']['WalletPerformanceApiResponseDto'];
-        };
-      };
-      /** @description Sem permissão para acessar esta carteira */
-      403: {
-        headers: {
-          [name: string]: unknown;
-        };
-        content: {
-          'application/json': components['schemas']['ApiErrorResponseDto'];
-        };
-      };
-      /** @description Carteira não encontrada */
-      404: {
-        headers: {
-          [name: string]: unknown;
-        };
-        content: {
-          'application/json': components['schemas']['ApiErrorResponseDto'];
-        };
-      };
-    };
-  };
   WalletsController_triggerSentinelCheck: {
     parameters: {
       query?: never;
@@ -2847,60 +2749,6 @@ export interface operations {
       };
       /** @description Carteira não encontrada */
       404: {
-        headers: {
-          [name: string]: unknown;
-        };
-        content: {
-          'application/json': components['schemas']['ApiErrorResponseDto'];
-        };
-      };
-    };
-  };
-  WalletsController_cashOperation: {
-    parameters: {
-      query?: never;
-      header?: never;
-      path: {
-        /** @description ID da carteira */
-        id: string;
-      };
-      cookie?: never;
-    };
-    requestBody: {
-      content: {
-        'application/json': components['schemas']['CashOperationInputDto'];
-      };
-    };
-    responses: {
-      /** @description Operação realizada com sucesso */
-      200: {
-        headers: {
-          [name: string]: unknown;
-        };
-        content: {
-          'application/json': components['schemas']['WalletApiResponseDto'];
-        };
-      };
-      /** @description Saldo insuficiente ou dados inválidos */
-      400: {
-        headers: {
-          [name: string]: unknown;
-        };
-        content: {
-          'application/json': components['schemas']['ApiErrorResponseDto'];
-        };
-      };
-      /** @description Sem permissão para operar esta carteira */
-      403: {
-        headers: {
-          [name: string]: unknown;
-        };
-        content: {
-          'application/json': components['schemas']['ApiErrorResponseDto'];
-        };
-      };
-      /** @description Operação duplicada (idempotencyKey já utilizada) */
-      409: {
         headers: {
           [name: string]: unknown;
         };

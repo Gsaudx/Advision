@@ -604,8 +604,6 @@ describe('StrategyBuilderService', () => {
         expect(profile.maxGain).toBe(1000);
         expect(profile.netPremium).toBe(1000);
         expect(profile.isDebitStrategy).toBe(false);
-        // Margin is calculated twice: once in SINGLE_OPTION case, once in general loop
-        expect(profile.marginRequired).toBe(48000);
       });
     });
 
@@ -695,38 +693,6 @@ describe('StrategyBuilderService', () => {
       });
     });
 
-    describe('margin calculation', () => {
-      it('calculates margin for short puts', async () => {
-        const putAsset26 = {
-          ...mockPutAsset,
-          ticker: 'PETRM260',
-          optionDetail: { ...mockPutAsset.optionDetail, strikePrice: 26 },
-        };
-        prisma.asset.findUnique
-          .mockResolvedValueOnce(mockPutAsset)
-          .mockResolvedValueOnce(putAsset26);
-
-        const profile = await service.getStrategyRiskProfile(
-          StrategyType.CUSTOM,
-          [
-            {
-              legType: OperationLegType.SELL_PUT,
-              ticker: 'PETRM240',
-              quantity: 10,
-              price: 1.0,
-            },
-            {
-              legType: OperationLegType.SELL_PUT,
-              ticker: 'PETRM260',
-              quantity: 5,
-              price: 2.0,
-            },
-          ],
-        );
-
-        expect(profile.marginRequired).toBe(24 * 100 * 10 + 26 * 100 * 5);
-      });
-    });
   });
 
   describe('previewStrategy', () => {

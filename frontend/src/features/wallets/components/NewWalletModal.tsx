@@ -190,63 +190,33 @@ export function NewWalletModal({ isOpen, onClose }: NewWalletModalProps) {
                 )}
               </div>
 
-              {/* Moeda + Aporte Inicial */}
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                <div className="space-y-2">
-                  <label htmlFor="currency" className={LABEL_CLASS}>
-                    Moeda
-                  </label>
-                  <div className="relative">
-                    <select
-                      id="currency"
-                      name="currency"
-                      value={formData.currency}
-                      onChange={handleChange}
-                      disabled={createWalletMutation.isPending}
-                      className={`${INPUT_BASE} appearance-none pr-10`}
-                    >
-                      {currencyOptions.map((opt) => (
-                        <option
-                          key={opt.value}
-                          value={opt.value}
-                          className="bg-surface-container-low"
-                        >
-                          {opt.label}
-                        </option>
-                      ))}
-                    </select>
-                    <ChevronDown
-                      className="absolute right-4 top-1/2 -translate-y-1/2 text-on-surface-variant pointer-events-none"
-                      size={18}
-                    />
-                  </div>
-                </div>
-
-                <div className="space-y-2">
-                  <label htmlFor="initialCashBalance" className={LABEL_CLASS}>
-                    Aporte Inicial
-                  </label>
-                  <div className="relative">
-                    <span className="absolute left-4 top-1/2 -translate-y-1/2 text-on-surface-variant/30 text-xs font-bold">
-                      R$
-                    </span>
-                    <input
-                      id="initialCashBalance"
-                      name="initialCashBalance"
-                      type="text"
-                      inputMode="numeric"
-                      value={formData.initialCashBalance}
-                      onChange={handleChange}
-                      disabled={createWalletMutation.isPending}
-                      className={`${INPUT_BASE} pl-11 ${errors.initialCashBalance ? INPUT_ERROR : ''}`}
-                      placeholder="0,00"
-                    />
-                  </div>
-                  {errors.initialCashBalance && (
-                    <span className="text-error text-xs">
-                      {errors.initialCashBalance}
-                    </span>
-                  )}
+              <div className="space-y-2">
+                <label htmlFor="currency" className={LABEL_CLASS}>
+                  Moeda
+                </label>
+                <div className="relative">
+                  <select
+                    id="currency"
+                    name="currency"
+                    value={formData.currency}
+                    onChange={handleChange}
+                    disabled={createWalletMutation.isPending}
+                    className={`${INPUT_BASE} appearance-none pr-10`}
+                  >
+                    {currencyOptions.map((opt) => (
+                      <option
+                        key={opt.value}
+                        value={opt.value}
+                        className="bg-surface-container-low"
+                      >
+                        {opt.label}
+                      </option>
+                    ))}
+                  </select>
+                  <ChevronDown
+                    className="absolute right-4 top-1/2 -translate-y-1/2 text-on-surface-variant pointer-events-none"
+                    size={18}
+                  />
                 </div>
               </div>
 

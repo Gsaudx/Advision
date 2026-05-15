@@ -5,8 +5,6 @@ import type { AggregateType } from '@/generated/prisma/enums';
  */
 export const WalletEvents = {
   CREATED: 'WalletCreated',
-  CASH_DEPOSITED: 'CashDeposited',
-  CASH_WITHDRAWN: 'CashWithdrawn',
   POSITION_OPENED: 'PositionOpened',
   POSITION_INCREASED: 'PositionIncreased',
   POSITION_DECREASED: 'PositionDecreased',
@@ -108,27 +106,6 @@ export interface WalletCreatedPayload {
   clientId: string;
   name: string;
   currency: string;
-  initialCashBalance: number;
-}
-
-/**
- * Payload for CashDeposited event
- */
-export interface CashDepositedPayload {
-  walletId: string;
-  amount: number;
-  previousBalance: number;
-  newBalance: number;
-}
-
-/**
- * Payload for CashWithdrawn event
- */
-export interface CashWithdrawnPayload {
-  walletId: string;
-  amount: number;
-  previousBalance: number;
-  newBalance: number;
 }
 
 /**
@@ -289,7 +266,6 @@ export interface OptionSoldPayload {
   strikePrice: number;
   expirationDate: string;
   covered: boolean;
-  collateralBlocked: number;
 }
 
 /**
@@ -317,7 +293,6 @@ export interface StrategyExecutedPayload {
   legsCount: number;
   netPremium: number;
   isDebitStrategy: boolean;
-  marginRequired: number;
   correlationId: string;
 }
 
@@ -361,8 +336,6 @@ export interface OptionAssignedPayload {
   contracts: number;
   underlyingQuantity: number;
   strikePrice: number;
-  settlementAmount: number;
-  collateralReleased: number;
 }
 
 /**
@@ -379,5 +352,4 @@ export interface OptionExpiredPayload {
   wasShort: boolean;
   wasInTheMoney: boolean;
   strikePrice: number;
-  collateralReleased: number;
 }

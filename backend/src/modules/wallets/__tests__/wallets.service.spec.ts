@@ -1,7 +1,6 @@
 import { Test, TestingModule } from '@nestjs/testing';
 import {
   ForbiddenException,
-  ConflictException,
   BadRequestException,
 } from '@nestjs/common';
 import { WalletsService } from '../services/wallets.service';
@@ -91,7 +90,6 @@ describe('WalletsService', () => {
     name: 'Test Wallet',
     description: 'Test Description',
     currency: 'BRL',
-    cashBalance: mockDecimal(10000),
     createdAt: new Date('2024-01-01'),
     updatedAt: new Date('2024-01-01'),
     client: {
@@ -248,44 +246,6 @@ describe('WalletsService', () => {
   });
 
   describe('create', () => {
-    it('creates wallet with initial deposit transaction', async () => {
-      prisma.client.findFirst.mockResolvedValue({ id: 'client-123' });
-      prisma.wallet.create.mockResolvedValue({
-        ...baseWallet,
-        cashBalance: mockDecimal(5000),
-      });
-      prisma.transaction.create.mockResolvedValue({ id: 'tx-123' });
-
-      const result = await service.create(
-        {
-          clientId: 'client-123',
-          name: 'New Wallet',
-          currency: 'BRL',
-          initialCashBalance: 5000,
-        },
-        advisorUser,
-      );
-
-      expect(prisma.wallet.create).toHaveBeenCalled();
-      expect(prisma.transaction.create).toHaveBeenCalledWith(
-        expect.objectContaining({
-          data: expect.objectContaining({
-            type: 'DEPOSIT',
-            totalValue: 5000,
-          }),
-        }),
-      );
-      expect(auditService.log).toHaveBeenCalledWith(
-        expect.anything(),
-        expect.objectContaining({
-          tableName: 'transactions',
-          recordId: 'tx-123',
-          action: 'CREATE',
-        }),
-      );
-      expect(result.cashBalance).toBe(5000);
-    });
-
     it('creates wallet without deposit when initialCashBalance is 0', async () => {
       prisma.client.findFirst.mockResolvedValue({ id: 'client-123' });
       prisma.wallet.create.mockResolvedValue(baseWallet);
@@ -336,7 +296,7 @@ describe('WalletsService', () => {
       });
       expect(result).toHaveLength(1);
       expect(result[0].name).toBe('Test Wallet');
-      expect(result[0].totalValue).toBe(10000);
+      expect(result[0].totalValue).toBe(0);
       expect(result[0].totalPositionsValue).toBe(0);
     });
 
@@ -367,7 +327,7 @@ describe('WalletsService', () => {
 
       // 100 PETR4 × 35 = 3500
       expect(result[0].totalPositionsValue).toBe(3500);
-      expect(result[0].totalValue).toBe(13500); // cash 10000 + positions 3500
+      expect(result[0].totalValue).toBe(3500);
     });
   });
 
@@ -379,7 +339,6 @@ describe('WalletsService', () => {
 
       const result = await service.getDashboard('wallet-123', advisorUser);
 
-      expect(result.cashBalance).toBe(10000);
       expect(result.positions).toHaveLength(1);
       expect(result.positions[0].currentPrice).toBe(35);
       expect(result.positions[0].currentValue).toBe(3500); // 100 * 35
@@ -408,136 +367,6 @@ describe('WalletsService', () => {
       await expect(
         service.getDashboard('wallet-123', clientUser),
       ).rejects.toBeInstanceOf(ForbiddenException);
-    });
-  });
-
-  describe('cashOperation', () => {
-    it('deposits correctly', async () => {
-      prisma.transaction.findUnique.mockResolvedValue(null);
-      prisma.wallet.findFirst.mockResolvedValue(baseWallet);
-      prisma.wallet.findUnique.mockResolvedValue(baseWallet);
-      prisma.wallet.update.mockResolvedValue({
-        ...baseWallet,
-        cashBalance: mockDecimal(15000),
-      });
-      prisma.position.findMany.mockResolvedValue([]);
-      marketData.getBatchPrices.mockResolvedValue({});
-
-      const result = await service.cashOperation(
-        'wallet-123',
-        {
-          type: 'DEPOSIT',
-          amount: 5000,
-          date: '2024-01-15T10:00:00.000Z',
-          idempotencyKey: 'dep-123',
-        },
-        advisorUser,
-      );
-
-      expect(prisma.wallet.update).toHaveBeenCalled();
-      expect(prisma.transaction.create).toHaveBeenCalledWith(
-        expect.objectContaining({
-          data: expect.objectContaining({
-            type: 'DEPOSIT',
-            totalValue: 5000,
-            idempotencyKey: 'dep-123',
-          }),
-        }),
-      );
-      expect(result).toBeDefined();
-    });
-
-    it('withdraws correctly', async () => {
-      prisma.transaction.findUnique.mockResolvedValue(null);
-      prisma.wallet.findFirst.mockResolvedValue(baseWallet);
-      prisma.wallet.findUnique.mockResolvedValue(baseWallet);
-      prisma.position.findMany.mockResolvedValue([]);
-      marketData.getBatchPrices.mockResolvedValue({});
-
-      await service.cashOperation(
-        'wallet-123',
-        {
-          type: 'WITHDRAWAL',
-          amount: 5000,
-          date: '2024-01-15T10:00:00.000Z',
-          idempotencyKey: 'with-123',
-        },
-        advisorUser,
-      );
-
-      expect(prisma.wallet.updateMany).toHaveBeenCalledWith(
-        expect.objectContaining({
-          where: expect.objectContaining({
-            id: 'wallet-123',
-            cashBalance: { gte: 5000 },
-          }),
-          data: { cashBalance: { decrement: 5000 } },
-        }),
-      );
-    });
-
-    it('rejects insufficient balance for withdrawal', async () => {
-      prisma.transaction.findUnique.mockResolvedValue(null);
-      prisma.wallet.findFirst.mockResolvedValue(baseWallet);
-      prisma.wallet.findUnique.mockResolvedValue({
-        ...baseWallet,
-        cashBalance: mockDecimal(1000),
-      });
-      prisma.wallet.updateMany.mockResolvedValue({ count: 0 });
-
-      await expect(
-        service.cashOperation(
-          'wallet-123',
-          {
-            type: 'WITHDRAWAL',
-            amount: 5000,
-            date: '2024-01-15T10:00:00.000Z',
-            idempotencyKey: 'with-fail',
-          },
-          advisorUser,
-        ),
-      ).rejects.toBeInstanceOf(BadRequestException);
-    });
-
-    it('rejects duplicate idempotencyKey for same wallet', async () => {
-      prisma.wallet.findFirst.mockResolvedValue(baseWallet);
-      prisma.transaction.findUnique.mockResolvedValue({ id: 'existing-tx' });
-
-      await expect(
-        service.cashOperation(
-          'wallet-123',
-          {
-            type: 'DEPOSIT',
-            amount: 1000,
-            date: '2024-01-15T10:00:00.000Z',
-            idempotencyKey: 'duplicate-key',
-          },
-          advisorUser,
-        ),
-      ).rejects.toBeInstanceOf(ConflictException);
-    });
-
-    it('translates idempotency unique constraint to ConflictException', async () => {
-      prisma.transaction.findUnique.mockResolvedValue(null);
-      prisma.wallet.findFirst.mockResolvedValue(baseWallet);
-      walletAccessService.isIdempotencyConflict.mockReturnValue(true);
-      prisma.$transaction.mockRejectedValueOnce({
-        code: 'P2002',
-        meta: { target: ['walletId', 'idempotencyKey'] },
-      });
-
-      await expect(
-        service.cashOperation(
-          'wallet-123',
-          {
-            type: 'DEPOSIT',
-            amount: 1000,
-            date: '2024-01-15T10:00:00.000Z',
-            idempotencyKey: 'dup-unique',
-          },
-          advisorUser,
-        ),
-      ).rejects.toBeInstanceOf(ConflictException);
     });
   });
 

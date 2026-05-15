@@ -1,8 +1,6 @@
 import {
   ShoppingCart,
   DollarSign,
-  ArrowDownToLine,
-  ArrowUpFromLine,
   TrendingUp,
   Layers,
   Ticket,
@@ -34,6 +32,14 @@ type TransactionStyle = {
 
 // Transaction type configuration — semantic colors preserved intentionally
 const transactionConfig: Record<TransactionType, TransactionStyle> = {
+  EXPIRED: {
+    icon: Hourglass,
+    bgColor: 'bg-surface-container-high',
+    iconColor: 'text-on-surface-variant',
+    borderColor: 'border-outline-variant/30',
+    valuePrefix: '',
+    valueColor: 'text-on-surface-variant',
+  },
   BUY: {
     icon: ShoppingCart,
     bgColor: 'bg-blue-500/20',
@@ -49,30 +55,6 @@ const transactionConfig: Record<TransactionType, TransactionStyle> = {
     borderColor: 'border-orange-500/30',
     valuePrefix: '+',
     valueColor: 'text-tertiary',
-  },
-  DEPOSIT: {
-    icon: ArrowDownToLine,
-    bgColor: 'bg-tertiary/20',
-    iconColor: 'text-tertiary',
-    borderColor: 'border-tertiary/30',
-    valuePrefix: '+',
-    valueColor: 'text-tertiary',
-  },
-  WITHDRAWAL: {
-    icon: ArrowUpFromLine,
-    bgColor: 'bg-error/20',
-    iconColor: 'text-error',
-    borderColor: 'border-error/30',
-    valuePrefix: '-',
-    valueColor: 'text-error',
-  },
-  EXPIRED: {
-    icon: Hourglass,
-    bgColor: 'bg-surface-container-high',
-    iconColor: 'text-on-surface-variant',
-    borderColor: 'border-outline-variant/30',
-    valuePrefix: '',
-    valueColor: 'text-on-surface-variant',
   },
   DIVIDEND: {
     icon: TrendingUp,

@@ -4,7 +4,6 @@ export { PositionTable } from './PositionTable';
 export { PerformancePanel } from './PerformancePanel';
 export { ConcentrationPanel } from './ConcentrationPanel';
 export { NewWalletModal } from './NewWalletModal';
-export { CashOperationModal } from './CashOperationModal';
 export { TickerAutocomplete } from './TickerAutocomplete';
 export { UnifiedTradeModal } from './UnifiedTradeModal';
 export { FilterSelect } from './FilterSelect';

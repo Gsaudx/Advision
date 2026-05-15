@@ -1,4 +1,4 @@
-import { Wallet, Banknote, TrendingUp, PiggyBank } from 'lucide-react';
+import { Wallet, TrendingUp, PiggyBank } from 'lucide-react';
 import { formatCurrency } from '@/lib/formatters';
 import type { WalletSummary } from '../types';
 import { StatCard } from '@/components/ui/StatCard';
@@ -11,12 +11,10 @@ export function WalletStatsCard({ wallets }: WalletStatsCardProps) {
   const totals = wallets.reduce(
     (acc, wallet) => ({
       count: acc.count + 1,
-      cash: acc.cash + wallet.cashBalance,
-      invested: acc.invested + wallet.totalInvested,
       total: acc.total + wallet.totalValue,
       pnl: acc.pnl + wallet.totalPnl,
     }),
-    { count: 0, cash: 0, invested: 0, total: 0, pnl: 0 },
+    { count: 0, total: 0, pnl: 0 },
   );
 
   const pnlIconColor =
@@ -33,20 +31,13 @@ export function WalletStatsCard({ wallets }: WalletStatsCardProps) {
         : 'bg-outline-variant/15';
 
   return (
-    <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
+    <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
       <StatCard
         label="Total de Carteiras"
         value={String(totals.count)}
         icon={Wallet}
         iconColor="text-primary"
         iconBg="bg-primary/10"
-      />
-      <StatCard
-        label="Saldo em Caixa"
-        value={formatCurrency(totals.cash)}
-        icon={Banknote}
-        iconColor="text-tertiary"
-        iconBg="bg-tertiary/10"
       />
       <StatCard
         label="Lucro/Prejuízo"

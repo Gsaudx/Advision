@@ -149,16 +149,6 @@ export function ExpirationModal({
           </div>
         )}
 
-        {/* Collateral Release */}
-        {position.isShort && position.collateralBlocked && (
-          <div className="p-3 bg-emerald-500/10 border border-emerald-500/20 rounded-lg">
-            <p className="text-emerald-400 text-sm">
-              Margem bloqueada de {formatCurrency(position.collateralBlocked)}{' '}
-              sera liberada apos o vencimento.
-            </p>
-          </div>
-        )}
-
         {/* Notes */}
         <div className="flex flex-col gap-1.5">
           <label

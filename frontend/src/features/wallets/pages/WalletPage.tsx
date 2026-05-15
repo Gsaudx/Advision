@@ -2,8 +2,6 @@ import { useState, useMemo, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import {
   ArrowLeft,
-  ArrowDownLeft,
-  ArrowUpRight,
   ChevronRight,
   Wallet,
   LineChart,
@@ -27,7 +25,6 @@ import {
 import { useWalletProventos } from '@/features/proventos/api';
 import { PositionTable } from '../components/PositionTable';
 import { ProventosTab } from '../components/ProventosTab';
-import { CashOperationModal } from '../components/CashOperationModal';
 import { UnifiedTradeModal } from '../components/UnifiedTradeModal';
 import { PerformancePanel } from '../components/PerformancePanel';
 import { ConcentrationPanel } from '../components/ConcentrationPanel';
@@ -51,7 +48,7 @@ import type {
   ExpiryStatus,
   OptionType,
 } from '@/features/derivatives';
-import type { CashOperationType, Position, Transaction } from '../types';
+import type { Position, Transaction } from '../types';
 import { transactionTypeLabels } from '../types';
 import { useWalletsPageConfig } from './useWalletsPageConfig';
 import { useSentinelStatus } from '../api';
@@ -252,9 +249,9 @@ function OperationsTable({
                 <td className="px-4 py-5">
                   <span
                     className={`inline-flex items-center px-3 py-1 rounded-full text-[10px] font-bold ${
-                      tx.type === 'BUY' || tx.type === 'DEPOSIT'
+                      tx.type === 'BUY'
                         ? 'bg-tertiary/10 text-tertiary'
-                        : tx.type === 'SELL' || tx.type === 'WITHDRAWAL'
+                        : tx.type === 'SELL'
                           ? 'bg-error/10 text-error'
                           : 'bg-outline-variant/20 text-on-surface-variant'
                     }`}
@@ -460,11 +457,8 @@ export default function WalletPage() {
 
   const [subTab, setSubTab] = useState<SubTab>('positions');
   const [pillTab, setPillTab] = useState<PillTab>('operations');
-  const [showCashModal, setShowCashModal] = useState(false);
   const [showTradeModal, setShowTradeModal] = useState(false);
   const [showStrategyModal, setShowStrategyModal] = useState(false);
-  const [cashOperationType, setCashOperationType] =
-    useState<CashOperationType>('DEPOSIT');
   const [tradeInitial, setTradeInitial] = useState<{
     instrument: 'asset' | 'option';
     direction: 'BUY' | 'SELL';
@@ -504,11 +498,6 @@ export default function WalletPage() {
 
   const handleSellPosition = (position: Position) =>
     handleOpenTrade('asset', 'SELL', position.ticker);
-
-  const handleOpenCashOperation = (type: CashOperationType) => {
-    setCashOperationType(type);
-    setShowCashModal(true);
-  };
 
   const findOptionPosition = (positionId: string): OptionPosition | undefined =>
     optionPositionsData?.positions.find((p) => p.id === positionId);
@@ -650,20 +639,6 @@ export default function WalletPage() {
               {config.canTrade && (
                 <>
                   <button
-                    onClick={() => handleOpenCashOperation('DEPOSIT')}
-                    className="flex items-center gap-1.5 bg-surface-container-high text-on-surface-variant px-4 py-2 rounded-full text-xs font-bold hover:bg-surface-container-highest hover:text-on-surface transition-all"
-                  >
-                    <ArrowDownLeft size={12} />
-                    Depositar
-                  </button>
-                  <button
-                    onClick={() => handleOpenCashOperation('WITHDRAWAL')}
-                    className="flex items-center gap-1.5 bg-surface-container-high text-on-surface-variant px-4 py-2 rounded-full text-xs font-bold hover:bg-surface-container-highest hover:text-on-surface transition-all"
-                  >
-                    <ArrowUpRight size={12} />
-                    Sacar
-                  </button>
-                  <button
                     onClick={() => setShowStrategyModal(true)}
                     className="flex items-center gap-1.5 bg-surface-container-high text-on-surface-variant px-4 py-2 rounded-full text-xs font-bold hover:bg-surface-container-highest hover:text-on-surface transition-all"
                   >
@@ -694,7 +669,6 @@ export default function WalletPage() {
               {formatCurrency(wallet.totalValue, wallet.currency)}
             </h3>
             <p className="text-xs text-on-surface-variant">
-              Caixa {formatCurrency(wallet.cashBalance, wallet.currency)} ·
               Investido{' '}
               {formatCurrency(wallet.totalPositionsValue, wallet.currency)}
             </p>
@@ -1007,22 +981,11 @@ export default function WalletPage() {
       </div>
 
       {/* Operation Modals */}
-      <CashOperationModal
-        isOpen={showCashModal}
-        onClose={() => setShowCashModal(false)}
-        walletId={walletId!}
-        walletName={wallet.name}
-        currentBalance={wallet.cashBalance}
-        currency={wallet.currency}
-        initialType={cashOperationType}
-      />
-
       <UnifiedTradeModal
         isOpen={showTradeModal}
         onClose={() => setShowTradeModal(false)}
         walletId={walletId!}
         walletName={wallet.name}
-        currentBalance={wallet.cashBalance}
         positions={wallet.positions.filter((p) => p.type === 'STOCK')}
         currency={wallet.currency}
         initialInstrument={tradeInitial.instrument}
@@ -1036,7 +999,6 @@ export default function WalletPage() {
           onClose={closeLifecycleModal}
           position={selectedPosition}
           walletId={walletId!}
-          walletCashBalance={wallet.cashBalance}
         />
       )}
       {selectedPosition && lifecycleAction === 'exercise' && (

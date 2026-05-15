@@ -78,9 +78,6 @@ export class DerivativesService {
       averagePrice,
       totalCost,
       isShort,
-      collateralBlocked: position.collateralBlocked
-        ? Number(position.collateralBlocked)
-        : undefined,
       optionDetail: {
         optionType: position.asset.optionDetail!.optionType,
         exerciseType: position.asset.optionDetail!.exerciseType,
@@ -159,29 +156,6 @@ export class DerivativesService {
 
     try {
       result = await this.prisma.$transaction(async (tx) => {
-        const wallet = await tx.wallet.findUnique({ where: { id: walletId } });
-
-        if (!wallet) {
-          throw new NotFoundException('Carteira nao encontrada');
-        }
-
-        const availableCash = new Decimal(wallet.cashBalance).minus(
-          wallet.blockedCollateral,
-        );
-
-        if (availableCash.lt(totalCost)) {
-          throw new BadRequestException('Saldo insuficiente');
-        }
-
-        const cashUpdateResult = await tx.wallet.updateMany({
-          where: { id: walletId, cashBalance: { gte: totalCost.toNumber() } },
-          data: { cashBalance: { decrement: totalCost.toNumber() } },
-        });
-
-        if (cashUpdateResult.count === 0) {
-          throw new BadRequestException('Saldo insuficiente');
-        }
-
         const existingPosition = await tx.position.findUnique({
           where: { walletId_assetId: { walletId, assetId: asset.id } },
         });
@@ -346,30 +320,6 @@ export class DerivativesService {
 
     try {
       result = await this.prisma.$transaction(async (tx) => {
-        const wallet = await tx.wallet.findUnique({ where: { id: walletId } });
-
-        if (!wallet) {
-          throw new NotFoundException('Carteira nao encontrada');
-        }
-
-        if (optionDetail.optionType === 'PUT') {
-          const availableCash = new Decimal(wallet.cashBalance).minus(
-            wallet.blockedCollateral,
-          );
-          if (availableCash.lt(requiredCollateral)) {
-            throw new BadRequestException(
-              'Saldo insuficiente para margem de garantia',
-            );
-          }
-
-          await tx.wallet.update({
-            where: { id: walletId },
-            data: {
-              blockedCollateral: { increment: requiredCollateral.toNumber() },
-            },
-          });
-        }
-
         if (optionDetail.optionType === 'CALL' && data.covered) {
           const underlyingPosition = await tx.position.findUnique({
             where: {
@@ -390,11 +340,6 @@ export class DerivativesService {
             );
           }
         }
-
-        await tx.wallet.update({
-          where: { id: walletId },
-          data: { cashBalance: { increment: totalPremium.toNumber() } },
-        });
 
         const existingPosition = await tx.position.findUnique({
           where: { walletId_assetId: { walletId, assetId: asset.id } },
@@ -494,7 +439,6 @@ export class DerivativesService {
             strikePrice: Number(optionDetail.strikePrice),
             expirationDate: optionDetail.expirationDate.toISOString(),
             covered: data.covered,
-            collateralBlocked: requiredCollateral.toNumber(),
           },
           actorId: actor.id,
           actorRole: actor.role,
@@ -576,60 +520,6 @@ export class DerivativesService {
 
     try {
       result = await this.prisma.$transaction(async (tx) => {
-        if (isShort) {
-          const wallet = await tx.wallet.findUnique({
-            where: { id: walletId },
-          });
-
-          if (!wallet) {
-            throw new NotFoundException('Carteira nao encontrada');
-          }
-
-          const availableCash = new Decimal(wallet.cashBalance).minus(
-            wallet.blockedCollateral,
-          );
-
-          if (availableCash.lt(totalValue)) {
-            throw new BadRequestException(
-              'Saldo insuficiente para fechar posicao',
-            );
-          }
-
-          const cashUpdateResult = await tx.wallet.updateMany({
-            where: {
-              id: walletId,
-              cashBalance: { gte: totalValue.toNumber() },
-            },
-            data: { cashBalance: { decrement: totalValue.toNumber() } },
-          });
-
-          if (cashUpdateResult.count === 0) {
-            throw new BadRequestException(
-              'Saldo insuficiente para fechar posicao',
-            );
-          }
-
-          if (position.collateralBlocked) {
-            const collateralToRelease = new Decimal(position.collateralBlocked)
-              .times(quantityToClose)
-              .div(absQty);
-
-            await tx.wallet.update({
-              where: { id: walletId },
-              data: {
-                blockedCollateral: {
-                  decrement: collateralToRelease.toNumber(),
-                },
-              },
-            });
-          }
-        } else {
-          await tx.wallet.update({
-            where: { id: walletId },
-            data: { cashBalance: { increment: totalValue.toNumber() } },
-          });
-        }
-
         const newQty = isShort
           ? currentQty + quantityToClose
           : currentQty - quantityToClose;

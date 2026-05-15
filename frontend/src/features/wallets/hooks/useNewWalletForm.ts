@@ -1,6 +1,5 @@
 import { useState, type ChangeEvent } from 'react';
 import { getFormErrors } from '@/lib/utils';
-import { formatCurrencyInput, parseCurrencyInput } from '@/lib/formatters';
 import type { WalletFormData, CreateWalletInput } from '../types';
 
 interface UseNewWalletFormProps {
@@ -12,7 +11,6 @@ const EMPTY_FORM_DATA: WalletFormData = {
   name: '',
   description: '',
   currency: 'BRL',
-  initialCashBalance: '',
 };
 
 export function useNewWalletForm({ onSubmit }: UseNewWalletFormProps) {
@@ -26,19 +24,10 @@ export function useNewWalletForm({ onSubmit }: UseNewWalletFormProps) {
   ) => {
     const { name, value } = e.target;
 
-    // Format currency input on the fly
-    if (name === 'initialCashBalance') {
-      const formatted = formatCurrencyInput(value);
-      setFormData((prev) => ({
-        ...prev,
-        initialCashBalance: formatted,
-      }));
-    } else {
-      setFormData((prev) => ({
-        ...prev,
-        [name]: value,
-      }));
-    }
+    setFormData((prev) => ({
+      ...prev,
+      [name]: value,
+    }));
 
     setErrors((prev) => ({
       ...prev,
@@ -48,10 +37,6 @@ export function useNewWalletForm({ onSubmit }: UseNewWalletFormProps) {
 
   const handleSubmit = (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
-
-    const initialBalance = formData.initialCashBalance
-      ? parseCurrencyInput(formData.initialCashBalance)
-      : undefined;
 
     const validations = [
       {
@@ -79,13 +64,6 @@ export function useNewWalletForm({ onSubmit }: UseNewWalletFormProps) {
         message: 'A descricao deve ter no maximo 500 caracteres.',
         inputName: 'description',
       },
-      {
-        isInvalid:
-          formData.initialCashBalance !== '' &&
-          (isNaN(initialBalance!) || initialBalance! < 0),
-        message: 'O saldo inicial deve ser um numero positivo.',
-        inputName: 'initialCashBalance',
-      },
     ];
 
     const errorList = getFormErrors(validations);
@@ -104,10 +82,6 @@ export function useNewWalletForm({ onSubmit }: UseNewWalletFormProps) {
       ...(formData.description.trim() && {
         description: formData.description.trim(),
       }),
-      ...(initialBalance !== undefined &&
-        initialBalance > 0 && {
-          initialCashBalance: initialBalance,
-        }),
     };
 
     onSubmit(createData);

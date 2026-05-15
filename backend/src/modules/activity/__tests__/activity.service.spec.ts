@@ -212,8 +212,8 @@ describe('ActivityService', () => {
     it('returns correct metrics including positions at market price', async () => {
       prisma.client.count.mockResolvedValue(5);
       prisma.wallet.findMany.mockResolvedValue([
-        { id: 'w1', cashBalance: 1000 },
-        { id: 'w2', cashBalance: 2500.5 },
+        { id: 'w1' },
+        { id: 'w2' },
       ]);
       prisma.position.findMany.mockResolvedValue([
         {
@@ -228,10 +228,10 @@ describe('ActivityService', () => {
 
       const result = await service.getAdvisorMetrics(advisorId);
 
-      // Cash 3500.50 + 100 PETR4 × 30 (fallback to avg when price absent) = 6500.50
+      // 100 PETR4 × 30 (averagePrice) = 3000
       expect(result).toEqual({
         clientCount: 5,
-        totalWalletValue: 6500.5,
+        totalWalletValue: 3000,
         pendingOperationsCount: 3,
         expiringOptionsCount: 2,
       });

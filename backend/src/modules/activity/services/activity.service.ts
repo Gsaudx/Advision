@@ -231,18 +231,13 @@ export class ActivityService {
 
     // Get all wallets for advisor's clients
     const wallets = await this.prisma.wallet.findMany({
-      where: {
-        client: { advisorId },
-      },
-      select: {
-        id: true,
-        cashBalance: true,
-      },
+      where: { client: { advisorId } },
+      select: { id: true },
     });
 
     const walletIds = wallets.map((w) => w.id);
 
-    // Add market value of open positions to the cash balances. For options the contract
+    // Market value of open positions across all wallets. For options the contract
     // multiplier (`optionDetail.contractSize`) is part of the SSOT and must be included.
     const positions =
       walletIds.length > 0
@@ -260,20 +255,14 @@ export class ActivityService {
         ? await this.marketData.getBatchPrices(uniqueTickers)
         : {};
 
-    const totalPositionsValue = positions.reduce((sum, p) => {
+    // Cost basis of open positions (market price when available, average price as fallback)
+    const totalWalletValue = positions.reduce((sum, p) => {
       const price = prices[p.asset.ticker];
       const qty = Number(p.quantity);
       const multiplier = p.asset.optionDetail?.contractSize ?? 1;
       if (price !== undefined) return sum + qty * price * multiplier;
       return sum + qty * Number(p.averagePrice) * multiplier;
     }, 0);
-
-    const totalCashBalance = wallets.reduce(
-      (sum, w) => sum + Number(w.cashBalance),
-      0,
-    );
-
-    const totalWalletValue = totalCashBalance + totalPositionsValue;
 
     // Count pending structured operations
     const pendingOperationsCount =
