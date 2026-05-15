@@ -669,7 +669,6 @@ export default function WalletPage() {
               {formatCurrency(wallet.totalValue, wallet.currency)}
             </h3>
             <p className="text-xs text-on-surface-variant">
-              Caixa {formatCurrency(wallet.cashBalance, wallet.currency)} ·
               Investido{' '}
               {formatCurrency(wallet.totalPositionsValue, wallet.currency)}
             </p>

@@ -1148,6 +1148,7 @@ export interface components {
           name: string;
           /** @enum {string} */
           type: 'STOCK' | 'OPTION';
+          sector?: string | null;
           quantity: number;
           averagePrice: number;
           currentPrice?: number;
@@ -1155,7 +1156,7 @@ export interface components {
           currentValue?: number;
           profitLoss?: number;
           profitLossPercent?: number;
-          collateralBlocked?: number | null;
+          weightPercent?: number;
           lastDividendDate?: string | null;
           priceAtLastDividend?: number | null;
           optionDetail?: {
@@ -1164,13 +1165,22 @@ export interface components {
             expirationDate: string;
             optionType: string;
             exerciseType: string;
+            contractSize: number;
           } | null;
         }[];
         totalPositionsValue: number;
         totalValue: number;
+        totalInvested: number;
+        totalPnl: number;
+        totalPnlPercent: number;
         totalCostBasis: number;
         totalMarketValue: number;
         totalUnrealizedPL: number;
+        concentration: {
+          byAsset: { key: string; label: string; value: number; percent: number }[];
+          byType: { key: string; label: string; value: number; percent: number }[];
+          bySector: { key: string; label: string; value: number; percent: number }[];
+        };
       };
       message?: string;
     };
@@ -1185,9 +1195,41 @@ export interface components {
         name: string;
         description: string | null;
         currency: string;
+        totalPositionsValue: number;
+        totalValue: number;
+        totalInvested: number;
+        totalPnl: number;
+        totalPnlPercent: number;
         createdAt: string;
         updatedAt: string;
       }[];
+      message?: string;
+    };
+    WalletPerformanceApiResponseDto: {
+      /** @enum {boolean} */
+      success: true;
+      data?: {
+        /** Format: uuid */
+        walletId: string;
+        realized: number;
+        unrealized: number;
+        dividends: number;
+        total: number;
+        totalInvested: number;
+        totalPercent: number;
+        byAsset: {
+          /** Format: uuid */
+          assetId: string;
+          ticker: string;
+          name: string;
+          /** @enum {string} */
+          type: 'STOCK' | 'OPTION';
+          realized: number;
+          unrealized: number;
+          dividends: number;
+          total: number;
+        }[];
+      };
       message?: string;
     };
     AssetSearchApiResponseDto: {
