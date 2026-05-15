@@ -388,21 +388,6 @@ describe('DerivativesService', () => {
       },
     };
 
-    const mockShortPosition = {
-      id: 'pos-short',
-      walletId: 'wallet-123',
-      assetId: 'asset-opt-123',
-      quantity: -10,
-      averagePrice: 1.5,
-      collateralBlocked: 24000,
-      asset: {
-        id: 'asset-opt-123',
-        ticker: 'PETRA240',
-        type: 'OPTION',
-        optionDetail: mockOptionDetail,
-      },
-    };
-
     it('deletes position when fully closed', async () => {
       const fullCloseInput = { ...closeInput, quantity: 10 };
       walletAccess.verifyWalletAccess.mockResolvedValue(mockWallet);

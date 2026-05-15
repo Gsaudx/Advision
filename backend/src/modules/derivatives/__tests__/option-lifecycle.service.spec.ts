@@ -628,17 +628,6 @@ describe('OptionLifecycleService', () => {
       asset: expiredOptionAsset,
     };
 
-    const expiredShortPosition = {
-      ...mockShortPutPosition,
-      asset: {
-        ...mockPutOptionAsset,
-        optionDetail: {
-          ...mockPutOptionAsset.optionDetail,
-          expirationDate: new Date('2020-01-16'),
-        },
-      },
-    };
-
     it('processes OTM expiration correctly', async () => {
       walletAccess.verifyWalletAccess.mockResolvedValue(mockWallet);
       prisma.position.findFirst.mockResolvedValue(expiredPosition);

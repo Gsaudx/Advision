@@ -522,11 +522,6 @@ export class TradingService {
     if (!tx || tx.walletId !== walletId)
       throw new NotFoundException('Transação não encontrada');
 
-    const oldCost = new Decimal(tx.price ?? 0).times(tx.quantity ?? 0);
-    const newCost = new Decimal(data.price ?? tx.price ?? 0).times(
-      data.quantity ?? tx.quantity ?? 0,
-    );
-
     await this.prisma.transaction.update({
       where: { id: txId },
       data: {
