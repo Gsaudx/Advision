@@ -1177,9 +1177,24 @@ export interface components {
         totalMarketValue: number;
         totalUnrealizedPL: number;
         concentration: {
-          byAsset: { key: string; label: string; value: number; percent: number }[];
-          byType: { key: string; label: string; value: number; percent: number }[];
-          bySector: { key: string; label: string; value: number; percent: number }[];
+          byAsset: {
+            key: string;
+            label: string;
+            value: number;
+            percent: number;
+          }[];
+          byType: {
+            key: string;
+            label: string;
+            value: number;
+            percent: number;
+          }[];
+          bySector: {
+            key: string;
+            label: string;
+            value: number;
+            percent: number;
+          }[];
         };
       };
       message?: string;
