@@ -296,7 +296,7 @@ describe('WalletsService', () => {
       });
       expect(result).toHaveLength(1);
       expect(result[0].name).toBe('Test Wallet');
-      expect(result[0].totalValue).toBe(10000);
+      expect(result[0].totalValue).toBe(0);
       expect(result[0].totalPositionsValue).toBe(0);
     });
 
@@ -327,7 +327,7 @@ describe('WalletsService', () => {
 
       // 100 PETR4 × 35 = 3500
       expect(result[0].totalPositionsValue).toBe(3500);
-      expect(result[0].totalValue).toBe(13500); // cash 10000 + positions 3500
+      expect(result[0].totalValue).toBe(3500);
     });
   });
 

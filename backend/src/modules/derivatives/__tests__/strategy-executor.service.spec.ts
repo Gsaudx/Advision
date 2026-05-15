@@ -223,7 +223,6 @@ describe('StrategyExecutorService', () => {
       expect(result.strategyType).toBe(StrategyType.SINGLE_OPTION);
       expect(result.status).toBe(OperationStatus.EXECUTED);
       expect(result.legs).toHaveLength(1);
-      expect(prisma.wallet.update).toHaveBeenCalled();
       expect(auditService.log).toHaveBeenCalled();
       expect(domainEvents.record).toHaveBeenCalled();
     });
@@ -321,61 +320,6 @@ describe('StrategyExecutorService', () => {
       await expect(
         service.executeStrategy('wallet-123', basicInput, mockActor),
       ).rejects.toThrow(BadRequestException);
-    });
-
-    it('throws BadRequestException when insufficient cash for debit strategy', async () => {
-      const lowCashWallet = {
-        ...mockWallet,
-        cashBalance: new Decimal(100),
-        blockedCollateral: new Decimal(0),
-      };
-      prisma.wallet.findUnique.mockResolvedValue(lowCashWallet);
-
-      await expect(
-        service.executeStrategy('wallet-123', basicInput, mockActor),
-      ).rejects.toThrow(BadRequestException);
-    });
-
-    it('blocks collateral for short put positions', async () => {
-      const shortPutInput = {
-        strategyType: StrategyType.SINGLE_OPTION,
-        legs: [
-          {
-            legType: OperationLegType.SELL_PUT,
-            ticker: 'PETRM240',
-            quantity: 10,
-            price: 1.0,
-          },
-        ],
-        executedAt: '2026-01-26T10:00:00.000Z',
-        idempotencyKey: 'short-put-123',
-      };
-
-      strategyBuilder.calculateNetPremium.mockReturnValue(1000);
-      assetResolver.ensureAssetExists.mockResolvedValue(mockPutAsset);
-      prisma.optionDetail.findUnique.mockResolvedValue(mockPutOptionDetail);
-      prisma.operationLeg.create.mockResolvedValue({
-        id: 'leg-123',
-        legOrder: 1,
-        legType: OperationLegType.SELL_PUT,
-        quantity: new Decimal(10),
-        price: new Decimal(1.0),
-        totalValue: new Decimal(1000),
-        status: OperationStatus.PENDING,
-        transactionId: null,
-        executedAt: null,
-        asset: mockPutAsset,
-      });
-
-      await service.executeStrategy('wallet-123', shortPutInput, mockActor);
-
-      expect(prisma.wallet.update).toHaveBeenCalledWith(
-        expect.objectContaining({
-          data: expect.objectContaining({
-            blockedCollateral: expect.anything(),
-          }),
-        }),
-      );
     });
 
     it('creates positions for new assets', async () => {

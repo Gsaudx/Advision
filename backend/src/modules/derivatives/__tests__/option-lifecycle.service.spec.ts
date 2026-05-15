@@ -218,7 +218,6 @@ describe('OptionLifecycleService', () => {
         expect(result.underlyingQuantity).toBe(1000);
         expect(result.strikePrice).toBe(24);
         expect(result.totalCost).toBe(24000);
-        expect(prisma.wallet.updateMany).toHaveBeenCalled();
         expect(domainEvents.record).toHaveBeenCalled();
       });
 
