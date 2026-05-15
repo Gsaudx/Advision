@@ -498,9 +498,9 @@ export class TradingService {
   }
 
   /**
-   * NEGÓCIO: Corrige uma operação já lançada. Se o preço ou quantidade mudar, o saldo em caixa da carteira
-   * é ajustado pela diferença. Se a data recuar para o passado, o sistema rastreia proventos do período.
-   * Se for uma opção e a data mudou, o strike vigente naquele dia é buscado e atualizado.
+   * NEGÓCIO: Corrige uma operação já lançada, atualizando seus dados e recalculando a posição resultante.
+   * Se a data recuar para o passado, o sistema rastreia proventos do período. Se for uma opção e a data
+   * mudou, o strike vigente naquele dia é buscado e atualizado.
    * TÉCNICO: Edita data, preço e/ou quantidade de uma transação existente, recalculando a posição.
    */
   async updateTransaction(
