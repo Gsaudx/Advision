@@ -148,8 +148,6 @@ export type WalletConcentration = z.infer<typeof WalletConcentrationSchema>;
  */
 export const WalletResponseSchema = WalletSummaryResponseSchema.extend({
   positions: z.array(PositionResponseSchema),
-  totalPositionsValue: z.number(),
-  totalValue: z.number(),
   totalCostBasis: z.number(),
   totalMarketValue: z.number(),
   totalUnrealizedPL: z.number(),

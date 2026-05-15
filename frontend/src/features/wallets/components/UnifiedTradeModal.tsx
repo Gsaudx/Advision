@@ -698,14 +698,16 @@ export function UnifiedTradeModal({
                               : 'border-outline-variant/10'
                           }`}
                         />
-                        <button
-                          type="button"
-                          onClick={handleMaxQuantity}
-                          disabled={isPending || maxAssetQuantity === 0}
-                          className="absolute right-2 top-1/2 -translate-y-1/2 px-2 py-1 text-[10px] font-bold rounded-lg bg-surface-container-high text-primary hover:bg-surface-container-highest transition-colors disabled:opacity-40"
-                        >
-                          MAX
-                        </button>
+                        {direction === 'SELL' && (
+                          <button
+                            type="button"
+                            onClick={handleMaxQuantity}
+                            disabled={isPending || maxAssetQuantity === 0}
+                            className="absolute right-2 top-1/2 -translate-y-1/2 px-2 py-1 text-[10px] font-bold rounded-lg bg-surface-container-high text-primary hover:bg-surface-container-highest transition-colors disabled:opacity-40"
+                          >
+                            MAX
+                          </button>
+                        )}
                       </div>
                       {assetErrors.quantity && (
                         <p className="text-error text-xs mt-1">

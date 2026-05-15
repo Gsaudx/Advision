@@ -1,3 +1,6 @@
+-- Clean up cash-only transactions before altering the enum (prevents constraint violation)
+DELETE FROM "transactions" WHERE type IN ('DEPOSIT', 'WITHDRAWAL');
+
 -- AlterEnum: Remove DEPOSIT and WITHDRAWAL from TransactionType
 BEGIN;
 CREATE TYPE "TransactionType_new" AS ENUM ('BUY', 'SELL', 'EXPIRED', 'DIVIDEND', 'SPLIT', 'SUBSCRIPTION', 'OPTION_EXERCISE', 'OPTION_ASSIGNMENT', 'OPTION_EXPIRY');

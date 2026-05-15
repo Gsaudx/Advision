@@ -255,6 +255,7 @@ export class ActivityService {
         ? await this.marketData.getBatchPrices(uniqueTickers)
         : {};
 
+    // Cost basis of open positions (market price when available, average price as fallback)
     const totalWalletValue = positions.reduce((sum, p) => {
       const price = prices[p.asset.ticker];
       const qty = Number(p.quantity);
@@ -262,7 +263,6 @@ export class ActivityService {
       if (price !== undefined) return sum + qty * price * multiplier;
       return sum + qty * Number(p.averagePrice) * multiplier;
     }, 0);
-
 
     // Count pending structured operations
     const pendingOperationsCount =
