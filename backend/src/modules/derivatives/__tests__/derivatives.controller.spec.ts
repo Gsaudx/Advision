@@ -2,6 +2,7 @@ import { Test, TestingModule } from '@nestjs/testing';
 import { DerivativesController } from '../controllers/derivatives.controller';
 import { DerivativesService } from '../services/derivatives.service';
 import { SentinelOptionService } from '@/modules/sentinel/services/sentinel-option.service';
+import { NotificationsService } from '@/modules/notifications/services';
 
 describe('DerivativesController', () => {
   let controller: DerivativesController;
@@ -11,6 +12,7 @@ describe('DerivativesController', () => {
     sellOption: jest.Mock;
     closeOptionPosition: jest.Mock;
   };
+  let notificationsService: { generateExpiryNotifications: jest.Mock };
 
   const mockActor = {
     id: 'advisor-123',
@@ -57,6 +59,10 @@ describe('DerivativesController', () => {
       closeOptionPosition: jest.fn(),
     };
 
+    notificationsService = {
+      generateExpiryNotifications: jest.fn().mockResolvedValue(undefined),
+    };
+
     const module: TestingModule = await Test.createTestingModule({
       controllers: [DerivativesController],
       providers: [
@@ -72,6 +78,7 @@ describe('DerivativesController', () => {
             propagateDividendsToWallet: jest.fn().mockResolvedValue(undefined),
           },
         },
+        { provide: NotificationsService, useValue: notificationsService },
       ],
     }).compile();
 
@@ -119,6 +126,21 @@ describe('DerivativesController', () => {
         mockActor,
       );
     });
+
+    it('triggers generateExpiryNotifications with forceRefresh after buy', async () => {
+      derivativesService.buyOption.mockResolvedValue(mockTradeResult);
+
+      await controller.buyOption(
+        'wallet-123',
+        { ticker: 'PETRA240', quantity: 10, premium: 1.5, date: '2026-01-26T10:00:00.000Z', idempotencyKey: 'buy-123' },
+        mockActor,
+      );
+
+      expect(notificationsService.generateExpiryNotifications).toHaveBeenCalledWith(
+        mockActor.id,
+        { forceRefresh: true },
+      );
+    });
   });
 
   describe('sellOption', () => {
@@ -146,6 +168,21 @@ describe('DerivativesController', () => {
         'wallet-123',
         dto,
         mockActor,
+      );
+    });
+
+    it('triggers generateExpiryNotifications with forceRefresh after sell', async () => {
+      derivativesService.sellOption.mockResolvedValue(mockTradeResult);
+
+      await controller.sellOption(
+        'wallet-123',
+        { ticker: 'PETRM240', quantity: 10, premium: 1.0, date: '2026-01-26T10:00:00.000Z', covered: false, idempotencyKey: 'sell-123' },
+        mockActor,
+      );
+
+      expect(notificationsService.generateExpiryNotifications).toHaveBeenCalledWith(
+        mockActor.id,
+        { forceRefresh: true },
       );
     });
   });
@@ -178,6 +215,22 @@ describe('DerivativesController', () => {
         'pos-123',
         dto,
         mockActor,
+      );
+    });
+
+    it('triggers generateExpiryNotifications with forceRefresh after close', async () => {
+      derivativesService.closeOptionPosition.mockResolvedValue(mockTradeResult);
+
+      await controller.closeOption(
+        'wallet-123',
+        'pos-123',
+        { premium: 2.0, date: '2026-01-26T10:00:00.000Z', idempotencyKey: 'close-123' },
+        mockActor,
+      );
+
+      expect(notificationsService.generateExpiryNotifications).toHaveBeenCalledWith(
+        mockActor.id,
+        { forceRefresh: true },
       );
     });
   });

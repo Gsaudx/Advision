@@ -30,6 +30,7 @@ import { NotFoundException } from '@nestjs/common';
 import { ActivityController } from '../controllers/activity.controller';
 import { ActivityService } from '../services/activity.service';
 import { PrismaService } from '@/shared/prisma/prisma.service';
+import { NotificationsService } from '@/modules/notifications/services';
 import type { CurrentUserData } from '@/common/decorators';
 
 const mockAdvisorUser: CurrentUserData = {
@@ -82,6 +83,7 @@ const mockClientProfile = {
 describe('ActivityController', () => {
   let controller: ActivityController;
   let service: jest.Mocked<ActivityService>;
+  let notificationsService: { generateExpiryNotifications: jest.Mock };
   let prisma: {
     client: {
       findUnique: jest.Mock;
@@ -105,11 +107,16 @@ describe('ActivityController', () => {
       },
     };
 
+    notificationsService = {
+      generateExpiryNotifications: jest.fn().mockResolvedValue(undefined),
+    };
+
     const module: TestingModule = await Test.createTestingModule({
       controllers: [ActivityController],
       providers: [
         { provide: ActivityService, useValue: mockService },
         { provide: PrismaService, useValue: prisma },
+        { provide: NotificationsService, useValue: notificationsService },
       ],
     }).compile();
 
@@ -203,6 +210,16 @@ describe('ActivityController', () => {
         success: true,
         data: mockAdvisorMetrics,
       });
+    });
+
+    it('triggers generateExpiryNotifications fire-and-forget', async () => {
+      service.getAdvisorMetrics.mockResolvedValue(mockAdvisorMetrics);
+
+      await controller.getAdvisorMetrics(mockAdvisorUser);
+
+      expect(notificationsService.generateExpiryNotifications).toHaveBeenCalledWith(
+        'advisor-123',
+      );
     });
   });
 

@@ -3,6 +3,7 @@ import { Response } from 'express';
 import { AuthController } from '../controllers/auth.controller';
 import { AuthService } from '../services/auth.service';
 import { ProventosSyncService } from '@/modules/proventos/services/proventos-sync.service';
+import { NotificationsService } from '@/modules/notifications/services';
 import { AUTH_COOKIE_NAME } from '../strategies/jwt.strategy';
 
 // Mock the env config with production settings
@@ -77,6 +78,10 @@ describe('AuthController (Production Config)', () => {
       providers: [
         { provide: AuthService, useValue: mockAuthService },
         { provide: ProventosSyncService, useValue: mockProventosSyncService },
+        {
+          provide: NotificationsService,
+          useValue: { generateExpiryNotifications: jest.fn().mockResolvedValue(undefined) },
+        },
       ],
     }).compile();
 
