@@ -46,6 +46,9 @@ export function NotificationSettingsPage() {
         </div>
         <button
           onClick={() => setEnabled((v) => !v)}
+          role="switch"
+          aria-checked={enabled}
+          aria-label="Ativar notificações de vencimento"
           className={`relative w-11 h-6 rounded-full transition-colors ${
             enabled ? 'bg-blue-500' : 'bg-slate-600'
           }`}

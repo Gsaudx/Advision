@@ -1,4 +1,5 @@
 import { Test, TestingModule } from '@nestjs/testing';
+import { NotFoundException } from '@nestjs/common';
 import { NotificationsService } from '../services/notifications.service';
 import { PrismaService } from '@/shared/prisma/prisma.service';
 import { NotificationSeverity } from '@/generated/prisma/enums';
@@ -41,6 +42,7 @@ describe('NotificationsService', () => {
     position: { findMany: jest.Mock };
     notification: {
       findMany: jest.Mock;
+      findUnique: jest.Mock;
       count: jest.Mock;
       upsert: jest.Mock;
       updateMany: jest.Mock;
@@ -55,6 +57,7 @@ describe('NotificationsService', () => {
       position: { findMany: jest.fn() },
       notification: {
         findMany: jest.fn(),
+        findUnique: jest.fn().mockResolvedValue(null),
         count: jest.fn(),
         upsert: jest.fn(),
         updateMany: jest.fn(),
@@ -170,6 +173,44 @@ describe('NotificationsService', () => {
       await service.generateExpiryNotifications(ADVISOR_ID);
 
       expect(prisma.notification.upsert).toHaveBeenCalledTimes(2);
+    });
+
+    it('resets isRead when severity escalates on an already-read notification', async () => {
+      prisma.user.findUnique.mockResolvedValue(makeUser());
+      prisma.client.findMany.mockResolvedValue([{ id: 'client-1', name: 'C' }]);
+      prisma.wallet.findMany.mockResolvedValue([
+        { id: 'wallet-1', name: 'W', clientId: 'client-1' },
+      ]);
+      prisma.position.findMany.mockResolvedValue([makePosition(1)]); // 1d → CRITICAL
+      // Existing notification was INFO (severity 0) and already read
+      prisma.notification.findUnique.mockResolvedValue({ severity: 'INFO', isRead: true });
+      prisma.notification.upsert.mockResolvedValue({});
+      prisma.user.update.mockResolvedValue({});
+
+      await service.generateExpiryNotifications(ADVISOR_ID);
+
+      expect(prisma.notification.upsert).toHaveBeenCalledWith(
+        expect.objectContaining({
+          update: expect.objectContaining({ isRead: false, readAt: null }),
+        }),
+      );
+    });
+
+    it('does not reset isRead when severity stays the same', async () => {
+      prisma.user.findUnique.mockResolvedValue(makeUser());
+      prisma.client.findMany.mockResolvedValue([{ id: 'client-1', name: 'C' }]);
+      prisma.wallet.findMany.mockResolvedValue([
+        { id: 'wallet-1', name: 'W', clientId: 'client-1' },
+      ]);
+      prisma.position.findMany.mockResolvedValue([makePosition(1)]); // CRITICAL
+      prisma.notification.findUnique.mockResolvedValue({ severity: 'CRITICAL', isRead: true });
+      prisma.notification.upsert.mockResolvedValue({});
+      prisma.user.update.mockResolvedValue({});
+
+      await service.generateExpiryNotifications(ADVISOR_ID);
+
+      const upsertCall = prisma.notification.upsert.mock.calls[0][0];
+      expect(upsertCall.update).not.toHaveProperty('isRead');
     });
 
     it('does not upsert when there are no positions in window', async () => {
@@ -308,8 +349,14 @@ describe('NotificationsService', () => {
       });
     });
 
-    it('filters by advisorId to prevent IDOR', async () => {
+    it('throws NotFoundException when notification does not exist or belongs to another advisor', async () => {
       prisma.notification.updateMany.mockResolvedValue({ count: 0 });
+
+      await expect(service.markAsRead(ADVISOR_ID, 'notif-1')).rejects.toBeInstanceOf(NotFoundException);
+    });
+
+    it('filters by advisorId to prevent IDOR', async () => {
+      prisma.notification.updateMany.mockResolvedValue({ count: 1 });
 
       await service.markAsRead('other-advisor', 'notif-1');
 

@@ -1,4 +1,4 @@
-import { Injectable, Logger } from '@nestjs/common';
+import { Injectable, Logger, NotFoundException } from '@nestjs/common';
 import { NotificationSeverity } from '@/generated/prisma/enums';
 import { PrismaService } from '@/shared/prisma/prisma.service';
 import type {
@@ -94,6 +94,12 @@ export class NotificationsService {
           },
         });
 
+        const SEVERITY_ORDER: Record<string, number> = {
+          INFO: 0,
+          WARNING: 1,
+          CRITICAL: 2,
+        };
+
         // Passo 8 — upsert de notificação por posição
         for (const position of positions) {
           const optionDetail = position.asset.optionDetail!;
@@ -114,6 +120,22 @@ export class NotificationsService {
             walletMap,
           );
 
+          // Verifica se houve escalona de severidade para resetar isRead
+          const existing = await this.prisma.notification.findUnique({
+            where: {
+              advisorId_type_relatedEntityId: {
+                advisorId,
+                type: 'OPTION_EXPIRY',
+                relatedEntityId: position.id,
+              },
+            },
+            select: { severity: true, isRead: true },
+          });
+
+          const severityEscalated =
+            existing?.isRead &&
+            SEVERITY_ORDER[severity] > SEVERITY_ORDER[existing.severity];
+
           await this.prisma.notification.upsert({
             where: {
               advisorId_type_relatedEntityId: {
@@ -122,7 +144,11 @@ export class NotificationsService {
                 relatedEntityId: position.id,
               },
             },
-            update: { severity, message },
+            update: {
+              severity,
+              message,
+              ...(severityEscalated ? { isRead: false, readAt: null } : {}),
+            },
             create: {
               advisorId,
               type: 'OPTION_EXPIRY',
@@ -189,10 +215,11 @@ export class NotificationsService {
 
   // Marcar uma notificação como lida
   async markAsRead(advisorId: string, notificationId: string): Promise<void> {
-    await this.prisma.notification.updateMany({
+    const result = await this.prisma.notification.updateMany({
       where: { id: notificationId, advisorId },
       data: { isRead: true, readAt: new Date() },
     });
+    if (result.count === 0) throw new NotFoundException('Notificação não encontrada');
   }
 
   // Marcar todas como lidas
