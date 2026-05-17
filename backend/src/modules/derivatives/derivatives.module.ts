@@ -1,5 +1,6 @@
 import { Module } from '@nestjs/common';
 import { WalletsModule } from '@/modules/wallets';
+import { NotificationsModule } from '@/modules/notifications/notifications.module'; // [NOTIF]
 import {
   DerivativesController,
   StrategiesController,
@@ -13,7 +14,7 @@ import {
 } from './services';
 
 @Module({
-  imports: [WalletsModule],
+  imports: [WalletsModule, NotificationsModule], // [NOTIF]
   controllers: [
     DerivativesController,
     StrategiesController,

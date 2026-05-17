@@ -9,6 +9,7 @@ import RegisterPage from '@/features/login-register/pages/RegisterPage';
 import ClientsPage from '@/features/clients-page/pages/ClientsPage';
 import { WalletsPage, WalletPage } from '@/features/wallets';
 import { ProventosPage } from '@/features/proventos';
+import { NotificationSettingsPage } from '@/features/notifications/pages/NotificationSettingsPage'; // [NOTIF]
 
 function RoleBasedRedirect() {
   const { user } = useAuth();
@@ -37,6 +38,7 @@ export function AppRoutes() {
         >
           <Route path="/advisor/home" element={<HomePageAdvisor />} />
           <Route path="/clients" element={<ClientsPage />} />
+          <Route path="/advisor/settings" element={<NotificationSettingsPage />} /> {/* [NOTIF] */}
         </Route>
 
         {/* Client layout */}

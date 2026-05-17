@@ -26,6 +26,7 @@ import { CurrentUser, type CurrentUserData } from '@/common/decorators';
 import { RolesGuard } from '@/common/guards';
 import { Roles } from '@/common/decorators';
 import { SentinelOptionService } from '@/modules/sentinel/services/sentinel-option.service'; // [SENTINEL]
+import { NotificationsService } from '@/modules/notifications/services'; // [NOTIF]
 import {
   WalletsService,
   TradingService,
@@ -70,6 +71,7 @@ export class WalletsController {
     private readonly performanceService: PerformanceService,
     private readonly marketService: CompositeMarketService,
     private readonly sentinelService: SentinelOptionService, // [SENTINEL]
+    private readonly notificationsService: NotificationsService, // [NOTIF]
   ) {}
 
   @Post()
@@ -686,6 +688,8 @@ export class WalletsController {
     @CurrentUser() user: CurrentUserData,
   ): Promise<ApiResponseType<WalletResponse>> {
     await this.tradingService.expireOption(id, body as ExpireOptionInput, user);
+    // [NOTIF] atualizar notificações após registro de vencimento (ignora stale check — dado mudou)
+    void this.notificationsService.generateExpiryNotifications(user.id, { forceRefresh: true });
     const data = await this.walletsService.getDashboard(id, user);
     return ApiResponseDto.success(data, 'Opção registrada como vencida');
   }

@@ -8,6 +8,7 @@ import { ActivityModule } from '@/modules/activity';
 import { DerivativesModule } from '@/modules/derivatives';
 import { ProventosModule } from '@/modules/proventos/proventos.module';
 import { SentinelModule } from '@/modules/sentinel/sentinel.module'; // [SENTINEL]
+import { NotificationsModule } from '@/modules/notifications/notifications.module'; // [NOTIF]
 
 @Module({
   imports: [
@@ -19,7 +20,8 @@ import { SentinelModule } from '@/modules/sentinel/sentinel.module'; // [SENTINE
     ActivityModule,
     DerivativesModule,
     ProventosModule,
-    SentinelModule, // [SENTINEL]
+    SentinelModule,      // [SENTINEL]
+    NotificationsModule, // [NOTIF]
   ],
 })
 export class AppModule {}
