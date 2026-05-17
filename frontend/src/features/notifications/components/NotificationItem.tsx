@@ -14,7 +14,9 @@ const severityConfig: Record<
   },
   WARNING: {
     border: 'border-l-amber-400',
-    icon: <AlertTriangle size={13} className="text-amber-400 shrink-0 mt-0.5" />,
+    icon: (
+      <AlertTriangle size={13} className="text-amber-400 shrink-0 mt-0.5" />
+    ),
     dot: 'bg-amber-400',
   },
   CRITICAL: {

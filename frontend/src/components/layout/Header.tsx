@@ -86,7 +86,6 @@ export function Header() {
             </button>
             */}
             {showAdvisorNav && <NotificationBell />} {/* [NOTIF] */}
-
             {/* User Profile - Desktop */}
             <div className="hidden sm:flex items-center gap-3 pl-3 border-l border-slate-700">
               <div className="text-right">
@@ -104,7 +103,6 @@ export function Header() {
                 <LogOut size={18} />
               </button>
             </div>
-
             {/* Mobile Menu Button */}
             <button
               className="lg:hidden p-2 text-slate-400 hover:text-white hover:bg-slate-800 rounded-lg transition-colors"

@@ -38,7 +38,11 @@ export function AppRoutes() {
         >
           <Route path="/advisor/home" element={<HomePageAdvisor />} />
           <Route path="/clients" element={<ClientsPage />} />
-          <Route path="/advisor/settings" element={<NotificationSettingsPage />} /> {/* [NOTIF] */}
+          <Route
+            path="/advisor/settings"
+            element={<NotificationSettingsPage />}
+          />{' '}
+          {/* [NOTIF] */}
         </Route>
 
         {/* Client layout */}
