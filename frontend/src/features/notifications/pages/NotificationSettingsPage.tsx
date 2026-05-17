@@ -9,10 +9,12 @@ export function NotificationSettingsPage() {
   const [windowDays, setWindowDays] = useState(7);
 
   useEffect(() => {
-    if (settings) {
+    if (!settings) return;
+    const t = setTimeout(() => {
       setEnabled(settings.notificationsEnabled);
       setWindowDays(settings.notificationWindowDays);
-    }
+    }, 0);
+    return () => clearTimeout(t);
   }, [settings]);
 
   const handleSave = () => {

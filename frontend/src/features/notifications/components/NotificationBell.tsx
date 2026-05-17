@@ -13,16 +13,17 @@ export function NotificationBell() {
 
   useEffect(() => {
     const prev = prevCountRef.current;
-    // Mostra o popover quando o count aumenta (ou na primeira carga com notificações)
-    if (count > 0 && (prev === undefined || count > prev) && !isOpen) {
-      setShowPopover(true);
-      if (popoverTimer.current) clearTimeout(popoverTimer.current);
-      popoverTimer.current = setTimeout(() => setShowPopover(false), 5000);
-    }
     prevCountRef.current = count;
-    return () => {
-      if (popoverTimer.current) clearTimeout(popoverTimer.current);
-    };
+
+    if (count <= 0 || (prev !== undefined && count <= prev) || isOpen) return;
+
+    if (popoverTimer.current) clearTimeout(popoverTimer.current);
+    const showTimer = setTimeout(() => {
+      setShowPopover(true);
+      popoverTimer.current = setTimeout(() => setShowPopover(false), 5000);
+    }, 0);
+
+    return () => clearTimeout(showTimer);
   }, [count]); // eslint-disable-line react-hooks/exhaustive-deps
 
   const handleToggle = () => {
