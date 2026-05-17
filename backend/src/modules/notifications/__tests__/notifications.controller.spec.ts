@@ -75,8 +75,8 @@ describe('NotificationsController', () => {
 
       const result = await controller.getNotifications(mockUser);
 
-      expect(result.data.notifications).toHaveLength(0);
-      expect(result.data.unreadCount).toBe(0);
+      expect(result.data!.notifications).toHaveLength(0);
+      expect(result.data!.unreadCount).toBe(0);
     });
   });
 
@@ -97,7 +97,7 @@ describe('NotificationsController', () => {
 
       const result = await controller.getUnreadCount(mockUser);
 
-      expect(result.data.count).toBe(0);
+      expect(result.data!.count).toBe(0);
     });
   });
 
@@ -118,7 +118,7 @@ describe('NotificationsController', () => {
 
       const result = await controller.markAllAsRead(mockUser);
 
-      expect(result.data.updated).toBe(0);
+      expect(result.data!.updated).toBe(0);
     });
   });
 
@@ -189,7 +189,7 @@ describe('NotificationsController', () => {
       expect(service.updateSettings).toHaveBeenCalledWith(mockUser.id, {
         notificationsEnabled: false,
       });
-      expect(result.data.notificationsEnabled).toBe(false);
+      expect(result.data!.notificationsEnabled).toBe(false);
     });
   });
 });
