@@ -3,6 +3,7 @@ import { Response } from 'express';
 import { AuthController } from '../controllers/auth.controller';
 import { AuthService } from '../services/auth.service';
 import { ProventosSyncService } from '@/modules/proventos/services/proventos-sync.service';
+import { NotificationsService } from '@/modules/notifications/services';
 import { AUTH_COOKIE_NAME } from '../strategies/jwt.strategy';
 
 // Mock the env config
@@ -53,6 +54,7 @@ const mockAuthResult = {
 describe('AuthController', () => {
   let authController: AuthController;
   let authService: jest.Mocked<AuthService>;
+  let notificationsService: jest.Mocked<NotificationsService>;
   let mockResponse: Partial<Response>;
 
   beforeEach(async () => {
@@ -72,16 +74,22 @@ describe('AuthController', () => {
       trySyncAfterAdminLogin: jest.fn(),
     };
 
+    const mockNotificationsService = {
+      generateExpiryNotifications: jest.fn().mockResolvedValue(undefined),
+    };
+
     const module: TestingModule = await Test.createTestingModule({
       controllers: [AuthController],
       providers: [
         { provide: AuthService, useValue: mockAuthService },
         { provide: ProventosSyncService, useValue: mockProventosSyncService },
+        { provide: NotificationsService, useValue: mockNotificationsService },
       ],
     }).compile();
 
     authController = module.get<AuthController>(AuthController);
     authService = module.get(AuthService);
+    notificationsService = module.get(NotificationsService);
 
     jest.clearAllMocks();
   });
@@ -150,6 +158,24 @@ describe('AuthController', () => {
         success: true,
         data: mockUserProfile,
       });
+    });
+
+    it('should trigger generateExpiryNotifications fire-and-forget on login', () => {
+      authService.generateToken.mockReturnValue('mock-jwt-token');
+
+      const mockRequest = {
+        user: mockUserProfile,
+      } as Parameters<typeof authController.login>[1];
+
+      authController.login(
+        { email: 'test@example.com', password: 'password123' },
+        mockRequest,
+        mockResponse as Response,
+      );
+
+      expect(notificationsService.generateExpiryNotifications).toHaveBeenCalledWith(
+        mockUserProfile.id,
+      );
     });
   });
 

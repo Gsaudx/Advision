@@ -125,6 +125,17 @@ enum OptionLifecycleEvent {
   CLOSED
 }
 
+// [NOTIF] tipos e severidade de notificação
+enum NotificationType {
+  OPTION_EXPIRY
+}
+
+enum NotificationSeverity {
+  INFO
+  WARNING
+  CRITICAL
+}
+
 // ============================================================================
 // MODELS
 // ============================================================================
@@ -139,9 +150,15 @@ model User {
   role         UserRole @default(ADVISOR)
   createdAt    DateTime @default(now())
   updatedAt    DateTime @updatedAt
-  clients       Client[] @relation("AdvisorClients")
-  clientProfile    Client?            @relation("LinkedUser")
+  clients          Client[]        @relation("AdvisorClients")
+  clientProfile    Client?         @relation("LinkedUser")
   dividendSyncLogs DividendSyncLog[]
+
+  // [NOTIF] configurações e controle de notificações
+  notificationsEnabled    Boolean   @default(true)
+  notificationWindowDays  Int       @default(7)
+  lastNotificationCheckAt DateTime?
+  notifications           Notification[]
 
   @@map("users")
 }
@@ -527,4 +544,29 @@ model DividendHistory {
   @@index([underlyingSymbol])
   @@index([sentinelOptionId])
   @@map("dividends_history")
+}
+
+// ============================================================================
+// NOTIFICATIONS — [NOTIF]
+// ============================================================================
+
+model Notification {
+  id              String               @id @default(uuid())
+  advisorId       String
+  type            NotificationType
+  relatedEntityId String
+  severity        NotificationSeverity
+  message         String
+  isRead          Boolean              @default(false)
+  readAt          DateTime?
+  walletId        String?
+  createdAt       DateTime             @default(now())
+  updatedAt       DateTime             @updatedAt
+
+  advisor User @relation(fields: [advisorId], references: [id], onDelete: Cascade)
+
+  @@unique([advisorId, type, relatedEntityId])
+  @@index([advisorId, isRead])
+  @@index([advisorId, createdAt])
+  @@map("notifications")
 }

@@ -5,9 +5,11 @@ import { TradingService } from '../services/trading.service';
 import { PerformanceService } from '../services/performance.service';
 import { CompositeMarketService } from '../providers';
 import { SentinelOptionService } from '@/modules/sentinel/services/sentinel-option.service';
+import { NotificationsService } from '@/modules/notifications/services';
 
 describe('WalletsController', () => {
   let controller: WalletsController;
+  let notificationsService: { generateExpiryNotifications: jest.Mock };
   let walletsService: {
     create: jest.Mock;
     findAll: jest.Mock;
@@ -42,6 +44,7 @@ describe('WalletsController', () => {
   let tradingService: {
     buy: jest.Mock;
     sell: jest.Mock;
+    expireOption: jest.Mock;
   };
   let performanceService: {
     computePerformance: jest.Mock;
@@ -60,6 +63,7 @@ describe('WalletsController', () => {
     tradingService = {
       buy: jest.fn(),
       sell: jest.fn(),
+      expireOption: jest.fn().mockResolvedValue(undefined),
     };
 
     performanceService = {
@@ -124,8 +128,14 @@ describe('WalletsController', () => {
             checkWalletSentinels: jest.fn().mockResolvedValue(undefined),
           },
         },
+        {
+          provide: NotificationsService,
+          useValue: { generateExpiryNotifications: jest.fn().mockResolvedValue(undefined) },
+        },
       ],
     }).compile();
+
+    notificationsService = module.get(NotificationsService);
 
     controller = module.get<WalletsController>(WalletsController);
   });
@@ -147,6 +157,7 @@ describe('WalletsController', () => {
         advisorUser,
       );
     });
+
   });
 
   describe('findAll', () => {
@@ -241,6 +252,43 @@ describe('WalletsController', () => {
         'wallet-123',
         expect.objectContaining({ ticker: 'PETR4' }),
         advisorUser,
+      );
+    });
+  });
+
+  describe('expireOption', () => {
+    it('registers option expiry and returns success response', async () => {
+      tradingService.expireOption.mockResolvedValue(undefined);
+      walletsService.getDashboard.mockResolvedValue(mockWalletResponse);
+
+      const result = await controller.expireOption(
+        'wallet-123',
+        { ticker: 'PETRA240', expiredAt: '2024-01-15T10:00:00.000Z' },
+        advisorUser,
+      );
+
+      expect(result.success).toBe(true);
+      expect(result.message).toBe('Opção registrada como vencida');
+      expect(tradingService.expireOption).toHaveBeenCalledWith(
+        'wallet-123',
+        expect.objectContaining({ ticker: 'PETRA240' }),
+        advisorUser,
+      );
+    });
+
+    it('triggers generateExpiryNotifications with forceRefresh after expiry', async () => {
+      tradingService.expireOption.mockResolvedValue(undefined);
+      walletsService.getDashboard.mockResolvedValue(mockWalletResponse);
+
+      await controller.expireOption(
+        'wallet-123',
+        { ticker: 'PETRA240', expiredAt: '2024-01-15T10:00:00.000Z' },
+        advisorUser,
+      );
+
+      expect(notificationsService.generateExpiryNotifications).toHaveBeenCalledWith(
+        advisorUser.id,
+        { forceRefresh: true },
       );
     });
   });

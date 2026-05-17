@@ -181,6 +181,92 @@ export interface paths {
     patch?: never;
     trace?: never;
   };
+  '/notifications': {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    /** Listar notificações (não lidas + lidas nas últimas 24h) */
+    get: operations['NotificationsController_getNotifications'];
+    put?: never;
+    post?: never;
+    delete?: never;
+    options?: never;
+    head?: never;
+    patch?: never;
+    trace?: never;
+  };
+  '/notifications/unread-count': {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    /** Contagem de notificações não lidas */
+    get: operations['NotificationsController_getUnreadCount'];
+    put?: never;
+    post?: never;
+    delete?: never;
+    options?: never;
+    head?: never;
+    patch?: never;
+    trace?: never;
+  };
+  '/notifications/read-all': {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    get?: never;
+    put?: never;
+    post?: never;
+    delete?: never;
+    options?: never;
+    head?: never;
+    /** Marcar todas as notificações como lidas */
+    patch: operations['NotificationsController_markAllAsRead'];
+    trace?: never;
+  };
+  '/notifications/{id}/read': {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    get?: never;
+    put?: never;
+    post?: never;
+    delete?: never;
+    options?: never;
+    head?: never;
+    /** Marcar uma notificação como lida */
+    patch: operations['NotificationsController_markAsRead'];
+    trace?: never;
+  };
+  '/notifications/settings': {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    /** Obter configurações de notificação do assessor */
+    get: operations['NotificationsController_getSettings'];
+    /** Atualizar configurações de notificação */
+    put: operations['NotificationsController_updateSettings'];
+    post?: never;
+    delete?: never;
+    options?: never;
+    head?: never;
+    patch?: never;
+    trace?: never;
+  };
   '/clients/{id}/invite': {
     parameters: {
       query?: never;
@@ -414,6 +500,26 @@ export interface paths {
      * @description Retorna a carteira com posições e preços atuais de mercado.
      */
     get: operations['WalletsController_findOne'];
+    put?: never;
+    post?: never;
+    delete?: never;
+    options?: never;
+    head?: never;
+    patch?: never;
+    trace?: never;
+  };
+  '/wallets/{id}/performance': {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    /**
+     * Performance da carteira
+     * @description Retorna lucro/prejuízo realizado, não realizado e proventos recebidos, com breakdown por ativo. Rentabilidade % calculada sobre o custo investido (Σ totalCost das posições abertas).
+     */
+    get: operations['WalletsController_getPerformance'];
     put?: never;
     post?: never;
     delete?: never;
@@ -1043,6 +1149,58 @@ export interface components {
       };
       message?: string;
     };
+    NotificationListApiResponseDto: {
+      /** @enum {boolean} */
+      success: true;
+      data?: {
+        notifications: {
+          /** Format: uuid */
+          id: string;
+          /** @enum {string} */
+          type: 'OPTION_EXPIRY';
+          /** @enum {string} */
+          severity: 'INFO' | 'WARNING' | 'CRITICAL';
+          message: string;
+          isRead: boolean;
+          readAt: string | null;
+          walletId: string | null;
+          createdAt: string;
+          updatedAt: string;
+        }[];
+        unreadCount: number;
+      };
+      message?: string;
+    };
+    UnreadCountApiResponseDto: {
+      /** @enum {boolean} */
+      success: true;
+      data?: {
+        count: number;
+      };
+      message?: string;
+    };
+    MarkAllReadApiResponseDto: {
+      /** @enum {boolean} */
+      success: true;
+      data?: {
+        updated: number;
+      };
+      message?: string;
+    };
+    NotificationSettingsApiResponseDto: {
+      /** @enum {boolean} */
+      success: true;
+      data?: {
+        notificationsEnabled: boolean;
+        notificationWindowDays: number;
+        lastNotificationCheckAt: string | null;
+      };
+      message?: string;
+    };
+    UpdateNotificationSettingsDto: {
+      notificationsEnabled?: boolean;
+      notificationWindowDays?: number;
+    };
     InviteApiResponseDto: {
       /** @enum {boolean} */
       success: true;
@@ -1137,6 +1295,11 @@ export interface components {
         name: string;
         description: string | null;
         currency: string;
+        totalPositionsValue: number;
+        totalValue: number;
+        totalInvested: number;
+        totalPnl: number;
+        totalPnlPercent: number;
         createdAt: string;
         updatedAt: string;
         positions: {
@@ -1157,6 +1320,7 @@ export interface components {
           profitLoss?: number;
           profitLossPercent?: number;
           weightPercent?: number;
+          collateralBlocked?: number | null;
           lastDividendDate?: string | null;
           priceAtLastDividend?: number | null;
           optionDetail?: {
@@ -1168,11 +1332,6 @@ export interface components {
             contractSize: number;
           } | null;
         }[];
-        totalPositionsValue: number;
-        totalValue: number;
-        totalInvested: number;
-        totalPnl: number;
-        totalPnlPercent: number;
         totalCostBasis: number;
         totalMarketValue: number;
         totalUnrealizedPL: number;
@@ -1220,33 +1379,6 @@ export interface components {
       }[];
       message?: string;
     };
-    WalletPerformanceApiResponseDto: {
-      /** @enum {boolean} */
-      success: true;
-      data?: {
-        /** Format: uuid */
-        walletId: string;
-        realized: number;
-        unrealized: number;
-        dividends: number;
-        total: number;
-        totalInvested: number;
-        totalPercent: number;
-        byAsset: {
-          /** Format: uuid */
-          assetId: string;
-          ticker: string;
-          name: string;
-          /** @enum {string} */
-          type: 'STOCK' | 'OPTION';
-          realized: number;
-          unrealized: number;
-          dividends: number;
-          total: number;
-        }[];
-      };
-      message?: string;
-    };
     AssetSearchApiResponseDto: {
       /** @enum {boolean} */
       success: true;
@@ -1283,6 +1415,33 @@ export interface components {
         price: number;
         name?: string;
         type?: string;
+      };
+      message?: string;
+    };
+    WalletPerformanceApiResponseDto: {
+      /** @enum {boolean} */
+      success: true;
+      data?: {
+        /** Format: uuid */
+        walletId: string;
+        realized: number;
+        unrealized: number;
+        dividends: number;
+        total: number;
+        totalInvested: number;
+        totalPercent: number;
+        byAsset: {
+          /** Format: uuid */
+          assetId: string;
+          ticker: string;
+          name: string;
+          /** @enum {string} */
+          type: 'STOCK' | 'OPTION';
+          realized: number;
+          unrealized: number;
+          dividends: number;
+          total: number;
+        }[];
       };
       message?: string;
     };
@@ -2107,6 +2266,132 @@ export interface operations {
       };
     };
   };
+  NotificationsController_getNotifications: {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    requestBody?: never;
+    responses: {
+      200: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/json': components['schemas']['NotificationListApiResponseDto'];
+        };
+      };
+    };
+  };
+  NotificationsController_getUnreadCount: {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    requestBody?: never;
+    responses: {
+      200: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/json': components['schemas']['UnreadCountApiResponseDto'];
+        };
+      };
+    };
+  };
+  NotificationsController_markAllAsRead: {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    requestBody?: never;
+    responses: {
+      200: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/json': components['schemas']['MarkAllReadApiResponseDto'];
+        };
+      };
+    };
+  };
+  NotificationsController_markAsRead: {
+    parameters: {
+      query?: never;
+      header?: never;
+      path: {
+        id: string;
+      };
+      cookie?: never;
+    };
+    requestBody?: never;
+    responses: {
+      200: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content?: never;
+      };
+      404: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/json': components['schemas']['ApiErrorResponseDto'];
+        };
+      };
+    };
+  };
+  NotificationsController_getSettings: {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    requestBody?: never;
+    responses: {
+      200: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/json': components['schemas']['NotificationSettingsApiResponseDto'];
+        };
+      };
+    };
+  };
+  NotificationsController_updateSettings: {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    requestBody: {
+      content: {
+        'application/json': components['schemas']['UpdateNotificationSettingsDto'];
+      };
+    };
+    responses: {
+      200: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/json': components['schemas']['NotificationSettingsApiResponseDto'];
+        };
+      };
+    };
+  };
   ClientsInviteController_getInviteStatus: {
     parameters: {
       query?: never;
@@ -2662,6 +2947,47 @@ export interface operations {
         };
         content: {
           'application/json': components['schemas']['WalletApiResponseDto'];
+        };
+      };
+      /** @description Sem permissão para acessar esta carteira */
+      403: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/json': components['schemas']['ApiErrorResponseDto'];
+        };
+      };
+      /** @description Carteira não encontrada */
+      404: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/json': components['schemas']['ApiErrorResponseDto'];
+        };
+      };
+    };
+  };
+  WalletsController_getPerformance: {
+    parameters: {
+      query?: never;
+      header?: never;
+      path: {
+        /** @description ID da carteira */
+        id: string;
+      };
+      cookie?: never;
+    };
+    requestBody?: never;
+    responses: {
+      /** @description Performance consolidada */
+      200: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/json': components['schemas']['WalletPerformanceApiResponseDto'];
         };
       };
       /** @description Sem permissão para acessar esta carteira */

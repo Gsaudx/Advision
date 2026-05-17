@@ -19,6 +19,7 @@ import { CurrentUser, type CurrentUserData } from '@/common/decorators';
 import { RolesGuard } from '@/common/guards';
 import { Roles } from '@/common/decorators';
 import { PrismaService } from '@/shared/prisma/prisma.service';
+import { NotificationsService } from '@/modules/notifications/services'; // [NOTIF]
 import { ActivityService } from '../services';
 import {
   ActivityListApiResponseDto,
@@ -41,6 +42,7 @@ export class ActivityController {
   constructor(
     private readonly activityService: ActivityService,
     private readonly prisma: PrismaService,
+    private readonly notificationsService: NotificationsService, // [NOTIF]
   ) {}
 
   @Get('advisor')
@@ -131,6 +133,9 @@ export class ActivityController {
   async getAdvisorMetrics(
     @CurrentUser() user: CurrentUserData,
   ): Promise<ApiResponseType<AdvisorMetrics>> {
+    // [NOTIF] varredura diária de vencimentos ao abrir o dashboard (fire-and-forget, respeita 24h)
+    void this.notificationsService.generateExpiryNotifications(user.id);
+
     const data = await this.activityService.getAdvisorMetrics(user.id);
     return ApiResponseDto.success(data);
   }

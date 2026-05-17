@@ -3,13 +3,14 @@ import { Link, useLocation, useNavigate } from 'react-router-dom';
 import {
   Menu,
   X,
-  Bell,
+  // Bell, // [NOTIF] movido para NotificationBell
   Search,
   LogOut,
   LayoutDashboard,
   Users,
 } from 'lucide-react';
 import { useAuth } from '@/features/auth';
+import { NotificationBell } from '@/features/notifications/components'; // [NOTIF]
 import fullLogo from '@/assets/logos/Advision_logo_2.png';
 
 interface NavItem {
@@ -78,11 +79,13 @@ export function Header() {
           {/* Right section */}
           <div className="flex items-center gap-3">
             {/* Notifications */}
+            {/* [NOTIF] substituído por NotificationBell funcional
             <button className="hidden sm:flex p-2 text-slate-400 hover:text-white hover:bg-slate-800 rounded-lg transition-colors relative">
               <Bell size={20} />
               <span className="absolute top-1.5 right-1.5 w-2 h-2 bg-blue-400 rounded-full" />
             </button>
-
+            */}
+            {showAdvisorNav && <NotificationBell />} {/* [NOTIF] */}
             {/* User Profile - Desktop */}
             <div className="hidden sm:flex items-center gap-3 pl-3 border-l border-slate-700">
               <div className="text-right">
@@ -100,7 +103,6 @@ export function Header() {
                 <LogOut size={18} />
               </button>
             </div>
-
             {/* Mobile Menu Button */}
             <button
               className="lg:hidden p-2 text-slate-400 hover:text-white hover:bg-slate-800 rounded-lg transition-colors"

@@ -21,6 +21,7 @@ import {
 import { AuthGuard } from '@nestjs/passport';
 import { CurrentUser, type CurrentUserData } from '@/common/decorators';
 import { SentinelOptionService } from '@/modules/sentinel/services/sentinel-option.service';
+import { NotificationsService } from '@/modules/notifications/services'; // [NOTIF]
 import { DerivativesService } from '../services';
 import {
   BuyOptionInputDto,
@@ -40,6 +41,7 @@ export class DerivativesController {
   constructor(
     private readonly derivativesService: DerivativesService,
     private readonly sentinelService: SentinelOptionService,
+    private readonly notificationsService: NotificationsService, // [NOTIF]
   ) {}
 
   @Get()
@@ -101,6 +103,9 @@ export class DerivativesController {
       }
     })();
 
+    // [NOTIF] atualizar notificações após compra de opção (ignora stale check — dado mudou)
+    void this.notificationsService.generateExpiryNotifications(actor.id, { forceRefresh: true });
+
     return { success: true, data };
   }
 
@@ -118,6 +123,10 @@ export class DerivativesController {
     @CurrentUser() actor: CurrentUserData,
   ) {
     const data = await this.derivativesService.sellOption(walletId, dto, actor);
+
+    // [NOTIF] atualizar notificações após venda de opção (ignora stale check — dado mudou)
+    void this.notificationsService.generateExpiryNotifications(actor.id, { forceRefresh: true });
+
     return { success: true, data };
   }
 
@@ -142,6 +151,10 @@ export class DerivativesController {
       dto,
       actor,
     );
+
+    // [NOTIF] atualizar notificações após fechamento de opção (ignora stale check — dado mudou)
+    void this.notificationsService.generateExpiryNotifications(actor.id, { forceRefresh: true });
+
     return { success: true, data };
   }
 }
