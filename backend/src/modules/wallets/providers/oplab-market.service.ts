@@ -692,6 +692,25 @@ export class OpLabMarketService extends MarketDataProvider {
     }
   }
 
+  // [ANALYTICS] série histórica diária por ticker — usado em PatrimonyEvolutionService e BenchmarkService
+  async getHistoricalSeries(
+    ticker: string,
+    from: string, // "YYYY-MM-DD"
+    to: string,   // "YYYY-MM-DD"
+  ): Promise<Array<{ date: string; close: number }>> {
+    if (!this.accessToken) return [];
+    const data = await this.makeRequest<{ data?: Array<{ time: number; close?: number }> }>(
+      `/market/historical/${ticker.toUpperCase()}/1d`,
+      { from, to },
+    );
+    return (data.data ?? [])
+      .filter((c) => c.close != null)
+      .map((c) => ({
+        date: new Date(c.time).toISOString().split('T')[0],
+        close: c.close!,
+      }));
+  }
+
   /**
    * Get option details with Greeks
    * First checks cached series data, then falls back to direct API call

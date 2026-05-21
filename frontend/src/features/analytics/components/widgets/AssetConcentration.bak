@@ -1,0 +1,40 @@
+import { WidgetCard } from '../WidgetCard';
+import { useAssetConcentration } from '../../api/hooks';
+import type { AnalyticsBaseParams } from '../../types';
+
+interface Props { params: AnalyticsBaseParams }
+
+export function AssetConcentration({ params }: Props) {
+  const { data, isLoading, error } = useAssetConcentration(params);
+  return (
+    <WidgetCard title="Concentração de Ativos" isLoading={isLoading} error={error}>
+      {data?.holdings.length === 0 && <p className="text-sm text-gray-400">Sem posições.</p>}
+      {data && (
+        <div className="overflow-x-auto">
+          <table className="w-full text-xs">
+            <thead>
+              <tr className="text-gray-400 border-b border-gray-100">
+                <th className="text-left py-1">Ativo</th>
+                <th className="text-right">Valor</th>
+                <th className="text-right">% Book</th>
+                <th className="text-right">Clientes</th>
+                <th className="text-right">Rent.</th>
+              </tr>
+            </thead>
+            <tbody>
+              {data.holdings.map((h) => (
+                <tr key={h.ticker} className={`border-b border-gray-50 ${h.flags.overWeight ? 'bg-yellow-50' : ''} ${h.flags.overConcentrated ? 'bg-red-50' : ''}`}>
+                  <td className="py-1.5 font-medium text-gray-700">{h.ticker}</td>
+                  <td className="text-right">{h['valueR$'].toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' })}</td>
+                  <td className={`text-right font-medium ${h.flags.overWeight ? 'text-yellow-600' : ''}`}>{h.percentBook.toFixed(1)}%</td>
+                  <td className={`text-right ${h.flags.overConcentrated ? 'text-red-500 font-medium' : ''}`}>{h.nClients}</td>
+                  <td className={`text-right ${h.gainPercent >= 0 ? 'text-green-600' : 'text-red-500'}`}>{h.gainPercent.toFixed(2)}%</td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </div>
+      )}
+    </WidgetCard>
+  );
+}

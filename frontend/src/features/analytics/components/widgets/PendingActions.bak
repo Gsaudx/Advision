@@ -1,0 +1,30 @@
+import { Link } from 'react-router-dom';
+import { AlertTriangle, AlertCircle } from 'lucide-react';
+import { WidgetCard } from '../WidgetCard';
+import { usePendingActions } from '../../api/hooks';
+
+export function PendingActions() {
+  const { data, isLoading, error } = usePendingActions();
+
+  return (
+    <WidgetCard title="Ações Pendentes" isLoading={isLoading} error={error}>
+      {data?.items.length === 0 && (
+        <p className="text-sm text-gray-400">Nenhuma ação pendente.</p>
+      )}
+      <ul className="space-y-2">
+        {data?.items.map((item, i) => (
+          <li key={i} className="flex items-start gap-2">
+            {item.severity === 'critical'
+              ? <AlertCircle className="w-4 h-4 text-red-500 mt-0.5 shrink-0" />
+              : <AlertTriangle className="w-4 h-4 text-yellow-500 mt-0.5 shrink-0" />}
+            <div>
+              <p className="text-sm text-gray-700">{item.description}</p>
+              <p className="text-xs text-gray-400">{item.clientName}</p>
+              <Link to={item.linkTo} className="text-xs text-blue-500 hover:underline">Ver detalhes</Link>
+            </div>
+          </li>
+        ))}
+      </ul>
+    </WidgetCard>
+  );
+}

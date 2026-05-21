@@ -1,0 +1,45 @@
+import { BarChart, Bar, XAxis, YAxis, Tooltip, ResponsiveContainer } from 'recharts';
+import { WidgetCard } from '../WidgetCard';
+import { useDividends } from '../../api/hooks';
+import type { AnalyticsPeriodParams } from '../../types';
+
+interface Props { params: AnalyticsPeriodParams }
+
+export function Dividends({ params }: Props) {
+  const { data, isLoading, error } = useDividends(params);
+
+  return (
+    <WidgetCard title="Proventos Recebidos" isLoading={isLoading} error={error}>
+      {data && (
+        <>
+          <p className="text-xs text-gray-400 mb-2">
+            Total no período: <span className="font-semibold text-gray-700">
+              {data.totalPeriod.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' })}
+            </span>
+          </p>
+          <ResponsiveContainer width="100%" height={140}>
+            <BarChart data={data.monthly} margin={{ top: 0, right: 0, left: -20, bottom: 0 }}>
+              <XAxis dataKey="month" tick={{ fontSize: 10 }} />
+              <YAxis tick={{ fontSize: 10 }} />
+              <Tooltip formatter={(v: number) => v.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' })} />
+              <Bar dataKey="total" fill="#3b82f6" radius={[3, 3, 0, 0]} />
+            </BarChart>
+          </ResponsiveContainer>
+          {data.topPayers.length > 0 && (
+            <div className="mt-3">
+              <p className="text-xs font-medium text-gray-500 mb-1">Top pagadores</p>
+              <ul className="space-y-1">
+                {data.topPayers.map((p) => (
+                  <li key={p.ticker} className="flex justify-between text-xs">
+                    <span className="text-gray-700">{p.ticker} — {p.name}</span>
+                    <span className="font-medium">{p.total.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' })}</span>
+                  </li>
+                ))}
+              </ul>
+            </div>
+          )}
+        </>
+      )}
+    </WidgetCard>
+  );
+}

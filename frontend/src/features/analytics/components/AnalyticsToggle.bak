@@ -1,0 +1,43 @@
+import type { AnalyticsMode } from '../types';
+
+interface Wallet { id: string; clientName: string }
+
+interface Props {
+  mode: AnalyticsMode;
+  onModeChange: (m: AnalyticsMode) => void;
+  wallets: Wallet[];
+  selectedWalletId: string | null;
+  onWalletChange: (id: string) => void;
+}
+
+export function AnalyticsToggle({ mode, onModeChange, wallets, selectedWalletId, onWalletChange }: Props) {
+  return (
+    <div className="flex items-center gap-4">
+      <div className="flex rounded-lg border border-gray-200 overflow-hidden">
+        {(['CONSOLIDATED', 'DRILLDOWN'] as AnalyticsMode[]).map((m) => (
+          <button
+            key={m}
+            onClick={() => onModeChange(m)}
+            className={`px-4 py-1.5 text-sm font-medium transition-colors ${
+              mode === m ? 'bg-blue-600 text-white' : 'bg-white text-gray-600 hover:bg-gray-50'
+            }`}
+          >
+            {m === 'CONSOLIDATED' ? 'Consolidado' : 'Carteira'}
+          </button>
+        ))}
+      </div>
+      {mode === 'DRILLDOWN' && (
+        <select
+          value={selectedWalletId ?? ''}
+          onChange={(e) => onWalletChange(e.target.value)}
+          className="border border-gray-300 rounded-lg px-3 py-1.5 text-sm"
+        >
+          <option value="">Selecionar carteira...</option>
+          {wallets.map((w) => (
+            <option key={w.id} value={w.id}>{w.clientName}</option>
+          ))}
+        </select>
+      )}
+    </div>
+  );
+}
