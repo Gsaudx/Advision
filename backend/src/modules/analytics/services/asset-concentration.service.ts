@@ -28,13 +28,14 @@ export class AssetConcentrationService {
       ? [walletId]
       : (await this.prisma.wallet.findMany({ where: { client: { advisorId } }, select: { id: true } })).map((w) => w.id);
 
-    const positions = await this.prisma.position.findMany({
+    const allPositions = await this.prisma.position.findMany({
       where: { walletId: { in: walletIds }, quantity: { gt: 0 } },
       include: {
         asset: true,
         wallet: { include: { client: { select: { id: true } } } },
       },
     });
+    const positions = allPositions.filter((p) => p.asset.type === 'STOCK');
 
     const tickers = [...new Set(positions.map((p) => p.asset.ticker))];
     const prices = tickers.length ? await this.market.getBatchPrices(tickers) : {};

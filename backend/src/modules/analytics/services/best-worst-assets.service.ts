@@ -3,6 +3,7 @@ import { PrismaService } from '@/shared/prisma/prisma.service';
 import { AnalyticsCacheService } from '../cache/analytics-cache.service';
 import { BestWorstAssetsResponse } from '../schemas/analytics-response.schema';
 import { CompositeMarketService } from '@/modules/wallets/providers/composite-market.service';
+import { AssetType } from '@/generated/prisma/enums';
 
 @Injectable()
 export class BestWorstAssetsService {
@@ -27,7 +28,7 @@ export class BestWorstAssetsService {
       : (await this.prisma.wallet.findMany({ where: { client: { advisorId } }, select: { id: true } })).map((w) => w.id);
 
     const positions = await this.prisma.position.findMany({
-      where: { walletId: { in: walletIds }, quantity: { gt: 0 } },
+      where: { walletId: { in: walletIds }, quantity: { gt: 0 }, asset: { type: 'STOCK' } },
       include: {
         asset: true,
         wallet: { include: { client: true } },

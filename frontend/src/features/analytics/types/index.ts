@@ -45,6 +45,9 @@ export interface PendingActionItem {
   linkTo: string;
   clientName: string;
   walletId: string | null;
+  daysInactive?: number;
+  positionCount?: number;
+  costBasis?: number;
 }
 export interface PendingActionsResponse {
   items: PendingActionItem[];

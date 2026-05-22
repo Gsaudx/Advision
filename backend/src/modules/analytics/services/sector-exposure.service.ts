@@ -32,7 +32,14 @@ export class SectorExposureService {
 
     const positions = await this.prisma.position.findMany({
       where: { walletId: { in: walletIds }, quantity: { gt: 0 } },
-      include: { asset: true },
+      include: {
+        asset: {
+          include: {
+            // [ANALYTICS] Options have no sector in OpLab — resolve via underlying asset
+            optionDetail: { include: { underlyingAsset: true } },
+          },
+        },
+      },
     });
 
     const tickers = [...new Set(positions.map((p) => p.asset.ticker))];
@@ -44,7 +51,8 @@ export class SectorExposureService {
     for (const pos of positions) {
       const price = prices[pos.asset.ticker] ?? Number(pos.averagePrice);
       const value = Number(pos.quantity) * price;
-      const sector = pos.asset.sector ?? 'Não classificado';
+      const resolvedSector = pos.asset.optionDetail?.underlyingAsset?.sector ?? pos.asset.sector;
+      const sector = resolvedSector ?? 'Não classificado';
 
       const entry = sectorMap.get(sector) ?? { valueR$: 0, assetIds: new Set() };
       entry.valueR$ += value;

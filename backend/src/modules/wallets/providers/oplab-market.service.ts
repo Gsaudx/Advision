@@ -126,9 +126,8 @@ interface OpLabSeriesResponse {
   series: OpLabSeriesGroup[];
 }
 
-interface OpLabInstrumentResponse {
-  data: OpLabInstrument;
-}
+// OpLab returns the instrument directly (flat object), not wrapped in { data: ... }
+type OpLabInstrumentResponse = OpLabInstrument;
 
 const SERIES_CACHE_TTL_MS = 5 * 60 * 1000; // 5 minutes for option series
 const OPLAB_BASE_URL = 'https://api.oplab.com.br/v3';
@@ -284,11 +283,9 @@ export class OpLabMarketService extends MarketDataProvider {
 
     try {
       // First try to get as an instrument
-      const data = await this.makeRequest<OpLabInstrumentResponse>(
+      const instrument = await this.makeRequest<OpLabInstrumentResponse>(
         `/market/instruments/${upperTicker}`,
       );
-
-      const instrument = data.data;
 
       // Check if it's an option by type or by checking for option-specific fields
       if (

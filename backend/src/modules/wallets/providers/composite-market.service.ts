@@ -67,21 +67,7 @@ export class CompositeMarketService extends MarketDataProvider {
   async getMetadata(ticker: string): Promise<AssetMetadata> {
     const upperTicker = ticker.toUpperCase();
 
-    if (this.isOptionTicker(upperTicker)) {
-      // Try OpLab first for options
-      if (this.opLabService.isConfigured()) {
-        try {
-          return await this.opLabService.getMetadata(upperTicker);
-        } catch {
-          this.logger.warn(
-            `OpLab metadata lookup failed for ${upperTicker}, falling back to Brapi`,
-          );
-        }
-      }
-    }
-
-    // Default to Brapi for stocks (which also handles option parsing as fallback)
-    return this.brapiService.getMetadata(upperTicker);
+    return this.opLabService.getMetadata(upperTicker);
   }
 
   /**

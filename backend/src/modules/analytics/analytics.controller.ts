@@ -94,7 +94,7 @@ export class AnalyticsController {
   }
 
   @Post('sectors/reseed')
-  @Roles('ADMIN')
+  @Roles('ADVISOR', 'ADMIN')
   async reseedSectors() {
     return this.sectorsReseed.reseed();
   }

@@ -81,7 +81,7 @@ export function AssetConcentration({ params }: Props) {
   const overConcCount = data?.holdings.filter((h) => h.flags.overConcentrated).length ?? 0;
 
   return (
-    <WidgetCard isLoading={isLoading} error={error} padded={false}>
+    <WidgetCard isLoading={isLoading} error={error} padded={false} className="overflow-hidden">
       <div className="p-6 md:p-7 pb-3">
         <WidgetEyebrow
           icon={<Layers size={12} className="text-tertiary" />}
@@ -118,7 +118,7 @@ export function AssetConcentration({ params }: Props) {
       )}
 
       {!isLoading && !error && !!data?.holdings.length && (
-        <div className="overflow-x-auto">
+        <div className="overflow-auto h-[300px]">
           <table className="w-full text-sm">
             <thead className="sticky top-0 z-10">
               <tr className="text-[10px] uppercase tracking-widest text-on-surface-variant/80 font-extrabold bg-surface-container-lowest border-y border-outline-variant/20">

@@ -54,23 +54,42 @@ export class PendingActionsService {
     // Fonte 2: carteiras sem operação há > 90 dias
     const walletIds = await this.prisma.wallet.findMany({
       where: { client: { advisorId } },
-      select: { id: true, client: { select: { name: true, id: true } } },
+      select: { id: true, createdAt: true, client: { select: { name: true, id: true } } },
     });
 
     for (const wallet of walletIds) {
-      const lastTx = await this.prisma.transaction.findFirst({
-        where: { walletId: wallet.id },
-        orderBy: { executedAt: 'desc' },
-        select: { executedAt: true },
-      });
+      const [lastTx, positions] = await Promise.all([
+        this.prisma.transaction.findFirst({
+          where: { walletId: wallet.id },
+          orderBy: { executedAt: 'desc' },
+          select: { executedAt: true },
+        }),
+        this.prisma.position.findMany({
+          where: { walletId: wallet.id },
+          select: { quantity: true, averagePrice: true },
+        }),
+      ]);
+
       if (!lastTx || lastTx.executedAt < ninetyDaysAgo) {
+        const referenceDate = lastTx?.executedAt ?? wallet.createdAt;
+        const daysInactive = Math.floor(
+          (Date.now() - referenceDate.getTime()) / (1000 * 60 * 60 * 24),
+        );
+        const costBasis = positions.reduce(
+          (sum, p) => sum + Number(p.quantity) * Number(p.averagePrice),
+          0,
+        );
+
         items.push({
           type: 'INACTIVE_CLIENT',
           severity: 'warning',
-          description: `Cliente sem operação há mais de 90 dias`,
+          description: `Cliente sem operação há ${daysInactive} dias`,
           linkTo: `/clients/${wallet.client.id}`,
           clientName: wallet.client.name,
           walletId: wallet.id,
+          daysInactive,
+          positionCount: positions.length,
+          costBasis,
         });
       }
     }

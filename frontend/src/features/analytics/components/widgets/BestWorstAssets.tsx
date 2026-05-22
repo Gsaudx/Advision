@@ -42,48 +42,54 @@ export function BestWorstAssets({ params }: Props) {
   const consolidated = params.mode === 'CONSOLIDATED';
 
   return (
-    <WidgetCard isLoading={isLoading} error={error}>
-      <WidgetEyebrow
-        icon={<Sparkles size={12} className="text-tertiary" />}
-        label="Melhores & piores ativos"
-      />
+    <WidgetCard isLoading={isLoading} error={error} padded={false} className="overflow-hidden">
+      <div className="p-6 md:p-8 pb-4">
+        <WidgetEyebrow
+          icon={<Sparkles size={12} className="text-tertiary" />}
+          label="Melhores & piores ativos"
+        />
+      </div>
 
       {!isLoading && !error && !data?.topGains.length && !data?.topLosses.length && (
-        <WidgetEmptyState
-          icon={<Sparkles size={20} className="text-on-surface-variant" />}
-          title="Sem dados"
-          hint="Nenhuma posição com resultado calculado."
-        />
+        <div className="px-6 md:px-8 pb-8">
+          <WidgetEmptyState
+            icon={<Sparkles size={20} className="text-on-surface-variant" />}
+            title="Sem dados"
+            hint="Nenhuma posição com resultado calculado."
+          />
+        </div>
       )}
 
-      {!isLoading && !error && data && (
-        <div className="grid grid-cols-2 gap-x-5 gap-y-3">
-          <div>
-            <div className="flex items-center gap-1.5 mb-3">
-              <span className="w-1.5 h-3 bg-tertiary rounded-full" />
-              <p className="text-[10px] uppercase tracking-widest text-tertiary font-extrabold">Top ganhos</p>
+      {!isLoading && !error && data && (data.topGains.length > 0 || data.topLosses.length > 0) && (
+        <div className="overflow-y-auto h-[300px] px-6 md:px-8 pb-6">
+          <div className="grid grid-cols-2 gap-x-5 gap-y-3">
+            <div>
+              <div className="flex items-center gap-1.5 mb-3">
+                <span className="w-1.5 h-3 bg-tertiary rounded-full" />
+                <p className="text-[10px] uppercase tracking-widest text-tertiary font-extrabold">Top ganhos</p>
+              </div>
+              <div className="space-y-0.5">
+                {data.topGains.length === 0
+                  ? <p className="text-xs text-on-surface-variant">—</p>
+                  : data.topGains.map((a, i) => (
+                      <AssetRow key={i} a={a} positive consolidated={consolidated} />
+                    ))
+                }
+              </div>
             </div>
-            <div className="space-y-0.5">
-              {data.topGains.length === 0
-                ? <p className="text-xs text-on-surface-variant">—</p>
-                : data.topGains.map((a, i) => (
-                    <AssetRow key={i} a={a} positive consolidated={consolidated} />
-                  ))
-              }
-            </div>
-          </div>
-          <div>
-            <div className="flex items-center gap-1.5 mb-3">
-              <span className="w-1.5 h-3 bg-error rounded-full" />
-              <p className="text-[10px] uppercase tracking-widest text-error font-extrabold">Top perdas</p>
-            </div>
-            <div className="space-y-0.5">
-              {data.topLosses.length === 0
-                ? <p className="text-xs text-on-surface-variant">—</p>
-                : data.topLosses.map((a, i) => (
-                    <AssetRow key={i} a={a} positive={false} consolidated={consolidated} />
-                  ))
-              }
+            <div>
+              <div className="flex items-center gap-1.5 mb-3">
+                <span className="w-1.5 h-3 bg-error rounded-full" />
+                <p className="text-[10px] uppercase tracking-widest text-error font-extrabold">Top perdas</p>
+              </div>
+              <div className="space-y-0.5">
+                {data.topLosses.length === 0
+                  ? <p className="text-xs text-on-surface-variant">—</p>
+                  : data.topLosses.map((a, i) => (
+                      <AssetRow key={i} a={a} positive={false} consolidated={consolidated} />
+                    ))
+                }
+              </div>
             </div>
           </div>
         </div>
