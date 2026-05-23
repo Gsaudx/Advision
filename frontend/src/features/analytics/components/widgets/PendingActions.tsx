@@ -48,25 +48,12 @@ function ClientRow({ item, rank }: { item: PendingActionItem; rank: number }) {
   );
 }
 
-// ── MOCK ── remover bloco abaixo quando backend estiver populado ──────────────
-const MOCK_INACTIVE: PendingActionItem[] = [
-  { type: 'INACTIVE_CLIENT', severity: 'warning', description: '', linkTo: '/clients/1', clientName: 'Roberto Andrade',   walletId: '1', daysInactive: 214, positionCount: 8,  costBasis: 487320 },
-  { type: 'INACTIVE_CLIENT', severity: 'warning', description: '', linkTo: '/clients/2', clientName: 'Fernanda Lopes',    walletId: '2', daysInactive: 178, positionCount: 5,  costBasis: 210500 },
-  { type: 'INACTIVE_CLIENT', severity: 'warning', description: '', linkTo: '/clients/3', clientName: 'Carlos Menezes',   walletId: '3', daysInactive: 142, positionCount: 12, costBasis: 1034800 },
-  { type: 'INACTIVE_CLIENT', severity: 'warning', description: '', linkTo: '/clients/4', clientName: 'Ana Paula Souza',  walletId: '4', daysInactive: 117, positionCount: 3,  costBasis: 98450 },
-  { type: 'INACTIVE_CLIENT', severity: 'warning', description: '', linkTo: '/clients/5', clientName: 'Marcos Teixeira',  walletId: '5', daysInactive: 93,  positionCount: 6,  costBasis: 320750 },
-  { type: 'INACTIVE_CLIENT', severity: 'warning', description: '', linkTo: '/clients/5', clientName: 'Marcos Teixeira',  walletId: '5', daysInactive: 93,  positionCount: 6,  costBasis: 320750 },
-  { type: 'INACTIVE_CLIENT', severity: 'warning', description: '', linkTo: '/clients/5', clientName: 'Marcos Teixeira',  walletId: '5', daysInactive: 93,  positionCount: 6,  costBasis: 320750 },
-];
-// ── FIM MOCK ──────────────────────────────────────────────────────────────────
-
 export function PendingActions() {
   const { data, isLoading, error } = usePendingActions();
 
-  const inactive = (MOCK_INACTIVE.length > 0 // MOCK — trocar por: (data?.items ?? [])
-    ? MOCK_INACTIVE
-    : (data?.items ?? []).filter((i) => i.type === 'INACTIVE_CLIENT')
-  ).sort((a, b) => (b.daysInactive ?? 0) - (a.daysInactive ?? 0));
+  const inactive = (data?.items ?? [])
+    .filter((i) => i.type === 'INACTIVE_CLIENT')
+    .sort((a, b) => (b.daysInactive ?? 0) - (a.daysInactive ?? 0));
 
   return (
     <WidgetCard isLoading={isLoading} error={error} padded={false} className="overflow-hidden">

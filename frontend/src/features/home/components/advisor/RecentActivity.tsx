@@ -61,7 +61,7 @@ export function RecentActivity({
   return (
     <>
       {/* Card único que engloba título + lista */}
-      <div className="bg-surface-container-low rounded-[2rem] overflow-hidden flex flex-col">
+      <div className="bg-surface-container-low rounded-[2rem] overflow-hidden flex flex-col h-full">
         {/* Header dentro do card */}
         <div className="flex items-center justify-between px-5 pt-5 pb-3 flex-shrink-0">
           <h4 className="font-headline font-bold text-lg text-on-surface">
@@ -105,7 +105,7 @@ export function RecentActivity({
             Nenhuma atividade recente.
           </p>
         ) : (
-          <div className="divide-y divide-outline-variant/10 overflow-y-auto max-h-48">
+          <div className="divide-y divide-outline-variant/10 overflow-y-auto flex-1">
             {activities.map((activity) => {
               const category = getActivityCategory(activity.action);
               const styles = categoryStyles[category];

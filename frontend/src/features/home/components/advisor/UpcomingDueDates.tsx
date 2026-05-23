@@ -36,8 +36,6 @@ function formatExpirationDate(dateStr: string): string {
 }
 
 export function UpcomingDueDates({ expirations }: UpcomingDueDatesProps) {
-  if (expirations.length === 0) return null;
-
   const vencidoCount = expirations.filter((e) => e.status === 'Vencido').length;
   const proximoCount = expirations.filter((e) => e.status === 'Proximo').length;
 
@@ -88,6 +86,13 @@ export function UpcomingDueDates({ expirations }: UpcomingDueDatesProps) {
             </tr>
           </thead>
           <tbody className="text-sm">
+            {expirations.length === 0 && (
+              <tr>
+                <td colSpan={7} className="py-10 text-center text-on-surface-variant text-sm">
+                  Sem próximos vencimentos
+                </td>
+              </tr>
+            )}
             {expirations.map((item) => {
               const styles = statusStyles[item.status];
               return (
