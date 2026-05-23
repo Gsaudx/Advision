@@ -201,6 +201,7 @@ export function UnifiedTradeModal({
   const {
     data: optionPriceData,
     isLoading: isOptionPriceLoading,
+    isError: isOptionPriceError,
     refetch: refetchOptionPrice,
   } = useAssetPrice(optionFormData.ticker, optionFormData.ticker.length > 0);
 
@@ -218,6 +219,13 @@ export function UnifiedTradeModal({
       }, 0);
     }
   }, [optionPriceData, isPremiumManual]);
+
+  // Clear premium when price fetch fails (e.g. option with no quote)
+  useEffect(() => {
+    if (isOptionPriceError && !isPremiumManual) {
+      setOptionFormData((prev) => ({ ...prev, premium: '' }));
+    }
+  }, [isOptionPriceError, isPremiumManual]);
 
   // Historical price lookup (D.3/D.4 — retroactive date)
   const activeTicker =
@@ -962,6 +970,11 @@ export function UnifiedTradeModal({
                         <p className="text-[10px] text-on-surface-variant mt-1">
                           Mercado:{' '}
                           {formatCurrency(optionPriceData.price, currency)}
+                        </p>
+                      )}
+                      {isOptionPriceError && !isOptionPriceLoading && optionFormData.ticker && (
+                        <p className="text-[10px] text-amber-400 mt-1">
+                          Prêmio não disponível — insira manualmente
                         </p>
                       )}
                       {isPremiumManual && optionFormData.premium && (

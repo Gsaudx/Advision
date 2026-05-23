@@ -700,7 +700,7 @@ export default function WalletPage() {
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ delay: 0.08 }}
-            className="lg:col-span-4 space-y-8"
+            className="lg:col-span-4 space-y-4"
           >
             <ConcentrationPanel
               byAsset={wallet.concentration.byAsset}
@@ -743,7 +743,7 @@ export default function WalletPage() {
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ delay: 0.1 }}
-            className="lg:col-span-8 space-y-8"
+            className="lg:col-span-8 flex flex-col gap-8"
           >
             {/* Sub-tab content: Ações */}
             {subTab === 'positions' && (
@@ -803,7 +803,7 @@ export default function WalletPage() {
             {/* Sub-tab content: Opções */}
             {subTab === 'options' && (
               <>
-                <ContentPanel className="relative" bodyClassName="p-0">
+                <ContentPanel className="relative flex flex-col min-h-[540px]" bodyClassName="p-0 overflow-y-auto flex-1">
                   {isLoadingOptions ? (
                     <div className="flex justify-center py-8">
                       <LoadingSpinner size="md" />

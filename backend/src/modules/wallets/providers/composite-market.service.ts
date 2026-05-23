@@ -1,4 +1,4 @@
-import { Injectable, Logger } from '@nestjs/common';
+import { Injectable, Logger, NotFoundException } from '@nestjs/common';
 import { MarketDataProvider, AssetMetadata } from './market-data.provider';
 import { BrapiMarketService } from './brapi-market.service';
 import { OpLabMarketService } from './oplab-market.service';
@@ -44,15 +44,14 @@ export class CompositeMarketService extends MarketDataProvider {
     const upperTicker = ticker.toUpperCase();
 
     if (this.isOptionTicker(upperTicker)) {
-      // Try OpLab first for options
-      if (this.opLabService.isConfigured()) {
-        try {
-          return await this.opLabService.getPrice(upperTicker);
-        } catch {
-          this.logger.warn(
-            `OpLab price lookup failed for ${upperTicker}, falling back to Brapi`,
-          );
-        }
+      if (!this.opLabService.isConfigured()) {
+        throw new NotFoundException(`OpLab não configurado: prêmio indisponível para ${upperTicker}`);
+      }
+      try {
+        return await this.opLabService.getPrice(upperTicker);
+      } catch {
+        this.logger.warn(`OpLab price lookup failed for ${upperTicker}`);
+        throw new NotFoundException(`Prêmio não encontrado para ${upperTicker}`);
       }
     }
 
