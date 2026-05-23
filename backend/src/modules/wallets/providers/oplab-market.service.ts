@@ -39,6 +39,7 @@ interface OpLabOptionSeries {
   days_to_maturity: number;
   category?: string;
   spot?: OpLabSpotInfo;
+  parent_symbol?: string;
   close?: number;
   bid?: number;
   ask?: number;
@@ -374,7 +375,7 @@ export class OpLabMarketService extends MarketDataProvider {
         ticker,
         type: 'OPTION',
         name: this.buildOptionName(option),
-        underlyingSymbol: option.spot?.symbol,
+        underlyingSymbol: option.spot?.symbol ?? option.parent_symbol,
         optionType: option.type,
         exerciseType: 'AMERICAN', // B3 options are typically American
         strikePrice: option.strike,
@@ -416,7 +417,7 @@ export class OpLabMarketService extends MarketDataProvider {
    * Build a human-readable option name
    */
   private buildOptionName(option: OpLabOptionSeries): string {
-    const underlying = option.spot?.name || option.spot?.symbol || 'Unknown';
+    const underlying = option.spot?.name || option.spot?.symbol || option.parent_symbol || 'Unknown';
     const type = option.type === 'CALL' ? 'CALL' : 'PUT';
     const strike = option.strike?.toFixed(2) ?? '?';
     const expiry = option.due_date
