@@ -252,8 +252,8 @@ export class StrategyExecutorService {
             leg.status = OperationStatus.EXECUTED;
             leg.executedAt = new Date(data.executedAt);
 
-            const existingPosition = await tx.position.findUnique({
-              where: { walletId_assetId: { walletId, assetId: leg.asset.id } },
+            const existingPosition = await tx.position.findFirst({
+              where: { walletId, assetId: leg.asset.id },
             });
 
             const isOption =

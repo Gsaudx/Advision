@@ -117,8 +117,8 @@ export class TradingService {
           | undefined;
 
         for (let attempt = 0; attempt < maxPositionAttempts; attempt++) {
-          const existingPosition = await tx.position.findUnique({
-            where: { walletId_assetId: { walletId, assetId: asset.id } },
+          const existingPosition = await tx.position.findFirst({
+            where: { walletId, assetId: asset.id },
           });
 
           if (!existingPosition) {
@@ -334,8 +334,8 @@ export class TradingService {
           | undefined;
 
         for (let attempt = 0; attempt < maxPositionAttempts; attempt++) {
-          const existingPosition = await tx.position.findUnique({
-            where: { walletId_assetId: { walletId, assetId: asset.id } },
+          const existingPosition = await tx.position.findFirst({
+            where: { walletId, assetId: asset.id },
           });
 
           if (!existingPosition) {
@@ -613,9 +613,8 @@ export class TradingService {
 
     if (remaining === 0) {
       await this.prisma.position
-        .delete({
-          where: { walletId_assetId: { walletId, assetId: tx.assetId! } },
-        })
+        .findFirst({ where: { walletId, assetId: tx.assetId! } })
+        .then((p) => p && this.prisma.position.delete({ where: { id: p.id } }))
         .catch(() => {});
     }
 
@@ -640,8 +639,8 @@ export class TradingService {
     if (!asset)
       throw new NotFoundException(`Ativo não encontrado: ${data.ticker}`);
 
-    const position = await this.prisma.position.findUnique({
-      where: { walletId_assetId: { walletId, assetId: asset.id } },
+    const position = await this.prisma.position.findFirst({
+      where: { walletId, assetId: asset.id },
     });
     if (!position) throw new NotFoundException('Posição não encontrada');
 
@@ -660,9 +659,8 @@ export class TradingService {
     const remaining = await this.recalculatePosition(walletId, asset.id);
     if (remaining === 0) {
       await this.prisma.position
-        .delete({
-          where: { walletId_assetId: { walletId, assetId: asset.id } },
-        })
+        .findFirst({ where: { walletId, assetId: asset.id } })
+        .then((p) => p && this.prisma.position.delete({ where: { id: p.id } }))
         .catch(() => {});
     }
   }
@@ -697,13 +695,13 @@ export class TradingService {
     }
 
     if (qty.gt(0)) {
-      await this.prisma.position.update({
-        where: { walletId_assetId: { walletId, assetId } },
-        data: {
-          quantity: qty,
-          averagePrice: totalCost.div(qty),
-        },
-      });
+      const posToUpdate = await this.prisma.position.findFirst({ where: { walletId, assetId } });
+      if (posToUpdate) {
+        await this.prisma.position.update({
+          where: { id: posToUpdate.id },
+          data: { quantity: qty, averagePrice: totalCost.div(qty) },
+        });
+      }
     }
 
     return qty.toNumber();

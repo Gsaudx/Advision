@@ -134,12 +134,10 @@ export class OptionLifecycleService {
         let underlyingPositionId: string | null = null;
 
         if (optionDetail.optionType === 'CALL') {
-          const existingUnderlyingPosition = await tx.position.findUnique({
+          const existingUnderlyingPosition = await tx.position.findFirst({
             where: {
-              walletId_assetId: {
-                walletId,
+              walletId,
                 assetId: optionDetail.underlyingAssetId,
-              },
             },
           });
 
@@ -168,12 +166,10 @@ export class OptionLifecycleService {
             underlyingPositionId = existingUnderlyingPosition.id;
           }
         } else {
-          const existingUnderlyingPosition = await tx.position.findUnique({
+          const existingUnderlyingPosition = await tx.position.findFirst({
             where: {
-              walletId_assetId: {
-                walletId,
+              walletId,
                 assetId: optionDetail.underlyingAssetId,
-              },
             },
           });
 
@@ -332,12 +328,10 @@ export class OptionLifecycleService {
         let underlyingPositionId: string | null = null;
 
         if (optionDetail.optionType === 'CALL') {
-          const existingUnderlyingPosition = await tx.position.findUnique({
+          const existingUnderlyingPosition = await tx.position.findFirst({
             where: {
-              walletId_assetId: {
-                walletId,
+              walletId,
                 assetId: optionDetail.underlyingAssetId,
-              },
             },
           });
 
@@ -366,12 +360,10 @@ export class OptionLifecycleService {
 
           underlyingPositionId = existingUnderlyingPosition.id;
         } else {
-          const existingUnderlyingPosition = await tx.position.findUnique({
+          const existingUnderlyingPosition = await tx.position.findFirst({
             where: {
-              walletId_assetId: {
-                walletId,
+              walletId,
                 assetId: optionDetail.underlyingAssetId,
-              },
             },
           });
 

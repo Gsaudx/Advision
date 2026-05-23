@@ -156,50 +156,17 @@ export class DerivativesService {
 
     try {
       result = await this.prisma.$transaction(async (tx) => {
-        const existingPosition = await tx.position.findUnique({
-          where: { walletId_assetId: { walletId, assetId: asset.id } },
+        // Each option purchase is a separate lot — never accumulate into an existing position
+        const newPosition = await tx.position.create({
+          data: {
+            walletId,
+            assetId: asset.id,
+            quantity: data.quantity,
+            averagePrice: data.premium,
+          },
         });
-
-        let positionId: string;
-        let positionAction: 'CREATE' | 'UPDATE' = 'CREATE';
-
-        if (!existingPosition) {
-          const newPosition = await tx.position.create({
-            data: {
-              walletId,
-              assetId: asset.id,
-              quantity: data.quantity,
-              averagePrice: data.premium,
-            },
-          });
-          positionId = newPosition.id;
-        } else {
-          const existingQty = Number(existingPosition.quantity);
-          const existingAvg = Number(existingPosition.averagePrice);
-
-          if (existingQty < 0) {
-            const newQty = existingQty + data.quantity;
-            if (newQty === 0) {
-              await tx.position.delete({ where: { id: existingPosition.id } });
-            } else {
-              await tx.position.update({
-                where: { id: existingPosition.id },
-                data: { quantity: newQty },
-              });
-            }
-          } else {
-            const totalQty = existingQty + data.quantity;
-            const totalCostPrev = existingQty * existingAvg;
-            const newAvg =
-              (totalCostPrev + data.quantity * data.premium) / totalQty;
-            await tx.position.update({
-              where: { id: existingPosition.id },
-              data: { quantity: totalQty, averagePrice: newAvg },
-            });
-          }
-          positionId = existingPosition.id;
-          positionAction = 'UPDATE';
-        }
+        const positionId = newPosition.id;
+        const positionAction = 'CREATE' as const;
 
         const transaction = await tx.transaction.create({
           data: {
@@ -321,13 +288,8 @@ export class DerivativesService {
     try {
       result = await this.prisma.$transaction(async (tx) => {
         if (optionDetail.optionType === 'CALL' && data.covered) {
-          const underlyingPosition = await tx.position.findUnique({
-            where: {
-              walletId_assetId: {
-                walletId,
-                assetId: optionDetail.underlyingAssetId,
-              },
-            },
+          const underlyingPosition = await tx.position.findFirst({
+            where: { walletId, assetId: optionDetail.underlyingAssetId },
           });
 
           const requiredShares = data.quantity * CONTRACT_SIZE;
@@ -341,8 +303,8 @@ export class DerivativesService {
           }
         }
 
-        const existingPosition = await tx.position.findUnique({
-          where: { walletId_assetId: { walletId, assetId: asset.id } },
+        const existingPosition = await tx.position.findFirst({
+          where: { walletId, assetId: asset.id },
         });
 
         let positionId: string;
