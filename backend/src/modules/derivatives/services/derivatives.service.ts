@@ -106,7 +106,8 @@ export class DerivativesService {
       result.profitLossPercent = profitLossPercent;
     }
 
-    if (underlyingPrice !== undefined) {
+    if (underlyingPrice !== undefined && underlyingPrice > 0) {
+      result.currentUnderlyingPrice = underlyingPrice;
       const strikePrice = Number(position.asset.optionDetail!.strikePrice);
       const priceDiff = Math.abs(underlyingPrice - strikePrice);
       const threshold = strikePrice * MONEYNESS_ATM_THRESHOLD;

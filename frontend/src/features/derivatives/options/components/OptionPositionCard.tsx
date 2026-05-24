@@ -50,7 +50,25 @@ export function OptionPositionCard({
 }: OptionPositionCardProps) {
   const isCall = position.optionDetail.optionType === 'CALL';
   const isProfit = (position.profitLoss ?? 0) >= 0;
-  const moneyness = (position.moneyness as Moneyness | undefined) ?? null;
+  const backendMoneyness = position.moneyness as Moneyness | undefined;
+  const underlyingPrice = (position as { currentUnderlyingPrice?: number })
+    .currentUnderlyingPrice;
+  const moneyness: Moneyness | null = backendMoneyness
+    ? backendMoneyness
+    : underlyingPrice && underlyingPrice > 0
+      ? (() => {
+          const strike = position.optionDetail.strikePrice;
+          const diff = Math.abs(underlyingPrice - strike);
+          if (diff <= strike * 0.01) return 'ATM';
+          return position.optionDetail.optionType === 'CALL'
+            ? underlyingPrice > strike
+              ? 'ITM'
+              : 'OTM'
+            : underlyingPrice < strike
+              ? 'ITM'
+              : 'OTM';
+        })()
+      : null;
 
   const daysUntilExpiry = Math.ceil(
     (new Date(position.optionDetail.expirationDate).getTime() - currentTime) /
