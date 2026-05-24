@@ -21,7 +21,7 @@ const PeriodQuerySchema = BaseQuerySchema.extend({
   { message: 'from e to são obrigatórios quando period=CUSTOM', path: ['from'] },
 );
 
-const EvolutionQuerySchema = z.object({
+const EvolutionQuerySchema = BaseQuerySchema.extend({
   period: AnalyticsPeriodEnum.default('1A'),
   from: z.string().optional(),
   to: z.string().optional(),

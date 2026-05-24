@@ -37,7 +37,7 @@ export function AnalyticsPage() {
 
   const baseParams: AnalyticsBaseParams = { mode, walletId: walletId ?? undefined };
   const periodParams: AnalyticsPeriodParams = { ...baseParams, period, customFrom, customTo };
-  const evolutionParams: AnalyticsEvolutionParams = { period, customFrom, customTo };
+  const evolutionParams: AnalyticsEvolutionParams = { mode, walletId: walletId ?? undefined, period, customFrom, customTo };
 
   const handleRefresh = async () => {
     setRefreshing(true);
@@ -131,7 +131,7 @@ export function AnalyticsPage() {
         </div>
 
         {/* ── Linha 6: Ranking de Clientes (100%) ── */}
-        <ClientRanking />
+        {mode === 'CONSOLIDATED' && <ClientRanking />}
 
         <footer className="pt-8 pb-2 text-center">
           <p className="text-[10px] uppercase tracking-widest text-on-surface-variant/40 font-extrabold">

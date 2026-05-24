@@ -70,6 +70,7 @@ export function usePatrimonyEvolution(p: AnalyticsEvolutionParams) {
     queryKey: ['analytics', 'patrimony-evolution', p],
     queryFn: () => analyticsApi.getPatrimonyEvolution(p),
     staleTime: STALE,
+    enabled: p.mode === 'CONSOLIDATED' || !!p.walletId,
   });
 }
 
@@ -78,6 +79,7 @@ export function useBenchmark(p: AnalyticsEvolutionParams) {
     queryKey: ['analytics', 'benchmark', p],
     queryFn: () => analyticsApi.getBenchmark(p),
     staleTime: STALE,
+    enabled: p.mode === 'CONSOLIDATED' || !!p.walletId,
   });
 }
 

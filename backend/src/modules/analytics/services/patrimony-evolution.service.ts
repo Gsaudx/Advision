@@ -14,9 +14,9 @@ export class PatrimonyEvolutionService {
   ) {}
 
   // Consumido pelo BenchmarkService
-  async getSeries(advisorId: string, from: string, to: string): Promise<PatrimonyDataPoint[]> {
+  async getSeries(advisorId: string, from: string, to: string, walletId?: string): Promise<PatrimonyDataPoint[]> {
     const transactions = await this.prisma.transaction.findMany({
-      where: { wallet: { client: { advisorId } } },
+      where: { wallet: { ...(walletId ? { id: walletId } : {}), client: { advisorId } } },
       orderBy: { executedAt: 'asc' },
       include: { asset: { include: { optionDetail: true } } },
     });
@@ -96,13 +96,14 @@ export class PatrimonyEvolutionService {
     period: string,
     customFrom?: string,
     customTo?: string,
+    walletId?: string,
   ): Promise<PatrimonyEvolutionResponse> {
-    const key = this.cache.buildKey(advisorId, 'patrimony-evolution', { period, customFrom, customTo });
+    const key = this.cache.buildKey(advisorId, 'patrimony-evolution', { period, customFrom, customTo, walletId });
     const cached = this.cache.get<PatrimonyEvolutionResponse>(key);
     if (cached) return cached;
 
     const { from, to } = resolvePeriod(period, customFrom, customTo);
-    const series = await this.getSeries(advisorId, formatYYYYMMDD(from), formatYYYYMMDD(to));
+    const series = await this.getSeries(advisorId, formatYYYYMMDD(from), formatYYYYMMDD(to), walletId);
 
     const startValue = series[0]?.totalValue ?? 0;
     const endValue = series[series.length - 1]?.totalValue ?? 0;

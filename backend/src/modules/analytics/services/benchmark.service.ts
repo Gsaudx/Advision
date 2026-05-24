@@ -13,8 +13,8 @@ export class BenchmarkService {
     private readonly cache: AnalyticsCacheService,
   ) {}
 
-  async getBenchmark(advisorId: string, period: string, customFrom?: string, customTo?: string): Promise<BenchmarkResponse> {
-    const key = this.cache.buildKey(advisorId, 'benchmark', { period, customFrom, customTo });
+  async getBenchmark(advisorId: string, period: string, customFrom?: string, customTo?: string, walletId?: string): Promise<BenchmarkResponse> {
+    const key = this.cache.buildKey(advisorId, 'benchmark', { period, customFrom, customTo, walletId });
     const cached = this.cache.get<BenchmarkResponse>(key);
     if (cached) return cached;
 
@@ -23,7 +23,7 @@ export class BenchmarkService {
     const toStr = formatYYYYMMDD(to);
 
     const [portfolioSeries, ibovRaw] = await Promise.all([
-      this.patrimony.getSeries(advisorId, fromStr, toStr),
+      this.patrimony.getSeries(advisorId, fromStr, toStr, walletId),
       this.oplab.getHistoricalSeries('IBOV', fromStr, toStr),
     ]);
 

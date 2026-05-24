@@ -77,13 +77,13 @@ export class AnalyticsController {
   @Get('patrimony-evolution')
   @Roles('ADVISOR', 'ADMIN')
   async getPatrimonyEvolution(@Query() q: EvolutionQueryDto, @CurrentUser() user: CurrentUserData) {
-    return this.patrimonyEvolution.getResponse(user.id, q.period, q.from, q.to);
+    return this.patrimonyEvolution.getResponse(user.id, q.period, q.from, q.to, q.walletId);
   }
 
   @Get('benchmark')
   @Roles('ADVISOR', 'ADMIN')
   async getBenchmark(@Query() q: EvolutionQueryDto, @CurrentUser() user: CurrentUserData) {
-    return this.benchmark.getBenchmark(user.id, q.period, q.from, q.to);
+    return this.benchmark.getBenchmark(user.id, q.period, q.from, q.to, q.walletId);
   }
 
   @Delete('cache')

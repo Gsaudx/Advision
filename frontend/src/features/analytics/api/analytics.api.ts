@@ -18,6 +18,7 @@ function periodParams(p: AnalyticsPeriodParams) {
 }
 function evolutionParams(p: AnalyticsEvolutionParams) {
   return {
+    ...baseParams(p),
     period: p.period,
     ...(p.customFrom ? { from: p.customFrom } : {}),
     ...(p.customTo ? { to: p.customTo } : {}),

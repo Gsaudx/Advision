@@ -102,7 +102,7 @@ export interface AnalyticsPeriodParams extends AnalyticsBaseParams {
   customFrom?: string;
   customTo?: string;
 }
-export interface AnalyticsEvolutionParams {
+export interface AnalyticsEvolutionParams extends AnalyticsBaseParams {
   period: AnalyticsPeriod;
   customFrom?: string;
   customTo?: string;
