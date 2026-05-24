@@ -179,6 +179,7 @@ export function OptionTickerAutocomplete({
       return {
         ...option,
         optionType: parsed?.type,
+        underlyingTicker: selectedUnderlying ?? undefined,
       };
     });
   };

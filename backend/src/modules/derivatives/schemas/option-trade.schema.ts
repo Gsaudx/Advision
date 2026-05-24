@@ -107,6 +107,7 @@ export const OptionPositionResponseSchema = z.object({
   currentValue: z.number().optional(),
   profitLoss: z.number().optional(),
   profitLossPercent: z.number().optional(),
+  moneyness: z.enum(['ITM', 'ATM', 'OTM']).optional(),
   isShort: z.boolean(),
   optionDetail: OptionDetailResponseSchema,
 });

@@ -17,22 +17,6 @@ interface OptionPositionCardProps {
   currentTime: number;
 }
 
-function calcMoneyness(position: OptionPosition): Moneyness | null {
-  if (position.currentPrice === undefined) return null;
-  const diff = Math.abs(
-    position.currentPrice - position.optionDetail.strikePrice,
-  );
-  const threshold = position.optionDetail.strikePrice * 0.01;
-  if (diff <= threshold) return 'ATM';
-  if (position.optionDetail.optionType === 'CALL') {
-    return position.currentPrice > position.optionDetail.strikePrice
-      ? 'ITM'
-      : 'OTM';
-  }
-  return position.currentPrice < position.optionDetail.strikePrice
-    ? 'ITM'
-    : 'OTM';
-}
 
 const moneynessStyle: Record<Moneyness, string> = {
   ITM: 'bg-tertiary/[0.15] text-tertiary',
@@ -66,7 +50,7 @@ export function OptionPositionCard({
 }: OptionPositionCardProps) {
   const isCall = position.optionDetail.optionType === 'CALL';
   const isProfit = (position.profitLoss ?? 0) >= 0;
-  const moneyness = calcMoneyness(position);
+  const moneyness = (position.moneyness as Moneyness | undefined) ?? null;
 
   const daysUntilExpiry = Math.ceil(
     (new Date(position.optionDetail.expirationDate).getTime() - currentTime) /

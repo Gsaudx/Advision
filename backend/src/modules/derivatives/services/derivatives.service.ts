@@ -23,7 +23,7 @@ import {
   WalletAccessService,
 } from '@/modules/wallets/services';
 import { MarketDataProvider } from '@/modules/wallets/providers';
-import { CONTRACT_SIZE } from '../constants';
+import { CONTRACT_SIZE, MONEYNESS_ATM_THRESHOLD } from '../constants';
 import type {
   BuyOptionInput,
   SellOptionInput,
@@ -61,6 +61,7 @@ export class DerivativesService {
   private formatOptionPosition(
     position: PositionWithAssetAndOption,
     currentPrice?: number,
+    underlyingPrice?: number,
   ): OptionPositionResponse {
     const quantity = Number(position.quantity);
     const averagePrice = Number(position.averagePrice);
@@ -103,6 +104,19 @@ export class DerivativesService {
       result.currentValue = currentValue;
       result.profitLoss = profitLoss;
       result.profitLossPercent = profitLossPercent;
+    }
+
+    if (underlyingPrice !== undefined) {
+      const strikePrice = Number(position.asset.optionDetail!.strikePrice);
+      const priceDiff = Math.abs(underlyingPrice - strikePrice);
+      const threshold = strikePrice * MONEYNESS_ATM_THRESHOLD;
+      if (priceDiff <= threshold) {
+        result.moneyness = 'ATM';
+      } else if (position.asset.optionDetail!.optionType === 'CALL') {
+        result.moneyness = underlyingPrice > strikePrice ? 'ITM' : 'OTM';
+      } else {
+        result.moneyness = underlyingPrice < strikePrice ? 'ITM' : 'OTM';
+      }
     }
 
     return result;
@@ -609,13 +623,30 @@ export class DerivativesService {
     });
 
     const tickers = positions.map((p) => p.asset.ticker);
-    const prices =
-      tickers.length > 0 ? await this.marketData.getBatchPrices(tickers) : {};
+    const underlyingTickers = [
+      ...new Set(
+        positions
+          .map((p) => p.asset.optionDetail?.underlyingAsset.ticker)
+          .filter((t): t is string => t !== undefined),
+      ),
+    ];
+
+    const [prices, underlyingPrices] = await Promise.all([
+      tickers.length > 0
+        ? this.marketData.getBatchPrices(tickers)
+        : ({} as Record<string, number>),
+      underlyingTickers.length > 0
+        ? this.marketData.getBatchPrices(underlyingTickers)
+        : ({} as Record<string, number>),
+    ]);
 
     const formattedPositions = positions.map((p) =>
       this.formatOptionPosition(
         p as PositionWithAssetAndOption,
         prices[p.asset.ticker],
+        p.asset.optionDetail?.underlyingAsset.ticker
+          ? underlyingPrices[p.asset.optionDetail.underlyingAsset.ticker]
+          : undefined,
       ),
     );
 
