@@ -131,10 +131,11 @@ export const walletsApi = {
   getHistoricalPrice: async (
     ticker: string,
     date: string,
+    underlying?: string,
   ): Promise<HistoricalPriceResponse> => {
     const response = await api.get<ApiResponse<HistoricalPriceResponse>>(
       `/wallets/assets/${ticker}/historical-price`,
-      { params: { date } },
+      { params: { date, ...(underlying ? { underlying } : {}) } },
     );
     return response.data.data;
   },

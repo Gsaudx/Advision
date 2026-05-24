@@ -230,11 +230,16 @@ export function UnifiedTradeModal({
   // Historical price lookup (D.3/D.4 — retroactive date)
   const activeTicker =
     instrument === 'asset' ? assetFormData.ticker : optionFormData.ticker;
+  // Para opções, passa o underlying para que o backend use o caminho correto
+  // mesmo quando a opção ainda não existe no banco (primeira compra)
+  const underlyingForHistorical =
+    instrument === 'option' ? (selectedOption?.underlyingTicker ?? '') : '';
   const { data: historicalData, isFetching: isFetchingHistorical } =
     useHistoricalPrice(
       activeTicker,
       historicalDateStr,
       isRetroactiveDate && historicalDateStr.length > 0,
+      underlyingForHistorical || undefined,
     );
 
   // NEGÓCIO: Quando o assessor muda a data de compra para um dia no passado, o sistema busca automaticamente
