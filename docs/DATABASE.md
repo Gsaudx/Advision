@@ -150,7 +150,7 @@ model Position {
   createdAt    DateTime @default(now())
   updatedAt    DateTime @updatedAt
 
-  @@unique([walletId, assetId])  // One position per asset per wallet
+  @@index([walletId, assetId])  // Stocks: one position per asset. Options: one position per lot (each purchase is a separate record)
 }
 
 model Transaction {
@@ -212,7 +212,7 @@ model RebalanceLog {
 
 | Table           | Purpose                                                                                                                  |
 | --------------- | ------------------------------------------------------------------------------------------------------------------------ |
-| **Position**    | Current position of an asset in a wallet. Stores quantity and **acquisition average price**. Unique per `[walletId, assetId]` pair. |
+| **Position**    | Current position of an asset in a wallet. Stores quantity and **acquisition average price**. Stocks accumulate into one position per wallet; **options create one position per lot** (each purchase is a separate record). |
 | **Transaction** | Transaction history (append-only). Includes: buys, sells, dividends, splits, deposits and withdrawals.                   |
 
 > **Important: Average Price vs Market Price**

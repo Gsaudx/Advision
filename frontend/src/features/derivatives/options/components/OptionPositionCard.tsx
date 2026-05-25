@@ -17,23 +17,6 @@ interface OptionPositionCardProps {
   currentTime: number;
 }
 
-function calcMoneyness(position: OptionPosition): Moneyness | null {
-  if (position.currentPrice === undefined) return null;
-  const diff = Math.abs(
-    position.currentPrice - position.optionDetail.strikePrice,
-  );
-  const threshold = position.optionDetail.strikePrice * 0.01;
-  if (diff <= threshold) return 'ATM';
-  if (position.optionDetail.optionType === 'CALL') {
-    return position.currentPrice > position.optionDetail.strikePrice
-      ? 'ITM'
-      : 'OTM';
-  }
-  return position.currentPrice < position.optionDetail.strikePrice
-    ? 'ITM'
-    : 'OTM';
-}
-
 const moneynessStyle: Record<Moneyness, string> = {
   ITM: 'bg-tertiary/[0.15] text-tertiary',
   ATM: 'bg-outline-variant/30 text-on-surface-variant',
@@ -66,7 +49,30 @@ export function OptionPositionCard({
 }: OptionPositionCardProps) {
   const isCall = position.optionDetail.optionType === 'CALL';
   const isProfit = (position.profitLoss ?? 0) >= 0;
-  const moneyness = calcMoneyness(position);
+
+  // Backend populates moneyness only when market data is available; fall back to
+  // client-side calc using currentUnderlyingPrice (also absent from generated schema
+  // but present in the runtime payload from OptionPositionResponseSchema).
+  const pos = position as typeof position & {
+    moneyness?: 'ITM' | 'ATM' | 'OTM';
+    currentUnderlyingPrice?: number;
+  };
+  const moneyness: Moneyness | null =
+    pos.moneyness ??
+    (() => {
+      const underlying = pos.currentUnderlyingPrice;
+      if (!underlying || underlying <= 0) return null;
+      const strike = position.optionDetail.strikePrice;
+      const diff = Math.abs(underlying - strike);
+      if (diff <= strike * 0.01) return 'ATM';
+      return isCall
+        ? underlying > strike
+          ? 'ITM'
+          : 'OTM'
+        : underlying < strike
+          ? 'ITM'
+          : 'OTM';
+    })();
 
   const daysUntilExpiry = Math.ceil(
     (new Date(position.optionDetail.expirationDate).getTime() - currentTime) /

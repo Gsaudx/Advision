@@ -112,6 +112,7 @@ describe('StrategyExecutorService', () => {
         update: jest.fn(),
       },
       position: {
+        findFirst: jest.fn(),
         findUnique: jest.fn(),
         create: jest.fn(),
         update: jest.fn(),
@@ -208,7 +209,7 @@ describe('StrategyExecutorService', () => {
         asset: mockCallAsset,
       });
       prisma.transaction.create.mockResolvedValue({ id: 'tx-123' });
-      prisma.position.findUnique.mockResolvedValue(null);
+      prisma.position.findFirst.mockResolvedValue(null);
       prisma.position.create.mockResolvedValue({ id: 'pos-123' });
     });
 
@@ -323,7 +324,7 @@ describe('StrategyExecutorService', () => {
     });
 
     it('creates positions for new assets', async () => {
-      prisma.position.findUnique.mockResolvedValue(null);
+      prisma.position.findFirst.mockResolvedValue(null);
 
       await service.executeStrategy('wallet-123', basicInput, mockActor);
 
@@ -338,7 +339,7 @@ describe('StrategyExecutorService', () => {
         quantity: new Decimal(5),
         averagePrice: new Decimal(1.0),
       };
-      prisma.position.findUnique.mockResolvedValue(existingPosition);
+      prisma.position.findFirst.mockResolvedValue(existingPosition);
 
       await service.executeStrategy('wallet-123', basicInput, mockActor);
 
@@ -381,7 +382,7 @@ describe('StrategyExecutorService', () => {
         quantity: new Decimal(10),
         averagePrice: new Decimal(1.5),
       };
-      prisma.position.findUnique.mockResolvedValue(existingPosition);
+      prisma.position.findFirst.mockResolvedValue(existingPosition);
 
       await service.executeStrategy('wallet-123', sellInput, mockActor);
 

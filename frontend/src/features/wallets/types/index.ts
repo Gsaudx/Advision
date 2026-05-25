@@ -191,3 +191,10 @@ export const assetTypeLabels: Record<AssetType, string> = {
   STOCK: 'Ação',
   OPTION: 'Opção',
 };
+
+export interface HistoricalPriceResponse {
+  type: 'STOCK' | 'OPTION';
+  price: number | null;
+  strike?: number | null;
+  message?: string;
+}

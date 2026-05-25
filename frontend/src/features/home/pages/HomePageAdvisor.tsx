@@ -7,79 +7,13 @@ import { RecentActivity } from '../components/advisor/RecentActivity';
 import { ActivityHistoryModal } from '../components/advisor/ActivityHistoryModal';
 import { UpcomingDueDates } from '../components/advisor/UpcomingDueDates';
 import { AlertsPanel } from '../components/advisor/AlertsPanel';
-import type { AdvisorExpiration } from '../api';
 import {
   useAdvisorActivity,
   useAdvisorActivityHistory,
   useAdvisorExpirations,
   useAdvisorMetrics,
 } from '../api';
-
-// MOCKUP: remover quando useAdvisorExpirations retornar dados reais
-const MOCK_EXPIRATIONS: AdvisorExpiration[] = [
-  {
-    positionId: '1',
-    ticker: 'PETRH315',
-    optionType: 'CALL',
-    strikePrice: 31.5,
-    expirationDate: '2026-04-19',
-    daysUntilExpiry: 4,
-    quantity: 200,
-    isShort: false,
-    walletName: 'Carteira Arrojada',
-    clientName: 'Adriana Mendes',
-    status: 'Proximo',
-  },
-  {
-    positionId: '2',
-    ticker: 'VALEF280',
-    optionType: 'PUT',
-    strikePrice: 28.0,
-    expirationDate: '2026-04-19',
-    daysUntilExpiry: 4,
-    quantity: 100,
-    isShort: true,
-    walletName: 'Carteira Moderada',
-    clientName: 'Ricardo Silveira',
-    status: 'Proximo',
-  },
-  {
-    positionId: '3',
-    ticker: 'BBASH320',
-    optionType: 'CALL',
-    strikePrice: 32.0,
-    expirationDate: '2026-04-25',
-    daysUntilExpiry: 10,
-    quantity: 150,
-    isShort: false,
-    walletName: 'Carteira Global',
-    clientName: 'João Paulo Neto',
-    status: 'Em dia',
-  },
-  {
-    positionId: '4',
-    ticker: 'ITUBF245',
-    optionType: 'PUT',
-    strikePrice: 24.5,
-    expirationDate: '2026-04-17',
-    daysUntilExpiry: 2,
-    quantity: 300,
-    isShort: false,
-    walletName: 'Carteira Conserv.',
-    clientName: 'Beatriz Valença',
-    status: 'Vencido',
-  },
-];
-
-function formatCompactCurrency(value: number): string {
-  if (value >= 1_000_000) {
-    return `R$ ${(value / 1_000_000).toFixed(1).replace('.', ',')}M`;
-  }
-  if (value >= 1_000) {
-    return `R$ ${(value / 1_000).toFixed(1).replace('.', ',')}K`;
-  }
-  return `R$ ${value.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}`;
-}
+import { fmtBRLCompact } from '@/features/analytics/utils/formatters';
 
 export function HomePageAdvisor() {
   const { user } = useAuth();
@@ -127,7 +61,7 @@ export function HomePageAdvisor() {
                   Assets Under Management
                 </p>
                 <h3 className="text-5xl font-headline font-extrabold tracking-tighter text-on-surface">
-                  {formatCompactCurrency(totalWalletValue)}
+                  {fmtBRLCompact(totalWalletValue)}
                 </h3>
               </div>
               <div className="bg-tertiary/10 p-4 rounded-2xl ring-1 ring-tertiary/20 group-hover:ring-tertiary/40 transition-all">
@@ -135,17 +69,6 @@ export function HomePageAdvisor() {
               </div>
             </div>
             <div className="flex flex-wrap gap-6 items-end">
-              {/* MOCKUP: crescimento mensal — remover quando endpoint estiver disponível */}
-              <div>
-                <div className="flex items-center gap-1.5 mb-1">
-                  <div className="w-1.5 h-3.5 rounded-full bg-tertiary" />
-                  <p className="text-[10px] text-on-surface-variant uppercase font-bold tracking-wider">
-                    Crescimento Mensal
-                  </p>
-                </div>
-                <p className="text-tertiary font-bold text-lg pl-3">+4.2%</p>
-              </div>
-              <div className="h-10 w-px bg-outline-variant/40 hidden sm:block" />
               <div>
                 <div className="flex items-center gap-1.5 mb-1">
                   <div className="p-1 rounded-md bg-amber-500/15">
@@ -186,7 +109,7 @@ export function HomePageAdvisor() {
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ delay: 0.1 }}
-          className="md:col-span-4"
+          className="md:col-span-4 h-full"
         >
           <RecentActivity
             activities={activities}
@@ -201,13 +124,7 @@ export function HomePageAdvisor() {
       {/* Secondary Grid: Upcoming Due Dates + Alerts */}
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
         <div className="lg:col-span-2">
-          <UpcomingDueDates
-            expirations={
-              expirationsData?.expirations?.length
-                ? expirationsData.expirations
-                : MOCK_EXPIRATIONS
-            }
-          />
+          <UpcomingDueDates expirations={expirationsData?.expirations ?? []} />
         </div>
         <AlertsPanel />
       </div>

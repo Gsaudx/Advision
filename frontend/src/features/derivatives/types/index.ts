@@ -184,6 +184,7 @@ export interface OptionSearchResult extends AssetSearchResult {
   expirationDate?: string;
   optionType?: OptionType;
   lastPrice?: number;
+  underlyingTicker?: string;
 }
 
 // ============================================================================

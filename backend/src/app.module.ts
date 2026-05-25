@@ -9,6 +9,7 @@ import { DerivativesModule } from '@/modules/derivatives';
 import { ProventosModule } from '@/modules/proventos/proventos.module';
 import { SentinelModule } from '@/modules/sentinel/sentinel.module'; // [SENTINEL]
 import { NotificationsModule } from '@/modules/notifications/notifications.module'; // [NOTIF]
+import { AnalyticsModule } from '@/modules/analytics/analytics.module'; // [ANALYTICS]
 
 @Module({
   imports: [
@@ -22,6 +23,7 @@ import { NotificationsModule } from '@/modules/notifications/notifications.modul
     ProventosModule,
     SentinelModule,      // [SENTINEL]
     NotificationsModule, // [NOTIF]
+    AnalyticsModule,     // [ANALYTICS]
   ],
 })
 export class AppModule {}

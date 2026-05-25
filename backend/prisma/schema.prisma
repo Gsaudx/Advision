@@ -261,7 +261,7 @@ model Position {
   lifecycleEvents  OptionLifecycle[]
   dividendPayments WalletDividendPayment[]
 
-  @@unique([walletId, assetId])
+  @@index([walletId, assetId])
   @@index([walletId])
   @@index([assetId])
   @@map("positions")

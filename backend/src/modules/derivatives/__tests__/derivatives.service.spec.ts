@@ -178,17 +178,11 @@ describe('DerivativesService', () => {
       expect(result.status).toBe('EXECUTED');
     });
 
-    it('averages price when adding to existing long position', async () => {
+    it('creates a new position lot (no accumulation)', async () => {
       walletAccess.verifyWalletAccess.mockResolvedValue(mockWallet);
       prisma.transaction.findUnique.mockResolvedValue(null);
       assetResolver.ensureAssetExists.mockResolvedValue(mockOptionAsset);
       prisma.optionDetail.findUnique.mockResolvedValue(mockOptionDetail);
-
-      const existingPosition = {
-        id: 'pos-existing',
-        quantity: 5,
-        averagePrice: 1.0,
-      };
 
       const mockTx = {
         wallet: {
@@ -196,8 +190,7 @@ describe('DerivativesService', () => {
           updateMany: jest.fn().mockResolvedValue({ count: 1 }),
         },
         position: {
-          findUnique: jest.fn().mockResolvedValue(existingPosition),
-          update: jest.fn().mockResolvedValue({ id: 'pos-existing' }),
+          create: jest.fn().mockResolvedValue({ id: 'pos-new' }),
         },
         transaction: {
           create: jest.fn().mockResolvedValue({ id: 'tx-123' }),
@@ -208,27 +201,19 @@ describe('DerivativesService', () => {
 
       await service.buyOption('wallet-123', buyInput, advisorUser);
 
-      // New average: (5*1.0 + 10*1.5) / 15 = 20/15 = 1.333...
-      expect(mockTx.position.update).toHaveBeenCalledWith({
-        where: { id: 'pos-existing' },
-        data: {
-          quantity: 15,
-          averagePrice: expect.closeTo(1.333, 2),
-        },
+      expect(mockTx.position.create).toHaveBeenCalledWith({
+        data: expect.objectContaining({
+          quantity: 10,
+          averagePrice: 1.5,
+        }),
       });
     });
 
-    it('reduces short position when buying', async () => {
+    it('creates separate lot regardless of existing position', async () => {
       walletAccess.verifyWalletAccess.mockResolvedValue(mockWallet);
       prisma.transaction.findUnique.mockResolvedValue(null);
       assetResolver.ensureAssetExists.mockResolvedValue(mockOptionAsset);
       prisma.optionDetail.findUnique.mockResolvedValue(mockOptionDetail);
-
-      const existingShortPosition = {
-        id: 'pos-short',
-        quantity: -15,
-        averagePrice: 2.0,
-      };
 
       const mockTx = {
         wallet: {
@@ -236,8 +221,7 @@ describe('DerivativesService', () => {
           updateMany: jest.fn().mockResolvedValue({ count: 1 }),
         },
         position: {
-          findUnique: jest.fn().mockResolvedValue(existingShortPosition),
-          update: jest.fn().mockResolvedValue({ id: 'pos-short' }),
+          create: jest.fn().mockResolvedValue({ id: 'pos-new' }),
         },
         transaction: {
           create: jest.fn().mockResolvedValue({ id: 'tx-123' }),
@@ -248,10 +232,9 @@ describe('DerivativesService', () => {
 
       await service.buyOption('wallet-123', buyInput, advisorUser);
 
-      expect(mockTx.position.update).toHaveBeenCalledWith({
-        where: { id: 'pos-short' },
-        data: { quantity: -5 }, // -15 + 10 = -5
-      });
+      expect(mockTx.position.create).toHaveBeenCalledWith(
+        expect.objectContaining({ data: expect.objectContaining({ quantity: 10 }) }),
+      );
     });
 
     it('throws ForbiddenException when wallet not accessible', async () => {
@@ -306,7 +289,7 @@ describe('DerivativesService', () => {
           update: jest.fn().mockResolvedValue(mockWallet),
         },
         position: {
-          findUnique: jest.fn().mockResolvedValue(null),
+          findFirst: jest.fn().mockResolvedValue(null),
           create: jest.fn().mockResolvedValue({ id: 'pos-123' }),
         },
         transaction: {
@@ -349,7 +332,7 @@ describe('DerivativesService', () => {
           update: jest.fn().mockResolvedValue(mockWallet),
         },
         position: {
-          findUnique: jest
+          findFirst: jest
             .fn()
             .mockResolvedValueOnce({ quantity: 500 }) // Underlying position (need 1000)
             .mockResolvedValueOnce(null),

@@ -23,7 +23,7 @@ import {
   WalletAccessService,
 } from '@/modules/wallets/services';
 import { MarketDataProvider } from '@/modules/wallets/providers';
-import { CONTRACT_SIZE } from '../constants';
+import { CONTRACT_SIZE, MONEYNESS_ATM_THRESHOLD } from '../constants';
 import type {
   BuyOptionInput,
   SellOptionInput,
@@ -61,6 +61,7 @@ export class DerivativesService {
   private formatOptionPosition(
     position: PositionWithAssetAndOption,
     currentPrice?: number,
+    underlyingPrice?: number,
   ): OptionPositionResponse {
     const quantity = Number(position.quantity);
     const averagePrice = Number(position.averagePrice);
@@ -103,6 +104,20 @@ export class DerivativesService {
       result.currentValue = currentValue;
       result.profitLoss = profitLoss;
       result.profitLossPercent = profitLossPercent;
+    }
+
+    if (underlyingPrice !== undefined && underlyingPrice > 0) {
+      result.currentUnderlyingPrice = underlyingPrice;
+      const strikePrice = Number(position.asset.optionDetail!.strikePrice);
+      const priceDiff = Math.abs(underlyingPrice - strikePrice);
+      const threshold = strikePrice * MONEYNESS_ATM_THRESHOLD;
+      if (priceDiff <= threshold) {
+        result.moneyness = 'ATM';
+      } else if (position.asset.optionDetail!.optionType === 'CALL') {
+        result.moneyness = underlyingPrice > strikePrice ? 'ITM' : 'OTM';
+      } else {
+        result.moneyness = underlyingPrice < strikePrice ? 'ITM' : 'OTM';
+      }
     }
 
     return result;
@@ -156,50 +171,17 @@ export class DerivativesService {
 
     try {
       result = await this.prisma.$transaction(async (tx) => {
-        const existingPosition = await tx.position.findUnique({
-          where: { walletId_assetId: { walletId, assetId: asset.id } },
+        // Each option purchase is a separate lot — never accumulate into an existing position
+        const newPosition = await tx.position.create({
+          data: {
+            walletId,
+            assetId: asset.id,
+            quantity: data.quantity,
+            averagePrice: data.premium,
+          },
         });
-
-        let positionId: string;
-        let positionAction: 'CREATE' | 'UPDATE' = 'CREATE';
-
-        if (!existingPosition) {
-          const newPosition = await tx.position.create({
-            data: {
-              walletId,
-              assetId: asset.id,
-              quantity: data.quantity,
-              averagePrice: data.premium,
-            },
-          });
-          positionId = newPosition.id;
-        } else {
-          const existingQty = Number(existingPosition.quantity);
-          const existingAvg = Number(existingPosition.averagePrice);
-
-          if (existingQty < 0) {
-            const newQty = existingQty + data.quantity;
-            if (newQty === 0) {
-              await tx.position.delete({ where: { id: existingPosition.id } });
-            } else {
-              await tx.position.update({
-                where: { id: existingPosition.id },
-                data: { quantity: newQty },
-              });
-            }
-          } else {
-            const totalQty = existingQty + data.quantity;
-            const totalCostPrev = existingQty * existingAvg;
-            const newAvg =
-              (totalCostPrev + data.quantity * data.premium) / totalQty;
-            await tx.position.update({
-              where: { id: existingPosition.id },
-              data: { quantity: totalQty, averagePrice: newAvg },
-            });
-          }
-          positionId = existingPosition.id;
-          positionAction = 'UPDATE';
-        }
+        const positionId = newPosition.id;
+        const positionAction = 'CREATE' as const;
 
         const transaction = await tx.transaction.create({
           data: {
@@ -321,13 +303,8 @@ export class DerivativesService {
     try {
       result = await this.prisma.$transaction(async (tx) => {
         if (optionDetail.optionType === 'CALL' && data.covered) {
-          const underlyingPosition = await tx.position.findUnique({
-            where: {
-              walletId_assetId: {
-                walletId,
-                assetId: optionDetail.underlyingAssetId,
-              },
-            },
+          const underlyingPosition = await tx.position.findFirst({
+            where: { walletId, assetId: optionDetail.underlyingAssetId },
           });
 
           const requiredShares = data.quantity * CONTRACT_SIZE;
@@ -341,8 +318,8 @@ export class DerivativesService {
           }
         }
 
-        const existingPosition = await tx.position.findUnique({
-          where: { walletId_assetId: { walletId, assetId: asset.id } },
+        const existingPosition = await tx.position.findFirst({
+          where: { walletId, assetId: asset.id },
         });
 
         let positionId: string;
@@ -647,13 +624,30 @@ export class DerivativesService {
     });
 
     const tickers = positions.map((p) => p.asset.ticker);
-    const prices =
-      tickers.length > 0 ? await this.marketData.getBatchPrices(tickers) : {};
+    const underlyingTickers = [
+      ...new Set(
+        positions
+          .map((p) => p.asset.optionDetail?.underlyingAsset.ticker)
+          .filter((t): t is string => t !== undefined),
+      ),
+    ];
+
+    const [prices, underlyingPrices] = await Promise.all([
+      tickers.length > 0
+        ? this.marketData.getBatchPrices(tickers)
+        : ({} as Record<string, number>),
+      underlyingTickers.length > 0
+        ? this.marketData.getBatchPrices(underlyingTickers)
+        : ({} as Record<string, number>),
+    ]);
 
     const formattedPositions = positions.map((p) =>
       this.formatOptionPosition(
         p as PositionWithAssetAndOption,
         prices[p.asset.ticker],
+        p.asset.optionDetail?.underlyingAsset.ticker
+          ? underlyingPrices[p.asset.optionDetail.underlyingAsset.ticker]
+          : undefined,
       ),
     );
 

@@ -4,6 +4,7 @@ import {
   Users,
   Wallet,
   TrendingUp,
+  BarChart2,
   ChevronLeft,
   ChevronRight,
 } from 'lucide-react';
@@ -20,6 +21,7 @@ const advisorNavItems: NavItem[] = [
   { name: 'Clientes', href: '/clients', icon: Users },
   { name: 'Carteiras', href: '/wallets', icon: Wallet },
   { name: 'Proventos', href: '/proventos', icon: TrendingUp },
+  { name: 'Análises', href: '/analytics', icon: BarChart2 }, // [ANALYTICS]
 ];
 
 const clientNavItems: NavItem[] = [

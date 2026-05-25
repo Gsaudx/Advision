@@ -79,7 +79,7 @@ export class AssetResolverService {
         return asset;
       }
 
-      // Create stock
+      // Create stock — update sector if it was null on first creation
       const asset = await this.prisma.asset.upsert({
         where: { ticker },
         create: {
@@ -89,7 +89,7 @@ export class AssetResolverService {
           sector: metadata.sector,
           market: 'B3',
         },
-        update: {},
+        update: { sector: metadata.sector },
       });
 
       this.logger.log(`Created stock asset: ${ticker}`);
@@ -112,4 +112,5 @@ export class AssetResolverService {
       throw error;
     }
   }
+
 }

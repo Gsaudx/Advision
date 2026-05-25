@@ -387,9 +387,14 @@ async triggerRetroactiveScanIfNeeded(ticker, purchaseDate, walletId):
 
 **Endpoint:**
 ```
-GET /wallets/assets/:ticker/historical-price?date=YYYY-MM-DD
+GET /wallets/assets/:ticker/historical-price?date=YYYY-MM-DD[&underlying=TICKER]
 Roles: ADVISOR, ADMIN
 ```
+
+| Query param  | Obrigatório | Descrição |
+|---|---|---|
+| `date` | Sim | Data no formato `YYYY-MM-DD` |
+| `underlying` | Não (obrigatório para opções não cadastradas) | Ticker do ativo subjacente da opção (ex: `PETR4`) |
 
 **Resposta:**
 ```typescript
@@ -401,25 +406,31 @@ interface HistoricalPriceResponse {
 }
 ```
 
-**Lógica no backend:**
-- `STOCK`: chama `opLabService.getHistoricalClose(ticker, date)` (candles 1d)
-- `OPTION`: chama `sentinelService.fetchHistory(underlying, date, date, ticker)` e retorna `close` + `strike`
-- OpLab retorna vazio/inválido para opções vencidas → `try/catch` retorna `{ price: null, message: '...' }` em vez de 500
+**Lógica no backend (`wallets.service.ts`):**
+1. Se `underlying` foi informado → vai direto ao caminho de opção sem consultar o banco
+2. Se não → busca o asset no banco para determinar o tipo (`STOCK` ou `OPTION`)
+3. `STOCK`: chama `opLabService.getHistoricalClose(ticker, date)` com retry de 3 dias
+4. `OPTION`: chama `sentinelService.fetchHistory(underlying, date-5, date, ticker)`, ordena por data desc e retorna o pregão mais recente com prêmio > 0 (cobre fins de semana, feriados e opções com baixa liquidez)
+
+> **Por que `underlying` é necessário para opções novas:** o endpoint determina o caminho STOCK vs OPTION verificando se o asset existe no banco. Uma opção nunca comprada ainda não tem registro, então sem `underlying` o backend cairia erroneamente no caminho de ação.
+
+> **Por que buscar 5 dias atrás:** dados de opções na OpLab são esparsos — opções com baixa liquidez podem não ter candle em um dia específico mesmo sendo dia útil. O lookback de 5 dias garante que fins de semana, feriados e dias sem negociação sejam cobertos.
 
 **Frontend — `UnifiedTradeModal.tsx`:**
 Ao mudar a data de compra para um dia no passado, o modal:
 1. Detecta se a data é retroativa (`selected < today && ticker preenchido`)
-2. Ativa `useHistoricalPrice(ticker, date, enabled)` com `staleTime: Infinity` (dados históricos não mudam)
-3. Preenche automaticamente o campo `price` (ação) ou `premium` (opção) quando a resposta chegar
-4. Exibe spinner `isFetchingHistorical` abaixo do campo de data
+2. Ativa `useHistoricalPrice(ticker, date, enabled, underlying)` com `staleTime: Infinity`
+3. Para opções: extrai `underlying` de `selectedOption.underlyingTicker` e passa ao hook
+4. Preenche automaticamente o campo `price` (ação) ou `premium` (opção) quando a resposta chegar
+5. Exibe spinner `isFetchingHistorical` abaixo do campo de data
 
 **Hook `useHistoricalPrice`:**
 ```typescript
 // frontend/src/features/wallets/api/useHistoricalPrice.ts
-export function useHistoricalPrice(ticker, date, enabled) {
+export function useHistoricalPrice(ticker, date, enabled, underlying?) {
   return useQuery({
-    queryKey: ['historicalPrice', ticker, date],
-    queryFn: () => walletsApi.getHistoricalPrice(ticker, date),
+    queryKey: ['historicalPrice', ticker, date, underlying],
+    queryFn: () => walletsApi.getHistoricalPrice(ticker, date, underlying),
     enabled: enabled && ticker.length > 0 && date.length > 0,
     staleTime: Infinity,
   });
@@ -549,7 +560,7 @@ async propagateStrikeAdjustments(walletId, underlyingSymbol, dividendAmount): Pr
 
 | Método | Rota | Roles | Descrição |
 |---|---|---|---|
-| `GET` | `/wallets/assets/:ticker/historical-price?date=` | ADVISOR, ADMIN | Preço histórico do ativo na data |
+| `GET` | `/wallets/assets/:ticker/historical-price?date=&underlying=` | ADVISOR, ADMIN | Preço histórico do ativo na data. `underlying` opcional mas obrigatório para opções não cadastradas no banco |
 | `PUT` | `/wallets/:id/transactions/:txId` | ADVISOR, ADMIN | Edita data/preço/quantidade de transação |
 | `DELETE` | `/wallets/:id/transactions/:txId` | ADVISOR, ADMIN | Remove transação e desfaz efeito financeiro |
 | `POST` | `/wallets/:id/trade/expire` | ADVISOR, ADMIN | Registra opção como vencida (EXPIRED, price=0) |
@@ -580,7 +591,7 @@ const details =
 
 | Arquivo | Tipo | Descrição |
 |---|---|---|
-| `api/useHistoricalPrice.ts` | Hook | Busca preço histórico; `staleTime: Infinity` |
+| `api/useHistoricalPrice.ts` | Hook | Busca preço histórico; aceita `underlying` opcional para opções; `staleTime: Infinity` |
 | `api/useUpdateTransaction.ts` | Hook | `useUpdateTransaction` e `useDeleteTransaction` |
 | `api/useSentinelStatus.ts` | Hook | Busca status de monitoramento por ticker |
 | `api/useExpireOption.ts` | Hook | Registra opção como EXPIRED |

@@ -10,6 +10,7 @@ import type {
   AssetPriceResult,
   TransactionList,
   OptionDetailsResult,
+  HistoricalPriceResponse,
 } from '../types';
 
 export interface SentinelStatusItem {
@@ -131,10 +132,11 @@ export const walletsApi = {
   getHistoricalPrice: async (
     ticker: string,
     date: string,
+    underlying?: string,
   ): Promise<HistoricalPriceResponse> => {
     const response = await api.get<ApiResponse<HistoricalPriceResponse>>(
       `/wallets/assets/${ticker}/historical-price`,
-      { params: { date } },
+      { params: { date, ...(underlying ? { underlying } : {}) } },
     );
     return response.data.data;
   },
@@ -159,9 +161,4 @@ export const walletsApi = {
   },
 };
 
-export interface HistoricalPriceResponse {
-  type: 'STOCK' | 'OPTION';
-  price: number | null;
-  strike?: number | null;
-  message?: string;
-}
+export type { HistoricalPriceResponse } from '../types';

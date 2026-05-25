@@ -39,6 +39,7 @@ interface OpLabOptionSeries {
   days_to_maturity: number;
   category?: string;
   spot?: OpLabSpotInfo;
+  parent_symbol?: string;
   close?: number;
   bid?: number;
   ask?: number;
@@ -126,9 +127,8 @@ interface OpLabSeriesResponse {
   series: OpLabSeriesGroup[];
 }
 
-interface OpLabInstrumentResponse {
-  data: OpLabInstrument;
-}
+// OpLab returns the instrument directly (flat object), not wrapped in { data: ... }
+type OpLabInstrumentResponse = OpLabInstrument;
 
 const SERIES_CACHE_TTL_MS = 5 * 60 * 1000; // 5 minutes for option series
 const OPLAB_BASE_URL = 'https://api.oplab.com.br/v3';
@@ -284,11 +284,9 @@ export class OpLabMarketService extends MarketDataProvider {
 
     try {
       // First try to get as an instrument
-      const data = await this.makeRequest<OpLabInstrumentResponse>(
+      const instrument = await this.makeRequest<OpLabInstrumentResponse>(
         `/market/instruments/${upperTicker}`,
       );
-
-      const instrument = data.data;
 
       // Check if it's an option by type or by checking for option-specific fields
       if (
@@ -377,7 +375,7 @@ export class OpLabMarketService extends MarketDataProvider {
         ticker,
         type: 'OPTION',
         name: this.buildOptionName(option),
-        underlyingSymbol: option.spot?.symbol,
+        underlyingSymbol: option.spot?.symbol ?? option.parent_symbol,
         optionType: option.type,
         exerciseType: 'AMERICAN', // B3 options are typically American
         strikePrice: option.strike,
@@ -419,7 +417,7 @@ export class OpLabMarketService extends MarketDataProvider {
    * Build a human-readable option name
    */
   private buildOptionName(option: OpLabOptionSeries): string {
-    const underlying = option.spot?.name || option.spot?.symbol || 'Unknown';
+    const underlying = option.spot?.name || option.spot?.symbol || option.parent_symbol || 'Unknown';
     const type = option.type === 'CALL' ? 'CALL' : 'PUT';
     const strike = option.strike?.toFixed(2) ?? '?';
     const expiry = option.due_date
@@ -690,6 +688,25 @@ export class OpLabMarketService extends MarketDataProvider {
       );
       return [];
     }
+  }
+
+  // [ANALYTICS] série histórica diária por ticker — usado em PatrimonyEvolutionService e BenchmarkService
+  async getHistoricalSeries(
+    ticker: string,
+    from: string, // "YYYY-MM-DD"
+    to: string,   // "YYYY-MM-DD"
+  ): Promise<Array<{ date: string; close: number }>> {
+    if (!this.accessToken) return [];
+    const data = await this.makeRequest<{ data?: Array<{ time: number; close?: number }> }>(
+      `/market/historical/${ticker.toUpperCase()}/1d`,
+      { from, to },
+    );
+    return (data.data ?? [])
+      .filter((c) => c.close != null)
+      .map((c) => ({
+        date: new Date(c.time).toISOString().split('T')[0],
+        close: c.close!,
+      }));
   }
 
   /**

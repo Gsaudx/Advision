@@ -10,6 +10,7 @@ import ClientsPage from '@/features/clients-page/pages/ClientsPage';
 import { WalletsPage, WalletPage } from '@/features/wallets';
 import { ProventosPage } from '@/features/proventos';
 import { NotificationSettingsPage } from '@/features/notifications/pages/NotificationSettingsPage'; // [NOTIF]
+import { AnalyticsPage } from '@/features/analytics/pages/AnalyticsPage'; // [ANALYTICS]
 
 function RoleBasedRedirect() {
   const { user } = useAuth();
@@ -43,6 +44,8 @@ export function AppRoutes() {
             element={<NotificationSettingsPage />}
           />{' '}
           {/* [NOTIF] */}
+          <Route path="/analytics" element={<AnalyticsPage />} />{' '}
+          {/* [ANALYTICS] */}
         </Route>
 
         {/* Client layout */}

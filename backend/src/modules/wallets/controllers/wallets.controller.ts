@@ -318,6 +318,11 @@ export class WalletsController {
     required: true,
     description: 'Data no formato YYYY-MM-DD',
   })
+  @ApiQuery({
+    name: 'underlying',
+    required: false,
+    description: 'Ticker do ativo subjacente (obrigatório para opções ainda não cadastradas no banco)',
+  })
   @ApiResponse({
     status: 200,
     description: 'Preço histórico',
@@ -326,10 +331,12 @@ export class WalletsController {
   async getHistoricalPrice(
     @Param('ticker') ticker: string,
     @Query('date') date: string,
+    @Query('underlying') underlying?: string,
   ): Promise<ApiResponseType<HistoricalPriceResponse>> {
     const data = await this.walletsService.getHistoricalPrice(
       ticker.toUpperCase(),
       date,
+      underlying?.toUpperCase(),
     );
     return ApiResponseDto.success(data);
   }

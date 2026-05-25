@@ -567,7 +567,14 @@ export class WalletsService {
   async getHistoricalPrice(
     ticker: string,
     date: string,
+    underlying?: string,
   ): Promise<HistoricalPriceResponse> {
+    // Se o frontend informou o underlying, sabe-se que é uma opção — vai direto ao caminho de opção
+    // sem depender do banco (resolve o caso de opções ainda não cadastradas)
+    if (underlying) {
+      return this.fetchOptionHistoricalPrice(ticker, date, underlying);
+    }
+
     const asset = await this.prisma.asset.findUnique({ where: { ticker } });
 
     if (!asset || asset.type === 'STOCK') {
@@ -590,41 +597,52 @@ export class WalletsService {
         include: { underlyingAsset: true },
       });
       if (!optDetail) return { type: 'OPTION', price: null, strike: null };
-
-      let history: Awaited<
-        ReturnType<typeof this.sentinelService.fetchHistory>
-      > = [];
-      try {
-        history = await this.sentinelService.fetchHistory(
-          optDetail.underlyingAsset.ticker,
-          date,
-          date,
-          ticker,
-        );
-      } catch {
-        return {
-          type: 'OPTION',
-          price: null,
-          strike: null,
-          message: 'Sem dados para esta data',
-        };
-      }
-      if (!history.length) {
-        return {
-          type: 'OPTION',
-          price: null,
-          strike: null,
-          message: 'Sem dados para esta data',
-        };
-      }
-      return {
-        type: 'OPTION',
-        price: history[0].premium ?? null,
-        strike: history[0].strike,
-      };
+      return this.fetchOptionHistoricalPrice(ticker, date, optDetail.underlyingAsset.ticker);
     }
 
     return { type: 'STOCK', price: null };
+  }
+
+  private async fetchOptionHistoricalPrice(
+    ticker: string,
+    date: string,
+    underlyingTicker: string,
+  ): Promise<HistoricalPriceResponse> {
+    // Busca os últimos 5 dias para cobrir fins de semana, feriados e opções com baixa liquidez
+    const lookback = new Date(date);
+    lookback.setDate(lookback.getDate() - 5);
+    const fromDate = lookback.toISOString().split('T')[0];
+
+    let history: Awaited<ReturnType<typeof this.sentinelService.fetchHistory>> =
+      [];
+    try {
+      history = await this.sentinelService.fetchHistory(
+        underlyingTicker,
+        fromDate,
+        date,
+        ticker,
+      );
+    } catch {
+      return {
+        type: 'OPTION',
+        price: null,
+        strike: null,
+        message: 'Sem dados para esta data',
+      };
+    }
+
+    // Ordena decrescente e pega o pregão mais recente com prêmio real (> 0)
+    history.sort((a, b) => b.time.localeCompare(a.time));
+    const entry = history.find((e) => (e.premium ?? 0) > 0);
+    if (!entry) {
+      return {
+        type: 'OPTION',
+        price: null,
+        strike: null,
+        message: 'Sem dados para esta data',
+      };
+    }
+    return { type: 'OPTION', price: entry.premium!, strike: entry.strike };
   }
 
   async getOptionDetailsFromDb(ticker: string): Promise<{

@@ -201,6 +201,7 @@ export function UnifiedTradeModal({
   const {
     data: optionPriceData,
     isLoading: isOptionPriceLoading,
+    isError: isOptionPriceError,
     refetch: refetchOptionPrice,
   } = useAssetPrice(optionFormData.ticker, optionFormData.ticker.length > 0);
 
@@ -219,14 +220,26 @@ export function UnifiedTradeModal({
     }
   }, [optionPriceData, isPremiumManual]);
 
+  // Clear premium when price fetch fails (e.g. option with no quote)
+  useEffect(() => {
+    if (isOptionPriceError && !isPremiumManual) {
+      setOptionFormData((prev) => ({ ...prev, premium: '' }));
+    }
+  }, [isOptionPriceError, isPremiumManual]);
+
   // Historical price lookup (D.3/D.4 — retroactive date)
   const activeTicker =
     instrument === 'asset' ? assetFormData.ticker : optionFormData.ticker;
+  // Para opções, passa o underlying para que o backend use o caminho correto
+  // mesmo quando a opção ainda não existe no banco (primeira compra)
+  const underlyingForHistorical =
+    instrument === 'option' ? (selectedOption?.underlyingTicker ?? '') : '';
   const { data: historicalData, isFetching: isFetchingHistorical } =
     useHistoricalPrice(
       activeTicker,
       historicalDateStr,
       isRetroactiveDate && historicalDateStr.length > 0,
+      underlyingForHistorical || undefined,
     );
 
   // NEGÓCIO: Quando o assessor muda a data de compra para um dia no passado, o sistema busca automaticamente
@@ -964,6 +977,13 @@ export function UnifiedTradeModal({
                           {formatCurrency(optionPriceData.price, currency)}
                         </p>
                       )}
+                      {isOptionPriceError &&
+                        !isOptionPriceLoading &&
+                        optionFormData.ticker && (
+                          <p className="text-[10px] text-amber-400 mt-1">
+                            Prêmio não disponível — insira manualmente
+                          </p>
+                        )}
                       {isPremiumManual && optionFormData.premium && (
                         <p className="text-[10px] text-on-surface-variant mt-1">
                           Preço manual
