@@ -133,7 +133,7 @@ export class AnalyticsController {
   @Roles('ADVISOR', 'ADMIN')
   @ApiOperation({ summary: 'Invalida o cache de analytics do advisor autenticado' })
   @ApiResponse({ status: 200, type: ApiResponseDto })
-  async invalidateCache(@CurrentUser() user: CurrentUserData) {
+  invalidateCache(@CurrentUser() user: CurrentUserData) {
     this.cache.invalidateAdvisor(user.id);
     return ApiResponseDto.success(null);
   }

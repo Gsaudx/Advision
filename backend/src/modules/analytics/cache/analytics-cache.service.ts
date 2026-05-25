@@ -38,7 +38,7 @@ export class AnalyticsCacheService {
       this.evictExpired();
       if (this.cache.size >= this.MAX_ENTRIES) {
         // Remove oldest entry (first inserted) when still full after eviction
-        const firstKey = this.cache.keys().next().value;
+        const firstKey = this.cache.keys().next().value as string | undefined;
         if (firstKey) this.cache.delete(firstKey);
       }
     }
