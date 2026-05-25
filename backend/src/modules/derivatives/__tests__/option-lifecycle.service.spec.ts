@@ -253,10 +253,11 @@ describe('OptionLifecycleService', () => {
 
       it('updates existing underlying position when exercising CALL', async () => {
         walletAccess.verifyWalletAccess.mockResolvedValue(mockWallet);
-        prisma.position.findFirst.mockResolvedValue(mockLongCallPosition);
+        prisma.position.findFirst
+          .mockResolvedValueOnce(mockLongCallPosition)
+          .mockResolvedValueOnce(mockUnderlyingPosition);
         prisma.wallet.findUnique.mockResolvedValue(mockWallet);
         prisma.wallet.updateMany.mockResolvedValue({ count: 1 });
-        prisma.position.findUnique.mockResolvedValue(mockUnderlyingPosition);
         prisma.position.update.mockResolvedValue({});
         prisma.transaction.create.mockResolvedValue({ id: 'tx-123' });
         prisma.optionLifecycle.create.mockResolvedValue({
@@ -282,9 +283,10 @@ describe('OptionLifecycleService', () => {
     describe('PUT exercise', () => {
       it('exercises long PUT position and sells underlying shares', async () => {
         walletAccess.verifyWalletAccess.mockResolvedValue(mockWallet);
-        prisma.position.findFirst.mockResolvedValue(mockLongPutPosition);
+        prisma.position.findFirst
+          .mockResolvedValueOnce(mockLongPutPosition)
+          .mockResolvedValueOnce(mockUnderlyingPosition);
         prisma.wallet.findUnique.mockResolvedValue(mockWallet);
-        prisma.position.findUnique.mockResolvedValue(mockUnderlyingPosition);
         prisma.position.update.mockResolvedValue({});
         prisma.wallet.update.mockResolvedValue(mockWallet);
         prisma.transaction.create.mockResolvedValue({ id: 'tx-123' });
@@ -310,9 +312,10 @@ describe('OptionLifecycleService', () => {
           quantity: 1000,
         };
         walletAccess.verifyWalletAccess.mockResolvedValue(mockWallet);
-        prisma.position.findFirst.mockResolvedValue(mockLongPutPosition);
+        prisma.position.findFirst
+          .mockResolvedValueOnce(mockLongPutPosition)
+          .mockResolvedValueOnce(smallUnderlyingPosition);
         prisma.wallet.findUnique.mockResolvedValue(mockWallet);
-        prisma.position.findUnique.mockResolvedValue(smallUnderlyingPosition);
         prisma.position.delete.mockResolvedValue({});
         prisma.wallet.update.mockResolvedValue(mockWallet);
         prisma.transaction.create.mockResolvedValue({ id: 'tx-123' });
@@ -498,9 +501,10 @@ describe('OptionLifecycleService', () => {
     describe('CALL assignment', () => {
       it('handles short CALL assignment - delivers shares', async () => {
         walletAccess.verifyWalletAccess.mockResolvedValue(mockWallet);
-        prisma.position.findFirst.mockResolvedValue(mockShortCallPosition);
+        prisma.position.findFirst
+          .mockResolvedValueOnce(mockShortCallPosition)
+          .mockResolvedValueOnce(mockUnderlyingPosition);
         prisma.wallet.findUnique.mockResolvedValue(mockWallet);
-        prisma.position.findUnique.mockResolvedValue(mockUnderlyingPosition);
         prisma.position.update.mockResolvedValue({});
         prisma.wallet.update.mockResolvedValue(mockWallet);
         prisma.transaction.create.mockResolvedValue({ id: 'tx-123' });

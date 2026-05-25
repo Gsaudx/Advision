@@ -93,7 +93,7 @@ describe('AssetResolverService', () => {
           sector: 'Mining',
           market: 'B3',
         },
-        update: {},
+        update: { sector: 'Mining' },
       });
       expect(result.ticker).toBe('VALE3');
     });

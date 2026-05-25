@@ -94,12 +94,10 @@ describe('OpLabMarketService', () => {
         ok: true,
         json: () =>
           Promise.resolve({
-            data: {
-              symbol: 'PETR4',
-              name: 'Petrobras PN',
-              type: 'STOCK',
-              sector: 'Oil & Gas',
-            },
+            symbol: 'PETR4',
+            name: 'Petrobras PN',
+            type: 'STOCK',
+            sector: 'Oil & Gas',
           }),
       });
 
