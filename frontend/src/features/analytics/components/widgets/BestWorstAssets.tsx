@@ -1,10 +1,9 @@
-// [REDESIGN] Versão anterior preservada em BestWorstAssets.backup.tsx
 import { Sparkles } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { WidgetCard } from '../WidgetCard';
 import { WidgetEyebrow } from '../WidgetEyebrow';
 import { WidgetEmptyState } from '../WidgetEmptyState';
-import { useBestWorstAssets } from '../../api/hooks';
+import { useBestWorstAssets } from '../../api/useAnalytics';
 import { fmtBRLCompact, fmtPct } from '../../utils/formatters';
 import type { AnalyticsBaseParams, BestWorstAsset } from '../../types';
 
@@ -71,8 +70,8 @@ export function BestWorstAssets({ params }: Props) {
               <div className="space-y-0.5">
                 {data.topGains.length === 0
                   ? <p className="text-xs text-on-surface-variant">—</p>
-                  : data.topGains.map((a, i) => (
-                      <AssetRow key={i} a={a} positive consolidated={consolidated} />
+                  : data.topGains.map((a) => (
+                      <AssetRow key={a.ticker} a={a} positive consolidated={consolidated} />
                     ))
                 }
               </div>
@@ -85,8 +84,8 @@ export function BestWorstAssets({ params }: Props) {
               <div className="space-y-0.5">
                 {data.topLosses.length === 0
                   ? <p className="text-xs text-on-surface-variant">—</p>
-                  : data.topLosses.map((a, i) => (
-                      <AssetRow key={i} a={a} positive={false} consolidated={consolidated} />
+                  : data.topLosses.map((a) => (
+                      <AssetRow key={a.ticker} a={a} positive={false} consolidated={consolidated} />
                     ))
                 }
               </div>

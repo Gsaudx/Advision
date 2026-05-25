@@ -13,16 +13,7 @@ import {
   useAdvisorExpirations,
   useAdvisorMetrics,
 } from '../api';
-
-function formatCompactCurrency(value: number): string {
-  if (value >= 1_000_000) {
-    return `R$ ${(value / 1_000_000).toFixed(1).replace('.', ',')}M`;
-  }
-  if (value >= 1_000) {
-    return `R$ ${(value / 1_000).toFixed(1).replace('.', ',')}K`;
-  }
-  return `R$ ${value.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}`;
-}
+import { fmtBRLCompact } from '@/features/analytics/utils/formatters';
 
 export function HomePageAdvisor() {
   const { user } = useAuth();
@@ -70,7 +61,7 @@ export function HomePageAdvisor() {
                   Assets Under Management
                 </p>
                 <h3 className="text-5xl font-headline font-extrabold tracking-tighter text-on-surface">
-                  {formatCompactCurrency(totalWalletValue)}
+                  {fmtBRLCompact(totalWalletValue)}
                 </h3>
               </div>
               <div className="bg-tertiary/10 p-4 rounded-2xl ring-1 ring-tertiary/20 group-hover:ring-tertiary/40 transition-all">
@@ -78,17 +69,6 @@ export function HomePageAdvisor() {
               </div>
             </div>
             <div className="flex flex-wrap gap-6 items-end">
-              {/* MOCKUP: crescimento mensal — remover quando endpoint estiver disponível */}
-              <div>
-                <div className="flex items-center gap-1.5 mb-1">
-                  <div className="w-1.5 h-3.5 rounded-full bg-tertiary" />
-                  <p className="text-[10px] text-on-surface-variant uppercase font-bold tracking-wider">
-                    Crescimento Mensal
-                  </p>
-                </div>
-                <p className="text-tertiary font-bold text-lg pl-3">+4.2%</p>
-              </div>
-              <div className="h-10 w-px bg-outline-variant/40 hidden sm:block" />
               <div>
                 <div className="flex items-center gap-1.5 mb-1">
                   <div className="p-1 rounded-md bg-amber-500/15">

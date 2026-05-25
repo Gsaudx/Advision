@@ -14,7 +14,7 @@ import { BenchmarkService } from './services/benchmark.service';
 import { SectorsReseedService } from './services/sectors-reseed.service';
 
 @Module({
-  imports: [WalletsModule], // [ANALYTICS] acesso a PerformanceService, CompositeMarketService, OpLabMarketService
+  imports: [WalletsModule],
   controllers: [AnalyticsController],
   providers: [
     AnalyticsCacheService,

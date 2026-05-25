@@ -1,4 +1,3 @@
-// [REDESIGN] Versão anterior preservada em BenchmarkComparison.backup.tsx
 import { useMemo } from 'react';
 import {
   LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip,
@@ -9,7 +8,7 @@ import { cn } from '@/lib/utils';
 import { WidgetCard } from '../WidgetCard';
 import { WidgetEyebrow } from '../WidgetEyebrow';
 import { WidgetEmptyState } from '../WidgetEmptyState';
-import { useBenchmark } from '../../api/hooks';
+import { useBenchmark } from '../../api/useAnalytics';
 import { fmtPct, fmtDateShort } from '../../utils/formatters';
 import type { AnalyticsEvolutionParams } from '../../types';
 
@@ -58,36 +57,21 @@ export function BenchmarkComparison({ params, periodLabel }: Props) {
   const winning = delta >= 0;
 
   return (
-    <WidgetCard className="h-full">
+    <WidgetCard className="h-full" isLoading={isLoading} error={error}>
       <WidgetEyebrow
         icon={<TrendingUp size={12} className="text-tertiary" />}
         label="Rentabilidade vs IBOV"
         hint={periodLabel}
       />
 
-      {isLoading && (
-        <div className="space-y-3">
-          <div className="grid grid-cols-3 gap-3">
-            <div className="h-10 skel rounded-xl" />
-            <div className="h-10 skel rounded-xl" />
-            <div className="h-10 skel rounded-xl" />
-          </div>
-          <div className="h-48 skel rounded-2xl mt-4" />
-        </div>
-      )}
-
-      {!isLoading && error && (
-        <WidgetEmptyState icon={<span className="text-error text-lg">!</span>} title="Erro ao carregar" />
-      )}
-
-      {!isLoading && !error && data?.series.length === 0 && (
+      {data?.series.length === 0 && (
         <WidgetEmptyState
           icon={<TrendingUp size={20} className="text-on-surface-variant" />}
           title="Sem dados no período"
         />
       )}
 
-      {!isLoading && !error && !!data?.series.length && (
+      {!!data?.series.length && (
         <>
           <div className="grid grid-cols-3 gap-4 mb-5">
             <div>

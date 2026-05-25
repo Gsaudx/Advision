@@ -1,4 +1,3 @@
-// [REDESIGN] Barra de proporção horizontal — usada em tabelas e listas
 import { cn } from '@/lib/utils';
 
 interface Props {

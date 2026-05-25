@@ -1,4 +1,3 @@
-// [REDESIGN] Versão anterior preservada em WidgetCard.backup.tsx
 import { type ReactNode } from 'react';
 import { cn } from '@/lib/utils';
 

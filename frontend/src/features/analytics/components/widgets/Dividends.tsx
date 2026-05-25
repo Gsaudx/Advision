@@ -1,4 +1,3 @@
-// [REDESIGN] Versão anterior preservada em Dividends.backup.tsx
 import { useMemo } from 'react';
 import {
   BarChart, Bar, XAxis, Tooltip, ResponsiveContainer, Cell,
@@ -8,7 +7,7 @@ import { WidgetCard } from '../WidgetCard';
 import { WidgetEyebrow } from '../WidgetEyebrow';
 import { WidgetEmptyState } from '../WidgetEmptyState';
 import { ProportionBar } from '../ProportionBar';
-import { useDividends } from '../../api/hooks';
+import { useDividends } from '../../api/useAnalytics';
 import { fmtBRLCompact, fmtBRL, fmtDateMonth } from '../../utils/formatters';
 import type { AnalyticsPeriodParams } from '../../types';
 

@@ -3,7 +3,7 @@ import { Users, ChevronRight, PhoneCall } from 'lucide-react';
 import { WidgetCard } from '../WidgetCard';
 import { WidgetEyebrow } from '../WidgetEyebrow';
 import { WidgetEmptyState } from '../WidgetEmptyState';
-import { usePendingActions } from '../../api/hooks';
+import { usePendingActions } from '../../api/useAnalytics';
 import { fmtBRLCompact } from '../../utils/formatters';
 import type { PendingActionItem } from '../../types';
 

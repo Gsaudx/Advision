@@ -1,8 +1,9 @@
 import { Injectable, ForbiddenException } from '@nestjs/common';
-import { PrismaService } from '@/shared/prisma/prisma.service';
+import { PrismaService } from '@/shared/prisma';
 import { AnalyticsCacheService } from '../cache/analytics-cache.service';
 import { OptionsExpiryResponse, OptionsExpiryWindow } from '../schemas/analytics-response.schema';
 import { CompositeMarketService } from '@/modules/wallets/providers/composite-market.service';
+import { AssetType } from '@/generated/prisma/enums';
 
 const WINDOWS: Array<{ label: string; min: number; max: number }> = [
   { label: '≤ 7d',   min: 0,  max: 7  },
@@ -41,7 +42,7 @@ export class OptionsExpiryService {
       where: {
         walletId: { in: walletIds },
         quantity: { gt: 0 },
-        asset: { type: 'OPTION' },
+        asset: { type: AssetType.OPTION },
       },
       include: {
         asset: { include: { optionDetail: true } },

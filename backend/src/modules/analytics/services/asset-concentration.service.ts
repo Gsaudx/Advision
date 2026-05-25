@@ -1,8 +1,9 @@
 import { Injectable, ForbiddenException } from '@nestjs/common';
-import { PrismaService } from '@/shared/prisma/prisma.service';
+import { PrismaService } from '@/shared/prisma';
 import { AnalyticsCacheService } from '../cache/analytics-cache.service';
 import { AssetConcentrationResponse } from '../schemas/analytics-response.schema';
 import { CompositeMarketService } from '@/modules/wallets/providers/composite-market.service';
+import { AssetType } from '@/generated/prisma/enums';
 
 @Injectable()
 export class AssetConcentrationService {
@@ -35,7 +36,7 @@ export class AssetConcentrationService {
         wallet: { include: { client: { select: { id: true } } } },
       },
     });
-    const positions = allPositions.filter((p) => p.asset.type === 'STOCK');
+    const positions = allPositions.filter((p) => p.asset.type === AssetType.STOCK);
 
     const tickers = [...new Set(positions.map((p) => p.asset.ticker))];
     const prices = tickers.length ? await this.market.getBatchPrices(tickers) : {};

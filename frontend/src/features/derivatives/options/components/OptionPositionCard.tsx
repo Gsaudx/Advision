@@ -50,25 +50,24 @@ export function OptionPositionCard({
 }: OptionPositionCardProps) {
   const isCall = position.optionDetail.optionType === 'CALL';
   const isProfit = (position.profitLoss ?? 0) >= 0;
-  const backendMoneyness = position.moneyness as Moneyness | undefined;
-  const underlyingPrice = (position as { currentUnderlyingPrice?: number })
-    .currentUnderlyingPrice;
-  const moneyness: Moneyness | null = backendMoneyness
-    ? backendMoneyness
-    : underlyingPrice && underlyingPrice > 0
-      ? (() => {
-          const strike = position.optionDetail.strikePrice;
-          const diff = Math.abs(underlyingPrice - strike);
-          if (diff <= strike * 0.01) return 'ATM';
-          return position.optionDetail.optionType === 'CALL'
-            ? underlyingPrice > strike
-              ? 'ITM'
-              : 'OTM'
-            : underlyingPrice < strike
-              ? 'ITM'
-              : 'OTM';
-        })()
-      : null;
+
+  // Backend populates moneyness only when market data is available; fall back to
+  // client-side calc using currentUnderlyingPrice (also absent from generated schema
+  // but present in the runtime payload from OptionPositionResponseSchema).
+  const pos = position as typeof position & {
+    moneyness?: 'ITM' | 'ATM' | 'OTM';
+    currentUnderlyingPrice?: number;
+  };
+  const moneyness: Moneyness | null = pos.moneyness ?? (() => {
+    const underlying = pos.currentUnderlyingPrice;
+    if (!underlying || underlying <= 0) return null;
+    const strike = position.optionDetail.strikePrice;
+    const diff = Math.abs(underlying - strike);
+    if (diff <= strike * 0.01) return 'ATM';
+    return isCall
+      ? (underlying > strike ? 'ITM' : 'OTM')
+      : (underlying < strike ? 'ITM' : 'OTM');
+  })();
 
   const daysUntilExpiry = Math.ceil(
     (new Date(position.optionDetail.expirationDate).getTime() - currentTime) /

@@ -1,9 +1,8 @@
-// [REDESIGN] Versão anterior preservada em AnalyticsPage.backup.tsx
 import { useState } from 'react';
 import { RefreshCw } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import type { AnalyticsMode, AnalyticsPeriod, AnalyticsBaseParams, AnalyticsPeriodParams, AnalyticsEvolutionParams } from '../types';
-import { useInvalidateAnalyticsCache } from '../api/hooks';
+import { useInvalidateAnalyticsCache } from '../api/useAnalytics';
 import { PeriodSelector } from '../components/PeriodSelector';
 import { AnalyticsToggle } from '../components/AnalyticsToggle';
 import { PendingActions } from '../components/widgets/PendingActions';
@@ -35,9 +34,14 @@ export function AnalyticsPage() {
 
   const wallets = (walletsData ?? []).map((w) => ({ id: w.id, clientName: w.name }));
 
+  const customDateInvalid =
+    period === 'CUSTOM' && !!customFrom && !!customTo && customFrom > customTo;
+  const safeCustomFrom = customDateInvalid ? undefined : customFrom;
+  const safeCustomTo = customDateInvalid ? undefined : customTo;
+
   const baseParams: AnalyticsBaseParams = { mode, walletId: walletId ?? undefined };
-  const periodParams: AnalyticsPeriodParams = { ...baseParams, period, customFrom, customTo };
-  const evolutionParams: AnalyticsEvolutionParams = { mode, walletId: walletId ?? undefined, period, customFrom, customTo };
+  const periodParams: AnalyticsPeriodParams = { ...baseParams, period, customFrom: safeCustomFrom, customTo: safeCustomTo };
+  const evolutionParams: AnalyticsEvolutionParams = { mode, walletId: walletId ?? undefined, period, customFrom: safeCustomFrom, customTo: safeCustomTo };
 
   const handleRefresh = async () => {
     setRefreshing(true);
@@ -81,6 +85,7 @@ export function AnalyticsPage() {
               customTo={customTo}
               onCustomFromChange={setCustomFrom}
               onCustomToChange={setCustomTo}
+              dateError={customDateInvalid ? 'Data inicial deve ser anterior à data final' : undefined}
             />
             <button
               onClick={handleRefresh}

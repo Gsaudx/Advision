@@ -1,4 +1,3 @@
-// [REDESIGN] Versão anterior preservada em ClientRanking.backup.tsx
 import { useState } from 'react';
 import { Users, ChevronDown, ChevronUp, ChevronsUpDown, Clock, AlertCircle } from 'lucide-react';
 import { cn } from '@/lib/utils';
@@ -6,7 +5,7 @@ import { WidgetCard } from '../WidgetCard';
 import { WidgetEyebrow } from '../WidgetEyebrow';
 import { WidgetEmptyState } from '../WidgetEmptyState';
 import { ProportionBar } from '../ProportionBar';
-import { useClientRanking } from '../../api/hooks';
+import { useClientRanking } from '../../api/useAnalytics';
 import { fmtBRLCompact, fmtPct, fmtDaysAgo, daysAgoNum, colorForResult } from '../../utils/formatters';
 import type { ClientRankingItem } from '../../types';
 
@@ -120,7 +119,7 @@ export function ClientRanking() {
     : [];
 
   const maxPat = data?.clients.length
-    ? Math.max(...data.clients.map((c) => c.patrimonioR$))
+    ? data.clients.reduce((m, c) => Math.max(m, c.patrimonioR$), 0)
     : 1;
 
   function toggleSort(key: string) {

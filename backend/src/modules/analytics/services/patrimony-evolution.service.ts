@@ -1,5 +1,5 @@
 import { Injectable } from '@nestjs/common';
-import { PrismaService } from '@/shared/prisma/prisma.service';
+import { PrismaService } from '@/shared/prisma';
 import { OpLabMarketService } from '@/modules/wallets/providers/oplab-market.service';
 import { PatrimonyEvolutionResponse, PatrimonyDataPoint } from '../schemas/analytics-response.schema';
 import { resolvePeriod, formatYYYYMMDD } from '../utils/period.util';

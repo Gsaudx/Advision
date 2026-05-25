@@ -1,10 +1,9 @@
-// [REDESIGN] Versão anterior preservada em AssetConcentration.backup.tsx
 import { Layers, AlertTriangle } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { WidgetCard } from '../WidgetCard';
 import { WidgetEyebrow } from '../WidgetEyebrow';
 import { WidgetEmptyState } from '../WidgetEmptyState';
-import { useAssetConcentration } from '../../api/hooks';
+import { useAssetConcentration } from '../../api/useAnalytics';
 import { fmtBRLCompact, fmtPct, colorForResult } from '../../utils/formatters';
 import type { AnalyticsBaseParams, ConcentrationHolding } from '../../types';
 
@@ -91,7 +90,7 @@ function ConcentrationRow({ h, maxPct }: { h: ConcentrationHolding; maxPct: numb
 export function AssetConcentration({ params }: Props) {
   const { data, isLoading, error } = useAssetConcentration(params);
 
-  const maxPct = data?.holdings.length ? Math.max(...data.holdings.map((h) => h.percentBook)) : 1;
+  const maxPct = data?.holdings.length ? data.holdings.reduce((m, h) => Math.max(m, h.percentBook), 0) : 1;
   const overWeightCount = data?.holdings.filter((h) => h.flags.overWeight && !h.flags.overConcentrated).length ?? 0;
   const overConcCount = data?.holdings.filter((h) => h.flags.overConcentrated).length ?? 0;
   const flagCount = overWeightCount + overConcCount;

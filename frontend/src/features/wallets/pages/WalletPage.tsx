@@ -7,7 +7,10 @@ import {
   LineChart,
   LayoutGrid,
   Layers,
-  ShieldCheck,
+  Search,
+  X,
+  Pencil,
+  Trash2,
 } from 'lucide-react';
 import { motion } from 'motion/react';
 import { formatCurrency, formatDateTime } from '@/lib/formatters';
@@ -31,7 +34,6 @@ import { ConcentrationPanel } from '../components/ConcentrationPanel';
 import { ContentPanel } from '@/components/ui/ContentPanel';
 import { OptionFilter, FilterSelect } from '../components';
 import { useOptionFilters } from '../hooks/useOptionFilters';
-import { Search, X, Pencil, Trash2 } from 'lucide-react';
 import {
   useOptionPositions,
   OptionPositionCard,
@@ -712,30 +714,6 @@ export default function WalletPage() {
               totalPositionsValue={wallet.totalPositionsValue}
             />
 
-            {/*
-             * MOCKUP: Advisor Insight — texto fixo temporário.
-             * TODO: integrar com a API do Gemini para gerar análise inteligente
-             * com base nas posições e histórico real da carteira.
-             */}
-            <div className="bg-primary text-white p-8 rounded-[2.5rem] relative overflow-hidden shadow-xl">
-              <div className="relative z-10 space-y-6">
-                <div className="flex items-center gap-3 text-tertiary">
-                  <ShieldCheck size={24} />
-                  <h4 className="text-sm font-bold uppercase tracking-widest">
-                    Advisor Insight
-                  </h4>
-                </div>
-                <p className="text-lg font-medium leading-relaxed opacity-90">
-                  A alocação atual demonstra boa resiliência à volatilidade.
-                  Considere rebalancear 5% de Renda Fixa para Renda Variável no
-                  próximo trimestre.
-                </p>
-                <button className="w-full bg-tertiary text-white py-4 rounded-2xl font-bold text-sm uppercase tracking-widest hover:brightness-110 transition-all shadow-lg shadow-tertiary/20">
-                  Agendar Reunião
-                </button>
-              </div>
-              <div className="absolute -right-10 -bottom-10 w-48 h-48 bg-tertiary/10 rounded-full blur-3xl" />
-            </div>
           </motion.div>
 
           {/* ── Right Column ── */}

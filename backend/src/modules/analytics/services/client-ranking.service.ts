@@ -1,5 +1,5 @@
 import { Injectable } from '@nestjs/common';
-import { PrismaService } from '@/shared/prisma/prisma.service';
+import { PrismaService } from '@/shared/prisma';
 import { AnalyticsCacheService } from '../cache/analytics-cache.service';
 import { ClientRankingResponse } from '../schemas/analytics-response.schema';
 import { PerformanceService } from '@/modules/wallets/services/performance.service';

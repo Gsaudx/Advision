@@ -1,5 +1,5 @@
 import { Injectable, ForbiddenException } from '@nestjs/common';
-import { PrismaService } from '@/shared/prisma/prisma.service';
+import { PrismaService } from '@/shared/prisma';
 import { AnalyticsCacheService } from '../cache/analytics-cache.service';
 import { SectorExposureResponse } from '../schemas/analytics-response.schema';
 import { CompositeMarketService } from '@/modules/wallets/providers/composite-market.service';
@@ -35,7 +35,6 @@ export class SectorExposureService {
       include: {
         asset: {
           include: {
-            // [ANALYTICS] Options have no sector in OpLab — resolve via underlying asset
             optionDetail: { include: { underlyingAsset: true } },
           },
         },

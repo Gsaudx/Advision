@@ -1,4 +1,3 @@
-// [REDESIGN] Formatadores específicos para a página de Análises — Sovereign
 
 const MES_PT = ['jan', 'fev', 'mar', 'abr', 'mai', 'jun', 'jul', 'ago', 'set', 'out', 'nov', 'dez'];
 

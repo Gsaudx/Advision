@@ -1,4 +1,3 @@
-// [REDESIGN] Novo componente — cabeçalho padronizado de widget (Sovereign)
 import { type ReactNode } from 'react';
 
 interface Props {

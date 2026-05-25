@@ -1,9 +1,8 @@
-// [REDESIGN] Versão anterior preservada em SectorExposure.backup.tsx
 import { Building2 } from 'lucide-react';
 import { WidgetCard } from '../WidgetCard';
 import { WidgetEyebrow } from '../WidgetEyebrow';
 import { WidgetEmptyState } from '../WidgetEmptyState';
-import { useSectorExposure } from '../../api/hooks';
+import { useSectorExposure } from '../../api/useAnalytics';
 import { fmtBRLCompact } from '../../utils/formatters';
 import type { AnalyticsBaseParams } from '../../types';
 
@@ -24,7 +23,7 @@ const SECTOR_COLORS = [
 
 export function SectorExposure({ params }: Props) {
   const { data, isLoading, error } = useSectorExposure(params);
-  const max = data?.sectors.length ? Math.max(...data.sectors.map((s) => s.percent)) : 1;
+  const max = data?.sectors.length ? data.sectors.reduce((m, s) => Math.max(m, s.percent), 0) : 1;
 
   return (
     <WidgetCard isLoading={isLoading} error={error}>

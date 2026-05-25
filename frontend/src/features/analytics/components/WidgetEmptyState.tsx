@@ -1,4 +1,3 @@
-// [REDESIGN] Estado vazio padronizado Sovereign
 import { type ReactNode } from 'react';
 
 interface Props {

@@ -1,4 +1,3 @@
-// [REDESIGN] Versão anterior preservada em PatrimonyEvolution.backup.tsx
 import { useMemo } from 'react';
 import {
   AreaChart, Area, XAxis, YAxis, CartesianGrid, Tooltip,
@@ -9,7 +8,7 @@ import { cn } from '@/lib/utils';
 import { WidgetCard } from '../WidgetCard';
 import { WidgetEyebrow } from '../WidgetEyebrow';
 import { WidgetEmptyState } from '../WidgetEmptyState';
-import { usePatrimonyEvolution } from '../../api/hooks';
+import { usePatrimonyEvolution } from '../../api/useAnalytics';
 import { fmtBRL, fmtBRLCompact, fmtPct, fmtDateShort } from '../../utils/formatters';
 import type { AnalyticsEvolutionParams } from '../../types';
 

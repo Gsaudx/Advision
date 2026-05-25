@@ -9,6 +9,7 @@ interface CacheEntry {
 export class AnalyticsCacheService {
   private readonly cache = new Map<string, CacheEntry>();
   private readonly TTL_MS = 5 * 60 * 1000;
+  private readonly MAX_ENTRIES = 500;
 
   buildKey(
     advisorId: string,
@@ -33,6 +34,14 @@ export class AnalyticsCacheService {
   }
 
   set(key: string, data: unknown): void {
+    if (this.cache.size >= this.MAX_ENTRIES) {
+      this.evictExpired();
+      if (this.cache.size >= this.MAX_ENTRIES) {
+        // Remove oldest entry (first inserted) when still full after eviction
+        const firstKey = this.cache.keys().next().value;
+        if (firstKey) this.cache.delete(firstKey);
+      }
+    }
     this.cache.set(key, { data, expiresAt: Date.now() + this.TTL_MS });
   }
 
@@ -41,6 +50,13 @@ export class AnalyticsCacheService {
       if (key.startsWith(`${advisorId}:`)) {
         this.cache.delete(key);
       }
+    }
+  }
+
+  private evictExpired(): void {
+    const now = Date.now();
+    for (const [key, entry] of this.cache.entries()) {
+      if (now > entry.expiresAt) this.cache.delete(key);
     }
   }
 }

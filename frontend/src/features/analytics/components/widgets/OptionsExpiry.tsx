@@ -1,9 +1,8 @@
-// [REDESIGN] Versão anterior preservada em OptionsExpiry.backup.tsx
 import { Clock } from 'lucide-react';
 import { WidgetCard } from '../WidgetCard';
 import { WidgetEyebrow } from '../WidgetEyebrow';
 import { WidgetEmptyState } from '../WidgetEmptyState';
-import { useOptionsExpiry } from '../../api/hooks';
+import { useOptionsExpiry } from '../../api/useAnalytics';
 import { fmtBRLCompact } from '../../utils/formatters';
 import type { AnalyticsBaseParams, OptionsExpiryWindow } from '../../types';
 
@@ -47,7 +46,7 @@ function ExpiryRow({ w, max, index }: { w: OptionsExpiryWindow; max: number; ind
 export function OptionsExpiry({ params }: Props) {
   const { data, isLoading, error } = useOptionsExpiry(params);
 
-  const max = data?.windows.length ? Math.max(...data.windows.map((w) => w.totalValue)) : 1;
+  const max = data?.windows.length ? data.windows.reduce((m, w) => Math.max(m, w.totalValue), 0) : 1;
   const total = data?.windows.reduce((s, w) => s + w.totalValue, 0) ?? 0;
   const contracts = data?.windows.reduce((s, w) => s + w.count, 0) ?? 0;
   const criticalWindow = data?.windows[0];
@@ -80,7 +79,7 @@ export function OptionsExpiry({ params }: Props) {
 
           <div className="space-y-3">
             {data.windows.map((w, i) => (
-              <ExpiryRow key={i} w={w} max={max} index={i} />
+              <ExpiryRow key={w.label} w={w} max={max} index={i} />
             ))}
           </div>
 

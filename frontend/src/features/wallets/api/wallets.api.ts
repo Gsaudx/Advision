@@ -10,6 +10,7 @@ import type {
   AssetPriceResult,
   TransactionList,
   OptionDetailsResult,
+  HistoricalPriceResponse,
 } from '../types';
 
 export interface SentinelStatusItem {
@@ -160,9 +161,4 @@ export const walletsApi = {
   },
 };
 
-export interface HistoricalPriceResponse {
-  type: 'STOCK' | 'OPTION';
-  price: number | null;
-  strike?: number | null;
-  message?: string;
-}
+export type { HistoricalPriceResponse } from '../types';

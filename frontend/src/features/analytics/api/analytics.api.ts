@@ -1,4 +1,5 @@
 import { api } from '@/lib/axios';
+import type { ApiResponse } from '@/types/api-response';
 import type {
   BestWorstAssetsResponse, OptionsExpiryResponse, PendingActionsResponse,
   DividendsResponse, AssetConcentrationResponse, SectorExposureResponse,
@@ -11,7 +12,8 @@ function baseParams(p: AnalyticsBaseParams) {
 }
 function periodParams(p: AnalyticsPeriodParams) {
   return {
-    ...baseParams(p), period: p.period,
+    ...baseParams(p),
+    period: p.period,
     ...(p.customFrom ? { from: p.customFrom } : {}),
     ...(p.customTo ? { to: p.customTo } : {}),
   };
@@ -26,33 +28,52 @@ function evolutionParams(p: AnalyticsEvolutionParams) {
 }
 
 export const analyticsApi = {
-  getBestWorstAssets: (p: AnalyticsBaseParams) =>
-    api.get<BestWorstAssetsResponse>('/analytics/best-worst', { params: baseParams(p) }).then((r) => r.data),
+  getBestWorstAssets: async (p: AnalyticsBaseParams): Promise<BestWorstAssetsResponse> => {
+    const res = await api.get<ApiResponse<BestWorstAssetsResponse>>('/analytics/best-worst', { params: baseParams(p) });
+    return res.data.data;
+  },
 
-  getOptionsExpiry: (p: AnalyticsBaseParams) =>
-    api.get<OptionsExpiryResponse>('/analytics/options-expiry', { params: baseParams(p) }).then((r) => r.data),
+  getOptionsExpiry: async (p: AnalyticsBaseParams): Promise<OptionsExpiryResponse> => {
+    const res = await api.get<ApiResponse<OptionsExpiryResponse>>('/analytics/options-expiry', { params: baseParams(p) });
+    return res.data.data;
+  },
 
-  getPendingActions: () =>
-    api.get<PendingActionsResponse>('/analytics/pending-actions').then((r) => r.data),
+  getPendingActions: async (): Promise<PendingActionsResponse> => {
+    const res = await api.get<ApiResponse<PendingActionsResponse>>('/analytics/pending-actions');
+    return res.data.data;
+  },
 
-  getDividends: (p: AnalyticsPeriodParams) =>
-    api.get<DividendsResponse>('/analytics/dividends', { params: periodParams(p) }).then((r) => r.data),
+  getDividends: async (p: AnalyticsPeriodParams): Promise<DividendsResponse> => {
+    const res = await api.get<ApiResponse<DividendsResponse>>('/analytics/dividends', { params: periodParams(p) });
+    return res.data.data;
+  },
 
-  getConcentration: (p: AnalyticsBaseParams) =>
-    api.get<AssetConcentrationResponse>('/analytics/concentration', { params: baseParams(p) }).then((r) => r.data),
+  getConcentration: async (p: AnalyticsBaseParams): Promise<AssetConcentrationResponse> => {
+    const res = await api.get<ApiResponse<AssetConcentrationResponse>>('/analytics/concentration', { params: baseParams(p) });
+    return res.data.data;
+  },
 
-  getSectorExposure: (p: AnalyticsBaseParams) =>
-    api.get<SectorExposureResponse>('/analytics/sectors', { params: baseParams(p) }).then((r) => r.data),
+  getSectorExposure: async (p: AnalyticsBaseParams): Promise<SectorExposureResponse> => {
+    const res = await api.get<ApiResponse<SectorExposureResponse>>('/analytics/sectors', { params: baseParams(p) });
+    return res.data.data;
+  },
 
-  getClientRanking: () =>
-    api.get<ClientRankingResponse>('/analytics/client-ranking').then((r) => r.data),
+  getClientRanking: async (): Promise<ClientRankingResponse> => {
+    const res = await api.get<ApiResponse<ClientRankingResponse>>('/analytics/client-ranking');
+    return res.data.data;
+  },
 
-  getPatrimonyEvolution: (p: AnalyticsEvolutionParams) =>
-    api.get<PatrimonyEvolutionResponse>('/analytics/patrimony-evolution', { params: evolutionParams(p) }).then((r) => r.data),
+  getPatrimonyEvolution: async (p: AnalyticsEvolutionParams): Promise<PatrimonyEvolutionResponse> => {
+    const res = await api.get<ApiResponse<PatrimonyEvolutionResponse>>('/analytics/patrimony-evolution', { params: evolutionParams(p) });
+    return res.data.data;
+  },
 
-  getBenchmark: (p: AnalyticsEvolutionParams) =>
-    api.get<BenchmarkResponse>('/analytics/benchmark', { params: evolutionParams(p) }).then((r) => r.data),
+  getBenchmark: async (p: AnalyticsEvolutionParams): Promise<BenchmarkResponse> => {
+    const res = await api.get<ApiResponse<BenchmarkResponse>>('/analytics/benchmark', { params: evolutionParams(p) });
+    return res.data.data;
+  },
 
-  invalidateCache: () =>
-    api.delete('/analytics/cache').then((r) => r.data),
+  invalidateCache: async (): Promise<void> => {
+    await api.delete('/analytics/cache');
+  },
 };

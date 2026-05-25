@@ -1,5 +1,5 @@
 import { Injectable, ForbiddenException } from '@nestjs/common';
-import { PrismaService } from '@/shared/prisma/prisma.service';
+import { PrismaService } from '@/shared/prisma';
 import { AnalyticsCacheService } from '../cache/analytics-cache.service';
 import { DividendsResponse } from '../schemas/analytics-response.schema';
 import { resolvePeriod, formatYYYYMM, monthRange } from '../utils/period.util';

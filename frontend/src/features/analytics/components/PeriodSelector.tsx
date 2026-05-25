@@ -1,4 +1,3 @@
-// [REDESIGN] Versão anterior preservada em PeriodSelector.backup.tsx
 import { cn } from '@/lib/utils';
 import type { AnalyticsPeriod } from '../types';
 
@@ -18,9 +17,10 @@ interface Props {
   customTo?: string;
   onCustomFromChange?: (v: string) => void;
   onCustomToChange?: (v: string) => void;
+  dateError?: string;
 }
 
-export function PeriodSelector({ value, onChange, customFrom, customTo, onCustomFromChange, onCustomToChange }: Props) {
+export function PeriodSelector({ value, onChange, customFrom, customTo, onCustomFromChange, onCustomToChange, dateError }: Props) {
   return (
     <div className="flex items-center gap-2 flex-wrap">
       <div className="inline-flex items-center bg-surface-container-low rounded-full p-1 ring-1 ring-outline-variant/30">
@@ -44,20 +44,31 @@ export function PeriodSelector({ value, onChange, customFrom, customTo, onCustom
       </div>
 
       {value === 'CUSTOM' && (
-        <div className="flex items-center gap-2 ml-1">
-          <input
-            type="date"
-            value={customFrom ?? ''}
-            onChange={(e) => onCustomFromChange?.(e.target.value)}
-            className="bg-surface-container-low border border-outline-variant/30 rounded-full px-3 h-9 text-xs text-on-surface font-medium focus:outline-none focus:ring-2 focus:ring-tertiary/40"
-          />
-          <span className="text-on-surface-variant/60 text-sm">–</span>
-          <input
-            type="date"
-            value={customTo ?? ''}
-            onChange={(e) => onCustomToChange?.(e.target.value)}
-            className="bg-surface-container-low border border-outline-variant/30 rounded-full px-3 h-9 text-xs text-on-surface font-medium focus:outline-none focus:ring-2 focus:ring-tertiary/40"
-          />
+        <div className="flex flex-col gap-1 ml-1">
+          <div className="flex items-center gap-2">
+            <input
+              type="date"
+              value={customFrom ?? ''}
+              onChange={(e) => onCustomFromChange?.(e.target.value)}
+              className={cn(
+                'bg-surface-container-low border rounded-full px-3 h-9 text-xs text-on-surface font-medium focus:outline-none focus:ring-2 focus:ring-tertiary/40',
+                dateError ? 'border-error/60' : 'border-outline-variant/30'
+              )}
+            />
+            <span className="text-on-surface-variant/60 text-sm">–</span>
+            <input
+              type="date"
+              value={customTo ?? ''}
+              onChange={(e) => onCustomToChange?.(e.target.value)}
+              className={cn(
+                'bg-surface-container-low border rounded-full px-3 h-9 text-xs text-on-surface font-medium focus:outline-none focus:ring-2 focus:ring-tertiary/40',
+                dateError ? 'border-error/60' : 'border-outline-variant/30'
+              )}
+            />
+          </div>
+          {dateError && (
+            <p className="text-[11px] text-error font-medium pl-1">{dateError}</p>
+          )}
         </div>
       )}
     </div>

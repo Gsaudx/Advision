@@ -1,4 +1,3 @@
-// [ANALYTICS] converte enum de período em datas from/to
 export function resolvePeriod(
   period: string,
   customFrom?: string,
