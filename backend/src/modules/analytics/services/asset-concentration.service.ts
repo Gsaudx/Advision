@@ -44,7 +44,7 @@ export class AssetConcentrationService {
     // Agrupar por assetId
     const assetMap = new Map<string, {
       ticker: string; name: string;
-      totalValue: number; avgPrice: number; totalQty: number;
+      totalValue: number; totalCost: number; totalQty: number;
       clientIds: Set<string>; walletIds: Set<string>;
     }>();
 
@@ -52,20 +52,22 @@ export class AssetConcentrationService {
 
     for (const pos of positions) {
       const price = prices[pos.asset.ticker] ?? Number(pos.averagePrice);
-      const value = Number(pos.quantity) * price;
+      const qty = Number(pos.quantity);
+      const value = qty * price;
       totalBookValue += value;
 
       const entry = assetMap.get(pos.assetId) ?? {
         ticker: pos.asset.ticker,
         name: pos.asset.name,
         totalValue: 0,
-        avgPrice: Number(pos.averagePrice),
+        totalCost: 0,
         totalQty: 0,
         clientIds: new Set(),
         walletIds: new Set(),
       };
       entry.totalValue += value;
-      entry.totalQty += Number(pos.quantity);
+      entry.totalCost += qty * Number(pos.averagePrice);
+      entry.totalQty += qty;
       entry.clientIds.add(pos.wallet.client.id);
       entry.walletIds.add(pos.walletId);
       assetMap.set(pos.assetId, entry);
@@ -76,8 +78,9 @@ export class AssetConcentrationService {
       .slice(0, 10)
       .map((e) => {
         const percentBook = totalBookValue > 0 ? (e.totalValue / totalBookValue) * 100 : 0;
-        const currentPrice = prices[e.ticker] ?? e.avgPrice;
-        const gainPercent = e.avgPrice > 0 ? ((currentPrice - e.avgPrice) / e.avgPrice) * 100 : 0;
+        const avgPrice = e.totalQty > 0 ? e.totalCost / e.totalQty : 0;
+        const currentPrice = prices[e.ticker] ?? avgPrice;
+        const gainPercent = avgPrice > 0 ? ((currentPrice - avgPrice) / avgPrice) * 100 : 0;
         const nClients = mode === 'DRILLDOWN' ? 1 : e.clientIds.size;
         return {
           ticker: e.ticker,

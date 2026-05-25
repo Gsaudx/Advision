@@ -113,7 +113,7 @@ export function BestWorstAssets({ params }: Props) {
                   ) : (
                     data.topGains.map((a) => (
                       <AssetRow
-                        key={a.ticker}
+                        key={`${a.walletId}:${a.ticker}`}
                         a={a}
                         positive
                         consolidated={consolidated}
@@ -135,7 +135,7 @@ export function BestWorstAssets({ params }: Props) {
                   ) : (
                     data.topLosses.map((a) => (
                       <AssetRow
-                        key={a.ticker}
+                        key={`${a.walletId}:${a.ticker}`}
                         a={a}
                         positive={false}
                         consolidated={consolidated}

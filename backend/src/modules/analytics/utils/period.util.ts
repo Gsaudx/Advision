@@ -7,7 +7,10 @@ export function resolvePeriod(
   to.setHours(23, 59, 59, 999);
 
   if (period === 'CUSTOM' && customFrom && customTo) {
-    return { from: new Date(customFrom), to: new Date(customTo) };
+    return {
+      from: new Date(`${customFrom}T00:00:00.000Z`),
+      to: new Date(`${customTo}T23:59:59.999Z`),
+    };
   }
 
   const from = new Date();
@@ -16,9 +19,10 @@ export function resolvePeriod(
     case '3M':  from.setMonth(from.getMonth() - 3); break;
     case '6M':  from.setMonth(from.getMonth() - 6); break;
     case '1A':  from.setFullYear(from.getFullYear() - 1); break;
-    case 'YTD': from.setMonth(0, 1); from.setHours(0, 0, 0, 0); break;
+    case 'YTD': from.setMonth(0, 1); break;
     default:    from.setMonth(from.getMonth() - 1);
   }
+  from.setHours(0, 0, 0, 0);
 
   return { from, to };
 }

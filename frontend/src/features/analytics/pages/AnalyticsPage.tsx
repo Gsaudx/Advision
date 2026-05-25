@@ -72,8 +72,11 @@ export function AnalyticsPage() {
 
   const handleRefresh = async () => {
     setRefreshing(true);
-    await invalidate();
-    setRefreshing(false);
+    try {
+      await invalidate();
+    } finally {
+      setRefreshing(false);
+    }
   };
 
   const handleModeChange = (m: AnalyticsMode) => {

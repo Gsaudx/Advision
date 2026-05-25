@@ -61,7 +61,8 @@ export class CompositeMarketService extends MarketDataProvider {
 
   /**
    * Get metadata for an asset
-   * Routes to OpLab for options, Brapi for stocks
+   * Intentionally delegates to OpLab only — OpLab handles both stocks and options
+   * via /market/instruments, so no Brapi fallback is needed or wanted here.
    */
   async getMetadata(ticker: string): Promise<AssetMetadata> {
     const upperTicker = ticker.toUpperCase();
