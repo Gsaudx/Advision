@@ -124,9 +124,7 @@ export function HomePageAdvisor() {
       {/* Secondary Grid: Upcoming Due Dates + Alerts */}
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
         <div className="lg:col-span-2">
-          <UpcomingDueDates
-            expirations={expirationsData?.expirations ?? []}
-          />
+          <UpcomingDueDates expirations={expirationsData?.expirations ?? []} />
         </div>
         <AlertsPanel />
       </div>

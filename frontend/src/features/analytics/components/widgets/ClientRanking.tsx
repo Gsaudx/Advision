@@ -1,21 +1,53 @@
 import { useState } from 'react';
-import { Users, ChevronDown, ChevronUp, ChevronsUpDown, Clock, AlertCircle } from 'lucide-react';
+import {
+  Users,
+  ChevronDown,
+  ChevronUp,
+  ChevronsUpDown,
+  Clock,
+  AlertCircle,
+} from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { WidgetCard } from '../WidgetCard';
 import { WidgetEyebrow } from '../WidgetEyebrow';
 import { WidgetEmptyState } from '../WidgetEmptyState';
 import { ProportionBar } from '../ProportionBar';
 import { useClientRanking } from '../../api/useAnalytics';
-import { fmtBRLCompact, fmtPct, fmtDaysAgo, daysAgoNum, colorForResult } from '../../utils/formatters';
+import {
+  fmtBRLCompact,
+  fmtPct,
+  fmtDaysAgo,
+  daysAgoNum,
+  colorForResult,
+} from '../../utils/formatters';
 import type { ClientRankingItem } from '../../types';
 
-type SortKey = keyof Pick<ClientRankingItem, 'patrimonioR$' | 'rentabilidadePercent' | 'resultadoR$' | 'criticalNotifications'>;
+type SortKey = keyof Pick<
+  ClientRankingItem,
+  | 'patrimonioR$'
+  | 'rentabilidadePercent'
+  | 'resultadoR$'
+  | 'criticalNotifications'
+>;
 
 function SortHeader({
-  label, k, sortBy, dir, onClick, align = 'right', leftPad, rightPad,
+  label,
+  k,
+  sortBy,
+  dir,
+  onClick,
+  align = 'right',
+  leftPad,
+  rightPad,
 }: {
-  label: string; k: string; sortBy: string; dir: string;
-  onClick: (k: string) => void; align?: 'left' | 'right'; leftPad?: boolean; rightPad?: boolean;
+  label: string;
+  k: string;
+  sortBy: string;
+  dir: string;
+  onClick: (k: string) => void;
+  align?: 'left' | 'right';
+  leftPad?: boolean;
+  rightPad?: boolean;
 }) {
   const active = sortBy === k;
   return (
@@ -27,22 +59,41 @@ function SortHeader({
         leftPad && 'pl-6 md:pl-7',
         rightPad && 'pr-6 md:pr-7',
         !leftPad && !rightPad && 'px-4',
-        active ? 'text-tertiary' : 'text-on-surface-variant/80'
+        active ? 'text-tertiary' : 'text-on-surface-variant/80',
       )}
     >
-      <span className={cn('inline-flex items-center gap-1.5', align === 'right' && 'justify-end')}>
+      <span
+        className={cn(
+          'inline-flex items-center gap-1.5',
+          align === 'right' && 'justify-end',
+        )}
+      >
         {label}
         {active ? (
-          dir === 'desc' ? <ChevronDown size={12} /> : <ChevronUp size={12} />
+          dir === 'desc' ? (
+            <ChevronDown size={12} />
+          ) : (
+            <ChevronUp size={12} />
+          )
         ) : (
-          <span className="opacity-30"><ChevronsUpDown size={11} /></span>
+          <span className="opacity-30">
+            <ChevronsUpDown size={11} />
+          </span>
         )}
       </span>
     </th>
   );
 }
 
-function ClientRow({ c, rank, maxPat }: { c: ClientRankingItem; rank: number; maxPat: number }) {
+function ClientRow({
+  c,
+  rank,
+  maxPat,
+}: {
+  c: ClientRankingItem;
+  rank: number;
+  maxPat: number;
+}) {
   const days = daysAgoNum(c.lastOperationAt);
   const inactive = days > 90;
 
@@ -54,7 +105,9 @@ function ClientRow({ c, rank, maxPat }: { c: ClientRankingItem; rank: number; ma
             {String(rank).padStart(2, '0')}
           </span>
           <div className="min-w-0">
-            <p className="text-[13px] font-semibold text-on-surface truncate">{c.name}</p>
+            <p className="text-[13px] font-semibold text-on-surface truncate">
+              {c.name}
+            </p>
             <ProportionBar
               value={c.patrimonioR$}
               max={maxPat}
@@ -71,24 +124,42 @@ function ClientRow({ c, rank, maxPat }: { c: ClientRankingItem; rank: number; ma
         </p>
       </td>
       <td className="text-right px-4 py-3">
-        <span className={cn('inline-block font-mono font-semibold text-[13px] tabular-nums', colorForResult(c.rentabilidadePercent))}>
+        <span
+          className={cn(
+            'inline-block font-mono font-semibold text-[13px] tabular-nums',
+            colorForResult(c.rentabilidadePercent),
+          )}
+        >
           {fmtPct(c.rentabilidadePercent)}
         </span>
       </td>
       <td className="text-right px-4 py-3">
-        <span className={cn('font-mono font-semibold text-[13px] tabular-nums', colorForResult(c.resultadoR$))}>
+        <span
+          className={cn(
+            'font-mono font-semibold text-[13px] tabular-nums',
+            colorForResult(c.resultadoR$),
+          )}
+        >
           {c.resultadoR$ > 0 ? '+' : c.resultadoR$ < 0 ? '−' : ''}
           {fmtBRLCompact(Math.abs(c.resultadoR$))}
         </span>
       </td>
       <td className="text-right px-4 py-3">
-        <span className={cn(
-          'inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full font-mono text-[11px] font-semibold tabular-nums',
-          inactive ? 'bg-amber-500/15 text-amber-400' : 'text-on-surface-variant'
-        )}>
+        <span
+          className={cn(
+            'inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full font-mono text-[11px] font-semibold tabular-nums',
+            inactive
+              ? 'bg-amber-500/15 text-amber-400'
+              : 'text-on-surface-variant',
+          )}
+        >
           {inactive && <Clock size={11} />}
           {fmtDaysAgo(c.lastOperationAt)}
-          {inactive && <span className="text-[9px] uppercase tracking-wider font-bold">inativo</span>}
+          {inactive && (
+            <span className="text-[9px] uppercase tracking-wider font-bold">
+              inativo
+            </span>
+          )}
         </span>
       </td>
       <td className="text-right pr-6 md:pr-7 py-3">
@@ -125,7 +196,10 @@ export function ClientRanking() {
   function toggleSort(key: string) {
     const k = key as SortKey;
     if (sortBy === k) setDir(dir === 'asc' ? 'desc' : 'asc');
-    else { setSortBy(k); setDir('desc'); }
+    else {
+      setSortBy(k);
+      setDir('desc');
+    }
   }
 
   return (
@@ -138,7 +212,8 @@ export function ClientRanking() {
         />
         {!isLoading && !error && (
           <p className="text-[11px] text-on-surface-variant">
-            {data?.clients.length ?? 0} clientes · clique nos cabeçalhos para reordenar
+            {data?.clients.length ?? 0} clientes · clique nos cabeçalhos para
+            reordenar
           </p>
         )}
       </div>
@@ -158,19 +233,57 @@ export function ClientRanking() {
           <table className="w-full text-sm">
             <thead>
               <tr className="bg-surface-container-lowest border-y border-outline-variant/20">
-                <SortHeader label="Cliente" k="patrimonioR$" sortBy={sortBy} dir={dir} onClick={toggleSort} align="left" leftPad />
-                <SortHeader label="Patrimônio" k="patrimonioR$" sortBy={sortBy} dir={dir} onClick={toggleSort} />
-                <SortHeader label="Rentab." k="rentabilidadePercent" sortBy={sortBy} dir={dir} onClick={toggleSort} />
-                <SortHeader label="Resultado" k="resultadoR$" sortBy={sortBy} dir={dir} onClick={toggleSort} />
+                <SortHeader
+                  label="Cliente"
+                  k="patrimonioR$"
+                  sortBy={sortBy}
+                  dir={dir}
+                  onClick={toggleSort}
+                  align="left"
+                  leftPad
+                />
+                <SortHeader
+                  label="Patrimônio"
+                  k="patrimonioR$"
+                  sortBy={sortBy}
+                  dir={dir}
+                  onClick={toggleSort}
+                />
+                <SortHeader
+                  label="Rentab."
+                  k="rentabilidadePercent"
+                  sortBy={sortBy}
+                  dir={dir}
+                  onClick={toggleSort}
+                />
+                <SortHeader
+                  label="Resultado"
+                  k="resultadoR$"
+                  sortBy={sortBy}
+                  dir={dir}
+                  onClick={toggleSort}
+                />
                 <th className="text-right px-4 py-3 text-[10px] uppercase tracking-widest text-on-surface-variant/80 font-extrabold">
                   Última op.
                 </th>
-                <SortHeader label="Alertas" k="criticalNotifications" sortBy={sortBy} dir={dir} onClick={toggleSort} rightPad />
+                <SortHeader
+                  label="Alertas"
+                  k="criticalNotifications"
+                  sortBy={sortBy}
+                  dir={dir}
+                  onClick={toggleSort}
+                  rightPad
+                />
               </tr>
             </thead>
             <tbody>
               {sorted.map((c, i) => (
-                <ClientRow key={c.clientId} c={c} rank={i + 1} maxPat={maxPat} />
+                <ClientRow
+                  key={c.clientId}
+                  c={c}
+                  rank={i + 1}
+                  maxPat={maxPat}
+                />
               ))}
             </tbody>
           </table>

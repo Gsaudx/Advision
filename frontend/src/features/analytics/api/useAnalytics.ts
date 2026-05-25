@@ -1,6 +1,10 @@
 import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { analyticsApi } from './analytics.api';
-import type { AnalyticsBaseParams, AnalyticsPeriodParams, AnalyticsEvolutionParams } from '../types';
+import type {
+  AnalyticsBaseParams,
+  AnalyticsPeriodParams,
+  AnalyticsEvolutionParams,
+} from '../types';
 
 const STALE = 5 * 60 * 1000;
 

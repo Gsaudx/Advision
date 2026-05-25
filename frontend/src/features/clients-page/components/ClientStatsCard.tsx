@@ -7,8 +7,12 @@ interface ClientStatsCardProps {
 }
 
 export default function ClientStatsCard({ clients }: ClientStatsCardProps) {
-  const linkedClients = clients.filter((c) => c.inviteStatus === 'ACCEPTED').length;
-  const pendingClients = clients.filter((c) => c.inviteStatus === 'PENDING').length;
+  const linkedClients = clients.filter(
+    (c) => c.inviteStatus === 'ACCEPTED',
+  ).length;
+  const pendingClients = clients.filter(
+    (c) => c.inviteStatus === 'PENDING',
+  ).length;
 
   const stats = [
     {

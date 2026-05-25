@@ -6,7 +6,9 @@ import { useSectorExposure } from '../../api/useAnalytics';
 import { fmtBRLCompact } from '../../utils/formatters';
 import type { AnalyticsBaseParams } from '../../types';
 
-interface Props { params: AnalyticsBaseParams }
+interface Props {
+  params: AnalyticsBaseParams;
+}
 
 // Paleta categórica para setores (primeira cor = tertiary = máximo)
 const SECTOR_COLORS = [
@@ -23,7 +25,9 @@ const SECTOR_COLORS = [
 
 export function SectorExposure({ params }: Props) {
   const { data, isLoading, error } = useSectorExposure(params);
-  const max = data?.sectors.length ? data.sectors.reduce((m, s) => Math.max(m, s.percent), 0) : 1;
+  const max = data?.sectors.length
+    ? data.sectors.reduce((m, s) => Math.max(m, s.percent), 0)
+    : 1;
 
   return (
     <WidgetCard isLoading={isLoading} error={error}>
@@ -50,8 +54,13 @@ export function SectorExposure({ params }: Props) {
               <div key={s.sector} className="group">
                 <div className="flex items-center justify-between mb-1">
                   <div className="flex items-center gap-2 min-w-0">
-                    <span className="w-1.5 h-1.5 rounded-full shrink-0" style={{ background: color }} />
-                    <span className="text-[12px] font-semibold text-on-surface truncate">{s.sector}</span>
+                    <span
+                      className="w-1.5 h-1.5 rounded-full shrink-0"
+                      style={{ background: color }}
+                    />
+                    <span className="text-[12px] font-semibold text-on-surface truncate">
+                      {s.sector}
+                    </span>
                     <span className="text-[10px] text-on-surface-variant/60 font-mono shrink-0">
                       · {s.assetCount}
                     </span>

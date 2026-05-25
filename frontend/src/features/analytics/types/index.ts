@@ -53,8 +53,15 @@ export interface PendingActionsResponse {
   items: PendingActionItem[];
 }
 
-export interface DividendsMonthly { month: string; total: number; }
-export interface DividendsTopPayer { ticker: string; name: string; total: number; }
+export interface DividendsMonthly {
+  month: string;
+  total: number;
+}
+export interface DividendsTopPayer {
+  ticker: string;
+  name: string;
+  total: number;
+}
 export interface DividendsResponse {
   monthly: DividendsMonthly[];
   topPayers: DividendsTopPayer[];
@@ -62,8 +69,12 @@ export interface DividendsResponse {
 }
 
 export interface ConcentrationHolding {
-  ticker: string; name: string; valueR$: number; percentBook: number;
-  nClients: number; gainPercent: number;
+  ticker: string;
+  name: string;
+  valueR$: number;
+  percentBook: number;
+  nClients: number;
+  gainPercent: number;
   flags: { overWeight: boolean; overConcentrated: boolean };
 }
 export interface AssetConcentrationResponse {
@@ -71,26 +82,51 @@ export interface AssetConcentrationResponse {
   totalBookValue: number;
 }
 
-export interface SectorExposureItem { sector: string; valueR$: number; percent: number; assetCount: number; }
-export interface SectorExposureResponse { sectors: SectorExposureItem[]; totalValue: number; }
+export interface SectorExposureItem {
+  sector: string;
+  valueR$: number;
+  percent: number;
+  assetCount: number;
+}
+export interface SectorExposureResponse {
+  sectors: SectorExposureItem[];
+  totalValue: number;
+}
 
 export interface ClientRankingItem {
-  clientId: string; name: string; patrimonioR$: number;
-  rentabilidadePercent: number; resultadoR$: number;
-  lastOperationAt: string | null; criticalNotifications: number;
+  clientId: string;
+  name: string;
+  patrimonioR$: number;
+  rentabilidadePercent: number;
+  resultadoR$: number;
+  lastOperationAt: string | null;
+  criticalNotifications: number;
 }
-export interface ClientRankingResponse { clients: ClientRankingItem[]; }
+export interface ClientRankingResponse {
+  clients: ClientRankingItem[];
+}
 
-export interface PatrimonyDataPoint { date: string; totalValue: number; }
+export interface PatrimonyDataPoint {
+  date: string;
+  totalValue: number;
+}
 export interface PatrimonyEvolutionResponse {
-  series: PatrimonyDataPoint[]; startValue: number; endValue: number; changePercent: number;
+  series: PatrimonyDataPoint[];
+  startValue: number;
+  endValue: number;
+  changePercent: number;
 }
 
 export interface BenchmarkDataPoint {
-  date: string; portfolioValue: number; portfolioPercent: number; ibovPercent: number;
+  date: string;
+  portfolioValue: number;
+  portfolioPercent: number;
+  ibovPercent: number;
 }
 export interface BenchmarkResponse {
-  series: BenchmarkDataPoint[]; portfolioChangePercent: number; ibovChangePercent: number;
+  series: BenchmarkDataPoint[];
+  portfolioChangePercent: number;
+  ibovChangePercent: number;
 }
 
 export interface AnalyticsBaseParams {

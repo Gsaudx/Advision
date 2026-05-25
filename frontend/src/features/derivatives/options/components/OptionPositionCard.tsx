@@ -17,7 +17,6 @@ interface OptionPositionCardProps {
   currentTime: number;
 }
 
-
 const moneynessStyle: Record<Moneyness, string> = {
   ITM: 'bg-tertiary/[0.15] text-tertiary',
   ATM: 'bg-outline-variant/30 text-on-surface-variant',
@@ -58,16 +57,22 @@ export function OptionPositionCard({
     moneyness?: 'ITM' | 'ATM' | 'OTM';
     currentUnderlyingPrice?: number;
   };
-  const moneyness: Moneyness | null = pos.moneyness ?? (() => {
-    const underlying = pos.currentUnderlyingPrice;
-    if (!underlying || underlying <= 0) return null;
-    const strike = position.optionDetail.strikePrice;
-    const diff = Math.abs(underlying - strike);
-    if (diff <= strike * 0.01) return 'ATM';
-    return isCall
-      ? (underlying > strike ? 'ITM' : 'OTM')
-      : (underlying < strike ? 'ITM' : 'OTM');
-  })();
+  const moneyness: Moneyness | null =
+    pos.moneyness ??
+    (() => {
+      const underlying = pos.currentUnderlyingPrice;
+      if (!underlying || underlying <= 0) return null;
+      const strike = position.optionDetail.strikePrice;
+      const diff = Math.abs(underlying - strike);
+      if (diff <= strike * 0.01) return 'ATM';
+      return isCall
+        ? underlying > strike
+          ? 'ITM'
+          : 'OTM'
+        : underlying < strike
+          ? 'ITM'
+          : 'OTM';
+    })();
 
   const daysUntilExpiry = Math.ceil(
     (new Date(position.optionDetail.expirationDate).getTime() - currentTime) /

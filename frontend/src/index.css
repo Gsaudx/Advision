@@ -103,6 +103,10 @@ input[type='number'] {
   animation: skel-shimmer 1.6s linear infinite;
 }
 @keyframes skel-shimmer {
-  0%   { background-position: 200% 0; }
-  100% { background-position: -200% 0; }
+  0% {
+    background-position: 200% 0;
+  }
+  100% {
+    background-position: -200% 0;
+  }
 }

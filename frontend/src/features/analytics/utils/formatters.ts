@@ -1,25 +1,48 @@
-
-const MES_PT = ['jan', 'fev', 'mar', 'abr', 'mai', 'jun', 'jul', 'ago', 'set', 'out', 'nov', 'dez'];
+const MES_PT = [
+  'jan',
+  'fev',
+  'mar',
+  'abr',
+  'mai',
+  'jun',
+  'jul',
+  'ago',
+  'set',
+  'out',
+  'nov',
+  'dez',
+];
 
 export function fmtBRL(value: number | null | undefined): string {
   if (value == null || Number.isNaN(value)) return '—';
-  return value.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL', minimumFractionDigits: 2 });
+  return value.toLocaleString('pt-BR', {
+    style: 'currency',
+    currency: 'BRL',
+    minimumFractionDigits: 2,
+  });
 }
 
 export function fmtBRLCompact(value: number | null | undefined): string {
   if (value == null || Number.isNaN(value)) return '—';
   const abs = Math.abs(value);
   const sign = value < 0 ? '−' : '';
-  if (abs >= 1_000_000_000) return `${sign}R$ ${(abs / 1e9).toFixed(2).replace('.', ',')}B`;
-  if (abs >= 1_000_000) return `${sign}R$ ${(abs / 1e6).toFixed(2).replace('.', ',')}M`;
-  if (abs >= 1_000) return `${sign}R$ ${(abs / 1e3).toFixed(1).replace('.', ',')}k`;
+  if (abs >= 1_000_000_000)
+    return `${sign}R$ ${(abs / 1e9).toFixed(2).replace('.', ',')}B`;
+  if (abs >= 1_000_000)
+    return `${sign}R$ ${(abs / 1e6).toFixed(2).replace('.', ',')}M`;
+  if (abs >= 1_000)
+    return `${sign}R$ ${(abs / 1e3).toFixed(1).replace('.', ',')}k`;
   return `${sign}R$ ${abs.toLocaleString('pt-BR', { maximumFractionDigits: 0 })}`;
 }
 
-export function fmtPct(value: number | null | undefined, opts: { signed?: boolean; decimals?: number } = {}): string {
+export function fmtPct(
+  value: number | null | undefined,
+  opts: { signed?: boolean; decimals?: number } = {},
+): string {
   if (value == null || Number.isNaN(value)) return '—';
   const decimals = opts.decimals ?? 2;
-  const signed = opts.signed === false ? '' : value > 0 ? '+' : value < 0 ? '−' : '';
+  const signed =
+    opts.signed === false ? '' : value > 0 ? '+' : value < 0 ? '−' : '';
   const abs = Math.abs(value);
   return `${signed}${abs.toLocaleString('pt-BR', { minimumFractionDigits: decimals, maximumFractionDigits: decimals })}%`;
 }

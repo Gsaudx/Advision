@@ -2,7 +2,10 @@ import { ChevronDown } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import type { AnalyticsMode } from '../types';
 
-interface Wallet { id: string; clientName: string }
+interface Wallet {
+  id: string;
+  clientName: string;
+}
 
 interface Props {
   mode: AnalyticsMode;
@@ -12,7 +15,13 @@ interface Props {
   onWalletChange: (id: string) => void;
 }
 
-export function AnalyticsToggle({ mode, onModeChange, wallets, selectedWalletId, onWalletChange }: Props) {
+export function AnalyticsToggle({
+  mode,
+  onModeChange,
+  wallets,
+  selectedWalletId,
+  onWalletChange,
+}: Props) {
   return (
     <div className="inline-flex items-center bg-surface-container-low rounded-full p-1 ring-1 ring-outline-variant/30">
       <button
@@ -21,7 +30,7 @@ export function AnalyticsToggle({ mode, onModeChange, wallets, selectedWalletId,
           'px-4 h-8 text-xs font-bold rounded-full transition-colors',
           mode === 'CONSOLIDATED'
             ? 'bg-tertiary text-surface'
-            : 'text-on-surface-variant hover:text-on-surface'
+            : 'text-on-surface-variant hover:text-on-surface',
         )}
       >
         Consolidado
@@ -32,7 +41,7 @@ export function AnalyticsToggle({ mode, onModeChange, wallets, selectedWalletId,
           'px-4 h-8 text-xs font-bold rounded-full transition-colors',
           mode === 'DRILLDOWN'
             ? 'bg-tertiary text-surface'
-            : 'text-on-surface-variant hover:text-on-surface'
+            : 'text-on-surface-variant hover:text-on-surface',
         )}
       >
         Carteira
@@ -45,9 +54,13 @@ export function AnalyticsToggle({ mode, onModeChange, wallets, selectedWalletId,
             onChange={(e) => onWalletChange(e.target.value)}
             className="appearance-none bg-surface-container-high text-on-surface text-xs font-semibold pl-3 pr-8 h-8 rounded-full border-0 focus:ring-2 focus:ring-tertiary/40 cursor-pointer"
           >
-            <option value="" disabled>Selecione…</option>
+            <option value="" disabled>
+              Selecione…
+            </option>
             {wallets.map((w) => (
-              <option key={w.id} value={w.id}>{w.clientName}</option>
+              <option key={w.id} value={w.id}>
+                {w.clientName}
+              </option>
             ))}
           </select>
           <ChevronDown

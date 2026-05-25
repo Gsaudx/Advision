@@ -88,7 +88,10 @@ export function UpcomingDueDates({ expirations }: UpcomingDueDatesProps) {
           <tbody className="text-sm">
             {expirations.length === 0 && (
               <tr>
-                <td colSpan={7} className="py-10 text-center text-on-surface-variant text-sm">
+                <td
+                  colSpan={7}
+                  className="py-10 text-center text-on-surface-variant text-sm"
+                >
                   Sem próximos vencimentos
                 </td>
               </tr>

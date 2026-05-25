@@ -1,6 +1,11 @@
 import { useMemo } from 'react';
 import {
-  BarChart, Bar, XAxis, Tooltip, ResponsiveContainer, Cell,
+  BarChart,
+  Bar,
+  XAxis,
+  Tooltip,
+  ResponsiveContainer,
+  Cell,
 } from 'recharts';
 import { Coins } from 'lucide-react';
 import { WidgetCard } from '../WidgetCard';
@@ -11,14 +16,28 @@ import { useDividends } from '../../api/useAnalytics';
 import { fmtBRLCompact, fmtBRL, fmtDateMonth } from '../../utils/formatters';
 import type { AnalyticsPeriodParams } from '../../types';
 
-interface Props { params: AnalyticsPeriodParams }
+interface Props {
+  params: AnalyticsPeriodParams;
+}
 
-function CustomTooltip({ active, payload, label }: { active?: boolean; payload?: { value?: number }[]; label?: string }) {
+function CustomTooltip({
+  active,
+  payload,
+  label,
+}: {
+  active?: boolean;
+  payload?: { value?: number }[];
+  label?: string;
+}) {
   if (!active || !payload?.length) return null;
   return (
     <div className="px-3 py-2 rounded-xl bg-surface-container-high border border-outline-variant/50 text-xs shadow-xl whitespace-nowrap">
-      <p className="text-on-surface-variant text-[10px] uppercase tracking-widest font-bold mb-1">{label}</p>
-      <span className="text-on-surface font-mono font-semibold">{fmtBRL(payload[0].value ?? 0)}</span>
+      <p className="text-on-surface-variant text-[10px] uppercase tracking-widest font-bold mb-1">
+        {label}
+      </p>
+      <span className="text-on-surface font-mono font-semibold">
+        {fmtBRL(payload[0].value ?? 0)}
+      </span>
     </div>
   );
 }
@@ -26,12 +45,13 @@ function CustomTooltip({ active, payload, label }: { active?: boolean; payload?:
 export function Dividends({ params }: Props) {
   const { data, isLoading, error } = useDividends(params);
 
-  const chartData = useMemo(() =>
-    (data?.monthly ?? []).map((m) => ({
-      label: fmtDateMonth(m.month),
-      total: m.total,
-    })),
-    [data]
+  const chartData = useMemo(
+    () =>
+      (data?.monthly ?? []).map((m) => ({
+        label: fmtDateMonth(m.month),
+        total: m.total,
+      })),
+    [data],
   );
 
   const avgMonthly = data?.monthly.length
@@ -78,17 +98,31 @@ export function Dividends({ params }: Props) {
                 Por mês
               </p>
               <ResponsiveContainer width="100%" height={80}>
-                <BarChart data={chartData} margin={{ top: 0, right: 0, left: 0, bottom: 0 }} barCategoryGap="25%">
+                <BarChart
+                  data={chartData}
+                  margin={{ top: 0, right: 0, left: 0, bottom: 0 }}
+                  barCategoryGap="25%"
+                >
                   <XAxis
                     dataKey="label"
-                    tick={{ fontSize: 10, fill: 'rgb(148 163 184)', fontFamily: 'Inter' }}
+                    tick={{
+                      fontSize: 10,
+                      fill: 'rgb(148 163 184)',
+                      fontFamily: 'Inter',
+                    }}
                     axisLine={false}
                     tickLine={false}
                   />
-                  <Tooltip content={<CustomTooltip />} cursor={{ fill: 'rgba(30,51,71,0.5)' }} />
+                  <Tooltip
+                    content={<CustomTooltip />}
+                    cursor={{ fill: 'rgba(30,51,71,0.5)' }}
+                  />
                   <Bar dataKey="total" radius={[4, 4, 0, 0]}>
                     {chartData.map((_, i) => (
-                      <Cell key={i} fill={`rgba(52,211,153,${0.55 + (i / Math.max(chartData.length - 1, 1)) * 0.35})`} />
+                      <Cell
+                        key={i}
+                        fill={`rgba(52,211,153,${0.55 + (i / Math.max(chartData.length - 1, 1)) * 0.35})`}
+                      />
                     ))}
                   </Bar>
                 </BarChart>
@@ -103,13 +137,20 @@ export function Dividends({ params }: Props) {
               </p>
               <div className="space-y-2.5">
                 {data.topPayers.map((p, i) => (
-                  <div key={p.ticker} className="grid grid-cols-12 items-center gap-3">
+                  <div
+                    key={p.ticker}
+                    className="grid grid-cols-12 items-center gap-3"
+                  >
                     <div className="col-span-1 text-[11px] font-mono font-bold text-on-surface-variant/60 tabular-nums">
                       {String(i + 1).padStart(2, '0')}
                     </div>
                     <div className="col-span-3 min-w-0">
-                      <p className="text-xs font-semibold text-on-surface font-mono truncate">{p.ticker}</p>
-                      <p className="text-[11px] text-on-surface-variant truncate">{p.name}</p>
+                      <p className="text-xs font-semibold text-on-surface font-mono truncate">
+                        {p.ticker}
+                      </p>
+                      <p className="text-[11px] text-on-surface-variant truncate">
+                        {p.name}
+                      </p>
                     </div>
                     <div className="col-span-5">
                       <ProportionBar

@@ -44,7 +44,8 @@ export function AppRoutes() {
             element={<NotificationSettingsPage />}
           />{' '}
           {/* [NOTIF] */}
-          <Route path="/analytics" element={<AnalyticsPage />} /> {/* [ANALYTICS] */}
+          <Route path="/analytics" element={<AnalyticsPage />} />{' '}
+          {/* [ANALYTICS] */}
         </Route>
 
         {/* Client layout */}

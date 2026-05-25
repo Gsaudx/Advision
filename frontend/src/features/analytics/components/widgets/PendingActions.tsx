@@ -27,7 +27,9 @@ function ClientRow({ item, rank }: { item: PendingActionItem; rank: number }) {
       </span>
 
       <div className="min-w-0 flex-1">
-        <p className="text-sm font-semibold text-on-surface truncate">{item.clientName}</p>
+        <p className="text-sm font-semibold text-on-surface truncate">
+          {item.clientName}
+        </p>
         <p className="text-[11px] text-on-surface-variant mt-0.5">
           {item.positionCount ?? 0} posições
           {item.costBasis != null && item.costBasis > 0
@@ -36,7 +38,9 @@ function ClientRow({ item, rank }: { item: PendingActionItem; rank: number }) {
         </p>
       </div>
 
-      <div className={`px-2.5 py-1 rounded-lg text-[11px] font-mono font-bold tabular-nums shrink-0 ${colorCls}`}>
+      <div
+        className={`px-2.5 py-1 rounded-lg text-[11px] font-mono font-bold tabular-nums shrink-0 ${colorCls}`}
+      >
         {days}d
       </div>
 
@@ -56,7 +60,12 @@ export function PendingActions() {
     .sort((a, b) => (b.daysInactive ?? 0) - (a.daysInactive ?? 0));
 
   return (
-    <WidgetCard isLoading={isLoading} error={error} padded={false} className="overflow-hidden">
+    <WidgetCard
+      isLoading={isLoading}
+      error={error}
+      padded={false}
+      className="overflow-hidden"
+    >
       <div className="p-6 md:p-7 pb-3">
         <WidgetEyebrow
           icon={<PhoneCall size={12} className="text-amber-400" />}
@@ -69,7 +78,9 @@ export function PendingActions() {
               {inactive.length}
             </p>
             <p className="text-xs text-on-surface-variant font-semibold">
-              {inactive.length === 1 ? 'cliente para contactar' : 'clientes para contactar'}
+              {inactive.length === 1
+                ? 'cliente para contactar'
+                : 'clientes para contactar'}
             </p>
           </div>
         )}

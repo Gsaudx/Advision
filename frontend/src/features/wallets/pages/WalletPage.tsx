@@ -713,7 +713,6 @@ export default function WalletPage() {
               currency={wallet.currency}
               totalPositionsValue={wallet.totalPositionsValue}
             />
-
           </motion.div>
 
           {/* ── Right Column ── */}
@@ -781,7 +780,10 @@ export default function WalletPage() {
             {/* Sub-tab content: Opções */}
             {subTab === 'options' && (
               <>
-                <ContentPanel className="relative flex flex-col min-h-[540px]" bodyClassName="p-0 overflow-y-auto flex-1">
+                <ContentPanel
+                  className="relative flex flex-col min-h-[540px]"
+                  bodyClassName="p-0 overflow-y-auto flex-1"
+                >
                   {isLoadingOptions ? (
                     <div className="flex justify-center py-8">
                       <LoadingSpinner size="md" />

@@ -977,11 +977,13 @@ export function UnifiedTradeModal({
                           {formatCurrency(optionPriceData.price, currency)}
                         </p>
                       )}
-                      {isOptionPriceError && !isOptionPriceLoading && optionFormData.ticker && (
-                        <p className="text-[10px] text-amber-400 mt-1">
-                          Prêmio não disponível — insira manualmente
-                        </p>
-                      )}
+                      {isOptionPriceError &&
+                        !isOptionPriceLoading &&
+                        optionFormData.ticker && (
+                          <p className="text-[10px] text-amber-400 mt-1">
+                            Prêmio não disponível — insira manualmente
+                          </p>
+                        )}
                       {isPremiumManual && optionFormData.premium && (
                         <p className="text-[10px] text-on-surface-variant mt-1">
                           Preço manual
