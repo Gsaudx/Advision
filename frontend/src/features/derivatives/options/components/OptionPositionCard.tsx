@@ -1,4 +1,4 @@
-import { Calendar } from 'lucide-react';
+import { Calendar, Pencil, Trash2 } from 'lucide-react';
 import type { OptionPosition, Moneyness, ExpiryStatus } from '../../types';
 import {
   formatCurrency,
@@ -14,6 +14,8 @@ interface OptionPositionCardProps {
   onExercise?: (positionId: string) => void;
   onAssignment?: (positionId: string) => void;
   onExpire?: (positionId: string) => void;
+  onEdit?: (positionId: string) => void;
+  onDelete?: (positionId: string) => void;
   currentTime: number;
 }
 
@@ -45,6 +47,8 @@ export function OptionPositionCard({
   onExercise,
   onAssignment,
   onExpire,
+  onEdit,
+  onDelete,
   currentTime,
 }: OptionPositionCardProps) {
   const isCall = position.optionDetail.optionType === 'CALL';
@@ -91,7 +95,9 @@ export function OptionPositionCard({
     onClose ||
     (onExercise && canExercise) ||
     (onAssignment && canBeAssigned) ||
-    (onExpire && isExpired);
+    (onExpire && isExpired) ||
+    onEdit ||
+    onDelete;
 
   // 0% = vencido, 100% = 90+ dias
   const barWidth = isExpired
@@ -207,38 +213,62 @@ export function OptionPositionCard({
           ) : null}
 
           {hasActions && (
-            <div className="flex gap-[6px]">
-              {onClose && (
-                <button
-                  onClick={() => onClose(position.id)}
-                  className="text-[10px] font-black tracking-[0.1em] uppercase py-[7px] px-[14px] rounded-lg bg-surface-container-high text-on-surface-variant hover:brightness-110 transition-all whitespace-nowrap"
-                >
-                  Fechar
-                </button>
-              )}
-              {onExercise && canExercise && (
-                <button
-                  onClick={() => onExercise(position.id)}
-                  className="text-[10px] font-black tracking-[0.1em] uppercase py-[7px] px-[14px] rounded-lg bg-primary text-on-primary hover:brightness-110 transition-all whitespace-nowrap"
-                >
-                  Exercer
-                </button>
-              )}
-              {onAssignment && canBeAssigned && (
-                <button
-                  onClick={() => onAssignment(position.id)}
-                  className="text-[10px] font-black tracking-[0.1em] uppercase py-[7px] px-[14px] rounded-lg bg-outline-variant/20 text-on-surface-variant hover:brightness-110 transition-all whitespace-nowrap"
-                >
-                  Atribuição
-                </button>
-              )}
-              {onExpire && isExpired && (
-                <button
-                  onClick={() => onExpire(position.id)}
-                  className="text-[10px] font-black tracking-[0.1em] uppercase py-[7px] px-[14px] rounded-lg bg-error/[0.15] text-error hover:brightness-110 transition-all whitespace-nowrap"
-                >
-                  Vencimento
-                </button>
+            <div className="flex flex-col gap-[6px]">
+              <div className="flex gap-[6px]">
+                {onClose && (
+                  <button
+                    onClick={() => onClose(position.id)}
+                    className="text-[10px] font-black tracking-[0.1em] uppercase py-[7px] px-[14px] rounded-lg bg-surface-container-high text-on-surface-variant hover:brightness-110 transition-all whitespace-nowrap"
+                  >
+                    Fechar
+                  </button>
+                )}
+                {onExercise && canExercise && (
+                  <button
+                    onClick={() => onExercise(position.id)}
+                    className="text-[10px] font-black tracking-[0.1em] uppercase py-[7px] px-[14px] rounded-lg bg-primary text-on-primary hover:brightness-110 transition-all whitespace-nowrap"
+                  >
+                    Exercer
+                  </button>
+                )}
+                {onAssignment && canBeAssigned && (
+                  <button
+                    onClick={() => onAssignment(position.id)}
+                    className="text-[10px] font-black tracking-[0.1em] uppercase py-[7px] px-[14px] rounded-lg bg-outline-variant/20 text-on-surface-variant hover:brightness-110 transition-all whitespace-nowrap"
+                  >
+                    Atribuição
+                  </button>
+                )}
+                {onExpire && isExpired && (
+                  <button
+                    onClick={() => onExpire(position.id)}
+                    className="text-[10px] font-black tracking-[0.1em] uppercase py-[7px] px-[14px] rounded-lg bg-error/[0.15] text-error hover:brightness-110 transition-all whitespace-nowrap"
+                  >
+                    Vencimento
+                  </button>
+                )}
+              </div>
+              {(onEdit || onDelete) && (
+                <div className="flex gap-[6px]">
+                  {onEdit && (
+                    <button
+                      onClick={() => onEdit(position.id)}
+                      className="p-[7px] rounded-lg bg-surface-container-high text-on-surface-variant hover:text-primary hover:bg-primary/10 transition-all"
+                      title="Editar opção"
+                    >
+                      <Pencil size={13} />
+                    </button>
+                  )}
+                  {onDelete && (
+                    <button
+                      onClick={() => onDelete(position.id)}
+                      className="p-[7px] rounded-lg bg-surface-container-high text-on-surface-variant hover:text-error hover:bg-error/10 transition-all"
+                      title="Excluir opção"
+                    >
+                      <Trash2 size={13} />
+                    </button>
+                  )}
+                </div>
               )}
             </div>
           )}

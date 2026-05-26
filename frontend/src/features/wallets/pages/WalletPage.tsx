@@ -36,6 +36,7 @@ import { OptionFilter, FilterSelect } from '../components';
 import { useOptionFilters } from '../hooks/useOptionFilters';
 import {
   useOptionPositions,
+  useDeleteOption,
   OptionPositionCard,
   CloseOptionModal,
   ExerciseOptionModal,
@@ -44,6 +45,7 @@ import {
   UpcomingExpirationsWidget,
   StrategyBuilderModal,
   StrategyHistoryList,
+  EditOptionModal,
 } from '@/features/derivatives';
 import type {
   OptionPosition,
@@ -471,6 +473,12 @@ export default function WalletPage() {
     useState<LifecycleAction | null>(null);
   const [selectedPosition, setSelectedPosition] =
     useState<OptionPosition | null>(null);
+  const [editingPosition, setEditingPosition] =
+    useState<OptionPosition | null>(null);
+  const [deletingPosition, setDeletingPosition] =
+    useState<OptionPosition | null>(null);
+
+  const deleteOptionMutation = useDeleteOption();
 
   const {
     search: optionSearch,
@@ -525,6 +533,24 @@ export default function WalletPage() {
     openLifecycleModal('assignment', id);
   const handleExpireOption = (id: string) =>
     openLifecycleModal('expiration', id);
+
+  const handleEditOption = (id: string) => {
+    const position = findOptionPosition(id);
+    if (position) setEditingPosition(position);
+  };
+
+  const handleDeleteOption = (id: string) => {
+    const position = findOptionPosition(id);
+    if (position) setDeletingPosition(position);
+  };
+
+  const handleDeleteConfirm = () => {
+    if (!deletingPosition) return;
+    deleteOptionMutation.mutate(
+      { walletId: walletId!, positionId: deletingPosition.id },
+      { onSuccess: () => setDeletingPosition(null) },
+    );
+  };
 
   const subTabs: { id: SubTab; label: string; icon: React.ElementType }[] = [
     { id: 'positions', label: 'Ações', icon: LayoutGrid },
@@ -898,6 +924,16 @@ export default function WalletPage() {
                                     ? handleExpireOption
                                     : undefined
                                 }
+                                onEdit={
+                                  config.canTrade
+                                    ? handleEditOption
+                                    : undefined
+                                }
+                                onDelete={
+                                  config.canTrade
+                                    ? handleDeleteOption
+                                    : undefined
+                                }
                               />
                             ))}
                           </div>
@@ -1012,6 +1048,68 @@ export default function WalletPage() {
         walletId={walletId!}
         walletName={wallet.name}
       />
+
+      {editingPosition && (
+        <EditOptionModal
+          position={editingPosition}
+          walletId={walletId!}
+          onClose={() => setEditingPosition(null)}
+        />
+      )}
+
+      {deletingPosition && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
+          <div
+            className="absolute inset-0 bg-background/80 backdrop-blur-md"
+            onClick={() =>
+              !deleteOptionMutation.isPending && setDeletingPosition(null)
+            }
+          />
+          <div className="relative bg-surface-container-low w-full max-w-sm rounded-3xl p-8 shadow-xl border border-outline-variant/10">
+            <h3 className="text-lg font-bold text-on-surface mb-2">
+              Confirmar exclusão
+            </h3>
+            <p className="text-sm text-on-surface-variant mb-1">
+              Tem certeza que deseja excluir esta posição?
+            </p>
+            <p className="text-sm font-semibold text-on-surface mb-1">
+              {deletingPosition.ticker} ·{' '}
+              {deletingPosition.optionDetail.optionType} ·{' '}
+              {deletingPosition.quantity} contrato(s)
+            </p>
+            <p className="text-xs text-on-surface-variant/60 mb-6">
+              Esta ação remove o lançamento incorreto. Opções com eventos de
+              ciclo de vida não podem ser excluídas.
+            </p>
+            <div className="flex gap-3">
+              <button
+                onClick={() => setDeletingPosition(null)}
+                disabled={deleteOptionMutation.isPending}
+                className="flex-1 py-3 rounded-2xl text-sm text-on-surface-variant border border-outline-variant/20 disabled:opacity-40"
+              >
+                Cancelar
+              </button>
+              <button
+                onClick={handleDeleteConfirm}
+                disabled={deleteOptionMutation.isPending}
+                className="flex-1 py-3 rounded-2xl text-sm font-bold bg-error text-white disabled:opacity-40 flex items-center justify-center gap-2"
+              >
+                {deleteOptionMutation.isPending ? (
+                  <LoadingSpinner size="sm" />
+                ) : (
+                  'Excluir'
+                )}
+              </button>
+            </div>
+            {deleteOptionMutation.isError && (
+              <p className="text-error text-xs text-center mt-3">
+                Erro ao excluir — verifique se a posição não possui eventos de
+                ciclo de vida.
+              </p>
+            )}
+          </div>
+        </div>
+      )}
     </>
   );
 }

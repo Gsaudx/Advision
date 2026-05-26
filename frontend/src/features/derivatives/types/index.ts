@@ -110,6 +110,12 @@ export type SellOptionInput = components['schemas']['SellOptionInputDto'];
 
 export type CloseOptionInput = components['schemas']['CloseOptionInputDto'];
 
+export interface UpdateOptionInput {
+  quantity: number;
+  premium: number;
+  date: string;
+}
+
 export type OperationLegInput =
   components['schemas']['ExecuteStrategyInputDto']['legs'][number];
 

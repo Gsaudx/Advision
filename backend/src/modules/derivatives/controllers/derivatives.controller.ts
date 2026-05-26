@@ -2,6 +2,8 @@ import {
   Controller,
   Get,
   Post,
+  Patch,
+  Delete,
   Body,
   Param,
   ParseUUIDPipe,
@@ -27,6 +29,7 @@ import {
   BuyOptionInputDto,
   SellOptionInputDto,
   CloseOptionInputDto,
+  UpdateOptionInputDto,
   OptionPositionListApiResponseDto,
   OptionTradeResultApiResponseDto,
 } from '../schemas';
@@ -128,6 +131,43 @@ export class DerivativesController {
     void this.notificationsService.generateExpiryNotifications(actor.id, { forceRefresh: true });
 
     return { success: true, data };
+  }
+
+  @Patch(':positionId')
+  @HttpCode(HttpStatus.OK)
+  @ApiOperation({ summary: 'Edit an option position (correct a wrong entry)' })
+  @ApiParam({ name: 'walletId', type: 'string', format: 'uuid' })
+  @ApiParam({ name: 'positionId', type: 'string', format: 'uuid' })
+  @ApiOkResponse({
+    description: 'Option position updated successfully',
+    type: OptionTradeResultApiResponseDto,
+  })
+  async updateOption(
+    @Param('walletId', ParseUUIDPipe) walletId: string,
+    @Param('positionId', ParseUUIDPipe) positionId: string,
+    @Body() dto: UpdateOptionInputDto,
+    @CurrentUser() actor: CurrentUserData,
+  ) {
+    const data = await this.derivativesService.updateOption(
+      walletId,
+      positionId,
+      dto,
+      actor,
+    );
+    return { success: true, data };
+  }
+
+  @Delete(':positionId')
+  @HttpCode(HttpStatus.NO_CONTENT)
+  @ApiOperation({ summary: 'Delete an option position (remove a wrong entry)' })
+  @ApiParam({ name: 'walletId', type: 'string', format: 'uuid' })
+  @ApiParam({ name: 'positionId', type: 'string', format: 'uuid' })
+  async deleteOption(
+    @Param('walletId', ParseUUIDPipe) walletId: string,
+    @Param('positionId', ParseUUIDPipe) positionId: string,
+    @CurrentUser() actor: CurrentUserData,
+  ) {
+    await this.derivativesService.deleteOption(walletId, positionId, actor);
   }
 
   @Post(':positionId/close')

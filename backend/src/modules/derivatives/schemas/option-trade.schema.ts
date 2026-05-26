@@ -74,6 +74,22 @@ export const CloseOptionInputSchema = z.object({
 export class CloseOptionInputDto extends createZodDto(CloseOptionInputSchema) {}
 export type CloseOptionInput = z.infer<typeof CloseOptionInputSchema>;
 
+/**
+ * Schema for editing an option position (correcting a wrong entry)
+ */
+export const UpdateOptionInputSchema = z.object({
+  quantity: z
+    .number()
+    .positive('Quantidade de contratos deve ser positiva')
+    .int('Quantidade deve ser um número inteiro de contratos'),
+  premium: z.number().positive('Prêmio deve ser positivo'),
+  date: z
+    .string()
+    .datetime({ message: 'Data inválida (formato ISO esperado)' }),
+});
+export class UpdateOptionInputDto extends createZodDto(UpdateOptionInputSchema) {}
+export type UpdateOptionInput = z.infer<typeof UpdateOptionInputSchema>;
+
 // ============================================================================
 // RESPONSE SCHEMAS
 // ============================================================================

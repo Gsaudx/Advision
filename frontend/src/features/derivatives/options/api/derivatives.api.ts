@@ -5,6 +5,7 @@ import type {
   BuyOptionInput,
   SellOptionInput,
   CloseOptionInput,
+  UpdateOptionInput,
   OptionTradeResult,
   StructuredOperation,
   StructuredOperationList,
@@ -63,6 +64,25 @@ export const derivativesApi = {
       data,
     );
     return response.data.data;
+  },
+
+  updateOption: async (
+    walletId: string,
+    positionId: string,
+    data: UpdateOptionInput,
+  ): Promise<OptionTradeResult> => {
+    const response = await api.patch<ApiResponse<OptionTradeResult>>(
+      `/wallets/${walletId}/options/${positionId}`,
+      data,
+    );
+    return response.data.data;
+  },
+
+  deleteOption: async (
+    walletId: string,
+    positionId: string,
+  ): Promise<void> => {
+    await api.delete(`/wallets/${walletId}/options/${positionId}`);
   },
 
   // ============================================================================
