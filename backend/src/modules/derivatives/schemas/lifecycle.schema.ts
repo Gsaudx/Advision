@@ -52,10 +52,14 @@ export class ClosedOptionHistoryApiResponseDto extends createZodDto(
  * Schema for exercising an option
  */
 export const ExerciseOptionInputSchema = z.object({
-  quantity: z
-    .number()
-    .positive('Quantidade de contratos deve ser positiva')
-    .int('Quantidade deve ser um número inteiro de contratos')
+  // exercisedAt: data do exercício informada pelo usuário; não pode ser futura
+  exercisedAt: z
+    .string()
+    .datetime({ offset: true, message: 'Data de exercício inválida' })
+    .refine(
+      (val) => new Date(val) <= new Date(),
+      'Data de exercício não pode ser no futuro',
+    )
     .optional(),
   notes: z.string().max(500).optional(),
   idempotencyKey: z.string().min(1, 'Chave de idempotência obrigatória'),

@@ -118,13 +118,8 @@ export class OptionLifecycleService {
       }
     }
 
-    const quantityToExercise = data.quantity ?? currentQty;
-    if (quantityToExercise > currentQty) {
-      throw new BadRequestException(
-        `Quantidade para exercer (${quantityToExercise}) maior que posicao (${currentQty})`,
-      );
-    }
-
+    // All-or-Nothing: sempre exerce todos os contratos da posição
+    const quantityToExercise = currentQty;
     const underlyingQuantity = quantityToExercise * CONTRACT_SIZE;
     const strikePrice = Number(optionDetail.strikePrice);
     const totalCost = strikePrice * underlyingQuantity;
@@ -208,6 +203,8 @@ export class OptionLifecycleService {
           underlyingPositionId = existingUnderlyingPosition.id;
         }
 
+        const exercisedAt = data.exercisedAt ? new Date(data.exercisedAt) : new Date();
+
         const transaction = await tx.transaction.create({
           data: {
             walletId,
@@ -216,7 +213,7 @@ export class OptionLifecycleService {
             quantity: underlyingQuantity,
             price: strikePrice,
             totalValue: totalCost,
-            executedAt: new Date(),
+            executedAt: exercisedAt,
             idempotencyKey: data.idempotencyKey,
           },
         });
@@ -229,6 +226,7 @@ export class OptionLifecycleService {
             strikePrice,
             settlementAmount: totalCost,
             resultingTransactionId: transaction.id,
+            occurredAt: exercisedAt,
             notes: data.notes,
           },
         });

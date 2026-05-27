@@ -2065,7 +2065,8 @@ export interface components {
             message?: string;
         };
         ExerciseOptionInputDto: {
-            quantity?: number;
+            /** @format date-time */
+            exercisedAt?: string;
             notes?: string;
             idempotencyKey: string;
         };

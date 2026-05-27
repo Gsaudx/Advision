@@ -85,7 +85,70 @@ Não há fix para essa limitação sem a adição de um modelo de caixa, que est
 
 ---
 
-## 4. Histórico de Opções Encerradas
+## 4. Exercício All-or-Nothing e Data de Exercício
+
+### Motivação
+
+O exercício parcial de contratos foi removido do sistema. A lógica de opções na B3 trata o lote como unidade mínima de liquidação — exercer uma fração dos contratos de uma mesma série criaria inconsistência entre a posição registrada e o evento real de mercado.
+
+Adicionalmente, o sistema passou a aceitar uma **data de exercício informada pelo usuário**, permitindo registrar exercícios ocorridos em datas anteriores à do lançamento no sistema, sem perder a rastreabilidade temporal.
+
+---
+
+### 4.1 All-or-Nothing
+
+**Comportamento anterior:** o modal de exercício exibia um campo de quantidade, permitindo exercer N de M contratos.
+
+**Comportamento atual:** ao confirmar o exercício, todos os contratos da posição são exercidos de uma vez.
+
+**Backend (`option-lifecycle.service.ts`):**
+
+```typescript
+// Antes:
+const quantityToExercise = data.quantity ?? currentQty;
+if (quantityToExercise > currentQty) { throw ... }
+
+// Depois:
+const quantityToExercise = currentQty; // All-or-Nothing
+```
+
+O campo `quantity` foi removido do `ExerciseOptionInputSchema`. O DTO não aceita mais quantidade parcial.
+
+Como consequência direta, o exercício sempre resulta na deleção da posição da opção (quantity restante = 0), nunca em atualização parcial.
+
+---
+
+### 4.2 Data de Exercício
+
+**Comportamento anterior:** `executedAt` da transação e `occurredAt` do lifecycle eram sempre `new Date()` no momento da requisição.
+
+**Comportamento atual:** o usuário informa a data do exercício no modal. Ela é usada em ambos os registros.
+
+**Regras de validação:**
+
+| Camada | Regra |
+|--------|-------|
+| Frontend | Campo `type="date"` com `max={today}` — navegador bloqueia datas futuras |
+| Frontend | Validação JS: `new Date(exercisedAt) > new Date()` → erro |
+| Backend (Zod) | `.refine(val => new Date(val) <= new Date(), ...)` → rejeita futuro |
+
+**Backend (`option-lifecycle.service.ts`):**
+
+```typescript
+const exercisedAt = data.exercisedAt ? new Date(data.exercisedAt) : new Date();
+
+// Transação:
+executedAt: exercisedAt
+
+// OptionLifecycle:
+occurredAt: exercisedAt
+```
+
+O campo `exercisedAt` é opcional no DTO — se ausente, o sistema usa `new Date()` (comportamento padrão).
+
+---
+
+## 5. Histórico de Opções Encerradas
 
 ### Problema anterior
 
@@ -135,7 +198,7 @@ Cada linha exibe:
 
 ---
 
-## 5. Arquitetura
+## 6. Arquitetura
 
 ### Backend
 
@@ -143,58 +206,70 @@ Cada linha exibe:
 src/modules/derivatives/
 ├── services/
 │   └── option-lifecycle.service.ts
-│       ├── exerciseOption()     ← fix: callAcquisitionCost = strike + premium
-│       └── getOptionHistory()   ← novo: retorna eventos terminais com dados do ativo
+│       ├── exerciseOption()     ← All-or-Nothing + exercisedAt aplicado em executedAt/occurredAt
+│       └── getOptionHistory()   ← retorna eventos terminais com dados do ativo
 ├── controllers/
 │   └── lifecycle.controller.ts
-│       └── GET options/history  ← novo endpoint
+│       └── GET options/history
 └── schemas/
     └── lifecycle.schema.ts
-        ├── ClosedOptionHistoryItemSchema   ← novo
-        ├── ClosedOptionHistoryResponseSchema ← novo
-        └── ClosedOptionHistoryApiResponseDto ← novo
+        ├── ExerciseOptionInputSchema  ← removido quantity; adicionado exercisedAt?
+        ├── ClosedOptionHistoryItemSchema
+        ├── ClosedOptionHistoryResponseSchema
+        └── ClosedOptionHistoryApiResponseDto
 ```
 
 ### Frontend
 
 ```
 src/features/derivatives/
+├── lifecycle/
+│   └── components/
+│       └── ExerciseOptionModal.tsx  ← campo quantity removido; campo data do exercício adicionado
 ├── options/
 │   ├── api/
 │   │   ├── derivatives.api.ts     ← +getOptionHistory()
-│   │   ├── useOptionHistory.ts    ← novo hook
-│   │   └── index.ts               ← re-export
+│   │   ├── useOptionHistory.ts    ← hook React Query
+│   │   └── index.ts
 │   └── components/
-│       ├── ClosedOptionHistoryList.tsx  ← novo componente
-│       └── index.ts                    ← re-export
+│       ├── ClosedOptionHistoryList.tsx
+│       └── index.ts
 └── types/
     └── index.ts                   ← +ClosedOptionHistoryItem, +ClosedOptionHistory
 
 src/features/wallets/pages/
 └── WalletPage.tsx
-    └── aba "Opções" → seção "Histórico de Encerradas" (usa useOptionHistory + ClosedOptionHistoryList)
+    └── aba "Opções" → seção "Histórico de Encerradas"
 ```
 
 ---
 
-## 6. Fluxo Completo — CALL Exercise (após correção)
+## 7. Fluxo Completo — CALL Exercise (estado atual)
 
 ```
 1. Usuário clica "Exercer" na OptionPositionCard
-2. ExerciseOptionModal → POST /wallets/:id/options/:positionId/exercise
+2. ExerciseOptionModal:
+   - Exibe resumo com todos os contratos da posição (All-or-Nothing)
+   - Usuário informa a data do exercício (padrão: hoje; máximo: hoje)
+   - POST /wallets/:id/options/:positionId/exercise { exercisedAt, notes, idempotencyKey }
 3. exerciseOption():
-   a. Calcula callAcquisitionCost = strikePrice + position.averagePrice
-   b. Cria/atualiza posição em PETR4 com averagePrice = callAcquisitionCost
-   c. Cria transação OPTION_EXERCISE (price = strikePrice, para registro contábil)
-   d. Cria OptionLifecycle com event = EXERCISED
-   e. Deleta a posição da opção
+   a. quantityToExercise = currentQty (todos os contratos)
+   b. Calcula callAcquisitionCost = strikePrice + position.averagePrice
+   c. Cria/atualiza posição em PETR4 com averagePrice = callAcquisitionCost
+   d. Cria transação OPTION_EXERCISE com executedAt = exercisedAt
+   e. Cria OptionLifecycle com event = EXERCISED e occurredAt = exercisedAt
+   f. Deleta a posição da opção (quantity restante = 0)
 4. Frontend invalida queries → posição PETR4 aparece em "Ações" com custo correto
 5. GET /options/history retorna o evento EXERCISED → aparece em "Histórico de Encerradas"
 ```
 
 ---
 
-## 7. Decisões de Design
+## 8. Decisões de Design
+
+### Por que não permitir exercício parcial?
+
+Exercício parcial implica que uma série de opções com o mesmo ticker seria quebrada em dois lotes distintos, cada um com histórico de lifecycle separado. Isso complica a rastreabilidade sem benefício prático no contexto do sistema — o advisor opera lotes inteiros. A regra All-or-Nothing é mais simples e mais fiel ao comportamento da B3.
 
 ### Por que não soft-delete nas posições?
 
@@ -215,14 +290,16 @@ Inclui apenas eventos `CLOSED` (buy/sell to close) — não inclui EXERCISED ou 
 
 ---
 
-## 8. Arquivos Modificados
+## 9. Arquivos Modificados
 
 | Arquivo | Tipo | Descrição |
 |---------|------|-----------|
-| `backend/src/modules/derivatives/services/option-lifecycle.service.ts` | Modificado | Fix CALL exercise + método `getOptionHistory()` |
-| `backend/src/modules/derivatives/schemas/lifecycle.schema.ts` | Modificado | +3 schemas de histórico |
+| `backend/src/modules/derivatives/services/option-lifecycle.service.ts` | Modificado | Fix custo médio CALL; All-or-Nothing; exercisedAt em executedAt/occurredAt; `getOptionHistory()` |
+| `backend/src/modules/derivatives/schemas/lifecycle.schema.ts` | Modificado | `ExerciseOptionInputSchema`: removido `quantity`, adicionado `exercisedAt?`; +3 schemas de histórico |
 | `backend/src/modules/derivatives/controllers/lifecycle.controller.ts` | Modificado | +rota `GET options/history` |
-| `frontend/src/types/api.d.ts` | Gerado | Re-gerado via `npm run generate:types` |
+| `backend/src/modules/derivatives/__tests__/option-lifecycle.service.spec.ts` | Modificado | Teste parcial adaptado para All-or-Nothing; teste de "quantidade excede" removido |
+| `frontend/src/types/api.d.ts` | Modificado | `ExerciseOptionInputDto`: removido `quantity`, adicionado `exercisedAt?` |
+| `frontend/src/features/derivatives/lifecycle/components/ExerciseOptionModal.tsx` | Modificado | Campo de quantidade removido; campo "Data do exercicio" adicionado |
 | `frontend/src/features/derivatives/types/index.ts` | Modificado | +`ClosedOptionHistoryItem`, +`ClosedOptionHistory` |
 | `frontend/src/features/derivatives/options/api/derivatives.api.ts` | Modificado | +`getOptionHistory()` |
 | `frontend/src/features/derivatives/options/api/useOptionHistory.ts` | Novo | Hook React Query |
@@ -233,7 +310,7 @@ Inclui apenas eventos `CLOSED` (buy/sell to close) — não inclui EXERCISED ou 
 
 ---
 
-## 9. Fora do Escopo
+## 10. Fora do Escopo
 
 - **Custo médio em PUT exercise**: ao vender ações via PUT, o prêmio pago poderia em tese reduzir o preço efetivo de venda. Sem rastreamento de caixa, não há forma de capturar esse ajuste no patrimônio de forma consistente.
 - **Custo médio retroativo**: posições exercidas antes desta correção já foram deletadas com `averagePrice = strikePrice`. Não há backfill.

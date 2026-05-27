@@ -23,7 +23,8 @@ export function ExerciseOptionModal({
   walletId,
 }: ExerciseOptionModalProps) {
   const exerciseMutation = useExerciseOption();
-  const [quantity, setQuantity] = useState('');
+  const todayStr = new Date().toISOString().slice(0, 10);
+  const [exercisedAt, setExercisedAt] = useState(todayStr);
   const [notes, setNotes] = useState('');
   const [errors, setErrors] = useState<Record<string, string>>({});
 
@@ -31,9 +32,7 @@ export function ExerciseOptionModal({
     ? getApiErrorMessage(exerciseMutation.error)
     : null;
 
-  const contractsToExercise = quantity
-    ? parseInt(quantity, 10)
-    : position.quantity;
+  const contractsToExercise = position.quantity;
   const underlyingQuantity = contractsToExercise * CONTRACT_SIZE;
   const totalCost = underlyingQuantity * position.optionDetail.strikePrice;
 
@@ -53,13 +52,10 @@ export function ExerciseOptionModal({
     e.preventDefault();
     const newErrors: Record<string, string> = {};
 
-    if (quantity) {
-      const qty = parseInt(quantity, 10);
-      if (isNaN(qty) || qty <= 0) {
-        newErrors.quantity = 'Quantidade deve ser positiva';
-      } else if (qty > position.quantity) {
-        newErrors.quantity = `Maximo: ${position.quantity} contratos`;
-      }
+    if (!exercisedAt) {
+      newErrors.exercisedAt = 'Data do exercício é obrigatória';
+    } else if (new Date(exercisedAt) > new Date()) {
+      newErrors.exercisedAt = 'Data do exercício não pode ser no futuro';
     }
 
     if (Object.keys(newErrors).length > 0) {
@@ -73,7 +69,7 @@ export function ExerciseOptionModal({
         walletId,
         positionId: position.id,
         data: {
-          quantity: quantity ? parseInt(quantity, 10) : undefined,
+          exercisedAt: new Date(exercisedAt).toISOString(),
           notes: notes || undefined,
           idempotencyKey: generateIdempotencyKey(),
         },
@@ -169,30 +165,28 @@ export function ExerciseOptionModal({
           </div>
         </div>
 
-        {/* Quantity */}
+        {/* Data do exercício */}
         <div className="flex flex-col gap-1.5">
           <label
-            htmlFor="exercise-quantity"
+            htmlFor="exercise-date"
             className="text-sm font-medium text-gray-300"
           >
-            Contratos a exercer (opcional, padrao: todos)
+            Data do exercicio
           </label>
           <input
-            id="exercise-quantity"
-            type="number"
-            min="1"
-            max={position.quantity}
-            value={quantity}
+            id="exercise-date"
+            type="date"
+            max={todayStr}
+            value={exercisedAt}
             onChange={(e) => {
-              setQuantity(e.target.value);
-              setErrors((prev) => ({ ...prev, quantity: '' }));
+              setExercisedAt(e.target.value);
+              setErrors((prev) => ({ ...prev, exercisedAt: '' }));
             }}
             disabled={exerciseMutation.isPending}
-            placeholder={String(position.quantity)}
-            className={`w-full bg-slate-800 border rounded-lg px-4 py-3 text-white placeholder-gray-500 focus:outline-none focus:border-slate-500 focus:ring-1 focus:ring-slate-500 transition-colors ${errors.quantity ? 'border-red-500' : 'border-slate-600'}`}
+            className={`w-full bg-slate-800 border rounded-lg px-4 py-3 text-white focus:outline-none focus:border-slate-500 focus:ring-1 focus:ring-slate-500 transition-colors ${errors.exercisedAt ? 'border-red-500' : 'border-slate-600'}`}
           />
-          {errors.quantity && (
-            <span className="text-red-500 text-sm">{errors.quantity}</span>
+          {errors.exercisedAt && (
+            <span className="text-red-500 text-sm">{errors.exercisedAt}</span>
           )}
         </div>
 
