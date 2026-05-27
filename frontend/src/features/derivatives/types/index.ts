@@ -181,6 +181,16 @@ export type UpcomingExpirationsResponse = NonNullable<
   components['schemas']['UpcomingExpirationsApiResponseDto']['data']
 >;
 
+export type ClosedOptionHistoryItem = NonNullable<
+  NonNullable<
+    components['schemas']['ClosedOptionHistoryApiResponseDto']['data']
+  >['history'][number]
+>;
+
+export type ClosedOptionHistory = NonNullable<
+  components['schemas']['ClosedOptionHistoryApiResponseDto']['data']
+>;
+
 // ============================================================================
 // OPTION SEARCH TYPES (frontend-specific, extends wallet search result)
 // ============================================================================

@@ -18,6 +18,7 @@ import type {
   AssignmentResult,
   ExpirationResult,
   UpcomingExpirationsResponse,
+  ClosedOptionHistory,
 } from '../../types';
 
 export const derivativesApi = {
@@ -28,6 +29,13 @@ export const derivativesApi = {
   getOptionPositions: async (walletId: string): Promise<OptionPositionList> => {
     const response = await api.get<ApiResponse<OptionPositionList>>(
       `/wallets/${walletId}/options`,
+    );
+    return response.data.data;
+  },
+
+  getOptionHistory: async (walletId: string): Promise<ClosedOptionHistory> => {
+    const response = await api.get<ApiResponse<ClosedOptionHistory>>(
+      `/wallets/${walletId}/options/history`,
     );
     return response.data.data;
   },

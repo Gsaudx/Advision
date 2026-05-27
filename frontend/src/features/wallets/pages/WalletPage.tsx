@@ -36,8 +36,10 @@ import { OptionFilter, FilterSelect } from '../components';
 import { useOptionFilters } from '../hooks/useOptionFilters';
 import {
   useOptionPositions,
+  useOptionHistory,
   useDeleteOption,
   OptionPositionCard,
+  ClosedOptionHistoryList,
   CloseOptionModal,
   ExerciseOptionModal,
   AssignmentModal,
@@ -399,6 +401,8 @@ export default function WalletPage() {
     isLoading: isLoadingOptions,
     isFetching: isFetchingOptions,
   } = useOptionPositions(walletId!);
+
+  const { data: optionHistoryData } = useOptionHistory(walletId!);
 
   const { data: proventosData } = useWalletProventos(walletId!);
   const { statusMap: sentinelStatusMap } = useSentinelStatus(walletId);
@@ -968,6 +972,26 @@ export default function WalletPage() {
                     </div>
                   )}
                 </ContentPanel>
+                {optionHistoryData && optionHistoryData.history.length > 0 && (
+                  <ContentPanel
+                    header={
+                      <div className="flex items-center justify-between">
+                        <p className="text-[10px] font-bold text-on-surface-variant uppercase tracking-[0.2em]">
+                          Histórico de Encerradas
+                        </p>
+                        <span className="text-[10px] font-bold text-on-surface-variant bg-outline-variant/20 px-2 py-0.5 rounded-full">
+                          {optionHistoryData.history.length}
+                        </span>
+                      </div>
+                    }
+                    bodyClassName="p-2 max-h-[280px] overflow-y-auto"
+                  >
+                    <ClosedOptionHistoryList
+                      items={optionHistoryData.history}
+                    />
+                  </ContentPanel>
+                )}
+
                 {optionPositionsData?.positions &&
                   optionPositionsData.positions.length > 0 && (
                     <UpcomingExpirationsWidget
