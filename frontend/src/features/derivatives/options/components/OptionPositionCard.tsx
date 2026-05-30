@@ -99,6 +99,15 @@ export function OptionPositionCard({
     onEdit ||
     onDelete;
 
+  // dias desde a compra no sistema
+  const daysOpened =
+    position.openedAt !== undefined
+      ? Math.floor(
+          (currentTime - new Date(position.openedAt).getTime()) /
+            (1000 * 60 * 60 * 24),
+        )
+      : null;
+
   // 0% = vencido, 100% = 90+ dias
   const barWidth = isExpired
     ? 0
@@ -294,6 +303,11 @@ export function OptionPositionCard({
             style={{ width: `${barWidth}%` }}
           />
         </div>
+        {daysOpened !== null && (
+          <span className="flex items-center gap-[5px] text-[10px] text-on-surface-variant font-medium">
+            Operado há {daysOpened} dia{daysOpened !== 1 ? 's' : ''}
+          </span>
+        )}
         {position.optionDetail.initialStrike != null &&
           position.optionDetail.strikePrice <
             position.optionDetail.initialStrike && (

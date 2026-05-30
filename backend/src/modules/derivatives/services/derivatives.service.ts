@@ -80,6 +80,7 @@ export class DerivativesService {
       averagePrice,
       totalCost,
       isShort,
+      openedAt: position.createdAt.toISOString(),
       optionDetail: {
         optionType: position.asset.optionDetail!.optionType,
         exerciseType: position.asset.optionDetail!.exerciseType,

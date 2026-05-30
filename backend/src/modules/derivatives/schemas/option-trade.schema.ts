@@ -126,6 +126,7 @@ export const OptionPositionResponseSchema = z.object({
   currentUnderlyingPrice: z.number().optional(),
   moneyness: z.enum(['ITM', 'ATM', 'OTM']).optional(),
   isShort: z.boolean(),
+  openedAt: z.string().datetime().optional(),
   optionDetail: OptionDetailResponseSchema,
 });
 export type OptionPositionResponse = z.infer<

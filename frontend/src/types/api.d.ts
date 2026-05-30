@@ -1825,6 +1825,8 @@ export interface components {
                     /** @enum {string} */
                     moneyness?: "ITM" | "ATM" | "OTM";
                     isShort: boolean;
+                    /** Format: date-time */
+                    openedAt?: string;
                     optionDetail: {
                         /** @enum {string} */
                         optionType: "CALL" | "PUT";
@@ -2065,7 +2067,7 @@ export interface components {
             message?: string;
         };
         ExerciseOptionInputDto: {
-            /** @format date-time */
+            /** Format: date-time */
             exercisedAt?: string;
             notes?: string;
             idempotencyKey: string;
