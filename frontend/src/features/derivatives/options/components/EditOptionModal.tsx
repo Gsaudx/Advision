@@ -2,7 +2,7 @@ import { useState } from 'react';
 import { X, Pencil } from 'lucide-react';
 import { LoadingSpinner } from '@/components/ui/LoadingSpinner';
 import { useUpdateOption } from '../api';
-import { CONTRACT_SIZE, formatCurrency } from '../../types';
+import { formatCurrency } from '../../types';
 import { getApiErrorMessage } from '@/lib/api-error';
 import type { OptionPosition } from '../../types';
 
@@ -61,9 +61,10 @@ export function EditOptionModal({
     );
   };
 
+  const contractStep = position.optionDetail.contractSize ?? 100;
   const qty = parseInt(quantity, 10) || 0;
   const prem = parseFloat(premium) || 0;
-  const totalValue = qty * prem * CONTRACT_SIZE;
+  const totalValue = qty * prem;
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
@@ -105,12 +106,12 @@ export function EditOptionModal({
         <form onSubmit={handleSubmit} className="space-y-4">
           <div>
             <label className="text-[10px] font-bold text-on-surface-variant uppercase tracking-wider block mb-1">
-              Contratos
+              Ações
             </label>
             <input
               type="number"
-              step="1"
-              min="1"
+              step={contractStep}
+              min={contractStep}
               value={quantity}
               onChange={(e) => {
                 setQuantity(e.target.value);
@@ -173,7 +174,7 @@ export function EditOptionModal({
           <div className="p-3 bg-surface-container-lowest rounded-xl border border-outline-variant/10">
             <div className="flex justify-between text-xs">
               <span className="text-on-surface-variant">
-                Custo total ({qty} × {prem.toFixed(2)} × {CONTRACT_SIZE})
+                Custo total ({qty} ações × {prem.toFixed(2)})
               </span>
               <span className="font-bold text-on-surface">
                 {formatCurrency(totalValue)}

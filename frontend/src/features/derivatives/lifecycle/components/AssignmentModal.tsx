@@ -5,7 +5,6 @@ import { LoadingSpinner } from '@/components/ui/LoadingSpinner';
 import { getApiErrorMessage } from '@/lib/api-error';
 import { generateIdempotencyKey } from '@/lib/utils';
 import { useHandleAssignment } from '../api';
-import { CONTRACT_SIZE } from '../../types';
 import { formatCurrency } from '@/lib/formatters';
 import type { OptionPosition } from '../../types';
 
@@ -31,10 +30,9 @@ export function AssignmentModal({
     ? getApiErrorMessage(assignmentMutation.error)
     : null;
 
-  const contractsToAssign = quantity
-    ? parseInt(quantity, 10)
-    : position.quantity;
-  const underlyingQuantity = contractsToAssign * CONTRACT_SIZE;
+  const contractStep = position.optionDetail.contractSize ?? 100;
+  const sharesToAssign = quantity ? parseInt(quantity, 10) : position.quantity;
+  const underlyingQuantity = sharesToAssign; // quantity is already in shares
   const settlementAmount =
     underlyingQuantity * position.optionDetail.strikePrice;
 
@@ -48,7 +46,7 @@ export function AssignmentModal({
     if (isNaN(qty) || qty <= 0) {
       newErrors.quantity = 'Quantidade deve ser positiva';
     } else if (qty > position.quantity) {
-      newErrors.quantity = `Maximo: ${position.quantity} contratos`;
+      newErrors.quantity = `Máximo: ${position.quantity} ações`;
     }
 
     if (Object.keys(newErrors).length > 0) {
@@ -144,7 +142,7 @@ export function AssignmentModal({
           <div className="flex justify-between">
             <span className="text-sm text-gray-500">Posicao Vendida</span>
             <span className="text-sm text-white">
-              {position.quantity} contratos
+              {position.quantity} ações
             </span>
           </div>
         </div>
@@ -155,12 +153,13 @@ export function AssignmentModal({
             htmlFor="assignment-quantity"
             className="text-sm font-medium text-gray-300"
           >
-            Contratos atribuidos
+            Ações atribuídas
           </label>
           <input
             id="assignment-quantity"
             type="number"
-            min="1"
+            step={contractStep}
+            min={contractStep}
             max={position.quantity}
             value={quantity}
             onChange={(e) => {

@@ -19,7 +19,7 @@ import { OptionLifecycleEvent } from '@/generated/prisma/enums';
 import type { CurrentUserData } from '@/common/decorators';
 import { AuditService, WalletAccessService } from '@/modules/wallets/services';
 import { MarketDataProvider } from '@/modules/wallets/providers';
-import { CONTRACT_SIZE, MONEYNESS_ATM_THRESHOLD } from '../constants';
+import { MONEYNESS_ATM_THRESHOLD } from '../constants';
 import type {
   ExerciseOptionInput,
   AssignmentInput,
@@ -118,9 +118,9 @@ export class OptionLifecycleService {
       }
     }
 
-    // All-or-Nothing: sempre exerce todos os contratos da posição
+    // All-or-Nothing: sempre exerce toda a posição (quantity já é em ações)
     const quantityToExercise = currentQty;
-    const underlyingQuantity = quantityToExercise * CONTRACT_SIZE;
+    const underlyingQuantity = quantityToExercise;
     const strikePrice = Number(optionDetail.strikePrice);
     const totalCost = strikePrice * underlyingQuantity;
 
@@ -324,7 +324,7 @@ export class OptionLifecycleService {
     }
 
     const optionDetail = position.asset.optionDetail!;
-    const underlyingQuantity = data.quantity * CONTRACT_SIZE;
+    const underlyingQuantity = data.quantity; // quantity já é em ações
     const strikePrice = Number(optionDetail.strikePrice);
     const settlementAmount = strikePrice * underlyingQuantity;
 
@@ -684,8 +684,7 @@ export class OptionLifecycleService {
       const underlyingQty = lc.underlyingQuantity
         ? Number(lc.underlyingQuantity)
         : null;
-      const contracts =
-        underlyingQty != null ? underlyingQty / CONTRACT_SIZE : null;
+      const contracts = underlyingQty; // stored in shares; field kept for compatibility
       const settlementAmount = lc.settlementAmount
         ? Number(lc.settlementAmount)
         : null;

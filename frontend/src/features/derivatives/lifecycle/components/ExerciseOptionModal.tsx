@@ -5,7 +5,6 @@ import { LoadingSpinner } from '@/components/ui/LoadingSpinner';
 import { getApiErrorMessage } from '@/lib/api-error';
 import { generateIdempotencyKey } from '@/lib/utils';
 import { useExerciseOption } from '../api';
-import { CONTRACT_SIZE } from '../../types';
 import { formatCurrency } from '@/lib/formatters';
 import type { OptionPosition } from '../../types';
 
@@ -32,8 +31,8 @@ export function ExerciseOptionModal({
     ? getApiErrorMessage(exerciseMutation.error)
     : null;
 
-  const contractsToExercise = position.quantity;
-  const underlyingQuantity = contractsToExercise * CONTRACT_SIZE;
+  const sharesToExercise = position.quantity; // quantity is already in shares
+  const underlyingQuantity = sharesToExercise;
   const totalCost = underlyingQuantity * position.optionDetail.strikePrice;
 
   const isCall = position.optionDetail.optionType === 'CALL';
@@ -160,7 +159,7 @@ export function ExerciseOptionModal({
           <div className="flex justify-between">
             <span className="text-sm text-gray-500">Posicao Atual</span>
             <span className="text-sm text-white">
-              {position.quantity} contratos
+              {position.quantity} ações
             </span>
           </div>
         </div>

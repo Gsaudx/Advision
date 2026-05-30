@@ -90,6 +90,7 @@ export interface OptionDetailsResult {
   strike: number;
   expirationDate: string;
   type: 'CALL' | 'PUT';
+  contractSize?: number;
   impliedVolatility?: number;
   delta?: number;
   gamma?: number;

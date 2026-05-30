@@ -305,6 +305,7 @@ export class WalletsController {
       strike: details.strike,
       expirationDate: details.due_date,
       type: details.type,
+      contractSize: (details as { contract_size?: number }).contract_size ?? 100,
       impliedVolatility: (details as { implied_volatility?: number })
         .implied_volatility,
       delta: (details as { delta?: number }).delta,

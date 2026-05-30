@@ -75,8 +75,8 @@ export type ExerciseOptionInput = z.infer<typeof ExerciseOptionInputSchema>;
 export const AssignmentInputSchema = z.object({
   quantity: z
     .number()
-    .positive('Quantidade de contratos deve ser positiva')
-    .int('Quantidade deve ser um número inteiro de contratos'),
+    .positive('Quantidade de ações deve ser positiva')
+    .int('Quantidade deve ser um número inteiro de ações'),
   notes: z.string().max(500).optional(),
   idempotencyKey: z.string().min(1, 'Chave de idempotência obrigatória'),
 });

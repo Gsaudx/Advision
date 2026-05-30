@@ -11,13 +11,6 @@ export {
 } from '@/lib/formatters';
 
 // ============================================================================
-// CONTRACT CONSTANT (single source for frontend)
-// ============================================================================
-
-/** Standard B3 options contract size (number of shares per contract) */
-export const CONTRACT_SIZE = 100;
-
-// ============================================================================
 // Types derived from auto-generated API types (single source of truth)
 // ============================================================================
 
@@ -201,6 +194,7 @@ export interface OptionSearchResult extends AssetSearchResult {
   optionType?: OptionType;
   lastPrice?: number;
   underlyingTicker?: string;
+  contractSize?: number;
 }
 
 // ============================================================================

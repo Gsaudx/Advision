@@ -6,7 +6,6 @@ import {
   useBuyOption,
   useSellOption,
   OptionTickerAutocomplete,
-  CONTRACT_SIZE,
   generateIdempotencyKey,
 } from '@/features/derivatives';
 import type { OptionSearchResult } from '@/features/derivatives';
@@ -459,9 +458,10 @@ export function UnifiedTradeModal({
     }
   };
 
+  const contractStep = optionDetails?.contractSize ?? selectedOption?.contractSize ?? 100;
   const optionQty = parseInt(optionFormData.quantity, 10) || 0;
   const optionPremium = parseFloat(optionFormData.premium) || 0;
-  const optionTotalValue = optionQty * optionPremium * CONTRACT_SIZE;
+  const optionTotalValue = optionQty * optionPremium;
 
   // ── Shared ──
   const isPending =
@@ -900,30 +900,55 @@ export function UnifiedTradeModal({
                   <div className="grid grid-cols-2 gap-4">
                     <div>
                       <label className="text-[10px] font-bold text-on-surface-variant uppercase tracking-[0.15em] block mb-2">
-                        Contratos *
+                        Ações *
                       </label>
-                      <input
-                        name="quantity"
-                        type="number"
-                        step="1"
-                        min="1"
-                        value={optionFormData.quantity}
-                        onChange={handleOptionChange}
-                        disabled={isPending}
-                        placeholder="0"
-                        className={`w-full bg-surface-container-lowest border rounded-xl py-3.5 px-4 text-sm text-on-surface placeholder-on-surface-variant/40 focus:outline-none focus:ring-1 focus:ring-primary focus:border-primary transition-colors ${
-                          optionErrors.quantity
-                            ? 'border-error'
-                            : 'border-outline-variant/10'
-                        }`}
-                      />
+                      <div className="flex items-center gap-1">
+                        <button
+                          type="button"
+                          onClick={() => {
+                            const cur = parseInt(optionFormData.quantity, 10) || 0;
+                            const next = Math.max(contractStep, cur - contractStep);
+                            setOptionFormData((prev) => ({ ...prev, quantity: String(next) }));
+                          }}
+                          disabled={isPending}
+                          className="w-9 h-9 flex items-center justify-center bg-surface-container rounded-xl border border-outline-variant/10 text-on-surface-variant hover:bg-surface-container-high transition-colors disabled:opacity-50 text-base font-bold shrink-0"
+                        >
+                          −
+                        </button>
+                        <input
+                          name="quantity"
+                          type="number"
+                          step={contractStep}
+                          min={contractStep}
+                          value={optionFormData.quantity}
+                          onChange={handleOptionChange}
+                          disabled={isPending}
+                          placeholder={String(contractStep)}
+                          className={`w-full bg-surface-container-lowest border rounded-xl py-3.5 px-3 text-sm text-on-surface text-center placeholder-on-surface-variant/40 focus:outline-none focus:ring-1 focus:ring-primary focus:border-primary transition-colors ${
+                            optionErrors.quantity
+                              ? 'border-error'
+                              : 'border-outline-variant/10'
+                          }`}
+                        />
+                        <button
+                          type="button"
+                          onClick={() => {
+                            const cur = parseInt(optionFormData.quantity, 10) || 0;
+                            setOptionFormData((prev) => ({ ...prev, quantity: String(cur + contractStep) }));
+                          }}
+                          disabled={isPending}
+                          className="w-9 h-9 flex items-center justify-center bg-surface-container rounded-xl border border-outline-variant/10 text-on-surface-variant hover:bg-surface-container-high transition-colors disabled:opacity-50 text-base font-bold shrink-0"
+                        >
+                          +
+                        </button>
+                      </div>
                       {optionErrors.quantity && (
                         <p className="text-error text-xs mt-1">
                           {optionErrors.quantity}
                         </p>
                       )}
                       <p className="text-[10px] text-on-surface-variant mt-1">
-                        1 contrato = {CONTRACT_SIZE} ações
+                        Lote: {contractStep} ações por vez
                       </p>
                     </div>
 
@@ -1067,7 +1092,7 @@ export function UnifiedTradeModal({
                 <div className="flex justify-between text-sm">
                   <span className="text-on-surface-variant">
                     {instrument === 'option'
-                      ? `Total (${optionQty} × ${optionPremium.toFixed(2)} × ${CONTRACT_SIZE})`
+                      ? `Total (${optionQty} ações × ${optionPremium.toFixed(2)})`
                       : 'Valor Total'}
                   </span>
                   <span

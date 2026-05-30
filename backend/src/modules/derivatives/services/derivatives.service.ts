@@ -23,7 +23,7 @@ import {
   WalletAccessService,
 } from '@/modules/wallets/services';
 import { MarketDataProvider } from '@/modules/wallets/providers';
-import { CONTRACT_SIZE, MONEYNESS_ATM_THRESHOLD } from '../constants';
+import { MONEYNESS_ATM_THRESHOLD } from '../constants';
 import type {
   BuyOptionInput,
   SellOptionInput,
@@ -42,6 +42,7 @@ type PositionWithAssetAndOption = Position & {
       strikePrice: Decimal;
       initialStrike: Decimal | null;
       expirationDate: Date;
+      contractSize: number;
       underlyingAsset: Asset;
     } | null;
   };
@@ -68,7 +69,7 @@ export class DerivativesService {
     const averagePrice = Number(position.averagePrice);
     const isShort = quantity < 0;
     const absQuantity = Math.abs(quantity);
-    const totalCost = absQuantity * averagePrice * CONTRACT_SIZE;
+    const totalCost = absQuantity * averagePrice;
 
     const result: OptionPositionResponse = {
       id: position.id,
@@ -91,11 +92,12 @@ export class DerivativesService {
         expirationDate:
           position.asset.optionDetail!.expirationDate.toISOString(),
         underlyingTicker: position.asset.optionDetail!.underlyingAsset.ticker,
+        contractSize: position.asset.optionDetail!.contractSize,
       },
     };
 
     if (currentPrice !== undefined) {
-      const currentValue = absQuantity * currentPrice * CONTRACT_SIZE;
+      const currentValue = absQuantity * currentPrice;
       const profitLoss = isShort
         ? totalCost - currentValue
         : currentValue - totalCost;
@@ -127,7 +129,7 @@ export class DerivativesService {
 
   /**
    * Buy an option (long position)
-   * Total cost = premium × CONTRACT_SIZE × contracts
+   * Total cost = premium × quantity (quantity is in shares, not contracts)
    */
   async buyOption(
     walletId: string,
@@ -165,9 +167,7 @@ export class DerivativesService {
       );
     }
 
-    const totalCost = new Decimal(data.premium)
-      .times(CONTRACT_SIZE)
-      .times(data.quantity);
+    const totalCost = new Decimal(data.premium).times(data.quantity);
 
     let result: OptionTradeResultResponse;
 
@@ -251,7 +251,7 @@ export class DerivativesService {
 
   /**
    * Sell/Write an option (short position)
-   * Premium received = premium × CONTRACT_SIZE × contracts
+   * Premium received = premium × quantity (quantity is in shares, not contracts)
    * Requires collateral for short puts
    */
   async sellOption(
@@ -291,15 +291,11 @@ export class DerivativesService {
       );
     }
 
-    const totalPremium = new Decimal(data.premium)
-      .times(CONTRACT_SIZE)
-      .times(data.quantity);
+    const totalPremium = new Decimal(data.premium).times(data.quantity);
 
     const requiredCollateral =
       optionDetail.optionType === 'PUT'
-        ? new Decimal(optionDetail.strikePrice)
-            .times(CONTRACT_SIZE)
-            .times(data.quantity)
+        ? new Decimal(optionDetail.strikePrice).times(data.quantity)
         : new Decimal(0);
 
     let result: OptionTradeResultResponse;
@@ -311,7 +307,7 @@ export class DerivativesService {
             where: { walletId, assetId: optionDetail.underlyingAssetId },
           });
 
-          const requiredShares = data.quantity * CONTRACT_SIZE;
+          const requiredShares = data.quantity;
           if (
             !underlyingPosition ||
             Number(underlyingPosition.quantity) < requiredShares
@@ -493,9 +489,7 @@ export class DerivativesService {
       );
     }
 
-    const totalValue = new Decimal(data.premium)
-      .times(CONTRACT_SIZE)
-      .times(quantityToClose);
+    const totalValue = new Decimal(data.premium).times(quantityToClose);
 
     let result: OptionTradeResultResponse;
 
@@ -527,7 +521,7 @@ export class DerivativesService {
               : null,
             settlementAmount: totalValue.toNumber(),
             resultingTransactionId: transaction.id,
-            notes: `Posicao ${isShort ? 'vendida' : 'comprada'} fechada: ${quantityToClose} contratos a ${data.premium}`,
+            notes: `Posicao ${isShort ? 'vendida' : 'comprada'} fechada: ${quantityToClose} acoes a ${data.premium}`,
           },
         });
 
@@ -636,9 +630,7 @@ export class DerivativesService {
         'Posicao sem transacao de origem vinculada',
       );
 
-    const newTotalValue = new Decimal(data.premium)
-      .times(CONTRACT_SIZE)
-      .times(data.quantity);
+    const newTotalValue = new Decimal(data.premium).times(data.quantity);
 
     const snapshotBefore = {
       quantity: Number(position.quantity),

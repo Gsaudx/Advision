@@ -22,8 +22,8 @@ export const BuyOptionInputSchema = z.object({
     .toUpperCase(),
   quantity: z
     .number()
-    .positive('Quantidade de contratos deve ser positiva')
-    .int('Quantidade deve ser um número inteiro de contratos'),
+    .positive('Quantidade de ações deve ser positiva')
+    .int('Quantidade deve ser um número inteiro de ações'),
   premium: z.number().positive('Prêmio deve ser positivo'),
   date: z
     .string()
@@ -44,8 +44,8 @@ export const SellOptionInputSchema = z.object({
     .toUpperCase(),
   quantity: z
     .number()
-    .positive('Quantidade de contratos deve ser positiva')
-    .int('Quantidade deve ser um número inteiro de contratos'),
+    .positive('Quantidade de ações deve ser positiva')
+    .int('Quantidade deve ser um número inteiro de ações'),
   premium: z.number().positive('Prêmio deve ser positivo'),
   date: z
     .string()
@@ -62,8 +62,8 @@ export type SellOptionInput = z.infer<typeof SellOptionInputSchema>;
 export const CloseOptionInputSchema = z.object({
   quantity: z
     .number()
-    .positive('Quantidade de contratos deve ser positiva')
-    .int('Quantidade deve ser um número inteiro de contratos')
+    .positive('Quantidade de ações deve ser positiva')
+    .int('Quantidade deve ser um número inteiro de ações')
     .optional(),
   premium: z.number().positive('Prêmio deve ser positivo'),
   date: z
@@ -80,8 +80,8 @@ export type CloseOptionInput = z.infer<typeof CloseOptionInputSchema>;
 export const UpdateOptionInputSchema = z.object({
   quantity: z
     .number()
-    .positive('Quantidade de contratos deve ser positiva')
-    .int('Quantidade deve ser um número inteiro de contratos'),
+    .positive('Quantidade de ações deve ser positiva')
+    .int('Quantidade deve ser um número inteiro de ações'),
   premium: z.number().positive('Prêmio deve ser positivo'),
   date: z
     .string()
@@ -104,6 +104,7 @@ export const OptionDetailResponseSchema = z.object({
   initialStrike: z.number().nullable(),
   expirationDate: z.string(),
   underlyingTicker: z.string(),
+  contractSize: z.number(),
 });
 export type OptionDetailResponse = z.infer<typeof OptionDetailResponseSchema>;
 

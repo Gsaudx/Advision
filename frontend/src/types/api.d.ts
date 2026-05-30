@@ -104,83 +104,6 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
-    "/proventos/sync": {
-        parameters: {
-            query?: never;
-            header?: never;
-            path?: never;
-            cookie?: never;
-        };
-        get?: never;
-        put?: never;
-        /** [TEMP] Força sync de proventos da BRAPI */
-        post: operations["ProventosController_forceSync"];
-        delete?: never;
-        options?: never;
-        head?: never;
-        patch?: never;
-        trace?: never;
-    };
-    "/proventos/wallet/{walletId}": {
-        parameters: {
-            query?: never;
-            header?: never;
-            path?: never;
-            cookie?: never;
-        };
-        /**
-         * Proventos detalhados de uma carteira
-         * @description Calcula e retorna todos os eventos de dividendo recebidos pelas posições STOCK da carteira, com a quantidade histórica e total recebido por evento.
-         */
-        get: operations["ProventosController_getWalletProventos"];
-        put?: never;
-        post?: never;
-        delete?: never;
-        options?: never;
-        head?: never;
-        patch?: never;
-        trace?: never;
-    };
-    "/proventos/summary": {
-        parameters: {
-            query?: never;
-            header?: never;
-            path?: never;
-            cookie?: never;
-        };
-        /**
-         * Resumo de proventos por ticker de uma carteira
-         * @description Retorna os totais de proventos recebidos agrupados por ticker.
-         */
-        get: operations["ProventosController_getProventosSummary"];
-        put?: never;
-        post?: never;
-        delete?: never;
-        options?: never;
-        head?: never;
-        patch?: never;
-        trace?: never;
-    };
-    "/proventos": {
-        parameters: {
-            query?: never;
-            header?: never;
-            path?: never;
-            cookie?: never;
-        };
-        /**
-         * Listar proventos
-         * @description Retorna o historico de eventos de dividendos sincronizados da BRAPI. Filtravel por ticker.
-         */
-        get: operations["ProventosController_findAll"];
-        put?: never;
-        post?: never;
-        delete?: never;
-        options?: never;
-        head?: never;
-        patch?: never;
-        trace?: never;
-    };
     "/notifications": {
         parameters: {
             query?: never;
@@ -643,6 +566,23 @@ export interface paths {
          * @description Cria transação EXPIRED (preço = 0) e zera a posição.
          */
         post: operations["WalletsController_expireOption"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/proventos/wallet/{walletId}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Proventos detalhados de uma carteira */
+        get: operations["ProventosController_getWalletProventos"];
+        put?: never;
+        post?: never;
         delete?: never;
         options?: never;
         head?: never;
@@ -1318,59 +1258,6 @@ export interface components {
             email: string;
             password: string;
         };
-        WalletProventosApiResponseDto: {
-            /** @enum {boolean} */
-            success: true;
-            data?: {
-                /** Format: uuid */
-                walletId: string;
-                items: {
-                    ticker: string;
-                    dividendType: string | null;
-                    exDividendDate: string;
-                    paymentDate: string | null;
-                    valuePerShare: number;
-                    quantityAtDate: number;
-                    totalReceived: number;
-                }[];
-                totalReceived: number;
-            };
-            message?: string;
-        };
-        ProventosSummaryApiResponseDto: {
-            /** @enum {boolean} */
-            success: true;
-            data?: {
-                ticker: string;
-                totalReceived: number;
-                eventsCount: number;
-                lastDividendDate: string | null;
-            }[];
-            message?: string;
-        };
-        DividendEventListApiResponseDto: {
-            /** @enum {boolean} */
-            success: true;
-            data?: {
-                items: {
-                    /** Format: uuid */
-                    id: string;
-                    ticker: string;
-                    dividendType: string | null;
-                    approvedDate: string | null;
-                    paymentDate: string | null;
-                    exDividendDate: string | null;
-                    valuePerShare: number | null;
-                    source: string;
-                    referenceWeek: string;
-                    importedAt: string;
-                }[];
-                total: number;
-                skip: number;
-                take: number;
-            };
-            message?: string;
-        };
         NotificationListApiResponseDto: {
             /** @enum {boolean} */
             success: true;
@@ -1711,6 +1598,25 @@ export interface components {
             notes?: string;
             idempotencyKey: string;
         };
+        WalletProventosApiResponseDto: {
+            /** @enum {boolean} */
+            success: true;
+            data?: {
+                /** Format: uuid */
+                walletId: string;
+                items: {
+                    ticker: string;
+                    dividendType: string | null;
+                    exDividendDate: string;
+                    paymentDate: string | null;
+                    valuePerShare: number;
+                    quantityAtDate: number;
+                    totalReceived: number;
+                }[];
+                totalReceived: number;
+            };
+            message?: string;
+        };
         ActivityListApiResponseDto: {
             /** @enum {boolean} */
             success: true;
@@ -1836,6 +1742,7 @@ export interface components {
                         initialStrike: number | null;
                         expirationDate: string;
                         underlyingTicker: string;
+                        contractSize: number;
                     };
                 }[];
                 totalPremiumPaid: number;
@@ -2475,123 +2382,6 @@ export interface operations {
             };
         };
     };
-    ProventosController_forceSync: {
-        parameters: {
-            query?: never;
-            header?: never;
-            path?: never;
-            cookie?: never;
-        };
-        requestBody?: never;
-        responses: {
-            /** @description Sync disparado */
-            201: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content?: never;
-            };
-        };
-    };
-    ProventosController_getWalletProventos: {
-        parameters: {
-            query?: never;
-            header?: never;
-            path: {
-                walletId: string;
-            };
-            cookie?: never;
-        };
-        requestBody?: never;
-        responses: {
-            /** @description Proventos calculados */
-            200: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": components["schemas"]["WalletProventosApiResponseDto"];
-                };
-            };
-            /** @description Nao autenticado */
-            401: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": components["schemas"]["ApiErrorResponseDto"];
-                };
-            };
-        };
-    };
-    ProventosController_getProventosSummary: {
-        parameters: {
-            query: {
-                /** @description ID da carteira */
-                walletId: string;
-            };
-            header?: never;
-            path?: never;
-            cookie?: never;
-        };
-        requestBody?: never;
-        responses: {
-            /** @description Resumo de proventos */
-            200: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": components["schemas"]["ProventosSummaryApiResponseDto"];
-                };
-            };
-            /** @description Nao autenticado */
-            401: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": components["schemas"]["ApiErrorResponseDto"];
-                };
-            };
-        };
-    };
-    ProventosController_findAll: {
-        parameters: {
-            query?: {
-                /** @description Filtrar por ticker (ex: PETR4) */
-                ticker?: string;
-                /** @description Registros a pular (padrao: 0) */
-                skip?: string;
-                /** @description Registros a retornar (padrao: 20, max: 100) */
-                take?: string;
-            };
-            header?: never;
-            path?: never;
-            cookie?: never;
-        };
-        requestBody?: never;
-        responses: {
-            /** @description Lista de proventos */
-            200: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": components["schemas"]["DividendEventListApiResponseDto"];
-                };
-            };
-            /** @description Nao autenticado */
-            401: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": components["schemas"]["ApiErrorResponseDto"];
-                };
-            };
-        };
-    };
     NotificationsController_getNotifications: {
         parameters: {
             query?: never;
@@ -3146,8 +2936,12 @@ export interface operations {
                 underlying: string;
                 /** @description Tipo de opcao (CALL ou PUT) */
                 type?: "CALL" | "PUT";
-                /** @description Numero maximo de resultados (padrao: 20) */
-                limit?: string;
+                /** @description Pagina (padrao: 1) */
+                page?: string;
+                /** @description Resultados por pagina (padrao: 50) */
+                pageSize?: string;
+                /** @description Filtro por ticker (ex: PETRG3) */
+                q?: string;
             };
             header?: never;
             path?: never;
@@ -3155,14 +2949,12 @@ export interface operations {
         };
         requestBody?: never;
         responses: {
-            /** @description Lista de opcoes encontradas */
+            /** @description Pagina de opcoes encontradas */
             200: {
                 headers: {
                     [name: string]: unknown;
                 };
-                content: {
-                    "application/json": components["schemas"]["AssetSearchApiResponseDto"];
-                };
+                content?: never;
             };
         };
     };
@@ -3615,6 +3407,37 @@ export interface operations {
                 };
                 content: {
                     "application/json": components["schemas"]["WalletApiResponseDto"];
+                };
+            };
+        };
+    };
+    ProventosController_getWalletProventos: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                walletId: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Proventos calculados */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["WalletProventosApiResponseDto"];
+                };
+            };
+            /** @description Nao autenticado */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ApiErrorResponseDto"];
                 };
             };
         };
