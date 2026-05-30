@@ -735,13 +735,14 @@ export default function WalletPage() {
             className="lg:col-span-4 space-y-4"
           >
             <ConcentrationPanel
-              byAsset={wallet.concentration.byAsset}
               byType={wallet.concentration.byType}
               bySector={wallet.concentration.bySector}
               positions={wallet.positions}
+              optionPositions={optionPositionsData?.positions ?? []}
               performance={performance}
               currency={wallet.currency}
               totalPositionsValue={wallet.totalPositionsValue}
+              view={subTab === 'options' ? 'options' : 'assets'}
             />
           </motion.div>
 

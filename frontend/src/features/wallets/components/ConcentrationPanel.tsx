@@ -5,15 +5,17 @@ import { motion, AnimatePresence } from 'motion/react';
 import { formatCurrency, formatPercent } from '@/lib/formatters';
 import { EmptyState } from '@/components/ui/EmptyState';
 import type { ConcentrationItem, Position, WalletPerformance } from '../types';
+import type { OptionPosition } from '@/features/derivatives/types';
 
 interface ConcentrationPanelProps {
-  byAsset: ConcentrationItem[];
   byType?: ConcentrationItem[];
   bySector?: ConcentrationItem[];
   positions: Position[];
+  optionPositions?: OptionPosition[];
   performance?: WalletPerformance | null;
   currency: string;
   totalPositionsValue: number;
+  view?: 'assets' | 'options';
 }
 
 const PALETTE = [
@@ -74,23 +76,69 @@ function buildDonutPoints(
   ];
 }
 
-/**
- * Concentration over invested positions only (cash excluded by product convention).
- * Donut shows top assets + "Outros"; click "Detalhes" opens a modal with the full breakdown
- * including type and sector groupings plus per-position metrics.
- */
+function buildConcentration(
+  items: { key: string; label: string; value: number }[],
+  total: number,
+): ConcentrationItem[] {
+  if (total <= 0) return [];
+  return items.map((item) => ({
+    key: item.key,
+    label: item.label,
+    value: item.value,
+    percent: (item.value / total) * 100,
+  }));
+}
+
 export function ConcentrationPanel({
-  byAsset,
   byType,
   bySector,
   positions,
+  optionPositions = [],
   performance,
   currency,
   totalPositionsValue,
+  view = 'assets',
 }: ConcentrationPanelProps) {
   const [showDetails, setShowDetails] = useState(false);
 
-  const donutPoints = useMemo(() => buildDonutPoints(byAsset, 5), [byAsset]);
+  const stockItems = useMemo(() => {
+    const stocks = positions.filter((p) => p.type === 'STOCK');
+    const total = stocks.reduce(
+      (sum, p) => sum + (p.currentValue ?? p.totalCost),
+      0,
+    );
+    return buildConcentration(
+      stocks.map((p) => ({
+        key: p.ticker,
+        label: p.ticker,
+        value: p.currentValue ?? p.totalCost,
+      })),
+      total,
+    );
+  }, [positions]);
+
+  const optionItems = useMemo(() => {
+    const total = optionPositions.reduce(
+      (sum, p) => sum + (p.currentValue ?? p.totalCost),
+      0,
+    );
+    return buildConcentration(
+      optionPositions.map((p) => ({
+        key: p.ticker,
+        label: p.ticker,
+        value: p.currentValue ?? p.totalCost,
+      })),
+      total,
+    );
+  }, [optionPositions]);
+
+  const activeItems = view === 'options' ? optionItems : stockItems;
+  const itemCount = activeItems.length;
+
+  const donutPoints = useMemo(
+    () => buildDonutPoints(activeItems, 5),
+    [activeItems],
+  );
 
   const performanceByTicker = useMemo(() => {
     const map = new Map<string, number>();
@@ -102,7 +150,12 @@ export function ConcentrationPanel({
     return map;
   }, [performance]);
 
-  if (byAsset.length === 0 || totalPositionsValue <= 0) {
+  const isEmpty =
+    view === 'options'
+      ? optionPositions.length === 0
+      : stockItems.length === 0 || totalPositionsValue <= 0;
+
+  if (isEmpty) {
     return (
       <div className="bg-surface-container-lowest p-8 rounded-[2.5rem] shadow-sm border border-outline-variant/5 flex-1 flex flex-col">
         <h3 className="text-lg font-headline font-bold text-on-surface mb-4">
@@ -110,11 +163,34 @@ export function ConcentrationPanel({
         </h3>
         <EmptyState
           icon={PieIcon}
-          message="Sem posições investidas para calcular concentração."
+          message={
+            view === 'options'
+              ? 'Sem posições em opções para calcular concentração.'
+              : 'Sem posições investidas para calcular concentração.'
+          }
         />
       </div>
     );
   }
+
+  const subtitlePrefix =
+    view === 'options' ? 'Sobre opções' : 'Sobre ativos investidos';
+  const subtitleUnit =
+    view === 'options'
+      ? itemCount === 1
+        ? 'opção'
+        : 'opções'
+      : itemCount === 1
+        ? 'ativo'
+        : 'ativos';
+  const centerLabel =
+    view === 'options'
+      ? itemCount === 1
+        ? 'Opção'
+        : 'Opções'
+      : itemCount === 1
+        ? 'Ativo'
+        : 'Ativos';
 
   return (
     <>
@@ -125,8 +201,7 @@ export function ConcentrationPanel({
               Concentração
             </h3>
             <p className="text-[10px] text-on-surface-variant uppercase tracking-widest mt-1">
-              Sobre ativos investidos · {byAsset.length}{' '}
-              {byAsset.length === 1 ? 'ativo' : 'ativos'}
+              {subtitlePrefix} · {itemCount} {subtitleUnit}
             </p>
           </div>
           <button
@@ -159,10 +234,10 @@ export function ConcentrationPanel({
           </ResponsiveContainer>
           <div className="absolute inset-0 flex flex-col items-center justify-center pointer-events-none">
             <p className="text-3xl font-headline font-extrabold text-on-surface">
-              {byAsset.length}
+              {itemCount}
             </p>
             <p className="text-[10px] uppercase font-bold text-on-surface-variant tracking-widest">
-              {byAsset.length === 1 ? 'Ativo' : 'Ativos'}
+              {centerLabel}
             </p>
           </div>
         </div>
@@ -195,10 +270,10 @@ export function ConcentrationPanel({
       <AnimatePresence>
         {showDetails && (
           <ConcentrationDetailsModal
-            byAsset={byAsset}
             byType={byType ?? []}
             bySector={bySector ?? []}
             positions={positions}
+            optionPositions={optionPositions}
             performanceByTicker={performanceByTicker}
             currency={currency}
             totalPositionsValue={totalPositionsValue}
@@ -211,10 +286,10 @@ export function ConcentrationPanel({
 }
 
 interface DetailsModalProps {
-  byAsset: ConcentrationItem[];
   byType: ConcentrationItem[];
   bySector: ConcentrationItem[];
   positions: Position[];
+  optionPositions: OptionPosition[];
   performanceByTicker: Map<string, number>;
   currency: string;
   totalPositionsValue: number;
@@ -222,10 +297,10 @@ interface DetailsModalProps {
 }
 
 function ConcentrationDetailsModal({
-  byAsset,
   byType,
   bySector,
   positions,
+  optionPositions,
   performanceByTicker,
   currency,
   totalPositionsValue,
@@ -237,9 +312,83 @@ function ConcentrationDetailsModal({
     return map;
   }, [positions]);
 
-  const sortedAssets = useMemo(
-    () => [...byAsset].sort((a, b) => b.value - a.value),
-    [byAsset],
+  const sortedStockAssets = useMemo(() => {
+    const stocks = positions.filter((p) => p.type === 'STOCK');
+    const total = stocks.reduce(
+      (sum, p) => sum + (p.currentValue ?? p.totalCost),
+      0,
+    );
+    return stocks
+      .map((p) => ({
+        key: p.ticker,
+        label: p.ticker,
+        value: p.currentValue ?? p.totalCost,
+        percent: total > 0 ? ((p.currentValue ?? p.totalCost) / total) * 100 : 0,
+      }))
+      .sort((a, b) => b.value - a.value);
+  }, [positions]);
+
+  const optionsByBase = useMemo(() => {
+    if (optionPositions.length === 0) return [];
+    const totalOptValue = optionPositions.reduce(
+      (sum, p) => sum + (p.currentValue ?? p.totalCost),
+      0,
+    );
+    const map = new Map<
+      string,
+      {
+        optionCount: number;
+        totalQty: number;
+        totalValue: number;
+        totalPnl: number | null;
+      }
+    >();
+    for (const op of optionPositions) {
+      const base = op.optionDetail.underlyingTicker;
+      const val = op.currentValue ?? op.totalCost;
+      const existing = map.get(base);
+      if (existing) {
+        existing.optionCount++;
+        existing.totalQty += op.quantity;
+        existing.totalValue += val;
+        if (op.profitLoss !== undefined) {
+          existing.totalPnl = (existing.totalPnl ?? 0) + op.profitLoss;
+        }
+      } else {
+        map.set(base, {
+          optionCount: 1,
+          totalQty: op.quantity,
+          totalValue: val,
+          totalPnl: op.profitLoss ?? null,
+        });
+      }
+    }
+    return Array.from(map.entries())
+      .map(([base, data]) => ({
+        underlyingTicker: base,
+        ...data,
+        percent:
+          totalOptValue > 0 ? (data.totalValue / totalOptValue) * 100 : 0,
+      }))
+      .sort((a, b) => b.totalValue - a.totalValue);
+  }, [optionPositions]);
+
+  const totalOptValue = useMemo(
+    () =>
+      optionPositions.reduce(
+        (sum, p) => sum + (p.currentValue ?? p.totalCost),
+        0,
+      ),
+    [optionPositions],
+  );
+
+  const sortedOptions = useMemo(
+    () =>
+      [...optionPositions].sort(
+        (a, b) =>
+          (b.currentValue ?? b.totalCost) - (a.currentValue ?? a.totalCost),
+      ),
+    [optionPositions],
   );
 
   return (
@@ -339,84 +488,245 @@ function ConcentrationDetailsModal({
           </section>
         )}
 
-        <section>
-          <h4 className="text-[10px] font-bold uppercase tracking-widest text-on-surface-variant mb-3">
-            Por ativo
-          </h4>
-          <div className="overflow-x-auto rounded-2xl border border-outline-variant/10">
-            <table className="w-full text-left text-sm">
-              <thead className="bg-surface-container-lowest">
-                <tr className="text-[10px] uppercase font-bold tracking-widest text-on-surface-variant">
-                  <th className="px-4 py-3">Ativo</th>
-                  <th className="px-4 py-3 text-right">Qtd</th>
-                  <th className="px-4 py-3 text-right">Valor</th>
-                  <th className="px-4 py-3 text-right">L/P</th>
-                  <th className="px-4 py-3 text-right">%</th>
-                </tr>
-              </thead>
-              <tbody className="divide-y divide-outline-variant/5">
-                {sortedAssets.map((item, idx) => {
-                  const position = positionByTicker.get(item.key);
-                  const pnl = performanceByTicker.get(item.key);
-                  const pnlClass =
-                    pnl === undefined
-                      ? 'text-on-surface-variant'
-                      : pnl > 0
-                        ? 'text-tertiary'
-                        : pnl < 0
-                          ? 'text-error'
-                          : 'text-on-surface-variant';
-                  return (
-                    <tr
-                      key={item.key}
-                      className="hover:bg-surface-container-lowest/50"
-                    >
-                      <td className="px-4 py-3">
-                        <div className="flex items-center gap-2">
-                          <div
-                            className="w-2 h-2 rounded-full flex-shrink-0"
-                            style={{ backgroundColor: colorAt(idx) }}
-                          />
-                          <div className="min-w-0">
-                            <p className="font-bold text-on-surface">
-                              {item.label}
-                            </p>
-                            {position && (
-                              <p className="text-xs text-on-surface-variant truncate">
-                                {position.name}
-                              </p>
-                            )}
-                          </div>
-                        </div>
-                      </td>
-                      <td className="px-4 py-3 text-right text-on-surface-variant">
-                        {position?.quantity ?? '—'}
-                      </td>
-                      <td className="px-4 py-3 text-right font-medium text-on-surface">
-                        {formatCurrency(item.value, currency)}
-                      </td>
-                      <td
-                        className={`px-4 py-3 text-right font-medium ${pnlClass}`}
+        {sortedStockAssets.length > 0 && (
+          <section className="mb-6">
+            <h4 className="text-[10px] font-bold uppercase tracking-widest text-on-surface-variant mb-3">
+              Por ativo
+            </h4>
+            <div className="overflow-x-auto rounded-2xl border border-outline-variant/10">
+              <table className="w-full text-left text-sm">
+                <thead className="bg-surface-container-lowest">
+                  <tr className="text-[10px] uppercase font-bold tracking-widest text-on-surface-variant">
+                    <th className="px-4 py-3">Ativo</th>
+                    <th className="px-4 py-3 text-right">Qtd</th>
+                    <th className="px-4 py-3 text-right">Valor</th>
+                    <th className="px-4 py-3 text-right">L/P</th>
+                    <th className="px-4 py-3 text-right">%</th>
+                  </tr>
+                </thead>
+                <tbody className="divide-y divide-outline-variant/5">
+                  {sortedStockAssets.map((item, idx) => {
+                    const position = positionByTicker.get(item.key);
+                    const pnl = performanceByTicker.get(item.key);
+                    const pnlClass =
+                      pnl === undefined
+                        ? 'text-on-surface-variant'
+                        : pnl > 0
+                          ? 'text-tertiary'
+                          : pnl < 0
+                            ? 'text-error'
+                            : 'text-on-surface-variant';
+                    return (
+                      <tr
+                        key={item.key}
+                        className="hover:bg-surface-container-lowest/50"
                       >
-                        {pnl !== undefined ? (
-                          <>
-                            {pnl > 0 ? '+' : ''}
-                            {formatCurrency(pnl, currency)}
-                          </>
-                        ) : (
-                          '—'
-                        )}
-                      </td>
-                      <td className="px-4 py-3 text-right font-bold text-on-surface">
-                        {formatPercent(item.percent)}
-                      </td>
-                    </tr>
-                  );
-                })}
-              </tbody>
-            </table>
-          </div>
-        </section>
+                        <td className="px-4 py-3">
+                          <div className="flex items-center gap-2">
+                            <div
+                              className="w-2 h-2 rounded-full flex-shrink-0"
+                              style={{ backgroundColor: colorAt(idx) }}
+                            />
+                            <div className="min-w-0">
+                              <p className="font-bold text-on-surface">
+                                {item.label}
+                              </p>
+                              {position && (
+                                <p className="text-xs text-on-surface-variant truncate">
+                                  {position.name}
+                                </p>
+                              )}
+                            </div>
+                          </div>
+                        </td>
+                        <td className="px-4 py-3 text-right text-on-surface-variant">
+                          {position?.quantity ?? '—'}
+                        </td>
+                        <td className="px-4 py-3 text-right font-medium text-on-surface">
+                          {formatCurrency(item.value, currency)}
+                        </td>
+                        <td
+                          className={`px-4 py-3 text-right font-medium ${pnlClass}`}
+                        >
+                          {pnl !== undefined ? (
+                            <>
+                              {pnl > 0 ? '+' : ''}
+                              {formatCurrency(pnl, currency)}
+                            </>
+                          ) : (
+                            '—'
+                          )}
+                        </td>
+                        <td className="px-4 py-3 text-right font-bold text-on-surface">
+                          {formatPercent(item.percent)}
+                        </td>
+                      </tr>
+                    );
+                  })}
+                </tbody>
+              </table>
+            </div>
+          </section>
+        )}
+
+        {optionsByBase.length > 0 && (
+          <section className="mb-6">
+            <h4 className="text-[10px] font-bold uppercase tracking-widest text-on-surface-variant mb-3">
+              Opções por ativo base
+            </h4>
+            <div className="overflow-x-auto rounded-2xl border border-outline-variant/10">
+              <table className="w-full text-left text-sm">
+                <thead className="bg-surface-container-lowest">
+                  <tr className="text-[10px] uppercase font-bold tracking-widest text-on-surface-variant">
+                    <th className="px-4 py-3">Ativo base</th>
+                    <th className="px-4 py-3 text-right">Opções</th>
+                    <th className="px-4 py-3 text-right">Qtd ações</th>
+                    <th className="px-4 py-3 text-right">Valor</th>
+                    <th className="px-4 py-3 text-right">L/P</th>
+                    <th className="px-4 py-3 text-right">%</th>
+                  </tr>
+                </thead>
+                <tbody className="divide-y divide-outline-variant/5">
+                  {optionsByBase.map((item) => {
+                    const pnlClass =
+                      item.totalPnl === null
+                        ? 'text-on-surface-variant'
+                        : item.totalPnl > 0
+                          ? 'text-tertiary'
+                          : item.totalPnl < 0
+                            ? 'text-error'
+                            : 'text-on-surface-variant';
+                    return (
+                      <tr
+                        key={item.underlyingTicker}
+                        className="hover:bg-surface-container-lowest/50"
+                      >
+                        <td className="px-4 py-3 font-bold text-on-surface">
+                          {item.underlyingTicker}
+                        </td>
+                        <td className="px-4 py-3 text-right text-on-surface-variant">
+                          {item.optionCount}
+                        </td>
+                        <td className="px-4 py-3 text-right text-on-surface-variant">
+                          {item.totalQty}
+                        </td>
+                        <td className="px-4 py-3 text-right font-medium text-on-surface">
+                          {formatCurrency(item.totalValue, currency)}
+                        </td>
+                        <td
+                          className={`px-4 py-3 text-right font-medium ${pnlClass}`}
+                        >
+                          {item.totalPnl !== null ? (
+                            <>
+                              {item.totalPnl > 0 ? '+' : ''}
+                              {formatCurrency(item.totalPnl, currency)}
+                            </>
+                          ) : (
+                            '—'
+                          )}
+                        </td>
+                        <td className="px-4 py-3 text-right font-bold text-on-surface">
+                          {formatPercent(item.percent)}
+                        </td>
+                      </tr>
+                    );
+                  })}
+                </tbody>
+              </table>
+            </div>
+          </section>
+        )}
+
+        {sortedOptions.length > 0 && (
+          <section>
+            <h4 className="text-[10px] font-bold uppercase tracking-widest text-on-surface-variant mb-3">
+              Por opção
+            </h4>
+            <div className="overflow-x-auto rounded-2xl border border-outline-variant/10">
+              <table className="w-full text-left text-sm">
+                <thead className="bg-surface-container-lowest">
+                  <tr className="text-[10px] uppercase font-bold tracking-widest text-on-surface-variant">
+                    <th className="px-4 py-3">Opção</th>
+                    <th className="px-4 py-3 text-right">Tipo</th>
+                    <th className="px-4 py-3 text-right">Strike</th>
+                    <th className="px-4 py-3 text-right">Qtd</th>
+                    <th className="px-4 py-3 text-right">Valor</th>
+                    <th className="px-4 py-3 text-right">L/P</th>
+                    <th className="px-4 py-3 text-right">%</th>
+                  </tr>
+                </thead>
+                <tbody className="divide-y divide-outline-variant/5">
+                  {sortedOptions.map((op, idx) => {
+                    const val = op.currentValue ?? op.totalCost;
+                    const percent =
+                      totalOptValue > 0 ? (val / totalOptValue) * 100 : 0;
+                    const pnlClass =
+                      op.profitLoss === undefined
+                        ? 'text-on-surface-variant'
+                        : op.profitLoss > 0
+                          ? 'text-tertiary'
+                          : op.profitLoss < 0
+                            ? 'text-error'
+                            : 'text-on-surface-variant';
+                    return (
+                      <tr
+                        key={op.id}
+                        className="hover:bg-surface-container-lowest/50"
+                      >
+                        <td className="px-4 py-3">
+                          <div className="flex items-center gap-2">
+                            <div
+                              className="w-2 h-2 rounded-full flex-shrink-0"
+                              style={{ backgroundColor: colorAt(idx) }}
+                            />
+                            <p className="font-bold text-on-surface">
+                              {op.ticker}
+                            </p>
+                          </div>
+                        </td>
+                        <td className="px-4 py-3 text-right">
+                          <span
+                            className={`text-[10px] font-bold px-2 py-0.5 rounded-full ${
+                              op.optionDetail.optionType === 'CALL'
+                                ? 'bg-tertiary/10 text-tertiary'
+                                : 'bg-error/10 text-error'
+                            }`}
+                          >
+                            {op.optionDetail.optionType}
+                          </span>
+                        </td>
+                        <td className="px-4 py-3 text-right text-on-surface-variant">
+                          {formatCurrency(op.optionDetail.strikePrice, currency)}
+                        </td>
+                        <td className="px-4 py-3 text-right text-on-surface-variant">
+                          {op.quantity}
+                        </td>
+                        <td className="px-4 py-3 text-right font-medium text-on-surface">
+                          {formatCurrency(val, currency)}
+                        </td>
+                        <td
+                          className={`px-4 py-3 text-right font-medium ${pnlClass}`}
+                        >
+                          {op.profitLoss !== undefined ? (
+                            <>
+                              {op.profitLoss > 0 ? '+' : ''}
+                              {formatCurrency(op.profitLoss, currency)}
+                            </>
+                          ) : (
+                            '—'
+                          )}
+                        </td>
+                        <td className="px-4 py-3 text-right font-bold text-on-surface">
+                          {formatPercent(percent)}
+                        </td>
+                      </tr>
+                    );
+                  })}
+                </tbody>
+              </table>
+            </div>
+          </section>
+        )}
       </motion.div>
     </div>
   );
