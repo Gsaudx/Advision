@@ -203,7 +203,7 @@ export function OptionPositionCard({
           {position.profitLoss !== undefined ? (
             <div>
               <p className="text-[9px] font-bold text-on-surface-variant uppercase tracking-[0.14em] mb-1">
-                P&L Não Real.
+                P&L Aberto
               </p>
               <p
                 className={`font-headline font-black text-[20px] leading-none tracking-[-0.02em] ${isProfit ? 'text-tertiary' : 'text-error'}`}
