@@ -174,7 +174,7 @@ export function OptionPositionCard({
         <div className="flex-1 flex items-center px-7">
           {[
             {
-              label: 'CONTRATOS',
+              label: 'AÇÕES',
               value: position.quantity.toLocaleString('pt-BR'),
             },
             {

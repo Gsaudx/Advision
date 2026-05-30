@@ -896,7 +896,7 @@ export function UnifiedTradeModal({
                       </div>
                     )}
 
-                  {/* Contratos + Prêmio */}
+                  {/* Ações + Prêmio */}
                   <div className="grid grid-cols-2 gap-4">
                     <div>
                       <label className="text-[10px] font-bold text-on-surface-variant uppercase tracking-[0.15em] block mb-2">

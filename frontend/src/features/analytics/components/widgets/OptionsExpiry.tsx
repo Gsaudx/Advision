@@ -43,7 +43,7 @@ function ExpiryRow({
             {w.label}
           </span>
           <span className="text-[11px] text-on-surface-variant">
-            {w.count} contratos
+            {w.count} ações
           </span>
         </div>
         <span className="font-mono text-xs font-semibold text-on-surface tabular-nums">
@@ -92,7 +92,7 @@ export function OptionsExpiry({ params }: Props) {
               {fmtBRLCompact(total)}
             </p>
             <p className="text-xs text-on-surface-variant font-semibold whitespace-nowrap">
-              em {contracts} contratos
+              em {contracts} ações
             </p>
           </div>
 
@@ -105,7 +105,7 @@ export function OptionsExpiry({ params }: Props) {
           {criticalWindow && criticalWindow.count > 0 && (
             <div className="mt-5 pt-4 border-t border-outline-variant/20 flex items-center gap-2 flex-wrap">
               <div className="px-2.5 py-1 rounded-full bg-error/12 text-error text-[11px] font-bold whitespace-nowrap">
-                {criticalWindow.count} contratos em ≤7 dias
+                {criticalWindow.count} ações em ≤7 dias
               </div>
               <span className="text-[11px] text-on-surface-variant">
                 requerem rolagem ou exercício
