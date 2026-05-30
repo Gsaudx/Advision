@@ -734,16 +734,39 @@ export default function WalletPage() {
             transition={{ delay: 0.08 }}
             className="lg:col-span-4 space-y-4"
           >
-            <ConcentrationPanel
-              byType={wallet.concentration.byType}
-              bySector={wallet.concentration.bySector}
-              positions={wallet.positions}
-              optionPositions={optionPositionsData?.positions ?? []}
-              performance={performance}
-              currency={wallet.currency}
-              totalPositionsValue={wallet.totalPositionsValue}
-              view={subTab === 'options' ? 'options' : 'assets'}
-            />
+            <div className="flex flex-col min-h-[540px] max-h-[540px]">
+              <ConcentrationPanel
+                byType={wallet.concentration.byType}
+                bySector={wallet.concentration.bySector}
+                positions={wallet.positions}
+                optionPositions={optionPositionsData?.positions ?? []}
+                performance={performance}
+                currency={wallet.currency}
+                totalPositionsValue={wallet.totalPositionsValue}
+                view={subTab === 'options' ? 'options' : 'assets'}
+              />
+            </div>
+            {subTab === 'options' &&
+              optionHistoryData &&
+              optionHistoryData.history.length > 0 && (
+                <ContentPanel
+                  header={
+                    <div className="flex items-center justify-between">
+                      <p className="text-[10px] font-bold text-on-surface-variant uppercase tracking-[0.2em]">
+                        Histórico de Encerradas
+                      </p>
+                      <span className="text-[10px] font-bold text-on-surface-variant bg-outline-variant/20 px-2 py-0.5 rounded-full">
+                        {optionHistoryData.history.length}
+                      </span>
+                    </div>
+                  }
+                  bodyClassName="p-2 max-h-[280px] overflow-y-auto"
+                >
+                  <ClosedOptionHistoryList
+                    items={optionHistoryData.history}
+                  />
+                </ContentPanel>
+              )}
           </motion.div>
 
           {/* ── Right Column ── */}
@@ -810,9 +833,9 @@ export default function WalletPage() {
 
             {/* Sub-tab content: Opções */}
             {subTab === 'options' && (
-              <>
+              <div className="flex flex-col gap-4">
                 <ContentPanel
-                  className="relative flex flex-col min-h-[540px]"
+                  className="relative flex flex-col min-h-[540px] max-h-[540px]"
                   bodyClassName="p-0 overflow-y-auto flex-1"
                 >
                   {isLoadingOptions ? (
@@ -973,26 +996,6 @@ export default function WalletPage() {
                     </div>
                   )}
                 </ContentPanel>
-                {optionHistoryData && optionHistoryData.history.length > 0 && (
-                  <ContentPanel
-                    header={
-                      <div className="flex items-center justify-between">
-                        <p className="text-[10px] font-bold text-on-surface-variant uppercase tracking-[0.2em]">
-                          Histórico de Encerradas
-                        </p>
-                        <span className="text-[10px] font-bold text-on-surface-variant bg-outline-variant/20 px-2 py-0.5 rounded-full">
-                          {optionHistoryData.history.length}
-                        </span>
-                      </div>
-                    }
-                    bodyClassName="p-2 max-h-[280px] overflow-y-auto"
-                  >
-                    <ClosedOptionHistoryList
-                      items={optionHistoryData.history}
-                    />
-                  </ContentPanel>
-                )}
-
                 {optionPositionsData?.positions &&
                   optionPositionsData.positions.length > 0 && (
                     <UpcomingExpirationsWidget
@@ -1008,7 +1011,7 @@ export default function WalletPage() {
                       }
                     />
                   )}
-              </>
+              </div>
             )}
 
             {/* Sub-tab content: Estratégias */}
