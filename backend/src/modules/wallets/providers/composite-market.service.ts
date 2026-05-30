@@ -3,6 +3,7 @@ import { MarketDataProvider, AssetMetadata } from './market-data.provider';
 import { BrapiMarketService } from './brapi-market.service';
 import { OpLabMarketService } from './oplab-market.service';
 import type { AssetSearchResult } from './yahoo-market.service';
+import type { OptionSearchPageResponse } from '../schemas/wallet.schema';
 
 /**
  * Composite Market Data Service
@@ -171,9 +172,8 @@ export class CompositeMarketService extends MarketDataProvider {
           const optionSeries = await this.opLabService.searchOptions(
             stock.ticker,
             undefined,
-            Math.min(5, limit - results.length),
           );
-          results.push(...optionSeries);
+          results.push(...optionSeries.results);
         } catch {
           // Ignore errors for individual stock option lookups
         }
@@ -190,14 +190,16 @@ export class CompositeMarketService extends MarketDataProvider {
   async searchOptions(
     underlying: string,
     optionType?: 'CALL' | 'PUT',
-    limit = 20,
-  ): Promise<AssetSearchResult[]> {
+    page = 1,
+    pageSize = 50,
+    q?: string,
+  ): Promise<OptionSearchPageResponse> {
     if (!this.opLabService.isConfigured()) {
       this.logger.warn('OpLab not configured, cannot search options');
-      return [];
+      return { results: [], total: 0, page, pageSize, hasMore: false };
     }
 
-    return this.opLabService.searchOptions(underlying, optionType, limit);
+    return this.opLabService.searchOptions(underlying, optionType, page, pageSize, q);
   }
 
   /**

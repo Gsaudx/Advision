@@ -299,11 +299,13 @@ describe('OpLabMarketService', () => {
 
       const results = await service.searchOptions('PETR4');
 
-      expect(results).toHaveLength(2);
-      expect(results[0].ticker).toBe('PETRA240');
-      expect(results[0].type).toBe('OPTION');
-      expect(results[0].strike).toBe(24.0);
-      expect(results[0].optionType).toBe('CALL');
+      expect(results.results).toHaveLength(2);
+      expect(results.total).toBe(2);
+      expect(results.hasMore).toBe(false);
+      expect(results.results[0].ticker).toBe('PETRA240');
+      expect(results.results[0].type).toBe('OPTION');
+      expect(results.results[0].strike).toBe(24.0);
+      expect(results.results[0].optionType).toBe('CALL');
     });
 
     it('filters by option type', async () => {
@@ -342,9 +344,9 @@ describe('OpLabMarketService', () => {
 
       const results = await service.searchOptions('PETR4', 'PUT');
 
-      expect(results).toHaveLength(1);
-      expect(results[0].ticker).toBe('PETRM240');
-      expect(results[0].optionType).toBe('PUT');
+      expect(results.results).toHaveLength(1);
+      expect(results.results[0].ticker).toBe('PETRM240');
+      expect(results.results[0].optionType).toBe('PUT');
     });
   });
 

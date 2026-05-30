@@ -13,6 +13,7 @@ export {
 export { useTransactions, transactionQueryKeys } from './useTransactions';
 export {
   useOptionsSearch,
+  useOptionsSearchInfinite,
   useOptionDetails,
   optionsQueryKeys,
 } from './useOptionsSearch';

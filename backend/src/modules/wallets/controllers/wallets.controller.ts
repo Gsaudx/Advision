@@ -51,6 +51,7 @@ import type {
   WalletSummaryResponse,
   WalletPerformanceResponse,
   AssetSearchResponse,
+  OptionSearchPageResponse,
   AssetPriceResponse,
   TransactionListResponse,
   HistoricalPriceResponse,
@@ -222,35 +223,41 @@ export class WalletsController {
     enum: ['CALL', 'PUT'],
   })
   @ApiQuery({
-    name: 'limit',
+    name: 'page',
     required: false,
-    description: 'Numero maximo de resultados (padrao: 20)',
+    description: 'Pagina (padrao: 1)',
+  })
+  @ApiQuery({
+    name: 'pageSize',
+    required: false,
+    description: 'Resultados por pagina (padrao: 50)',
+  })
+  @ApiQuery({
+    name: 'q',
+    required: false,
+    description: 'Filtro por ticker (ex: PETRG3)',
   })
   @ApiResponse({
     status: 200,
-    description: 'Lista de opcoes encontradas',
-    type: AssetSearchApiResponseDto,
+    description: 'Pagina de opcoes encontradas',
   })
   async searchOptions(
     @Query('underlying') underlying: string,
     @Query('type') optionType?: 'CALL' | 'PUT',
-    @Query('limit') limit?: string,
-  ): Promise<ApiResponseType<AssetSearchResponse>> {
-    const DEFAULT_LIMIT = 20;
-    const MAX_LIMIT = 50;
-
-    let maxResults = DEFAULT_LIMIT;
-    if (limit) {
-      const parsed = parseInt(limit, 10);
-      if (!Number.isNaN(parsed) && parsed > 0) {
-        maxResults = Math.min(parsed, MAX_LIMIT);
-      }
-    }
-
+    @Query('page') page?: string,
+    @Query('pageSize') pageSize?: string,
+    @Query('q') q?: string,
+  ): Promise<ApiResponseType<OptionSearchPageResponse>> {
+    const parsedPage = page ? Math.max(1, parseInt(page, 10) || 1) : 1;
+    const parsedPageSize = pageSize
+      ? Math.max(1, parseInt(pageSize, 10) || 50)
+      : 50;
     const data = await this.marketService.searchOptions(
       underlying,
       optionType,
-      maxResults,
+      parsedPage,
+      parsedPageSize,
+      q,
     );
     return ApiResponseDto.success(data);
   }

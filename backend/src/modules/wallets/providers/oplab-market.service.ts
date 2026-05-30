@@ -5,6 +5,7 @@ import {
   MARKET_CACHE_TTL_MS,
 } from './market-data.provider';
 import type { AssetSearchResult } from './yahoo-market.service';
+import type { OptionSearchPageResponse } from '../schemas/wallet.schema';
 
 interface CacheEntry<T> {
   value: T;
@@ -566,30 +567,46 @@ export class OpLabMarketService extends MarketDataProvider {
   async searchOptions(
     underlying: string,
     optionType?: 'CALL' | 'PUT',
-    limit = 20,
-  ): Promise<AssetSearchResult[]> {
+    page = 1,
+    pageSize = 50,
+    q?: string,
+  ): Promise<OptionSearchPageResponse> {
     if (!this.isConfigured()) {
-      return [];
+      return { results: [], total: 0, page, pageSize, hasMore: false };
     }
 
     const upperUnderlying = underlying.toUpperCase();
     const series = await this.getOptionSeries(upperUnderlying);
 
-    let filtered = series;
-    if (optionType) {
-      filtered = series.filter((s) => s.type === optionType);
+    let filtered = optionType
+      ? series.filter((s) => s.type === optionType)
+      : series;
+
+    if (q) {
+      const upperQ = q.toUpperCase();
+      filtered = filtered.filter((s) => s.symbol.includes(upperQ));
     }
 
-    return filtered.slice(0, limit).map((option) => ({
-      ticker: option.symbol,
-      name: this.buildOptionName(option),
-      type: 'OPTION' as const,
-      exchange: 'B3',
-      strike: option.strike,
-      expirationDate: option.due_date,
-      optionType: option.type,
-      lastPrice: option.close ?? option.bid ?? option.ask,
-    }));
+    const total = filtered.length;
+    const offset = (page - 1) * pageSize;
+    const slice = filtered.slice(offset, offset + pageSize);
+
+    return {
+      results: slice.map((option) => ({
+        ticker: option.symbol,
+        name: this.buildOptionName(option),
+        type: 'OPTION' as const,
+        exchange: 'B3',
+        strike: option.strike,
+        expirationDate: option.due_date,
+        optionType: option.type,
+        lastPrice: option.close ?? option.bid ?? option.ask,
+      })),
+      total,
+      page,
+      pageSize,
+      hasMore: offset + pageSize < total,
+    };
   }
 
   /**
