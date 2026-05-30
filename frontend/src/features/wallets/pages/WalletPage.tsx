@@ -6,7 +6,6 @@ import {
   Wallet,
   LineChart,
   LayoutGrid,
-  Layers,
   Search,
   X,
   Pencil,
@@ -45,8 +44,6 @@ import {
   AssignmentModal,
   ExpirationModal,
   UpcomingExpirationsWidget,
-  StrategyBuilderModal,
-  StrategyHistoryList,
   EditOptionModal,
 } from '@/features/derivatives';
 import type {
@@ -58,7 +55,7 @@ import type { Position, Transaction } from '../types';
 import { transactionTypeLabels } from '../types';
 import { useWalletsPageConfig } from './useWalletsPageConfig';
 import { useSentinelStatus } from '../api';
-type SubTab = 'positions' | 'options' | 'strategies';
+type SubTab = 'positions' | 'options';
 type PillTab = 'operations' | 'proventos' | 'ativos';
 type LifecycleAction = 'close' | 'exercise' | 'assignment' | 'expiration';
 
@@ -466,7 +463,6 @@ export default function WalletPage() {
   const [subTab, setSubTab] = useState<SubTab>('positions');
   const [pillTab, setPillTab] = useState<PillTab>('operations');
   const [showTradeModal, setShowTradeModal] = useState(false);
-  const [showStrategyModal, setShowStrategyModal] = useState(false);
   const [tradeInitial, setTradeInitial] = useState<{
     instrument: 'asset' | 'option';
     direction: 'BUY' | 'SELL';
@@ -559,7 +555,6 @@ export default function WalletPage() {
   const subTabs: { id: SubTab; label: string; icon: React.ElementType }[] = [
     { id: 'positions', label: 'Ações', icon: LayoutGrid },
     { id: 'options', label: 'Opções', icon: LineChart },
-    { id: 'strategies', label: 'Estratégias', icon: Layers },
   ];
 
   const pillTabs: { id: PillTab; label: string }[] = [
@@ -669,21 +664,12 @@ export default function WalletPage() {
                 {wallet.name}
               </h2>
               {config.canTrade && (
-                <>
-                  <button
-                    onClick={() => setShowStrategyModal(true)}
-                    className="flex items-center gap-1.5 bg-surface-container-high text-on-surface-variant px-4 py-2 rounded-full text-xs font-bold hover:bg-surface-container-highest hover:text-on-surface transition-all"
-                  >
-                    <LayoutGrid size={12} />
-                    Estratégia
-                  </button>
-                  <button
-                    onClick={() => handleOpenTrade()}
-                    className="flex items-center gap-2 bg-tertiary text-white px-4 py-2 rounded-full text-xs font-bold hover:brightness-110 transition-all shadow-lg shadow-tertiary/20"
-                  >
-                    Nova Operação
-                  </button>
-                </>
+                <button
+                  onClick={() => handleOpenTrade()}
+                  className="flex items-center gap-2 bg-tertiary text-white px-4 py-2 rounded-full text-xs font-bold hover:brightness-110 transition-all shadow-lg shadow-tertiary/20"
+                >
+                  Nova Operação
+                </button>
               )}
             </div>
             {clientName && (
@@ -1014,12 +1000,6 @@ export default function WalletPage() {
               </div>
             )}
 
-            {/* Sub-tab content: Estratégias */}
-            {subTab === 'strategies' && (
-              <ContentPanel bodyClassName="p-0">
-                <StrategyHistoryList walletId={walletId!} />
-              </ContentPanel>
-            )}
           </motion.div>
         </div>
       </div>
@@ -1069,13 +1049,6 @@ export default function WalletPage() {
           walletId={walletId!}
         />
       )}
-
-      <StrategyBuilderModal
-        isOpen={showStrategyModal}
-        onClose={() => setShowStrategyModal(false)}
-        walletId={walletId!}
-        walletName={wallet.name}
-      />
 
       {editingPosition && (
         <EditOptionModal
