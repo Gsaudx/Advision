@@ -1,6 +1,5 @@
 import { Injectable, Logger, NotFoundException } from '@nestjs/common';
 import { MarketDataProvider, AssetMetadata } from './market-data.provider';
-import { BrapiMarketService } from './brapi-market.service';
 import { OpLabMarketService } from './oplab-market.service';
 import type { AssetSearchResult } from './yahoo-market.service';
 import type { OptionSearchPageResponse } from '../schemas/wallet.schema';
@@ -8,20 +7,13 @@ import type { OptionSearchPageResponse } from '../schemas/wallet.schema';
 /**
  * Composite Market Data Service
  *
- * Routes requests to the appropriate provider:
- * - Stocks -> BrapiMarketService (Brapi.dev)
- * - Options/Derivatives -> OpLabMarketService (OpLab API)
- *
- * The search method combines results from both providers for a complete search experience.
+ * Routes all requests to OpLabMarketService (stocks and options).
  */
 @Injectable()
 export class CompositeMarketService extends MarketDataProvider {
   private readonly logger = new Logger(CompositeMarketService.name);
 
-  constructor(
-    private readonly brapiService: BrapiMarketService,
-    private readonly opLabService: OpLabMarketService,
-  ) {
+  constructor(private readonly opLabService: OpLabMarketService) {
     super();
     this.logger.log(
       `CompositeMarketService initialized. OpLab configured: ${opLabService.isConfigured()}`,
@@ -38,26 +30,21 @@ export class CompositeMarketService extends MarketDataProvider {
   }
 
   /**
-   * Get current price for a ticker
-   * Routes to OpLab for options, Brapi for stocks
+   * Get current price for a ticker (stock or option) via OpLab
    */
   async getPrice(ticker: string): Promise<number> {
     const upperTicker = ticker.toUpperCase();
 
-    if (this.isOptionTicker(upperTicker)) {
-      if (!this.opLabService.isConfigured()) {
-        throw new NotFoundException(`OpLab não configurado: prêmio indisponível para ${upperTicker}`);
-      }
-      try {
-        return await this.opLabService.getPrice(upperTicker);
-      } catch {
-        this.logger.warn(`OpLab price lookup failed for ${upperTicker}`);
-        throw new NotFoundException(`Prêmio não encontrado para ${upperTicker}`);
-      }
+    if (!this.opLabService.isConfigured()) {
+      throw new NotFoundException(`OpLab não configurado: preço indisponível para ${upperTicker}`);
     }
 
-    // Default to Brapi for stocks
-    return this.brapiService.getPrice(upperTicker);
+    try {
+      return await this.opLabService.getPrice(upperTicker);
+    } catch {
+      this.logger.warn(`OpLab price lookup failed for ${upperTicker}`);
+      throw new NotFoundException(`Preço não encontrado para ${upperTicker}`);
+    }
   }
 
   /**
@@ -72,110 +59,55 @@ export class CompositeMarketService extends MarketDataProvider {
   }
 
   /**
-   * Get prices for multiple tickers in batch
-   * Separates options from stocks and routes accordingly
+   * Get prices for multiple tickers in batch via OpLab (stocks and options)
    */
   async getBatchPrices(tickers: string[]): Promise<Record<string, number>> {
-    const result: Record<string, number> = {};
-    const stockTickers: string[] = [];
-    const optionTickers: string[] = [];
+    if (!tickers.length || !this.opLabService.isConfigured()) return {};
 
-    // Separate tickers by type
-    for (const ticker of tickers) {
-      const upperTicker = ticker.toUpperCase();
-      if (this.isOptionTicker(upperTicker)) {
-        optionTickers.push(upperTicker);
-      } else {
-        stockTickers.push(upperTicker);
-      }
+    try {
+      return await this.opLabService.getBatchPrices(
+        tickers.map((t) => t.toUpperCase()),
+      );
+    } catch (error) {
+      this.logger.warn(
+        `Failed to fetch batch prices: ${(error as Error).message}`,
+      );
+      return {};
     }
-
-    // Fetch stock prices from Brapi
-    if (stockTickers.length > 0) {
-      const stockPrices = await this.brapiService.getBatchPrices(stockTickers);
-      Object.assign(result, stockPrices);
-    }
-
-    // Fetch option prices from OpLab
-    if (optionTickers.length > 0 && this.opLabService.isConfigured()) {
-      try {
-        const optionPrices =
-          await this.opLabService.getBatchPrices(optionTickers);
-        Object.assign(result, optionPrices);
-      } catch (error) {
-        this.logger.warn(
-          `Failed to fetch batch option prices: ${(error as Error).message}`,
-        );
-      }
-    }
-
-    return result;
   }
 
   /**
-   * Search for assets - combines results from both providers
-   * This is the key method for the autocomplete feature
-   *
-   * @param query - Search query
-   * @param limit - Maximum results to return
-   * @param includeOptions - Whether to include option series in results
+   * Search for assets via OpLab (stocks and options)
    */
   async search(
     query: string,
     limit = 10,
     includeOptions = false,
   ): Promise<AssetSearchResult[]> {
-    if (!query || query.length < 2) {
+    if (!query || query.length < 2 || !this.opLabService.isConfigured()) {
       return [];
     }
 
     const upperQuery = query.toUpperCase();
     const results: AssetSearchResult[] = [];
 
-    // If query looks like an option ticker, prioritize option search
-    if (this.isOptionTicker(upperQuery) && this.opLabService.isConfigured()) {
-      try {
-        const optionResults = await this.opLabService.search(upperQuery, limit);
-        results.push(
-          ...optionResults.map((r) => ({
-            ...r,
-            type: r.type || 'OPTION',
-          })),
-        );
-      } catch (error) {
-        this.logger.warn(`OpLab search failed: ${(error as Error).message}`);
-      }
+    try {
+      const opLabResults = await this.opLabService.search(upperQuery, limit);
+      results.push(...opLabResults);
+    } catch (error) {
+      this.logger.warn(`OpLab search failed: ${(error as Error).message}`);
     }
 
-    // Search for stocks from Brapi
-    const stockResults = await this.brapiService.search(
-      upperQuery,
-      limit - results.length,
-    );
-    results.push(...stockResults);
+    if (includeOptions && results.length < limit) {
+      const stocks = results.filter((r) => r.type === 'STOCK').slice(0, 3);
 
-    // If includeOptions is true, also search for option series of matching stocks
-    if (
-      includeOptions &&
-      this.opLabService.isConfigured() &&
-      results.length < limit
-    ) {
-      // Find stocks that might have options
-      const stocksWithOptions = results
-        .filter((r) => r.type === 'STOCK')
-        .slice(0, 3); // Limit to avoid too many API calls
-
-      for (const stock of stocksWithOptions) {
+      for (const stock of stocks) {
         if (results.length >= limit) break;
-
         try {
-          const optionSeries = await this.opLabService.searchOptions(
-            stock.ticker,
-            undefined,
-          );
+          const optionSeries = await this.opLabService.searchOptions(stock.ticker, undefined);
           results.push(...optionSeries.results);
         } catch {
-          // Ignore errors for individual stock option lookups
+          // ignore per-stock errors
         }
       }
     }
