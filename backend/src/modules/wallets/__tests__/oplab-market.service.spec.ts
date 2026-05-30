@@ -255,7 +255,7 @@ describe('OpLabMarketService', () => {
       const unconfiguredService = new OpLabMarketService();
 
       const results = await unconfiguredService.searchOptions('PETR4');
-      expect(results).toEqual([]);
+      expect(results).toEqual({ results: [], total: 0, page: 1, pageSize: 50, hasMore: false });
     });
 
     it('returns option series for underlying', async () => {

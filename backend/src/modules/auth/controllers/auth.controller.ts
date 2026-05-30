@@ -16,7 +16,6 @@ import { ApiResponseDto, ApiErrorResponseDto } from '@/common/schemas';
 import type { ApiResponse as ApiResponseType } from '@/common/schemas';
 import { env, parseJwtExpirationToMs } from '@/config';
 import { AuthService } from '../services/auth.service';
-import { ProventosSyncService } from '@/modules/proventos/services/proventos-sync.service';
 import { NotificationsService } from '@/modules/notifications/services'; // [NOTIF]
 import { RegisterDto, LoginDto, UserProfileApiResponseDto } from '../schemas';
 import type { UserProfile } from '../schemas';
@@ -59,7 +58,6 @@ function clearAuthCookie(res: ExpressResponse): void {
 export class AuthController {
   constructor(
     private readonly authService: AuthService,
-    private readonly proventosSyncService: ProventosSyncService,
     private readonly notificationsService: NotificationsService, // [NOTIF]
   ) {}
 
@@ -113,10 +111,6 @@ export class AuthController {
   ): ApiResponseType<UserProfile> {
     const token = this.authService.generateToken(req.user);
     setAuthCookie(res, token);
-
-    if (req.user.role === 'ADMIN') {
-      this.proventosSyncService.trySyncAfterAdminLogin(req.user.id);
-    }
 
     // [NOTIF] varredura diária de vencimentos no login (fire-and-forget, respeita 24h)
     if (req.user.role === 'ADVISOR' || req.user.role === 'ADMIN') {

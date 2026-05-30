@@ -1,2 +1,1 @@
-export { ProventosPage } from './pages/ProventosPage';
-export { useProventos } from './api';
+export { useWalletProventos } from './api';

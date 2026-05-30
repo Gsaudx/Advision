@@ -449,6 +449,7 @@ describe('DerivativesService', () => {
           quantity: 10,
           averagePrice: 1.5,
           collateralBlocked: null,
+          createdAt: new Date('2026-01-01T00:00:00.000Z'),
           asset: {
             id: 'asset-1',
             ticker: 'PETRA240',
@@ -470,6 +471,7 @@ describe('DerivativesService', () => {
           quantity: -5,
           averagePrice: 2.0,
           collateralBlocked: 12000,
+          createdAt: new Date('2026-01-01T00:00:00.000Z'),
           asset: {
             id: 'asset-2',
             ticker: 'PETRM240',
