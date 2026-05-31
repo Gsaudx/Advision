@@ -30,16 +30,13 @@ export function DonutChart({
 
   const GAP = total > 0 && segments.filter((s) => s.value > 0).length > 1 ? 4 : 0;
 
-  let cumulative = 0;
-  const drawn = segments
-    .filter((s) => s.value > 0)
-    .map((seg) => {
-      const arc = (seg.value / total) * circumference;
-      const dashLength = Math.max(0, arc - GAP);
-      const dashOffset = -cumulative;
-      cumulative += arc;
-      return { ...seg, dashLength, dashOffset };
-    });
+  const filtered = segments.filter((s) => s.value > 0);
+  const arcs = filtered.map((seg) => (seg.value / total) * circumference);
+  const drawn = filtered.map((seg, i) => ({
+    ...seg,
+    dashLength: Math.max(0, arcs[i] - GAP),
+    dashOffset: -arcs.slice(0, i).reduce((sum, a) => sum + a, 0),
+  }));
 
   const line1Size = size * 0.23;
   const line2Size = size * 0.115;
