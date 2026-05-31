@@ -315,3 +315,342 @@ Inclui apenas eventos `CLOSED` (buy/sell to close) — não inclui EXERCISED ou 
 - **Custo médio em PUT exercise**: ao vender ações via PUT, o prêmio pago poderia em tese reduzir o preço efetivo de venda. Sem rastreamento de caixa, não há forma de capturar esse ajuste no patrimônio de forma consistente.
 - **Custo médio retroativo**: posições exercidas antes desta correção já foram deletadas com `averagePrice = strikePrice`. Não há backfill.
 - **TWR (time-weighted return) de opções**: exigiria snapshots históricos, fora do escopo.
+
+---
+
+## 11. Edição e Exclusão de Opções (Correção de Lançamentos)
+
+### Motivação
+
+Usuários que cometiam erros ao registrar uma compra de opção (quantidade errada, prêmio incorreto, data equivocada) não tinham forma de corrigir a entrada — apenas podiam "fechar" a posição via evento de ciclo de vida, deixando rastros permanentes no histórico patrimonial.
+
+A solução adota uma separação explícita entre dois conceitos:
+
+- **Correção (edit/delete):** modifica ou remove a posição e sua transação de origem **antes de qualquer evento de ciclo de vida**. Não gera rastro em `OptionLifecycle`.
+- **Encerramento (close/exercise/assignment/expiration):** registra um evento de ciclo de vida que **fica no histórico permanentemente**.
+
+---
+
+### 11.1 Campo `originTransactionId` — Por Que Existe
+
+Antes desta mudança, `buyOption()` criava uma transação de BUY sem vínculo explícito à posição gerada. Para editar ou deletar a posição de forma atômica era necessário encontrar a transação correspondente sem ambiguidade.
+
+O campo `originTransactionId` foi adicionado à tabela `positions`:
+
+```prisma
+model Position {
+  // ...
+  originTransactionId   String?   @unique          // FK única para a transação de origem
+
+  originTransaction   Transaction?  @relation("PositionOriginTx",
+                        fields: [originTransactionId],
+                        references: [id],
+                        onDelete: SetNull)
+  // ...
+}
+
+model Transaction {
+  // ...
+  originPosition  Position?  @relation("PositionOriginTx") // relação reversa
+}
+```
+
+Propriedades do campo:
+- É `@unique` — garante relação 1-para-1 entre posição e transação de origem
+- É `SetNull` no `onDelete` — se a posição for deletada via cascata, a FK na transaction não quebra
+- Em `buyOption()`, a ordem de criação foi invertida: **Transaction é criada primeiro**, seu `id` é capturado e armazenado em `originTransactionId` da Position
+
+Cascata de exclusão ao deletar uma posição de opção:
+
+```
+Position.delete()
+  → WalletDividendPayment (Cascade)
+  → OptionLifecycle.positionId (SetNull)
+  → Transaction de origem (deletada manualmente no código)
+```
+
+---
+
+### 11.2 Endpoint PATCH — Edição de Opção
+
+```
+PATCH /wallets/:walletId/options/:positionId
+```
+
+Atualiza quantidade, prêmio e data de uma posição de opção **não-encerrada** de forma atômica.
+
+**Validações:**
+
+| Validação | Condição | Erro HTTP |
+|-----------|----------|-----------|
+| Acesso | usuário tem acesso à carteira | 404 |
+| Existência | posição existe com `walletId` | 404 |
+| Tipo | `asset.type === 'OPTION'` | 400 |
+| Estado | `optionLifecycle.count === 0` | 409 |
+| Vinculação | `position.originTransactionId !== null` | 400 |
+| Input | `quantity > 0`, `premium > 0`, `date` ISO válida | 422 (Zod) |
+
+**Operação atômica (transação Prisma):**
+
+```typescript
+// 1. UPDATE positions: quantity, averagePrice
+// 2. UPDATE transactions: quantity, price, totalValue, executedAt
+// 3. LOG auditoria com snapshotBefore e snapshotAfter
+```
+
+**Schema Zod:**
+
+```typescript
+export const UpdateOptionInputSchema = z.object({
+  quantity: z.number().positive().int(),
+  premium:  z.number().positive(),
+  date:     z.string().datetime({ message: 'Data inválida (formato ISO esperado)' }),
+});
+```
+
+**Resposta (200 OK):**
+
+```json
+{
+  "success": true,
+  "data": {
+    "positionId": "...",
+    "transactionId": "...",
+    "ticker": "VALE3C260626",
+    "quantity": 5,
+    "premium": 2.50,
+    "totalValue": 1250.00,
+    "status": "EXECUTED"
+  }
+}
+```
+
+**Erro quando há ciclo de vida (409 Conflict):**
+
+```json
+{
+  "success": false,
+  "statusCode": 409,
+  "message": "Posicao com eventos de ciclo de vida nao pode ser editada"
+}
+```
+
+---
+
+### 11.3 Endpoint DELETE — Exclusão de Opção
+
+```
+DELETE /wallets/:walletId/options/:positionId
+```
+
+Remove a posição e sua transação de origem sem gerar evento de `OptionLifecycle`. Retorna `204 No Content`.
+
+**Validações:** idênticas ao PATCH, exceto a checagem de `originTransactionId` (exclusão funciona mesmo sem vínculo explícito).
+
+**Operação atômica:**
+
+```typescript
+// 1. DELETE positions (cascata em WalletDividendPayment; SetNull em OptionLifecycle)
+// 2. DELETE transactions (onde id = originTransactionId)
+// 3. LOG auditoria com snapshotBefore, action: 'DELETE'
+```
+
+**Guarda de acesso (frontend):** os botões de editar/deletar só aparecem no `OptionPositionCard` quando `config.canTrade === true`:
+
+```typescript
+onEdit={config.canTrade ? handleEditOption : undefined}
+onDelete={config.canTrade ? handleDeleteOption : undefined}
+```
+
+---
+
+### 11.4 Fluxo de Edição
+
+```
+Usuário clica no ícone lápis (Pencil) no OptionPositionCard
+  ↓
+EditOptionModal renderiza com valores pré-preenchidos (quantity, premium, data)
+  ↓
+PATCH /wallets/:walletId/options/:positionId
+  ↓
+updateOption():
+  1. Valida posição e tipo
+  2. Conta OptionLifecycle → deve ser 0
+  3. Recalcula totalValue = premium × 100 × quantity
+  4. Transação atômica: UPDATE position + UPDATE transaction + AuditLog
+  ↓
+QueryClient invalida: 'option-positions', 'transactions'
+  ↓
+Frontend refetch → modal fecha
+```
+
+---
+
+### 11.5 Fluxo de Exclusão
+
+```
+Usuário clica no ícone lixeira (Trash2) no OptionPositionCard
+  ↓
+Diálogo de confirmação com ticker, tipo, quantidade
+  ↓
+DELETE /wallets/:walletId/options/:positionId
+  ↓
+deleteOption():
+  1. Valida posição e tipo
+  2. Conta OptionLifecycle → deve ser 0
+  3. Transação atômica: DELETE position + DELETE transaction + AuditLog
+  ↓
+QueryClient invalida: 'option-positions', 'transactions'
+  ↓
+Frontend refetch → diálogo fecha
+```
+
+---
+
+### 11.6 Auditoria
+
+Cada operação registra em AuditLog:
+
+```typescript
+{
+  tableName: 'positions',
+  recordId: positionId,
+  action: 'UPDATE' | 'DELETE',
+  actorId: user.id,
+  actorRole: user.role,
+  snapshotBefore: { quantity, averagePrice, ... },
+  snapshotAfter: { quantity, averagePrice } | undefined,
+  context: { trade: 'EDIT_OPTION' | 'DELETE_OPTION', ticker: string },
+}
+```
+
+---
+
+### 11.7 Arquivos Afetados
+
+| Arquivo | Tipo | Descrição |
+|---------|------|-----------|
+| `backend/prisma/schema.prisma` | Modificado | `originTransactionId` em `Position`; relação reversa `originPosition` em `Transaction` |
+| `backend/src/modules/derivatives/services/derivatives.service.ts` | Modificado | Modificação de `buyOption()`; novos métodos `updateOption()` e `deleteOption()` |
+| `backend/src/modules/derivatives/controllers/derivatives.controller.ts` | Modificado | Novos endpoints `PATCH /:positionId` e `DELETE /:positionId` |
+| `backend/src/modules/derivatives/schemas/option-trade.schema.ts` | Modificado | Novo `UpdateOptionInputSchema` e `UpdateOptionInputDto` |
+| `frontend/src/features/derivatives/options/api/derivatives.api.ts` | Modificado | Novos métodos `updateOption()` e `deleteOption()` |
+| `frontend/src/features/derivatives/options/api/useUpdateOption.ts` | Novo | Hook React Query para edição |
+| `frontend/src/features/derivatives/options/api/useDeleteOption.ts` | Novo | Hook React Query para exclusão |
+| `frontend/src/features/derivatives/options/components/EditOptionModal.tsx` | Novo | Modal de edição com pré-preenchimento e validação |
+| `frontend/src/features/derivatives/options/components/OptionPositionCard.tsx` | Modificado | Props `onEdit` e `onDelete`; ícones Pencil e Trash2 |
+| `frontend/src/features/wallets/pages/WalletPage.tsx` | Modificado | State, handlers, modal de edição e diálogo de confirmação |
+| `backend/src/modules/derivatives/__tests__/strategy-executor.service.spec.ts` | Modificado | Mock `position.findFirst` adicionado |
+
+---
+
+### 11.8 Limitações Conhecidas
+
+- **Sem histórico de edições na UI:** as alterações ficam apenas no AuditLog (acessível só por admins). Não há página de histórico de correções.
+- **Sem validação cruzada de data:** editar `date` não revalida contra outras transações da carteira.
+- **Cascata em `WalletDividendPayment`:** ao deletar uma posição de opção com pagamentos de dividendo associados (raro), esses registros são removidos em cascata.
+
+---
+
+## 12. Campo `openedAt` e Dias Operados no Card
+
+### Motivação
+
+O advisor precisa de visibilidade rápida sobre a **duração das operações**. Informações como "operado há 5 dias" são sinais relevantes para avaliação de risco e rentabilidade no período. O campo `createdAt` já existe no banco sem custo adicional, tornando a implementação trivial.
+
+---
+
+### 12.1 Backend — Campo `openedAt` na Resposta
+
+O campo foi adicionado ao `OptionPositionResponseSchema`:
+
+```typescript
+export const OptionPositionResponseSchema = z.object({
+  // ... campos existentes
+  isShort: z.boolean(),
+  openedAt: z.string().datetime().optional(),  // ← NOVO
+  optionDetail: OptionDetailResponseSchema,
+});
+```
+
+No service (`derivatives.service.ts`), o campo é populado com o timestamp de criação da posição:
+
+```typescript
+const result: OptionPositionResponse = {
+  // ...
+  openedAt: position.createdAt.toISOString(),
+};
+```
+
+**Propriedades:**
+- Tipo: string ISO 8601 (UTC)
+- Opcional (`.optional()`) — retrocompatibilidade com posições existentes sem `openedAt` em memória
+- Fonte: `position.createdAt` do Prisma — auditado automaticamente, sem nova coluna no banco
+
+---
+
+### 12.2 Frontend — Cálculo e Exibição
+
+**Cálculo de dias operados (`OptionPositionCard.tsx`):**
+
+```typescript
+// dias desde a abertura da posição no sistema
+const daysOpened =
+  position.openedAt !== undefined
+    ? Math.floor(
+        (currentTime - new Date(position.openedAt).getTime()) /
+          (1000 * 60 * 60 * 24),
+      )
+    : null;
+```
+
+- `Math.floor()` — conservador: não arredonda para cima dia incompleto ("operado há 0 dias" no dia de abertura é correto)
+- `currentTime` — prop numérica (`ms desde epoch`) reutilizada para calcular também o `daysUntilExpiry` já existente
+
+**Renderização no footer do card:**
+
+```typescript
+{daysOpened !== null && (
+  <span className="text-[10px] text-on-surface-variant font-medium">
+    Operado há {daysOpened} dia{daysOpened !== 1 ? 's' : ''}
+  </span>
+)}
+```
+
+- Pluralização correta em português: "0 dias", "1 dia", "2 dias"
+- Renderização condicional — não aparece se `openedAt` não estiver disponível (posições legadas)
+- Localização: footer do card, abaixo da barra de vencimento (expiry bar)
+
+---
+
+### 12.3 Relação com Outros Campos Temporais
+
+O `openedAt` complementa os demais marcadores temporais do ciclo de vida:
+
+| Campo | Significado | Origem |
+|-------|-------------|--------|
+| `openedAt` | Entrada: quando a posição foi criada | `position.createdAt` |
+| `exercisedAt` / `occurredAt` | Saída: data do evento terminal | Informada pelo usuário ou `new Date()` |
+| `daysUntilExpiry` | Dias até o vencimento | Calculado dinamicamente |
+| `daysOpened` | Dias desde abertura | Calculado dinamicamente |
+
+Juntos, oferecem visibilidade completa do ciclo de vida temporal de uma posição.
+
+---
+
+### 12.4 Arquivos Afetados
+
+| Arquivo | Tipo | Descrição |
+|---------|------|-----------|
+| `backend/src/modules/derivatives/schemas/option-trade.schema.ts` | Modificado | `openedAt?: z.string().datetime()` adicionado ao `OptionPositionResponseSchema` |
+| `backend/src/modules/derivatives/services/derivatives.service.ts` | Modificado | `openedAt: position.createdAt.toISOString()` no mapeamento de resposta |
+| `frontend/src/types/api.d.ts` | Modificado | `openedAt?: string` no DTO gerado (OpenAPI) |
+| `frontend/src/features/derivatives/options/components/OptionPositionCard.tsx` | Modificado | Cálculo de `daysOpened` e renderização condicional no footer |
+
+---
+
+### 12.5 Limitações Conhecidas
+
+- **Precisão de fuso horário:** diferenças de fuso entre servidor e cliente são normalizadas automaticamente via ISO 8601 (UTC). Discrepâncias de minutos não afetam `Math.floor()`.
+- **Posições legadas:** `openedAt = undefined` em posições criadas antes desta feature — o texto "Operado há N dias" simplesmente não aparece; não é erro.
+- **`% de lucro no período`:** não implementado neste item. Requereria cálculo de `(currentValue - totalCost) / totalCost * 100` e campo adicional no schema se cacheado no backend.
