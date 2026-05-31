@@ -237,8 +237,8 @@ export class ActivityService {
 
     const walletIds = wallets.map((w) => w.id);
 
-    // Market value of open positions across all wallets. For options the contract
-    // multiplier (`optionDetail.contractSize`) is part of the SSOT and must be included.
+    // Market value of open positions across all wallets.
+    // quantity é sempre em ações — sem multiplicador por contractSize.
     const positions =
       walletIds.length > 0
         ? await this.prisma.position.findMany({
@@ -259,9 +259,8 @@ export class ActivityService {
     const totalWalletValue = positions.reduce((sum, p) => {
       const price = prices[p.asset.ticker];
       const qty = Number(p.quantity);
-      const multiplier = p.asset.optionDetail?.contractSize ?? 1;
-      if (price !== undefined) return sum + qty * price * multiplier;
-      return sum + qty * Number(p.averagePrice) * multiplier;
+      if (price !== undefined) return sum + qty * price;
+      return sum + qty * Number(p.averagePrice);
     }, 0);
 
     // Count pending structured operations
