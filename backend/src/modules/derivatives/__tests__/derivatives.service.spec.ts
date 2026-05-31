@@ -135,7 +135,7 @@ describe('DerivativesService', () => {
   describe('buyOption', () => {
     const buyInput = {
       ticker: 'PETRA240',
-      quantity: 10,
+      quantity: 1000, // 10 contratos × 100 ações
       premium: 1.5,
       date: '2026-01-15T10:00:00.000Z',
       idempotencyKey: 'buy-123',
@@ -172,9 +172,9 @@ describe('DerivativesService', () => {
       expect(result.positionId).toBe('pos-123');
       expect(result.transactionId).toBe('tx-123');
       expect(result.ticker).toBe('PETRA240');
-      expect(result.quantity).toBe(10);
+      expect(result.quantity).toBe(1000);
       expect(result.premium).toBe(1.5);
-      expect(result.totalValue).toBe(1500); // 1.5 * 100 * 10
+      expect(result.totalValue).toBe(1500); // 1.5 * 1000 ações
       expect(result.status).toBe('EXECUTED');
     });
 
@@ -203,7 +203,7 @@ describe('DerivativesService', () => {
 
       expect(mockTx.position.create).toHaveBeenCalledWith({
         data: expect.objectContaining({
-          quantity: 10,
+          quantity: 1000,
           averagePrice: 1.5,
         }),
       });
@@ -233,7 +233,7 @@ describe('DerivativesService', () => {
       await service.buyOption('wallet-123', buyInput, advisorUser);
 
       expect(mockTx.position.create).toHaveBeenCalledWith(
-        expect.objectContaining({ data: expect.objectContaining({ quantity: 10 }) }),
+        expect.objectContaining({ data: expect.objectContaining({ quantity: 1000 }) }),
       );
     });
 
@@ -270,7 +270,7 @@ describe('DerivativesService', () => {
   describe('sellOption', () => {
     const sellInput = {
       ticker: 'PETRA240',
-      quantity: 10,
+      quantity: 1000, // 10 contratos × 100 ações
       premium: 1.5,
       date: '2026-01-15T10:00:00.000Z',
       covered: false,
@@ -312,7 +312,7 @@ describe('DerivativesService', () => {
       // CALL options don't require collateral
       expect(mockTx.position.create).toHaveBeenCalledWith({
         data: expect.objectContaining({
-          quantity: -10,
+          quantity: -1000,
           averagePrice: 1.5,
         }),
       });
@@ -446,7 +446,7 @@ describe('DerivativesService', () => {
           id: 'pos-1',
           walletId: 'wallet-123',
           assetId: 'asset-1',
-          quantity: 10,
+          quantity: 1000, // 10 contratos × 100 ações
           averagePrice: 1.5,
           collateralBlocked: null,
           createdAt: new Date('2026-01-01T00:00:00.000Z'),
@@ -468,7 +468,7 @@ describe('DerivativesService', () => {
           id: 'pos-2',
           walletId: 'wallet-123',
           assetId: 'asset-2',
-          quantity: -5,
+          quantity: -500, // 5 contratos × 100 ações
           averagePrice: 2.0,
           collateralBlocked: 12000,
           createdAt: new Date('2026-01-01T00:00:00.000Z'),
@@ -505,18 +505,18 @@ describe('DerivativesService', () => {
       // Long position
       const longPos = result.positions.find((p) => p.id === 'pos-1');
       expect(longPos!.isShort).toBe(false);
-      expect(longPos!.quantity).toBe(10);
+      expect(longPos!.quantity).toBe(1000);
       expect(longPos!.currentPrice).toBe(2.0);
-      expect(longPos!.profitLoss).toBe(500); // (2.0 - 1.5) * 100 * 10
+      expect(longPos!.profitLoss).toBe(500); // (2.0 - 1.5) * 1000 ações
 
       // Short position
       const shortPos = result.positions.find((p) => p.id === 'pos-2');
       expect(shortPos!.isShort).toBe(true);
-      expect(shortPos!.quantity).toBe(5);
+      expect(shortPos!.quantity).toBe(500);
 
       // Summary
-      expect(result.totalPremiumPaid).toBe(1500); // 1.5 * 100 * 10
-      expect(result.totalPremiumReceived).toBe(1000); // 2.0 * 100 * 5
+      expect(result.totalPremiumPaid).toBe(1500); // 1.5 * 1000 ações
+      expect(result.totalPremiumReceived).toBe(1000); // 2.0 * 500 ações
       expect(result.netPremium).toBe(-500);
     });
 

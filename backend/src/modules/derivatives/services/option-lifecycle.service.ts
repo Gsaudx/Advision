@@ -324,7 +324,7 @@ export class OptionLifecycleService {
     }
 
     const optionDetail = position.asset.optionDetail!;
-    const underlyingQuantity = data.quantity; // quantity já é em ações
+    const underlyingQuantity = data.quantity; // quantidade já é em ações
     const strikePrice = Number(optionDetail.strikePrice);
     const settlementAmount = strikePrice * underlyingQuantity;
 
