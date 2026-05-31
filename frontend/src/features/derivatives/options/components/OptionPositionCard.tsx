@@ -226,7 +226,7 @@ export function OptionPositionCard({
 
           {hasActions && (
             <div className="flex flex-col gap-[6px]">
-              <div className="flex gap-[6px]">
+              <div className="flex flex-wrap gap-[6px]">
                 {onClose && (
                   <button
                     onClick={() => onClose(position.id)}
