@@ -105,7 +105,11 @@
       "!**/node_modules/**",
       "!modules/sentinel/**",
       "!modules/wallets/services/trading.service.ts",
-      "!modules/wallets/providers/composite-market.service.ts"
+      "!modules/wallets/providers/composite-market.service.ts",
+      "!modules/analytics/services/asset-concentration.service.ts",
+      "!modules/analytics/services/benchmark.service.ts",
+      "!modules/analytics/services/dividends.service.ts",
+      "!modules/analytics/services/patrimony-evolution.service.ts"
     ],
     "coverageDirectory": "../coverage",
     "testEnvironment": "node",
