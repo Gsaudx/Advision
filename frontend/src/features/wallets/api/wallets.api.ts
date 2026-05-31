@@ -142,9 +142,15 @@ export const walletsApi = {
 
   getOptionDetails: async (
     ticker: string,
+    date?: string,
+    underlying?: string,
   ): Promise<OptionDetailsResult | null> => {
+    const params: Record<string, string> = {};
+    if (date) params.date = date;
+    if (underlying) params.underlying = underlying;
     const response = await api.get<ApiResponse<OptionDetailsResult | null>>(
       `/wallets/options/${ticker}/details`,
+      { params: Object.keys(params).length > 0 ? params : undefined },
     );
     return response.data.data;
   },

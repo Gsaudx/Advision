@@ -97,9 +97,21 @@ export type OptionPositionList = NonNullable<
 
 // --- Input types ---
 
-export type BuyOptionInput = components['schemas']['BuyOptionInputDto'];
+/** Metadata for options not found in OpLab (expired/retroactive registration) */
+export interface OptionMetadata {
+  strikePrice: number;
+  expirationDate: string;
+  optionType: 'CALL' | 'PUT';
+  underlyingTicker: string;
+}
 
-export type SellOptionInput = components['schemas']['SellOptionInputDto'];
+export type BuyOptionInput = components['schemas']['BuyOptionInputDto'] & {
+  optionMetadata?: OptionMetadata;
+};
+
+export type SellOptionInput = components['schemas']['SellOptionInputDto'] & {
+  optionMetadata?: OptionMetadata;
+};
 
 export type CloseOptionInput = components['schemas']['CloseOptionInputDto'];
 

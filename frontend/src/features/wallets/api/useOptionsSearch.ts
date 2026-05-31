@@ -4,7 +4,8 @@ import { walletsApi } from './wallets.api';
 export const optionsQueryKeys = {
   search: (underlying: string, optionType?: 'CALL' | 'PUT') =>
     ['options', 'search', underlying, optionType] as const,
-  details: (ticker: string) => ['options', 'details', ticker] as const,
+  details: (ticker: string, date?: string, underlying?: string) =>
+    ['options', 'details', ticker, date ?? '', underlying ?? ''] as const,
 };
 
 export function useOptionsSearch(
@@ -38,10 +39,15 @@ export function useOptionsSearchInfinite(
   });
 }
 
-export function useOptionDetails(ticker: string, enabled = true) {
+export function useOptionDetails(
+  ticker: string,
+  enabled = true,
+  date?: string,
+  underlying?: string,
+) {
   return useQuery({
-    queryKey: optionsQueryKeys.details(ticker),
-    queryFn: () => walletsApi.getOptionDetails(ticker),
+    queryKey: optionsQueryKeys.details(ticker, date, underlying),
+    queryFn: () => walletsApi.getOptionDetails(ticker, date, underlying),
     enabled: enabled && ticker.length > 0,
     staleTime: 60 * 1000, // 60 seconds
   });

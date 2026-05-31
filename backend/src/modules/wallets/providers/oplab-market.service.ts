@@ -515,6 +515,55 @@ export class OpLabMarketService extends MarketDataProvider {
   }
 
   /**
+   * Get historical strike and metadata for an option on a specific date.
+   * Uses GET /v3/market/historical/options/{spot}/{date}/{date}?symbol={ticker}.
+   * Falls back up to 3 previous calendar days to handle weekends/holidays.
+   */
+  async getHistoricalOptionDetails(
+    spot: string,
+    ticker: string,
+    date: Date,
+  ): Promise<{
+    strike: number;
+    expirationDate: string;
+    optionType: 'CALL' | 'PUT';
+  } | null> {
+    if (!this.accessToken) return null;
+
+    const upperSpot = spot.toUpperCase();
+    const upperTicker = ticker.toUpperCase();
+
+    for (let offset = 0; offset <= 3; offset++) {
+      const d = new Date(date);
+      d.setDate(d.getDate() - offset);
+      const dateStr = d.toISOString().split('T')[0];
+      try {
+        const data = await this.makeRequest<
+          Array<{ symbol: string; strike: number; due_date: string; type: 'CALL' | 'PUT' }>
+        >(
+          `/market/historical/options/${upperSpot}/${dateStr}/${dateStr}`,
+          { symbol: upperTicker },
+        );
+        const entry = Array.isArray(data) ? data[0] : null;
+        if (entry?.strike != null) {
+          return {
+            strike: entry.strike,
+            expirationDate: entry.due_date,
+            optionType: entry.type,
+          };
+        }
+      } catch {
+        // non-2xx or empty — try previous day
+      }
+    }
+
+    this.logger.warn(
+      `No historical option details found for ${ticker} (${spot}) near ${date.toISOString().split('T')[0]}`,
+    );
+    return null;
+  }
+
+  /**
    * Search for instruments (stocks and options)
    */
   async search(query: string, limit = 10): Promise<AssetSearchResult[]> {

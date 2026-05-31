@@ -196,6 +196,8 @@ export function UnifiedTradeModal({
   const [selectedOption, setSelectedOption] =
     useState<OptionSearchResult | null>(null);
   const [isPremiumManual, setIsPremiumManual] = useState(false);
+  const [manualStrike, setManualStrike] = useState('');
+  const [isStrikeManual, setIsStrikeManual] = useState(false);
 
   const {
     data: optionPriceData,
@@ -204,8 +206,18 @@ export function UnifiedTradeModal({
     refetch: refetchOptionPrice,
   } = useAssetPrice(optionFormData.ticker, optionFormData.ticker.length > 0);
 
+  // When retroactive date is set, fetch historical strike via the date+underlying params
+  const historicalUnderlying =
+    isRetroactiveDate && historicalDateStr
+      ? (selectedOption?.underlyingTicker ?? '')
+      : '';
   const { data: optionDetails, isLoading: isLoadingOptionDetails } =
-    useOptionDetails(optionFormData.ticker, optionFormData.ticker.length > 0);
+    useOptionDetails(
+      optionFormData.ticker,
+      optionFormData.ticker.length > 0,
+      isRetroactiveDate && historicalDateStr ? historicalDateStr : undefined,
+      historicalUnderlying || undefined,
+    );
 
   // Auto-fill premium
   useEffect(() => {
@@ -225,6 +237,30 @@ export function UnifiedTradeModal({
       setOptionFormData((prev) => ({ ...prev, premium: '' }));
     }
   }, [isOptionPriceError, isPremiumManual]);
+
+  // Auto-fill strike from option details (current or historical).
+  // In retroactive mode: ONLY uses historical data — no fallback to selectedOption
+  // (fallback would hide the "indisponível" warning and block manual entry).
+  useEffect(() => {
+    if (isStrikeManual) return;
+
+    if (isRetroactiveDate) {
+      if (isLoadingOptionDetails) {
+        setManualStrike('');
+      } else if (optionDetails?.strike != null) {
+        setManualStrike(optionDetails.strike.toFixed(2));
+        setOptionErrors((prev) => ({ ...prev, strike: '' }));
+      } else {
+        setManualStrike('');
+      }
+    } else {
+      const strike = optionDetails?.strike ?? selectedOption?.strike;
+      if (strike != null) {
+        setManualStrike(strike.toFixed(2));
+        setOptionErrors((prev) => ({ ...prev, strike: '' }));
+      }
+    }
+  }, [optionDetails, isLoadingOptionDetails, isRetroactiveDate, selectedOption?.strike, isStrikeManual]);
 
   // Historical price lookup (D.3/D.4 — retroactive date)
   const activeTicker =
@@ -309,6 +345,8 @@ export function UnifiedTradeModal({
     setOptionFormData((prev) => ({ ...prev, ticker, premium: '' }));
     setOptionErrors((prev) => ({ ...prev, ticker: '' }));
     setIsPremiumManual(false);
+    setManualStrike('');
+    setIsStrikeManual(false);
   };
 
   const handleOptionSelect = (option: OptionSearchResult) => {
@@ -337,6 +375,9 @@ export function UnifiedTradeModal({
     const prem = parseFloat(optionFormData.premium);
     if (!optionFormData.premium || isNaN(prem) || prem <= 0)
       newErrors.premium = 'Prêmio deve ser positivo';
+    const stk = parseFloat(manualStrike);
+    if (!manualStrike || isNaN(stk) || stk <= 0)
+      newErrors.strike = 'Strike é obrigatório';
     if (!optionFormData.date) newErrors.date = 'Data é obrigatória';
     else if (
       localExpiryDate &&
@@ -359,6 +400,18 @@ export function UnifiedTradeModal({
     const prem = parseFloat(pendingOptionData.premium);
     const ticker = pendingOptionData.ticker.toUpperCase();
 
+    const stk = parseFloat(manualStrike);
+    const expUnderlyingTicker = selectedOption?.underlyingTicker ?? '';
+    const expiredOptionMetadata =
+      stk > 0 && displayExpiration && expUnderlyingTicker && (displayOptionType || selectedOption?.optionType)
+        ? {
+            strikePrice: stk,
+            expirationDate: displayExpiration,
+            optionType: (displayOptionType ?? selectedOption?.optionType ?? 'CALL') as 'CALL' | 'PUT',
+            underlyingTicker: expUnderlyingTicker,
+          }
+        : undefined;
+
     buyOptionMutation.mutate(
       {
         walletId,
@@ -368,6 +421,7 @@ export function UnifiedTradeModal({
           premium: prem,
           date: new Date(pendingOptionData.date).toISOString(),
           idempotencyKey: generateIdempotencyKey(),
+          ...(expiredOptionMetadata ? { optionMetadata: expiredOptionMetadata } : {}),
         },
       },
       {
@@ -426,6 +480,19 @@ export function UnifiedTradeModal({
 
     const qty = parseInt(optionFormData.quantity, 10);
     const prem = parseFloat(optionFormData.premium);
+    const stk = parseFloat(manualStrike);
+
+    const underlyingTicker = selectedOption?.underlyingTicker ?? '';
+    const optionMetadata =
+      stk > 0 && displayExpiration && underlyingTicker && (displayOptionType || selectedOption?.optionType)
+        ? {
+            strikePrice: stk,
+            expirationDate: displayExpiration,
+            optionType: (displayOptionType ?? selectedOption?.optionType ?? 'CALL') as 'CALL' | 'PUT',
+            underlyingTicker,
+          }
+        : undefined;
+
     if (direction === 'BUY') {
       buyOptionMutation.mutate(
         {
@@ -436,6 +503,7 @@ export function UnifiedTradeModal({
             premium: prem,
             date: new Date(optionFormData.date).toISOString(),
             idempotencyKey: generateIdempotencyKey(),
+            ...(optionMetadata ? { optionMetadata } : {}),
           },
         },
         { onSuccess: () => handleClose() },
@@ -451,6 +519,7 @@ export function UnifiedTradeModal({
             date: new Date(optionFormData.date).toISOString(),
             covered: optionFormData.covered,
             idempotencyKey: generateIdempotencyKey(),
+            ...(optionMetadata ? { optionMetadata } : {}),
           },
         },
         { onSuccess: () => handleClose() },
@@ -490,6 +559,8 @@ export function UnifiedTradeModal({
     setOptionErrors({});
     setSelectedOption(null);
     setIsPremiumManual(false);
+    setManualStrike('');
+    setIsStrikeManual(false);
     setShowExpiredModal(false);
     setPendingOptionData(null);
     buyAssetMutation.reset();
@@ -843,6 +914,62 @@ export function UnifiedTradeModal({
                       disabled={isPending}
                       placeholder="Selecione a opção (ex: PETRH280)"
                     />
+                  </div>
+
+                  {/* Strike */}
+                  <div>
+                    <label className="text-[10px] font-bold text-on-surface-variant uppercase tracking-[0.15em] block mb-2">
+                      Strike *
+                      {isLoadingOptionDetails && (
+                        <span className="ml-1 normal-case font-medium text-primary/70">
+                          buscando…
+                        </span>
+                      )}
+                    </label>
+                    <div className="relative">
+                      <input
+                        name="strike"
+                        type="number"
+                        step="0.01"
+                        min="0.01"
+                        value={manualStrike}
+                        onChange={(e) => {
+                          setManualStrike(e.target.value);
+                          setIsStrikeManual(true);
+                          setOptionErrors((prev) => ({ ...prev, strike: '' }));
+                        }}
+                        disabled={isPending || isLoadingOptionDetails}
+                        placeholder={isLoadingOptionDetails ? 'Buscando…' : '0,00'}
+                        className={`w-full bg-surface-container-lowest border rounded-xl py-3.5 px-4 text-sm text-on-surface placeholder-on-surface-variant/40 focus:outline-none focus:ring-1 focus:ring-primary focus:border-primary transition-colors ${
+                          optionErrors.strike
+                            ? 'border-error'
+                            : 'border-outline-variant/10'
+                        } ${isLoadingOptionDetails ? 'opacity-60' : ''}`}
+                      />
+                      {isLoadingOptionDetails && (
+                        <div className="absolute right-3 top-1/2 -translate-y-1/2">
+                          <LoadingSpinner size="sm" />
+                        </div>
+                      )}
+                    </div>
+                    {optionErrors.strike && (
+                      <p className="text-error text-xs mt-1">
+                        {optionErrors.strike}
+                      </p>
+                    )}
+                    {!isLoadingOptionDetails &&
+                      isRetroactiveDate &&
+                      optionFormData.ticker &&
+                      !manualStrike && (
+                        <p className="text-[10px] text-amber-600 mt-1">
+                          Strike histórico indisponível — informe manualmente.
+                        </p>
+                      )}
+                    {isStrikeManual && manualStrike && (
+                      <p className="text-[10px] text-on-surface-variant mt-1">
+                        Strike manual
+                      </p>
+                    )}
                   </div>
 
                   {/* Option details card */}

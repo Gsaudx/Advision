@@ -184,6 +184,16 @@ export function OptionTickerAutocomplete({
     const v = e.target.value.toUpperCase();
     setManualTicker(v);
     onChange(v);
+    // propaga underlyingTicker para o pai poder buscar strike histórico
+    if (selectedUnderlying) {
+      onOptionSelect({
+        ticker: v,
+        name: v,
+        type: 'OPTION',
+        exchange: 'B3',
+        underlyingTicker: selectedUnderlying,
+      } as OptionSearchResult);
+    }
   };
 
   const totalLoaded = filteredOptions.length;

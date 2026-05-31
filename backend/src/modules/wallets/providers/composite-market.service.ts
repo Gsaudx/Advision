@@ -178,6 +178,23 @@ export class CompositeMarketService extends MarketDataProvider {
   }
 
   /**
+   * Get historical strike for an option on a specific past date.
+   * Delegates to OpLabMarketService with D-0/D-3 weekend fallback.
+   */
+  async getHistoricalOptionDetails(
+    spot: string,
+    ticker: string,
+    date: Date,
+  ): Promise<{
+    strike: number;
+    expirationDate: string;
+    optionType: 'CALL' | 'PUT';
+  } | null> {
+    if (!this.opLabService.isConfigured()) return null;
+    return this.opLabService.getHistoricalOptionDetails(spot, ticker, date);
+  }
+
+  /**
    * Check if OpLab service is configured and available
    */
   isOpLabConfigured(): boolean {

@@ -151,7 +151,10 @@ export class DerivativesService {
       throw new ConflictException('Operacao duplicada');
     }
 
-    const asset = await this.assetResolver.ensureAssetExists(data.ticker);
+    const asset = await this.assetResolver.ensureAssetExists(
+      data.ticker,
+      data.optionMetadata,
+    );
 
     if (asset.type !== 'OPTION') {
       throw new BadRequestException(`${data.ticker} nao e uma opcao`);
@@ -274,7 +277,10 @@ export class DerivativesService {
       throw new ConflictException('Operacao duplicada');
     }
 
-    const asset = await this.assetResolver.ensureAssetExists(data.ticker);
+    const asset = await this.assetResolver.ensureAssetExists(
+      data.ticker,
+      data.optionMetadata,
+    );
 
     if (asset.type !== 'OPTION') {
       throw new BadRequestException(`${data.ticker} nao e uma opcao`);

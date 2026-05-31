@@ -267,9 +267,11 @@ export class WalletsController {
   @ApiOperation({
     summary: 'Detalhes da opcao',
     description:
-      'Retorna informacoes detalhadas de uma opcao, incluindo gregas (delta, gamma, theta, vega).',
+      'Retorna informacoes detalhadas de uma opcao, incluindo gregas. Quando date (YYYY-MM-DD) e underlying são informados e a data é passada, busca o strike histórico via OpLab.',
   })
   @ApiParam({ name: 'ticker', description: 'Ticker da opcao (ex: PETRA240)' })
+  @ApiQuery({ name: 'date', required: false, description: 'Data no formato YYYY-MM-DD para busca histórica' })
+  @ApiQuery({ name: 'underlying', required: false, description: 'Ticker do ativo subjacente (ex: PETR4), necessário para busca histórica' })
   @ApiResponse({
     status: 200,
     description: 'Detalhes da opcao',
@@ -279,7 +281,11 @@ export class WalletsController {
     description: 'Opcao não encontrada',
     type: ApiErrorResponseDto,
   })
-  async getOptionDetails(@Param('ticker') ticker: string): Promise<
+  async getOptionDetails(
+    @Param('ticker') ticker: string,
+    @Query('date') date?: string,
+    @Query('underlying') underlying?: string,
+  ): Promise<
     ApiResponseType<{
       ticker: string;
       strike: number;
@@ -292,6 +298,28 @@ export class WalletsController {
       vega?: number;
     } | null>
   > {
+    // Retroactive date: try historical strike lookup first
+    if (date && underlying) {
+      const dateObj = new Date(date);
+      const today = new Date();
+      today.setHours(0, 0, 0, 0);
+      if (dateObj < today) {
+        const historical = await this.marketService.getHistoricalOptionDetails(
+          underlying.toUpperCase(),
+          ticker.toUpperCase(),
+          dateObj,
+        );
+        if (historical) {
+          return ApiResponseDto.success({
+            ticker: ticker.toUpperCase(),
+            strike: historical.strike,
+            expirationDate: historical.expirationDate,
+            type: historical.optionType,
+          });
+        }
+      }
+    }
+
     const details =
       (await this.marketService.getOptionDetails(ticker)) ??
       (await this.walletsService.getOptionDetailsFromDb(ticker));

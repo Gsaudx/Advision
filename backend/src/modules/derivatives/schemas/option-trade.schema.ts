@@ -12,6 +12,17 @@ import {
 // ============================================================================
 
 /**
+ * Metadata override for options that no longer exist in OpLab (expired/historical).
+ * Used when registering retroactive operations on options that have already expired.
+ */
+const OptionMetadataSchema = z.object({
+  strikePrice: z.number().positive('Strike deve ser positivo'),
+  expirationDate: z.string().min(1, 'Data de vencimento obrigatória'),
+  optionType: z.enum(['CALL', 'PUT']),
+  underlyingTicker: z.string().min(1, 'Ticker do ativo base obrigatório').toUpperCase(),
+});
+
+/**
  * Schema for buying an option (CALL or PUT)
  */
 export const BuyOptionInputSchema = z.object({
@@ -29,6 +40,7 @@ export const BuyOptionInputSchema = z.object({
     .string()
     .datetime({ message: 'Data inválida (formato ISO esperado)' }),
   idempotencyKey: z.string().min(1, 'Chave de idempotência obrigatória'),
+  optionMetadata: OptionMetadataSchema.optional(),
 });
 export class BuyOptionInputDto extends createZodDto(BuyOptionInputSchema) {}
 export type BuyOptionInput = z.infer<typeof BuyOptionInputSchema>;
@@ -52,6 +64,7 @@ export const SellOptionInputSchema = z.object({
     .datetime({ message: 'Data inválida (formato ISO esperado)' }),
   covered: z.boolean().default(false),
   idempotencyKey: z.string().min(1, 'Chave de idempotência obrigatória'),
+  optionMetadata: OptionMetadataSchema.optional(),
 });
 export class SellOptionInputDto extends createZodDto(SellOptionInputSchema) {}
 export type SellOptionInput = z.infer<typeof SellOptionInputSchema>;
