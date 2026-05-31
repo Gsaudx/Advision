@@ -4,6 +4,47 @@ import { createApiResponseSchema } from '@/common/schemas';
 import { OptionLifecycleEvent, OptionType } from '@/generated/prisma/enums';
 
 // ============================================================================
+// HISTORY SCHEMAS
+// ============================================================================
+
+/**
+ * Single closed option position history item
+ * For EXPIRED/CLOSED events: ticker = option ticker, optionType available
+ * For EXERCISED/ASSIGNED events: ticker = underlying ticker, optionType null
+ */
+export const ClosedOptionHistoryItemSchema = z.object({
+  lifecycleId: z.string().uuid(),
+  event: z.nativeEnum(OptionLifecycleEvent),
+  occurredAt: z.string(),
+  ticker: z.string(),
+  optionType: z.nativeEnum(OptionType).nullable(),
+  strikePrice: z.number().nullable(),
+  expirationDate: z.string().nullable(),
+  underlyingTicker: z.string(),
+  contracts: z.number().nullable(),
+  settlementAmount: z.number().nullable(),
+  notes: z.string().nullable(),
+});
+export type ClosedOptionHistoryItem = z.infer<
+  typeof ClosedOptionHistoryItemSchema
+>;
+
+/**
+ * Closed option positions history list with realized premium summary
+ */
+export const ClosedOptionHistoryResponseSchema = z.object({
+  history: z.array(ClosedOptionHistoryItemSchema),
+  realizedNetPremium: z.number(),
+});
+export type ClosedOptionHistoryResponse = z.infer<
+  typeof ClosedOptionHistoryResponseSchema
+>;
+
+export class ClosedOptionHistoryApiResponseDto extends createZodDto(
+  createApiResponseSchema(ClosedOptionHistoryResponseSchema),
+) {}
+
+// ============================================================================
 // INPUT SCHEMAS
 // ============================================================================
 
@@ -11,10 +52,14 @@ import { OptionLifecycleEvent, OptionType } from '@/generated/prisma/enums';
  * Schema for exercising an option
  */
 export const ExerciseOptionInputSchema = z.object({
-  quantity: z
-    .number()
-    .positive('Quantidade de contratos deve ser positiva')
-    .int('Quantidade deve ser um número inteiro de contratos')
+  // exercisedAt: data do exercício informada pelo usuário; não pode ser futura
+  exercisedAt: z
+    .string()
+    .datetime({ offset: true, message: 'Data de exercício inválida' })
+    .refine(
+      (val) => new Date(val) <= new Date(),
+      'Data de exercício não pode ser no futuro',
+    )
     .optional(),
   notes: z.string().max(500).optional(),
   idempotencyKey: z.string().min(1, 'Chave de idempotência obrigatória'),
@@ -30,8 +75,8 @@ export type ExerciseOptionInput = z.infer<typeof ExerciseOptionInputSchema>;
 export const AssignmentInputSchema = z.object({
   quantity: z
     .number()
-    .positive('Quantidade de contratos deve ser positiva')
-    .int('Quantidade deve ser um número inteiro de contratos'),
+    .positive('Quantidade de ações deve ser positiva')
+    .int('Quantidade deve ser um número inteiro de ações'),
   notes: z.string().max(500).optional(),
   idempotencyKey: z.string().min(1, 'Chave de idempotência obrigatória'),
 });

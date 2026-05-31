@@ -92,9 +92,9 @@ export class WalletsService {
   /**
    * Format a position for API response with current prices and weight in the wallet.
    *
-   * Para opções, position.quantity é o número de contratos e position.averagePrice é o prêmio
-   * por ação. Multiplica-se pelo `optionDetail.contractSize` (lote do contrato — geralmente 100
-   * no B3, mas pode variar após eventos corporativos) para obter custo e valor a mercado reais.
+   * position.quantity é sempre em ações (shares), tanto para STOCKs quanto para OPTIONs.
+   * O contractSize fica exposto na response para o frontend exibir (ex: "200 ações = 2 contratos"),
+   * mas não entra em cálculos financeiros aqui — quantity já está na unidade correta.
    */
   private formatPosition(
     position: PositionWithAsset,
@@ -104,8 +104,7 @@ export class WalletsService {
     const quantity = Number(position.quantity);
     const averagePrice = Number(position.averagePrice);
     const od = position.asset.optionDetail;
-    const multiplier = od ? od.contractSize : 1;
-    const totalCost = quantity * averagePrice * multiplier;
+    const totalCost = quantity * averagePrice;
 
     const result: PositionResponse = {
       id: position.id,
@@ -137,9 +136,9 @@ export class WalletsService {
       const referencePrice = position.priceAtLastDividend
         ? Number(position.priceAtLastDividend)
         : averagePrice;
-      const referenceCost = quantity * referencePrice * multiplier;
+      const referenceCost = quantity * referencePrice;
 
-      const currentValue = quantity * currentPrice * multiplier;
+      const currentValue = quantity * currentPrice;
       const profitLoss = currentValue - referenceCost;
       const profitLossPercent =
         referenceCost > 0 ? (profitLoss / referenceCost) * 100 : 0;
@@ -357,9 +356,8 @@ export class WalletsService {
         const totalPositionsValue = walletPositions.reduce((sum, p) => {
           const price = prices[p.asset.ticker];
           const qty = Number(p.quantity);
-          const multiplier = p.asset.optionDetail?.contractSize ?? 1;
-          if (price !== undefined) return sum + qty * price * multiplier;
-          return sum + qty * Number(p.averagePrice) * multiplier;
+          if (price !== undefined) return sum + qty * price;
+          return sum + qty * Number(p.averagePrice);
         }, 0);
 
         const totals = await this.performanceService.computeTotals(wallet.id, {
@@ -420,9 +418,8 @@ export class WalletsService {
     const totalPositionsValue = positions.reduce((sum, position) => {
       const price = prices[position.asset.ticker];
       const qty = Number(position.quantity);
-      const multiplier = position.asset.optionDetail?.contractSize ?? 1;
-      if (price !== undefined) return sum + qty * price * multiplier;
-      return sum + qty * Number(position.averagePrice) * multiplier;
+      if (price !== undefined) return sum + qty * price;
+      return sum + qty * Number(position.averagePrice);
     }, 0);
 
     const formattedPositions = positions.map((position) =>

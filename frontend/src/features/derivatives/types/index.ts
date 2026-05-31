@@ -11,13 +11,6 @@ export {
 } from '@/lib/formatters';
 
 // ============================================================================
-// CONTRACT CONSTANT (single source for frontend)
-// ============================================================================
-
-/** Standard B3 options contract size (number of shares per contract) */
-export const CONTRACT_SIZE = 100;
-
-// ============================================================================
 // Types derived from auto-generated API types (single source of truth)
 // ============================================================================
 
@@ -104,11 +97,29 @@ export type OptionPositionList = NonNullable<
 
 // --- Input types ---
 
-export type BuyOptionInput = components['schemas']['BuyOptionInputDto'];
+/** Metadata for options not found in OpLab (expired/retroactive registration) */
+export interface OptionMetadata {
+  strikePrice: number;
+  expirationDate: string;
+  optionType: 'CALL' | 'PUT';
+  underlyingTicker: string;
+}
 
-export type SellOptionInput = components['schemas']['SellOptionInputDto'];
+export type BuyOptionInput = components['schemas']['BuyOptionInputDto'] & {
+  optionMetadata?: OptionMetadata;
+};
+
+export type SellOptionInput = components['schemas']['SellOptionInputDto'] & {
+  optionMetadata?: OptionMetadata;
+};
 
 export type CloseOptionInput = components['schemas']['CloseOptionInputDto'];
+
+export interface UpdateOptionInput {
+  quantity: number;
+  premium: number;
+  date: string;
+}
 
 export type OperationLegInput =
   components['schemas']['ExecuteStrategyInputDto']['legs'][number];
@@ -175,6 +186,16 @@ export type UpcomingExpirationsResponse = NonNullable<
   components['schemas']['UpcomingExpirationsApiResponseDto']['data']
 >;
 
+export type ClosedOptionHistoryItem = NonNullable<
+  NonNullable<
+    components['schemas']['ClosedOptionHistoryApiResponseDto']['data']
+  >['history'][number]
+>;
+
+export type ClosedOptionHistory = NonNullable<
+  components['schemas']['ClosedOptionHistoryApiResponseDto']['data']
+>;
+
 // ============================================================================
 // OPTION SEARCH TYPES (frontend-specific, extends wallet search result)
 // ============================================================================
@@ -185,6 +206,7 @@ export interface OptionSearchResult extends AssetSearchResult {
   optionType?: OptionType;
   lastPrice?: number;
   underlyingTicker?: string;
+  contractSize?: number;
 }
 
 // ============================================================================

@@ -96,7 +96,7 @@ describe('OptionLifecycleService', () => {
     id: 'position-123',
     walletId: 'wallet-123',
     assetId: 'asset-opt-123',
-    quantity: 10,
+    quantity: 1000, // 10 contratos × 100 ações
     averagePrice: 1.5,
     collateralBlocked: null,
     asset: mockOptionAsset,
@@ -106,7 +106,7 @@ describe('OptionLifecycleService', () => {
     id: 'position-put-123',
     walletId: 'wallet-123',
     assetId: 'asset-put-123',
-    quantity: 10,
+    quantity: 1000, // 10 contratos × 100 ações
     averagePrice: 1.0,
     collateralBlocked: null,
     asset: mockPutOptionAsset,
@@ -116,7 +116,7 @@ describe('OptionLifecycleService', () => {
     id: 'position-short-call-123',
     walletId: 'wallet-123',
     assetId: 'asset-opt-123',
-    quantity: -10,
+    quantity: -1000, // 10 contratos × 100 ações
     averagePrice: 1.5,
     collateralBlocked: null,
     asset: mockOptionAsset,
@@ -126,7 +126,7 @@ describe('OptionLifecycleService', () => {
     id: 'position-short-put-123',
     walletId: 'wallet-123',
     assetId: 'asset-put-123',
-    quantity: -10,
+    quantity: -1000, // 10 contratos × 100 ações
     averagePrice: 1.0,
     collateralBlocked: 24000,
     asset: mockPutOptionAsset,
@@ -221,7 +221,7 @@ describe('OptionLifecycleService', () => {
         expect(domainEvents.record).toHaveBeenCalled();
       });
 
-      it('exercises partial CALL position', async () => {
+      it('exercises all contracts (All-or-Nothing) and deletes option position', async () => {
         walletAccess.verifyWalletAccess.mockResolvedValue(mockWallet);
         prisma.position.findFirst.mockResolvedValue(mockLongCallPosition);
         prisma.wallet.findUnique.mockResolvedValue(mockWallet);
@@ -232,22 +232,20 @@ describe('OptionLifecycleService', () => {
         prisma.optionLifecycle.create.mockResolvedValue({
           id: 'lifecycle-123',
         });
-        prisma.position.update.mockResolvedValue({});
+        prisma.position.delete.mockResolvedValue({});
 
         const result = await service.exerciseOption(
           'wallet-123',
           'position-123',
-          { quantity: 5, idempotencyKey: 'exercise-partial-123' },
+          { idempotencyKey: 'exercise-all-123' },
           mockActor,
         );
 
-        expect(result.underlyingQuantity).toBe(500);
-        expect(result.totalCost).toBe(12000);
-        expect(prisma.position.update).toHaveBeenCalledWith(
-          expect.objectContaining({
-            where: { id: 'position-123' },
-            data: { quantity: 5 },
-          }),
+        // 10 contratos × 100 = 1000 ações; custo = 1000 × 24 = 24000
+        expect(result.underlyingQuantity).toBe(1000);
+        expect(result.totalCost).toBe(24000);
+        expect(prisma.position.delete).toHaveBeenCalledWith(
+          expect.objectContaining({ where: { id: 'position-123' } }),
         );
       });
 
@@ -335,7 +333,9 @@ describe('OptionLifecycleService', () => {
 
       it('throws BadRequestException when insufficient underlying for PUT exercise', async () => {
         walletAccess.verifyWalletAccess.mockResolvedValue(mockWallet);
-        prisma.position.findFirst.mockResolvedValue(mockLongPutPosition);
+        prisma.position.findFirst
+          .mockResolvedValueOnce(mockLongPutPosition) // getOptionPosition
+          .mockResolvedValueOnce(null); // underlying lookup — não existe
         prisma.wallet.findUnique.mockResolvedValue(mockWallet);
         prisma.position.findUnique.mockResolvedValue(null);
 
@@ -412,19 +412,6 @@ describe('OptionLifecycleService', () => {
         ).rejects.toThrow(BadRequestException);
       });
 
-      it('throws BadRequestException when quantity exceeds position', async () => {
-        walletAccess.verifyWalletAccess.mockResolvedValue(mockWallet);
-        prisma.position.findFirst.mockResolvedValue(mockLongCallPosition);
-
-        await expect(
-          service.exerciseOption(
-            'wallet-123',
-            'position-123',
-            { quantity: 20, idempotencyKey: 'exercise-too-much' },
-            mockActor,
-          ),
-        ).rejects.toThrow(BadRequestException);
-      });
 
       it('throws BadRequestException when exercising European option before expiry', async () => {
         const europeanOption = {
@@ -515,7 +502,7 @@ describe('OptionLifecycleService', () => {
         const result = await service.handleAssignment(
           'wallet-123',
           'position-short-call-123',
-          { quantity: 5, idempotencyKey: 'assign-call-123' },
+          { quantity: 500, idempotencyKey: 'assign-call-123' }, // 5 contratos × 100 ações
           mockActor,
         );
 
@@ -534,7 +521,7 @@ describe('OptionLifecycleService', () => {
           service.handleAssignment(
             'wallet-123',
             'position-short-call-123',
-            { quantity: 5, idempotencyKey: 'assign-call-no-shares' },
+            { quantity: 500, idempotencyKey: 'assign-call-no-shares' }, // 5 contratos × 100 ações
             mockActor,
           ),
         ).rejects.toThrow(BadRequestException);
@@ -559,7 +546,7 @@ describe('OptionLifecycleService', () => {
         const result = await service.handleAssignment(
           'wallet-123',
           'position-short-put-123',
-          { quantity: 5, idempotencyKey: 'assign-put-123' },
+          { quantity: 500, idempotencyKey: 'assign-put-123' }, // 5 contratos × 100 ações
           mockActor,
         );
 
@@ -576,7 +563,7 @@ describe('OptionLifecycleService', () => {
           service.handleAssignment(
             'wallet-123',
             'position-123',
-            { quantity: 5, idempotencyKey: 'assign-long' },
+            { quantity: 500, idempotencyKey: 'assign-long' },
             mockActor,
           ),
         ).rejects.toThrow(BadRequestException);
@@ -590,7 +577,7 @@ describe('OptionLifecycleService', () => {
           service.handleAssignment(
             'wallet-123',
             'position-short-call-123',
-            { quantity: 20, idempotencyKey: 'assign-too-much' },
+            { quantity: 2000, idempotencyKey: 'assign-too-much' }, // excede posição de 1000 ações
             mockActor,
           ),
         ).rejects.toThrow(BadRequestException);
@@ -609,7 +596,7 @@ describe('OptionLifecycleService', () => {
           service.handleAssignment(
             'wallet-123',
             'position-short-call-123',
-            { quantity: 5, idempotencyKey: 'duplicate-key' },
+            { quantity: 500, idempotencyKey: 'duplicate-key' }, // 5 contratos × 100 ações
             mockActor,
           ),
         ).rejects.toThrow(ConflictException);
@@ -887,7 +874,7 @@ describe('OptionLifecycleService', () => {
       );
 
       expect(result.expirations[0].isShort).toBe(true);
-      expect(result.expirations[0].quantity).toBe(10);
+      expect(result.expirations[0].quantity).toBe(1000);
     });
 
     it('returns empty array when no positions expiring', async () => {

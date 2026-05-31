@@ -118,8 +118,8 @@ Todos os schemas são definidos com Zod 4 e expostos via `createZodDto` para ger
 
 ```ts
 {
-  topGains: BestWorstAsset[],   // top 5 maior resultado absoluto
-  topLosses: BestWorstAsset[]   // top 5 menor resultado absoluto
+  topGains: BestWorstAsset[],   // top 5 maior rentabilidade percentual
+  topLosses: BestWorstAsset[]   // top 5 menor rentabilidade percentual
 }
 
 BestWorstAsset = {
@@ -342,7 +342,7 @@ Todas as respostas de sucesso são envolvidas em `ApiResponseDto.success(data)`:
 4. Busca posições ativas (`quantity > 0`) do tipo `STOCK`.
 5. Consulta preços correntes via `CompositeMarketService.getBatchPrices`.
 6. Calcula `resultAbsolute = (preçoAtual - pmédio) × qtd` e `resultPercent`.
-7. Ordena por `resultAbsolute` desc → `topGains` (5 primeiros) e asc → `topLosses` (5 primeiros).
+7. Ordena por `resultPercent` desc → `topGains` (5 primeiros) e por `resultPercent` asc → `topLosses` (5 primeiros).
 8. Armazena no cache e retorna.
 
 **Fallback de preço:** se `getBatchPrices` não retornar o ticker, usa `averagePrice`.
@@ -886,3 +886,395 @@ O frontend detecta `customFrom > customTo` e substitui por `undefined` antes de 
 | `it_should_process_batch_of_10_assets_in_sectors_reseed` | 25 assets sem setor | `getMetadata` chamado 25 vezes em batches de 10 |
 | `it_should_return_zero_rentabilidade_when_total_invested_is_zero` | Cliente sem posições | `rentabilidadePercent === 0` |
 | `it_cache_key_is_different_for_different_advisor_ids` | `buildKey('adv1', ...)` e `buildKey('adv2', ...)` | Chaves distintas; não há colisão |
+
+---
+
+## 15. Mudança de Fonte de Preços — Remoção do Brapi e Consolidação do OpLab como SSOT
+
+> Commit de referência: `36f3012` — 30/05/2026
+
+### 15.1 Contexto
+
+Até o commit `36f3012`, o `CompositeMarketService` usava **dois provedores** de preços:
+
+- **Brapi** — para ações (ativo-objeto)
+- **OpLab** — para opções
+
+O Brapi nunca foi completamente configurado em produção e falhava silenciosamente, retornando `{}` para todas as requisições de batch. Isso provocava `currentPrice === averagePrice` para todos os ativos, resultando em `resultPercent = 0%` no widget "Melhores & Piores Ativos".
+
+### 15.2 O Que Mudou
+
+| Arquivo | Tipo | Alteração |
+|---------|------|-----------|
+| `backend/src/modules/wallets/providers/brapi-market.service.ts` | **Deletado** | Serviço Brapi descontinuado (−555 linhas) |
+| `backend/src/modules/wallets/__tests__/brapi-market.service.spec.ts` | **Deletado** | Testes de Brapi removidos (−294 linhas) |
+| `backend/src/modules/wallets/providers/composite-market.service.ts` | Modificado | Remove injeção de Brapi; simplifica roteamento (−106 / +77 linhas) |
+| `backend/src/modules/wallets/providers/index.ts` | Modificado | Remove export de `BrapiMarketService` |
+| `backend/src/modules/wallets/wallets.module.ts` | Modificado | Remove import e provider de `BrapiMarketService` |
+| `backend/src/modules/analytics/services/best-worst-assets.service.ts` | Modificado | Critério de sort: `resultAbsolute` → `resultPercent` |
+
+**Saldo líquido:** −980 linhas de código.
+
+### 15.3 Comportamento do CompositeMarketService Antes e Depois
+
+**Antes — roteamento duplo (Brapi + OpLab):**
+
+```typescript
+// getPrice() bifurcava por tipo de ticker
+if (this.isOptionTicker(upperTicker)) {
+  return await this.opLabService.getPrice(upperTicker);   // OpLab para opções
+}
+return this.brapiService.getPrice(upperTicker);            // Brapi para ações
+
+// getBatchPrices() separava stocks e options
+stockTickers  → brapiService.getBatchPrices()   // falhava silenciosamente → {}
+optionTickers → opLabService.getBatchPrices()
+```
+
+**Depois — fonte única (OpLab para tudo):**
+
+```typescript
+constructor(private readonly opLabService: OpLabMarketService) { ... }
+
+async getPrice(ticker: string): Promise<number> {
+  // Único caminho: OpLab para ações e opções
+  if (!this.opLabService.isConfigured()) throw new NotFoundException(...);
+  return await this.opLabService.getPrice(ticker.toUpperCase());
+}
+
+async getBatchPrices(tickers: string[]): Promise<Record<string, number>> {
+  if (!tickers.length || !this.opLabService.isConfigured()) return {};
+  try {
+    return await this.opLabService.getBatchPrices(tickers.map(t => t.toUpperCase()));
+  } catch (error) {
+    this.logger.warn(`Failed to fetch batch prices: ${(error as Error).message}`);
+    return {};
+  }
+}
+```
+
+### 15.4 Fluxo de Preços Antes vs Depois
+
+**ANTES (roteamento com falha silenciosa):**
+```
+CompositeMarketService.getBatchPrices(['PETR4', 'PETRA240'])
+  ├─ stockTickers=['PETR4']   → BrapiService.getBatchPrices() → {} (erro silencioso)
+  └─ optionTickers=['PETRA240'] → OpLabService → { PETRA240: 2.50 }
+  Resultado: { PETRA240: 2.50 }   ← PETR4 ausente → resultPercent = 0%
+```
+
+**DEPOIS (fonte única):**
+```
+CompositeMarketService.getBatchPrices(['PETR4', 'PETRA240'])
+  └─ OpLabService.getBatchPrices(['PETR4', 'PETRA240'])
+     POST /market/quote { symbols: ['PETR4', 'PETRA240'] }
+     Resultado: { PETR4: 35.12, PETRA240: 2.50 }   ← ambos corretos
+```
+
+### 15.5 Justificativa da Consolidação
+
+| Critério | Brapi | OpLab |
+|----------|-------|-------|
+| Configuração em produção | Nunca validada | Validada e funcional |
+| Suporte a ações | Sim | Sim (via `/market/quote`) |
+| Suporte a opções | Não | Sim |
+| Falha em batch | Silenciosa (retorna `{}`) | Explícita (`logger.warn` + retorna `{}`) |
+| Provedores necessários | 2 | 1 |
+
+**Conclusão:** OpLab é a única fonte de verdade autorizada para preços de ações e opções no Advision.
+
+### 15.6 Impacto em Módulos Consumidores
+
+Todos os módulos que injetam `CompositeMarketService` continuam com a mesma assinatura de interface — sem quebra de contrato:
+
+| Módulo | Método usado | Impacto |
+|--------|-------------|---------|
+| `AnalyticsModule` | `getBatchPrices()` | Sem mudança de assinatura; agora recebe dados confiáveis |
+| `OptionsExpiryService` | `getBatchPrices()` | Idem |
+| `SectorExposureService` | `getBatchPrices()` | Idem |
+
+### 15.7 Limitações Conhecidas
+
+- **Falha prolongada do OpLab:** `getBatchPrices` retorna `{}` e todos os ativos ficam com `resultPercent = 0%`. Mitigação futura: cache de preços com TTL > 5 min e badge "dados desatualizados" no widget.
+- **Tickers fora do catálogo OpLab:** ativos não reconhecidos pela API recebem fallback para `averagePrice`, resultando em `resultPercent = 0%` sem erro visível.
+
+---
+
+## 16. Correção do Sort no Widget Melhores & Piores Ativos
+
+> Commit de referência: `36f3012` — 30/05/2026
+
+### 16.1 Problema
+
+O widget exibia a **rentabilidade percentual** (`resultPercent`) na UI, mas o critério de ordenação era `resultAbsolute` (resultado financeiro bruto em reais). Isso gerava inconsistência: um ativo com grande volume investido aparecia no topo mesmo com baixa rentabilidade percentual.
+
+**Exemplo da inconsistência:**
+```
+Ativo A: R$100k investidos, ganho R$5k → 5%  de rentabilidade
+Ativo B: R$10k investidos,  ganho R$2k → 20% de rentabilidade
+
+Sort antigo (resultAbsolute): Ativo A primeiro (R$5k > R$2k)  ← ERRADO
+Sort novo   (resultPercent):  Ativo B primeiro (20% > 5%)     ← CORRETO
+```
+
+### 16.2 Mudança Aplicada
+
+**Arquivo:** `backend/src/modules/analytics/services/best-worst-assets.service.ts`
+
+```typescript
+// ANTES
+const sorted   = [...entries].sort((a, b) => b.resultAbsolute - a.resultAbsolute);
+const topGains = sorted.slice(0, 5);
+const topLosses = [...entries].sort((a, b) => a.resultAbsolute - b.resultAbsolute).slice(0, 5);
+
+// DEPOIS
+const sorted   = [...entries].sort((a, b) => b.resultPercent - a.resultPercent);
+const topGains = sorted.slice(0, 5);
+const topLosses = [...entries].sort((a, b) => a.resultPercent - b.resultPercent).slice(0, 5);
+```
+
+### 16.3 Critério de Ranking Vigente
+
+| Lista | Critério de sort | Ordem |
+|-------|-----------------|-------|
+| `topGains` (Melhores) | `resultPercent` | Descendente (maior % primeiro) |
+| `topLosses` (Piores) | `resultPercent` | Ascendente (menor % primeiro) |
+
+O campo `resultAbsolute` continua presente na resposta da API e pode ser exibido como informação complementar na UI — apenas o **ranking** passou a usar `resultPercent`.
+
+### 16.4 Consistência com os Modos de Visualização
+
+- **Modo CONSOLIDATED:** "Quais ativos de todos os clientes têm maior/menor rentabilidade %?"
+- **Modo DRILLDOWN:** "Quais ativos desta carteira têm maior/menor rentabilidade %?"
+
+Ambos os modos agora são consistentes com o critério de exibição do widget.
+
+---
+
+## 17. Mudança de Label no Card de Posição em Opções (P&L Aberto) e DTE
+
+> Commit de referência: `dc48e41` — 30/05/2026
+
+### 17.1 Contexto
+
+Esta mudança ocorre no componente `OptionPositionCard`, parte da feature de derivativos (`features/derivatives/options`), exibido na WalletPage. Está documentada aqui pois afeta diretamente a nomenclatura de P&L que é conceito central do módulo Analytics.
+
+### 17.2 Mudança de Label
+
+**Arquivo afetado:** `frontend/src/features/derivatives/options/components/OptionPositionCard.tsx` (linha 209)
+
+```tsx
+// ANTES
+<p className="text-[9px] font-bold text-on-surface-variant uppercase tracking-[0.14em] mb-1">
+  P&L Não Real.
+</p>
+
+// DEPOIS
+<p className="text-[9px] font-bold text-on-surface-variant uppercase tracking-[0.14em] mb-1">
+  P&L Aberto
+</p>
+```
+
+**Motivação da mudança:**
+- "P&L Não Real." gerava ambiguidade — "Real" pode ser interpretado como a moeda brasileira ou como "verdadeiro/concreto"
+- "P&L Aberto" comunica claramente: posição ainda em aberto → lucro/prejuízo não realizado
+- Alinha com a convenção internacional "Open P&L" usada em Bloomberg, TradingView e demais plataformas
+
+### 17.3 Semântica dos Tipos de P&L no Sistema
+
+| Termo | Significado | Onde exibido |
+|-------|-------------|--------------|
+| **P&L Aberto** | Lucro/prejuízo não realizado de uma posição ainda em vigor (marca-a-mercado) | `OptionPositionCard` — campo `position.profitLoss` |
+| **P&L Realizado** | Resultado efetivado no fechamento, exercício ou vencimento da posição | Histórico de transações (fora do card) |
+
+### 17.4 Exibição de DTE (Days to Expiration)
+
+O footer do `OptionPositionCard` já exibia DTE desde commits anteriores — não foi alterado neste commit:
+
+```tsx
+// Footer: dias até o vencimento
+<span className={`flex items-center gap-[5px] text-[10px] font-bold uppercase tracking-[0.1em] ${expiryTextColor[expiryStatus]}`}>
+  <Calendar size={11} />
+  {isExpired ? 'VENCIDO' : `Vence em: ${daysUntilExpiry} dia(s)`}
+</span>
+
+// Cálculo de DTE (arredondamento para cima evita "0 dias" com horas restantes)
+const daysUntilExpiry = Math.ceil(
+  (new Date(position.optionDetail.expirationDate).getTime() - currentTime) /
+    (1000 * 60 * 60 * 24),
+);
+```
+
+### 17.5 Paleta de Cores do P&L
+
+| Estado | Classe Tailwind | Uso |
+|--------|----------------|-----|
+| Lucro (`isProfit === true`) | `text-tertiary` | Valor do P&L Aberto |
+| Prejuízo (`isProfit === false`) | `text-error` | Valor do P&L Aberto |
+| Percentual positivo | `text-tertiary/60` | `profitLossPercent` |
+| Percentual negativo | `text-error/60` | `profitLossPercent` |
+
+### 17.6 Escopo e Limitações
+
+- Mudança exclusivamente cosmética: sem alteração de lógica, cálculo ou estrutura de tipos
+- Label hardcoded em português (sem i18n); abordagem consistente com os demais labels do componente
+- Não existe label "P&L Realizado" no card — posições realizadas são consultadas no histórico de transações
+
+---
+
+## 18. Widget de Resumo de Clientes no Dashboard do Assessor
+
+> Commit de referência: `dbd36b0` — 30/05/2026
+
+### 18.1 Contexto
+
+O widget `AlertsPanel` no dashboard do assessor (`/advisor/home`) exibia dados estáticos mockados sob o título "Alertas Críticos". Foi substituído por um widget de **Resumo de Clientes** que consome a API `GET /clients` e exibe dados reais.
+
+A mudança é relevante para o módulo Analytics pois o componente `DonutChart` criado aqui é candidato a reutilização em widgets de Analytics (Exposição Setorial, Concentração de Ativos).
+
+### 18.2 Arquivos Afetados
+
+| Arquivo | Tipo | Mudança |
+|---------|------|---------|
+| `frontend/src/features/home/components/advisor/AlertsPanel.tsx` | Modificado | Substituição completa: dados mockados → dados reais via `useClients()` |
+| `frontend/src/components/ui/DonutChart.tsx` | **Criado** | Componente SVG reutilizável para gráficos donut (109 linhas) |
+
+### 18.3 O Que o Novo Widget Exibe
+
+```
+┌─────────────────────────────────────────────────┐
+│ [Users] Clientes              [Badge urgência]  │  ← Header
+├─────────────────────────────────────────────────┤
+│                                                 │
+│  [Donut]      ● Vinculado:    1  (33%)         │
+│    100        ● Convite Env.: 1  (33%)         │
+│   clientes    ● Pendente:     1  (33%)         │
+│                                                 │
+│  ─────────────────────────────────────────────  │
+│  Recentes                                       │
+│  [JS] João Silva         ● Vinculado            │
+│  [MS] Maria Santos       ● Pendente             │
+│  [PC] Pedro Costa        ● Conv. Enviado        │
+└─────────────────────────────────────────────────┘
+```
+
+**Elementos:**
+- Contagem total de clientes (centro do donut)
+- Gráfico donut com distribuição por `inviteStatus`
+- Legenda interativa com contagens absolutas e percentuais
+- Badge de urgência no header (prioriza status mais crítico)
+- Lista dos 4 clientes cadastrados mais recentemente com avatares de iniciais coloridas
+
+### 18.4 Lógica de Dados
+
+**Fonte de dados:** hook `useClients()` → `GET /clients`
+
+**Processamento no componente:**
+
+```tsx
+// Contagem por status
+const counts = DISPLAY_ORDER.reduce((acc, status) => {
+  acc[status] = clients.filter(c => c.inviteStatus === status).length;
+  return acc;
+}, {} as Record<InviteStatus, number>);
+
+// Segmentos não-vazios para o donut
+const segments = DISPLAY_ORDER.filter(s => counts[s] > 0).map(s => ({
+  key: s,
+  value: counts[s],
+  color: STATUS_COLOR[s],
+}));
+
+// Status urgente (para o badge do header)
+const URGENCY_ORDER: InviteStatus[] = ['REJECTED', 'PENDING', 'SENT', 'ACCEPTED'];
+const urgentStatus = URGENCY_ORDER.find(s => counts[s] > 0);
+
+// Últimos 4 clientes por data de criação
+const recentClients = [...clients]
+  .sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime())
+  .slice(0, 4);
+```
+
+**Mapeamento de cores por status:**
+
+```tsx
+const STATUS_COLOR: Record<InviteStatus, string> = {
+  ACCEPTED: '#2dd4bf',  // Teal  → Vinculado
+  SENT:     '#fbbf24',  // Amber → Convite Enviado
+  PENDING:  '#38bdf8',  // Sky   → Pendente
+  REJECTED: '#f87171',  // Red   → Rejeitado
+};
+```
+
+**Ordem de exibição na legenda:** `['ACCEPTED', 'SENT', 'PENDING', 'REJECTED']` (sucesso primeiro)
+
+**Ordem de urgência para o badge:** `['REJECTED', 'PENDING', 'SENT', 'ACCEPTED']` (problema primeiro)
+
+### 18.5 Estados do Widget
+
+| Estado | Condição | Comportamento |
+|--------|----------|---------------|
+| Carregando | `isLoading === true` | Skeleton circular + linhas de legenda com `animate-pulse` |
+| Dados reais | `isLoading === false && total > 0` | Donut colorido + legenda + lista de recentes |
+| Vazio | `isLoading === false && total === 0` | Donut cinza com "0 clientes" + mensagem "Nenhum cliente cadastrado" |
+
+### 18.6 Componente DonutChart
+
+**Arquivo:** `frontend/src/components/ui/DonutChart.tsx`
+
+```tsx
+export interface DonutSegment {
+  key: string;
+  value: number;
+  color: string;
+}
+
+interface DonutChartProps {
+  segments: DonutSegment[];
+  total: number;
+  centerLine1: string | number;  // Linha principal (ex: contagem)
+  centerLine2?: string;           // Linha secundária (ex: "clientes")
+  size?: number;                  // Default: 120px
+  thickness?: number;             // Espessura do anel. Default: 11px
+}
+```
+
+**Algoritmo de renderização SVG:**
+
+1. `circumference = 2π × radius`
+2. Gap de 4px entre segmentos quando há mais de um
+3. Cada segmento: `arc = (value / total) × circumference`; `dashLength = max(0, arc − gap)`
+4. Offset acumulado posiciona cada segmento sequencialmente
+5. Rotação de −90° para iniciar em 12 o'clock
+6. Texto central: `centerLine1` em `size × 23%` de fonte; `centerLine2` em `size × 11.5%`
+
+**Características:**
+- SVG puro — sem dependências externas (sem D3.js ou Recharts)
+- Cores via prop `color` (hex); integra com Tailwind via `currentColor` para track de fundo
+- `aria-hidden="true"` — acessibilidade gerenciada pelo texto contextual ao redor
+
+**Uso previsto em Analytics:**
+
+O `DonutChart` é candidato a reutilização nos widgets:
+- **Exposição Setorial** — distribuição por setor (%)
+- **Concentração de Ativos** — top holdings vs. restante da carteira
+
+### 18.7 Função Auxiliar de Iniciais
+
+```tsx
+function getInitials(name: string): string {
+  const parts = name.trim().split(/\s+/);
+  if (parts.length === 1) return parts[0].slice(0, 2).toUpperCase();
+  return (parts[0][0] + parts[parts.length - 1][0]).toUpperCase();
+}
+// "João Silva"        → "JS"
+// "Maria"             → "MA"
+// "Pedro Costa Santos"→ "PS"
+```
+
+### 18.8 Limitações Conhecidas
+
+- Widget é somente leitura: sem filtros, ações ou criação de cliente
+- Lista de recentes limitada a 4 itens por design (mantém widget compacto no dashboard)
+- Sem tratativa de erro explícita: falha na API exibe estado vazio ("Nenhum cliente cadastrado")
+- `staleTime` padrão do `useClients()` é 0 — refetch ao focar a aba; ajustar se performance for problema

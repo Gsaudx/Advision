@@ -622,19 +622,27 @@ type SearchStep = 'underlying' | 'option' | 'manual';
 
 ---
 
-## 10. Sistema Legado BRAPI
+## 10. Sistema Legado BRAPI — Removido (commit `50009f1`)
 
-O backend BRAPI permanece **100% intacto e funcional**. Nenhuma tabela ou service foi removido. A contingência de reversão é:
+> **Evento arquitetural — 2026-05-30:** O código de sincronização BRAPI foi integralmente removido do projeto. O que antes era documentado como "intacto e funcional" foi descontinuado após o Sentinel se tornar 100% operacional. As informações abaixo refletem o estado **pós-remoção**.
 
+A transição eliminou o polling periódico BRAPI e consolidou toda a detecção de proventos no modelo Sentinel (on-demand via SSE). Nenhuma tabela de banco foi removida — apenas código de aplicação.
+
+**Fluxo BRAPI (extinto):**
 ```
-1. Descomentar chamadas BRAPI no frontend       → proventos voltam via BRAPI
-2. Descomentar ensureProcessed() em wallets.service.ts → cálculo síncrono volta
-3. Desativar SentinelModule no app.module.ts     → sentinela para completamente
+ProventosSyncService → BrapiDividendsService → GET /quote/{ticker}?dividends=true
+→ dividend_events → ProventosService → GET /proventos (removido)
+→ Frontend: ProventosPage → useProventos()
 ```
 
-Os endpoints `GET /proventos/wallet/:id` e `GET /proventos/summary` continuam funcionando sem alteração — eles leem `wallet_dividend_payments`, que agora é populado pela sentinela em vez da BRAPI. O frontend não sabe da diferença.
+**Fluxo Sentinel (atual — único):**
+```
+SentinelOptionService → dividends_history → wallet_dividend_payments
+→ GET /proventos/wallet/:id (ProventosCalculationService)
+→ Frontend: WalletPage → useWalletProventos()
+```
 
-**Coexistência:** `dividends_history` (sentinela) e `dividend_events` (BRAPI) são tabelas distintas. O sistema sentinela popula `wallet_dividend_payments` diretamente, sem passar por `dividend_events`.
+**Coexistência de tabelas:** `dividends_history` (Sentinel) e `dividend_events` (BRAPI) coexistem no banco. Nenhuma coluna foi removida. O sistema Sentinel popula `wallet_dividend_payments` diretamente, sem passar por `dividend_events`.
 
 ---
 
@@ -736,12 +744,67 @@ Para campos que devem sempre começar vazios ao reabrir um modal (ex: "Prêmio r
 | `features/wallets/api/useExpireOption.ts` | Hook de expiração de opção |
 | `features/wallets/api/wallets.api.ts` | Métodos de API: histórico, edição, deleção, status sentinela |
 
-### Sistema Legado BRAPI (intacto)
+### Sistema Legado BRAPI — Removido (commit `50009f1`, 2026-05-30)
+
+> Os arquivos abaixo foram deletados do repositório. O histórico completo está disponível via `git show 50009f1`.
 
 | Arquivo | Status |
 |---|---|
-| `src/modules/proventos/services/brapi-dividends.service.ts` | Intacto — contingência |
-| `src/modules/proventos/services/proventos-sync.service.ts` | Intacto — contingência |
-| `src/modules/proventos/services/proventos-calculation.service.ts` | Intacto — `ensureProcessed()` comentado em `getDashboard` |
-| `src/modules/proventos/controllers/proventos.controller.ts` | Intacto — endpoints BRAPI ainda funcionam |
-| `frontend/src/features/proventos/pages/ProventosPage.tsx` | Botão "Forçar sync BRAPI" comentado (`[SENTINEL]`) |
+| `src/modules/proventos/services/brapi-dividends.service.ts` | Deletado — código morto |
+| `src/modules/proventos/services/proventos-sync.service.ts` | Deletado — código morto |
+| `src/modules/proventos/services/proventos-sync-policy.service.ts` | Deletado — código morto |
+| `src/modules/proventos/services/proventos.service.ts` | Deletado — código morto |
+| `src/modules/proventos/utils/integrity-hash.util.ts` | Deletado — código morto |
+| `src/modules/proventos/utils/reference-week.util.ts` | Deletado — código morto |
+| `src/shared/http/brapi.utils.ts` | Deletado — nenhuma chamada à BRAPI no sistema |
+| `frontend/src/features/proventos/pages/ProventosPage.tsx` | Deletado — página orphan |
+| `frontend/src/features/proventos/api/useProventos.ts` | Deletado — hook orphan |
+
+**Testes deletados junto (6 arquivos):**
+`brapi-dividends.service.spec.ts`, `proventos-sync.service.spec.ts`, `proventos-sync-policy.service.spec.ts`, `proventos.service.spec.ts`, `integrity-hash.util.spec.ts`, `reference-week.util.spec.ts`
+
+### ProventosModule — Estado Pós-Remoção
+
+**Antes:**
+```typescript
+providers: [
+  BrapiDividendsService, ProventosSyncPolicyService,
+  ProventosSyncService, ProventosService,
+  ProventosCalculationService, OpLabMarketService, WalletAccessService,
+],
+exports: [ProventosSyncService, ProventosCalculationService],
+```
+
+**Depois:**
+```typescript
+providers: [ProventosCalculationService, OpLabMarketService, WalletAccessService],
+exports: [ProventosCalculationService],
+```
+
+**AuthModule:** `ProventosModule` foi removido dos `imports` — `ProventosSyncService` não é mais necessário em `AuthController`.
+
+### Endpoints Extintos
+
+| Rota | Método | Roles | Motivo |
+|---|---|---|---|
+| `/proventos` | `GET` | ADVISOR, ADMIN, CLIENT | Listagem BRAPI — removido |
+| `/proventos/sync` | `POST` | ADMIN, ADVISOR | Sync manual BRAPI — removido |
+| `/proventos/summary` | `GET` | ADVISOR, ADMIN, CLIENT | Resumo BRAPI — removido |
+
+### Frontend — Rotas e Navegação Removidas
+
+| Local | Mudança |
+|---|---|
+| `routes/index.tsx` | Removida rota `<Route path="/proventos" element={<ProventosPage />} />` |
+| `components/layout/Sidebar.tsx` | Removido link "Proventos" (advisor e client); removido import de `TrendingUp` |
+
+### O Que Permanece Intacto
+
+| Componente | Status | Uso |
+|---|---|---|
+| `ProventosCalculationService` | Preservado | Cálculo de proventos a partir de `wallet_dividend_payments` (populado pelo Sentinel) |
+| `GET /proventos/wallet/:id` | Preservado | Proventos detalhados de uma carteira — usado pelo frontend em `WalletPage` |
+| Tabelas `wallet_dividend_payments` e `dividend_events` | Preservadas | Sem remoção de schema; `dividend_events` (BRAPI) coexiste sem ser escrita |
+| `features/proventos/api/proventos.api.ts` | Simplificado | Apenas `getWalletProventos(walletId)`; removidos `getAll()` e `forceSync()` |
+| `features/proventos/api/useWalletProventos.ts` | Preservado | Hook para `GET /proventos/wallet/:id` |
+| Sistema Sentinel (SentinelOptionService, SSE) | Preservado | Fonte primária de detecção de proventos |

@@ -5,7 +5,6 @@ import { LoadingSpinner } from '@/components/ui/LoadingSpinner';
 import { getApiErrorMessage } from '@/lib/api-error';
 import { generateIdempotencyKey } from '@/lib/utils';
 import { useCloseOption } from '../../options/api';
-import { CONTRACT_SIZE } from '../../types';
 import { formatCurrency } from '@/lib/formatters';
 import type { OptionPosition } from '../../types';
 
@@ -31,11 +30,10 @@ export function CloseOptionModal({
     ? getApiErrorMessage(closeMutation.error)
     : null;
 
-  const contractsToClose = quantity
-    ? parseInt(quantity, 10)
-    : position.quantity;
+  const contractStep = position.optionDetail.contractSize ?? 100;
+  const sharesToClose = quantity ? parseInt(quantity, 10) : position.quantity;
   const premiumValue = parseFloat(premium) || 0;
-  const totalValue = contractsToClose * premiumValue * CONTRACT_SIZE;
+  const totalValue = sharesToClose * premiumValue;
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
@@ -50,7 +48,7 @@ export function CloseOptionModal({
       if (isNaN(qty) || qty <= 0) {
         newErrors.quantity = 'Quantidade deve ser positiva';
       } else if (qty > position.quantity) {
-        newErrors.quantity = `Maximo: ${position.quantity} contratos`;
+        newErrors.quantity = `Máximo: ${position.quantity} ações`;
       }
     }
 
@@ -127,7 +125,7 @@ export function CloseOptionModal({
           <div className="flex justify-between">
             <span className="text-sm text-gray-500">Posicao Atual</span>
             <span className="text-sm text-white">
-              {position.quantity} contratos
+              {position.quantity} ações
             </span>
           </div>
           <div className="flex justify-between">
@@ -172,12 +170,13 @@ export function CloseOptionModal({
               htmlFor="close-quantity"
               className="text-sm font-medium text-gray-300"
             >
-              Contratos (padrao: todos)
+              Ações (padrão: todas)
             </label>
             <input
               id="close-quantity"
               type="number"
-              min="1"
+              step={contractStep}
+              min={contractStep}
               max={position.quantity}
               value={quantity}
               onChange={(e) => {
@@ -198,8 +197,7 @@ export function CloseOptionModal({
         <div className="p-4 bg-slate-800 rounded-lg space-y-2">
           <div className="flex justify-between">
             <span className="text-sm text-gray-500">
-              Total ({contractsToClose} x {premiumValue.toFixed(2)} x{' '}
-              {CONTRACT_SIZE})
+              Total ({sharesToClose} ações × {premiumValue.toFixed(2)})
             </span>
             <span
               className={`text-sm font-semibold ${position.isShort ? 'text-red-400' : 'text-emerald-400'}`}

@@ -12,7 +12,6 @@ import {
   PerformanceService,
 } from './services';
 import {
-  BrapiMarketService,
   OpLabMarketService,
   CompositeMarketService,
 } from './providers';
@@ -30,7 +29,6 @@ import {
     AuditService,
     AssetResolverService,
     // Market data providers
-    BrapiMarketService,
     OpLabMarketService,
     CompositeMarketService,
     {

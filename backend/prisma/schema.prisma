@@ -247,6 +247,7 @@ model Position {
   id                    String    @id @default(uuid())
   walletId              String
   assetId               String
+  originTransactionId   String?   @unique
   quantity              Decimal   @db.Decimal(18, 8)
   averagePrice          Decimal   @db.Decimal(18, 2)
   collateralBlocked     Decimal?  @db.Decimal(18, 2)
@@ -256,10 +257,11 @@ model Position {
   createdAt             DateTime  @default(now())
   updatedAt             DateTime  @updatedAt
 
-  wallet           Wallet                  @relation(fields: [walletId], references: [id], onDelete: Cascade)
-  asset            Asset                   @relation(fields: [assetId], references: [id])
-  lifecycleEvents  OptionLifecycle[]
-  dividendPayments WalletDividendPayment[]
+  wallet              Wallet                  @relation(fields: [walletId], references: [id], onDelete: Cascade)
+  asset               Asset                   @relation(fields: [assetId], references: [id])
+  originTransaction   Transaction?            @relation("PositionOriginTx", fields: [originTransactionId], references: [id], onDelete: SetNull)
+  lifecycleEvents     OptionLifecycle[]
+  dividendPayments    WalletDividendPayment[]
 
   @@index([walletId, assetId])
   @@index([walletId])
@@ -301,10 +303,11 @@ model Transaction {
   idempotencyKey String?
   createdAt      DateTime        @default(now())
 
-  wallet         Wallet           @relation(fields: [walletId], references: [id], onDelete: Cascade)
-  asset          Asset?           @relation(fields: [assetId], references: [id])
-  operationLeg   OperationLeg?
-  lifecycleEvent OptionLifecycle?
+  wallet          Wallet           @relation(fields: [walletId], references: [id], onDelete: Cascade)
+  asset           Asset?           @relation(fields: [assetId], references: [id])
+  operationLeg    OperationLeg?
+  lifecycleEvent  OptionLifecycle?
+  originPosition  Position?        @relation("PositionOriginTx")
 
   @@unique([walletId, idempotencyKey])
   @@index([walletId])

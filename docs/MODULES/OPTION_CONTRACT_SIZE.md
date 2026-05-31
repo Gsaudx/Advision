@@ -388,4 +388,247 @@ Caminho de reversão completo (em ordem):
 | ------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------ |
 | [PERFORMANCE.md](./PERFORMANCE.md)                      | `PerformanceService` é o consumidor primário do multiplier; performance % seria 100× errada sem essa correção                                          |
 | [PROVENTOS.md](./PROVENTOS.md)                          | Sentinel grava `priceAtLastDividend` por ação — `formatPosition` aplica o multiplier também sobre esse preço de referência                            |
-| Módulo `derivatives` (sem PRD ainda)                     | Continua usando `CONTRACT_SIZE = 100` no caminho de escrita — gap conhecido (§7)                                                                       |
+| Módulo `derivatives` (sem PRD ainda)                     | Gap do §7 resolvido em §14 — `CONTRACT_SIZE` removido do `DerivativesService`; `quantity` agora é em ações                                            |
+
+---
+
+## 14. Resolução do Gap — `DerivativesService` e Modais (commit `301c4ec`)
+
+Esta seção documenta a segunda fase da entrega: a remoção da constante `CONTRACT_SIZE` do módulo `derivatives` e a mudança de semântica do campo `quantity` (de contratos para ações). Os gaps listados em §7 e §11 foram resolvidos neste commit.
+
+### 14.1 Mudança de Semântica do Campo `quantity`
+
+**Antes:** `quantity` armazenava o número de **contratos**. O cálculo financeiro aplicava `× CONTRACT_SIZE (100)` para obter o valor real.
+
+**Depois:** `quantity` armazena diretamente o número de **ações**. Não há multiplicador na camada de escrita — a conversão acontece no input do usuário (lote dinâmico via `contractStep`).
+
+O `averagePrice` sempre foi por ação — portanto a semântica de leitura permanece coerente.
+
+### 14.2 Remoção da Constante `CONTRACT_SIZE` do `DerivativesService`
+
+**Arquivo:** `backend/src/modules/derivatives/services/derivatives.service.ts`
+
+```typescript
+// Antes:
+import { CONTRACT_SIZE, MONEYNESS_ATM_THRESHOLD } from '../constants';
+
+// Depois:
+import { MONEYNESS_ATM_THRESHOLD } from '../constants';
+```
+
+Todos os cálculos financeiros que multiplicavam por `CONTRACT_SIZE` foram simplificados:
+
+| Método | Cálculo anterior | Cálculo atual |
+| ------ | ---------------- | ------------- |
+| `buyOption` → `totalCost` | `premium × 100 × qty_contratos` | `premium × qty_acoes` |
+| `sellOption` → `totalPremium` | `premium × 100 × qty_contratos` | `premium × qty_acoes` |
+| `sellOption` → `requiredCollateral` (PUT) | `strike × 100 × qty_contratos` | `strike × qty_acoes` |
+| `sellOption` → `requiredShares` | `qty_contratos × 100` | `qty_acoes` |
+| `closeOption` → `totalValue` | `premium × 100 × qty_contratos` | `premium × qty_acoes` |
+| `updateOption` → `newTotalValue` | `premium × 100 × qty_contratos` | `premium × qty_acoes` |
+| `formatOptionPosition` → `totalCost` | `qty × avg × 100` | `qty × avg` |
+| `formatOptionPosition` → `currentValue` | `qty × currentPrice × 100` | `qty × currentPrice` |
+
+### 14.3 Remoção da Constante do `OptionLifecycleService`
+
+**Arquivo:** `backend/src/modules/derivatives/services/option-lifecycle.service.ts`
+
+```typescript
+// Antes:
+import { CONTRACT_SIZE, MONEYNESS_ATM_THRESHOLD } from '../constants';
+
+// Depois:
+import { MONEYNESS_ATM_THRESHOLD } from '../constants';
+```
+
+| Método | Antes | Depois |
+| ------ | ----- | ------ |
+| `exerciseOption` → `underlyingQuantity` | `quantityToExercise × CONTRACT_SIZE` | `quantityToExercise` (já em ações) |
+| `assignOption` → `underlyingQuantity` | `data.quantity × CONTRACT_SIZE` | `data.quantity` (já em ações) |
+
+### 14.4 `contractSize` Exposto no Response Schema
+
+**Arquivo:** `backend/src/modules/derivatives/schemas/option-trade.schema.ts`
+
+```typescript
+export const OptionDetailResponseSchema = z.object({
+  optionType: z.nativeEnum(OptionType),
+  exerciseType: z.nativeEnum(ExerciseType),
+  strikePrice: z.number(),
+  initialStrike: z.number().nullable(),
+  expirationDate: z.string(),
+  underlyingTicker: z.string(),
+  contractSize: z.number(),  // ← NOVO: expõe o lote variável ao frontend
+});
+```
+
+O `formatOptionPosition` agora inclui `contractSize` na resposta:
+
+```typescript
+optionDetail: {
+  // ...campos existentes...
+  contractSize: position.asset.optionDetail!.contractSize,  // ← NOVO
+},
+```
+
+### 14.5 Mensagens de Validação Atualizadas
+
+Todos os schemas Zod em `option-trade.schema.ts` e `lifecycle.schema.ts` atualizaram as mensagens do campo `quantity`:
+
+| Schema | Antes | Depois |
+| ------ | ----- | ------ |
+| `BuyOptionInputSchema` | "Quantidade de contratos deve ser positiva" | "Quantidade de ações deve ser positiva" |
+| `SellOptionInputSchema` | "Quantidade deve ser um número inteiro de contratos" | "Quantidade deve ser um número inteiro de ações" |
+| `CloseOptionInputSchema` | (idem) | (idem) |
+| `UpdateOptionInputSchema` | (idem) | (idem) |
+
+### 14.6 Frontend — Modais com Input Dinâmico (`contractStep`)
+
+A remoção de `CONTRACT_SIZE` do frontend (`frontend/src/features/derivatives/types/index.ts`) foi acompanhada de UI dinâmica nos modais de operação.
+
+**Arquivo:** `frontend/src/features/derivatives/types/index.ts`
+
+```typescript
+// REMOVIDO:
+// /** Standard B3 options contract size (number of shares per contract) */
+// export const CONTRACT_SIZE = 100;
+```
+
+O `contractSize` passa a vir da API, resolvido em tempo de execução para cada opção.
+
+**`OptionTradeModal.tsx`** — campo de quantidade com botões ±:
+
+```jsx
+// Calcula o passo do lote a partir da resposta da API
+const contractStep = optionDetails?.contractSize ?? 100;
+
+// Input com step dinâmico e botões de incremento/decremento
+<button onClick={() => setFormData(prev => ({ ...prev, quantity: String(Math.max(0, cur - contractStep) || contractStep) }))}>−</button>
+<input type="number" step={contractStep} min={contractStep} value={formData.quantity} ... />
+<button onClick={() => setFormData(prev => ({ ...prev, quantity: String(cur + contractStep) }))}>+</button>
+<span className="text-xs text-gray-500">Lote: {contractStep} ações por vez</span>
+```
+
+Cálculo do total atualizado:
+
+```typescript
+// Antes: quantity * premium * CONTRACT_SIZE
+// Depois:
+const totalValue = quantity * premium; // quantity já é em ações
+```
+
+Os mesmos padrões foram aplicados em `CloseOptionModal.tsx`, `ExerciseOptionModal.tsx`, `AssignmentModal.tsx` e `UnifiedTradeModal.tsx`.
+
+### 14.7 Fluxo Completo Pós-Resolução
+
+```
+1. Usuário abre modal (ex: OptionTradeModal)
+   ↓
+2. API retorna OptionDetailsResult { contractSize: 100 }
+   ↓
+3. contractStep = optionDetails?.contractSize ?? 100
+   ↓
+4. Input com step={contractStep} e botões ± em passos de contractStep
+   ↓
+5. Usuário informa 100 ações (equivale a 1 lote padrão B3)
+   ↓
+6. POST /wallets/:id/options/buy { quantity: 100, premium: 1.50 }
+   ↓
+7. Backend: totalCost = 100 × 1.50 = R$ 150,00 (sem multiplicador)
+   ↓
+8. Posição gravada: quantity=100 (ações), averagePrice=1.50 (por ação)
+   ↓
+9. Leitura (WalletsService): contractSize lido do banco → multiplier=1 (já em ações)
+   Valor correto: 100 × 1.50 = R$ 150,00
+```
+
+### 14.8 Atualização da Tabela de Gaps (§7)
+
+Os gaps de §7 foram resolvidos neste commit. O estado atual dos arquivos antes marcados como "intacto":
+
+| Arquivo | Status anterior (§12) | Status atual |
+| ------- | --------------------- | ------------ |
+| `backend/src/modules/derivatives/constants.ts` | `CONTRACT_SIZE = 100` ainda em uso | `CONTRACT_SIZE` não importado por `DerivativesService` nem por `OptionLifecycleService`; constante permanece como fallback de contextos externos |
+| `backend/src/modules/derivatives/services/derivatives.service.ts` | Importava `CONTRACT_SIZE` | Import removido; cálculos usam `quantity` direto |
+| `frontend/src/features/derivatives/types/index.ts` | `CONTRACT_SIZE = 100` exportado | Export removido |
+| `frontend/src/features/wallets/components/UnifiedTradeModal.tsx` | Importava `CONTRACT_SIZE` | Import removido; usa `contractStep` da API |
+
+---
+
+## 15. Renome de Labels na UI — "Contratos" → "Ações" (commit `cce76c2`)
+
+Esta seção documenta as mudanças de nomenclatura realizadas em 5 componentes de UI para alinhar a linguagem exibida ao usuário com o modelo de dados corrigido nos §14 e §5.
+
+**Escopo:** Apenas rótulos e textos de UI — nenhuma mudança em lógica, tipos ou cálculos.
+
+### 15.1 Tabela Geral — Antes e Depois por Componente
+
+| Componente | Arquivo | Texto anterior | Texto atual |
+| ---------- | ------- | -------------- | ----------- |
+| Widget de vencimento (Analytics) | `OptionsExpiry.tsx` | `{w.count} contratos` | `{w.count} ações` |
+| Widget de vencimento (Analytics) | `OptionsExpiry.tsx` | `em {contracts} contratos` | `em {contracts} ações` |
+| Widget de vencimento (Analytics) | `OptionsExpiry.tsx` | `{criticalWindow.count} contratos em ≤7 dias` | `{criticalWindow.count} ações em ≤7 dias` |
+| Modal de vencimento (Derivativos) | `ExpirationModal.tsx` | `{position.quantity} contratos` | `{position.quantity} ações` |
+| Card de posição (Opções) | `OptionPositionCard.tsx` | `label: 'CONTRATOS'` | `label: 'AÇÕES'` |
+| Timeline de transações (Carteira) | `TransactionTimeline.tsx` | `isOption ? 'Contratos' : 'Quantidade'` | `isOption ? 'Ações' : 'Quantidade'` |
+| Modal unificada (Carteira) | `UnifiedTradeModal.tsx` | `{/* Contratos + Prêmio */}` | `{/* Ações + Prêmio */}` (comentário) |
+
+### 15.2 Detalhamento por Arquivo
+
+**`frontend/src/features/analytics/components/widgets/OptionsExpiry.tsx`**
+
+```jsx
+// Linha ~46 — subtítulo de cada janela
+<span className="text-[11px] text-on-surface-variant">{w.count} ações</span>
+
+// Linha ~95 — resumo total
+<p className="text-xs text-on-surface-variant font-semibold whitespace-nowrap">em {contracts} ações</p>
+
+// Linha ~108 — alerta crítico
+<div className="px-2.5 py-1 rounded-full bg-error/12 text-error text-[11px] font-bold whitespace-nowrap">
+  {criticalWindow.count} ações em ≤7 dias
+</div>
+```
+
+**`frontend/src/features/derivatives/lifecycle/components/ExpirationModal.tsx`**
+
+```jsx
+// Linha ~99
+<span className="text-sm text-white">
+  {position.optionDetail.optionType} - {position.quantity} ações
+</span>
+```
+
+**`frontend/src/features/derivatives/options/components/OptionPositionCard.tsx`**
+
+```jsx
+// Linha ~180 — objeto de métrica
+{ label: 'AÇÕES', value: position.quantity.toLocaleString('pt-BR') }
+```
+
+**`frontend/src/features/wallets/components/TransactionTimeline.tsx`**
+
+```jsx
+// Linha ~271 — label condicional
+<span className="text-on-surface-variant">
+  {isOption ? 'Ações' : 'Quantidade'}
+</span>
+```
+
+### 15.3 Motivação UX
+
+O termo "contratos" causava ambiguidade em carteiras mistas:
+
+- O usuário via "100 PETR4" (ação) e "10 contratos PETRH280" (opção).
+- A pergunta "10 contratos = 1.000 ações ou 10 itens?" ficava sem resposta clara na UI.
+
+Com o renome, a UI exibe "10 ações de PETRH280" — o multiplicador (`contractSize`) é transparente para o usuário; o valor financeiro correto já chega calculado do backend.
+
+O rótulo "Quantidade" permanece inalterado para ativos convencionais, criando diferença visual útil entre os dois tipos de ativo.
+
+### 15.4 Impacto e Rollback
+
+- **Arquivos modificados:** 5
+- **Alterações de texto:** 7 (6 strings visíveis ao usuário + 1 comentário interno)
+- **Impacto em lógica/tipos/APIs:** nenhum
+- **Rollback:** `git revert cce76c2` — desfaz todas as 7 mudanças; nenhuma migration envolvida

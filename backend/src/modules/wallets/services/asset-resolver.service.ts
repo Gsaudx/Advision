@@ -1,7 +1,14 @@
-import { Injectable, Inject, Logger } from '@nestjs/common';
+import { Injectable, Inject, Logger, NotFoundException } from '@nestjs/common';
 import { PrismaService } from '@/shared/prisma/prisma.service';
 import type { Asset } from '@/generated/prisma/client';
-import { MarketDataProvider } from '../providers';
+import { MarketDataProvider, AssetMetadata } from '../providers';
+
+interface OptionOverrideMetadata {
+  strikePrice: number;
+  expirationDate: string;
+  optionType: 'CALL' | 'PUT';
+  underlyingTicker: string;
+}
 
 @Injectable()
 export class AssetResolverService {
@@ -16,11 +23,16 @@ export class AssetResolverService {
   /**
    * Ensures an asset exists in the database, creating it if necessary.
    * For OPTIONS, recursively ensures the underlying asset exists first.
+   * When OpLab cannot find the ticker (e.g. expired option), uses overrideMetadata if provided.
    *
    * @param ticker - The asset ticker symbol
+   * @param overrideMetadata - Option metadata to use when OpLab throws NotFoundException
    * @returns The asset record
    */
-  async ensureAssetExists(ticker: string): Promise<Asset> {
+  async ensureAssetExists(
+    ticker: string,
+    overrideMetadata?: OptionOverrideMetadata,
+  ): Promise<Asset> {
     // 1. Check if asset already exists in DB
     const existing = await this.prisma.asset.findUnique({
       where: { ticker },
@@ -31,7 +43,16 @@ export class AssetResolverService {
     }
 
     // 2. Fetch metadata from market data provider (OUTSIDE transaction)
-    const metadata = await this.marketData.getMetadata(ticker);
+    let metadata: AssetMetadata;
+    try {
+      metadata = await this.marketData.getMetadata(ticker);
+    } catch (error) {
+      // OpLab returns 404 for expired options — use override metadata if provided
+      if (overrideMetadata && error instanceof NotFoundException) {
+        return this.createOptionFromOverride(ticker, overrideMetadata);
+      }
+      throw error;
+    }
 
     // 3. For OPTIONS, recursively ensure underlying asset exists first
     let underlyingAssetId: string | undefined;
@@ -113,4 +134,49 @@ export class AssetResolverService {
     }
   }
 
+  /**
+   * Creates an option asset record using caller-supplied metadata.
+   * Used when OpLab has no record for the ticker (e.g. already-expired options).
+   */
+  private async createOptionFromOverride(
+    ticker: string,
+    override: OptionOverrideMetadata,
+  ): Promise<Asset> {
+    const underlying = await this.ensureAssetExists(override.underlyingTicker);
+
+    try {
+      const asset = await this.prisma.asset.upsert({
+        where: { ticker },
+        create: {
+          ticker,
+          name: ticker,
+          type: 'OPTION',
+          market: 'B3',
+          optionDetail: {
+            create: {
+              underlyingAssetId: underlying.id,
+              optionType: override.optionType,
+              exerciseType: 'AMERICAN',
+              strikePrice: override.strikePrice,
+              initialStrike: override.strikePrice,
+              expirationDate: new Date(override.expirationDate),
+            },
+          },
+        },
+        update: {},
+      });
+      this.logger.log(`Created expired option asset from override: ${ticker}`);
+      return asset;
+    } catch (error: unknown) {
+      if (
+        error &&
+        typeof error === 'object' &&
+        'code' in error &&
+        error.code === 'P2002'
+      ) {
+        return this.prisma.asset.findUniqueOrThrow({ where: { ticker } });
+      }
+      throw error;
+    }
+  }
 }

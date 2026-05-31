@@ -51,6 +51,7 @@ import type {
   WalletSummaryResponse,
   WalletPerformanceResponse,
   AssetSearchResponse,
+  OptionSearchPageResponse,
   AssetPriceResponse,
   TransactionListResponse,
   HistoricalPriceResponse,
@@ -222,35 +223,41 @@ export class WalletsController {
     enum: ['CALL', 'PUT'],
   })
   @ApiQuery({
-    name: 'limit',
+    name: 'page',
     required: false,
-    description: 'Numero maximo de resultados (padrao: 20)',
+    description: 'Pagina (padrao: 1)',
+  })
+  @ApiQuery({
+    name: 'pageSize',
+    required: false,
+    description: 'Resultados por pagina (padrao: 50)',
+  })
+  @ApiQuery({
+    name: 'q',
+    required: false,
+    description: 'Filtro por ticker (ex: PETRG3)',
   })
   @ApiResponse({
     status: 200,
-    description: 'Lista de opcoes encontradas',
-    type: AssetSearchApiResponseDto,
+    description: 'Pagina de opcoes encontradas',
   })
   async searchOptions(
     @Query('underlying') underlying: string,
     @Query('type') optionType?: 'CALL' | 'PUT',
-    @Query('limit') limit?: string,
-  ): Promise<ApiResponseType<AssetSearchResponse>> {
-    const DEFAULT_LIMIT = 20;
-    const MAX_LIMIT = 50;
-
-    let maxResults = DEFAULT_LIMIT;
-    if (limit) {
-      const parsed = parseInt(limit, 10);
-      if (!Number.isNaN(parsed) && parsed > 0) {
-        maxResults = Math.min(parsed, MAX_LIMIT);
-      }
-    }
-
+    @Query('page') page?: string,
+    @Query('pageSize') pageSize?: string,
+    @Query('q') q?: string,
+  ): Promise<ApiResponseType<OptionSearchPageResponse>> {
+    const parsedPage = page ? Math.max(1, parseInt(page, 10) || 1) : 1;
+    const parsedPageSize = pageSize
+      ? Math.max(1, parseInt(pageSize, 10) || 50)
+      : 50;
     const data = await this.marketService.searchOptions(
       underlying,
       optionType,
-      maxResults,
+      parsedPage,
+      parsedPageSize,
+      q,
     );
     return ApiResponseDto.success(data);
   }
@@ -260,9 +267,11 @@ export class WalletsController {
   @ApiOperation({
     summary: 'Detalhes da opcao',
     description:
-      'Retorna informacoes detalhadas de uma opcao, incluindo gregas (delta, gamma, theta, vega).',
+      'Retorna informacoes detalhadas de uma opcao, incluindo gregas. Quando date (YYYY-MM-DD) e underlying são informados e a data é passada, busca o strike histórico via OpLab.',
   })
   @ApiParam({ name: 'ticker', description: 'Ticker da opcao (ex: PETRA240)' })
+  @ApiQuery({ name: 'date', required: false, description: 'Data no formato YYYY-MM-DD para busca histórica' })
+  @ApiQuery({ name: 'underlying', required: false, description: 'Ticker do ativo subjacente (ex: PETR4), necessário para busca histórica' })
   @ApiResponse({
     status: 200,
     description: 'Detalhes da opcao',
@@ -272,7 +281,11 @@ export class WalletsController {
     description: 'Opcao não encontrada',
     type: ApiErrorResponseDto,
   })
-  async getOptionDetails(@Param('ticker') ticker: string): Promise<
+  async getOptionDetails(
+    @Param('ticker') ticker: string,
+    @Query('date') date?: string,
+    @Query('underlying') underlying?: string,
+  ): Promise<
     ApiResponseType<{
       ticker: string;
       strike: number;
@@ -285,6 +298,28 @@ export class WalletsController {
       vega?: number;
     } | null>
   > {
+    // Retroactive date: try historical strike lookup first
+    if (date && underlying) {
+      const dateObj = new Date(date);
+      const today = new Date();
+      today.setHours(0, 0, 0, 0);
+      if (dateObj < today) {
+        const historical = await this.marketService.getHistoricalOptionDetails(
+          underlying.toUpperCase(),
+          ticker.toUpperCase(),
+          dateObj,
+        );
+        if (historical) {
+          return ApiResponseDto.success({
+            ticker: ticker.toUpperCase(),
+            strike: historical.strike,
+            expirationDate: historical.expirationDate,
+            type: historical.optionType,
+          });
+        }
+      }
+    }
+
     const details =
       (await this.marketService.getOptionDetails(ticker)) ??
       (await this.walletsService.getOptionDetailsFromDb(ticker));
@@ -298,6 +333,7 @@ export class WalletsController {
       strike: details.strike,
       expirationDate: details.due_date,
       type: details.type,
+      contractSize: (details as { contract_size?: number }).contract_size ?? 100,
       impliedVolatility: (details as { implied_volatility?: number })
         .implied_volatility,
       delta: (details as { delta?: number }).delta,

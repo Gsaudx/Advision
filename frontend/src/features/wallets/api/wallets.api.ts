@@ -13,6 +13,14 @@ import type {
   HistoricalPriceResponse,
 } from '../types';
 
+export interface OptionSearchPage {
+  results: AssetSearchResult[];
+  total: number;
+  page: number;
+  pageSize: number;
+  hasMore: boolean;
+}
+
 export interface SentinelStatusItem {
   ticker: string;
   status: 'ACTIVE' | 'UNAVAILABLE' | 'NOT_MONITORED';
@@ -111,11 +119,38 @@ export const walletsApi = {
     return response.data.data;
   },
 
+  searchOptionsPaginated: async (
+    underlying: string,
+    optionType?: 'CALL' | 'PUT',
+    page = 1,
+    pageSize = 50,
+    q?: string,
+  ): Promise<OptionSearchPage> => {
+    const params: Record<string, string> = {
+      underlying,
+      page: String(page),
+      pageSize: String(pageSize),
+    };
+    if (optionType) params.type = optionType;
+    if (q) params.q = q;
+    const response = await api.get<ApiResponse<OptionSearchPage>>(
+      '/wallets/options/search',
+      { params },
+    );
+    return response.data.data;
+  },
+
   getOptionDetails: async (
     ticker: string,
+    date?: string,
+    underlying?: string,
   ): Promise<OptionDetailsResult | null> => {
+    const params: Record<string, string> = {};
+    if (date) params.date = date;
+    if (underlying) params.underlying = underlying;
     const response = await api.get<ApiResponse<OptionDetailsResult | null>>(
       `/wallets/options/${ticker}/details`,
+      { params: Object.keys(params).length > 0 ? params : undefined },
     );
     return response.data.data;
   },

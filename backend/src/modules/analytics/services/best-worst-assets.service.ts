@@ -57,9 +57,9 @@ export class BestWorstAssetsService {
       };
     });
 
-    const sorted = [...entries].sort((a, b) => b.resultAbsolute - a.resultAbsolute);
+    const sorted = [...entries].sort((a, b) => b.resultPercent - a.resultPercent);
     const topGains = sorted.slice(0, 5);
-    const topLosses = [...entries].sort((a, b) => a.resultAbsolute - b.resultAbsolute).slice(0, 5);
+    const topLosses = [...entries].sort((a, b) => a.resultPercent - b.resultPercent).slice(0, 5);
 
     const result: BestWorstAssetsResponse = { topGains, topLosses };
     this.cache.set(key, result);

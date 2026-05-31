@@ -19,7 +19,7 @@ import { OptionLifecycleEvent } from '@/generated/prisma/enums';
 import type { CurrentUserData } from '@/common/decorators';
 import { AuditService, WalletAccessService } from '@/modules/wallets/services';
 import { MarketDataProvider } from '@/modules/wallets/providers';
-import { CONTRACT_SIZE, MONEYNESS_ATM_THRESHOLD } from '../constants';
+import { MONEYNESS_ATM_THRESHOLD } from '../constants';
 import type {
   ExerciseOptionInput,
   AssignmentInput,
@@ -29,6 +29,8 @@ import type {
   ExpirationResultResponse,
   UpcomingExpirationsResponse,
   UpcomingExpiration,
+  ClosedOptionHistoryItem,
+  ClosedOptionHistoryResponse,
 } from '../schemas';
 
 type PositionWithOptionDetail = Position & {
@@ -116,16 +118,17 @@ export class OptionLifecycleService {
       }
     }
 
-    const quantityToExercise = data.quantity ?? currentQty;
-    if (quantityToExercise > currentQty) {
-      throw new BadRequestException(
-        `Quantidade para exercer (${quantityToExercise}) maior que posicao (${currentQty})`,
-      );
-    }
-
-    const underlyingQuantity = quantityToExercise * CONTRACT_SIZE;
+    // All-or-Nothing: sempre exerce toda a posição (quantity já é em ações)
+    const quantityToExercise = currentQty;
+    const underlyingQuantity = quantityToExercise;
     const strikePrice = Number(optionDetail.strikePrice);
     const totalCost = strikePrice * underlyingQuantity;
+
+    // Premium per share (position.averagePrice is already quoted per underlying share,
+    // same unit as strikePrice). Adding it to the strike gives the true acquisition cost,
+    // so that P&L on the resulting stock position correctly reflects the full outlay.
+    const premiumPerShare = Number(position.averagePrice);
+    const callAcquisitionCost = strikePrice + premiumPerShare;
 
     let result: ExerciseResultResponse;
 
@@ -147,7 +150,7 @@ export class OptionLifecycleService {
                 walletId,
                 assetId: optionDetail.underlyingAssetId,
                 quantity: underlyingQuantity,
-                averagePrice: strikePrice,
+                averagePrice: callAcquisitionCost,
               },
             });
             underlyingPositionId = newPosition.id;
@@ -156,7 +159,8 @@ export class OptionLifecycleService {
             const existingAvg = Number(existingUnderlyingPosition.averagePrice);
             const totalQty = existingQty + underlyingQuantity;
             const newAvg =
-              (existingQty * existingAvg + underlyingQuantity * strikePrice) /
+              (existingQty * existingAvg +
+                underlyingQuantity * callAcquisitionCost) /
               totalQty;
 
             await tx.position.update({
@@ -199,6 +203,8 @@ export class OptionLifecycleService {
           underlyingPositionId = existingUnderlyingPosition.id;
         }
 
+        const exercisedAt = data.exercisedAt ? new Date(data.exercisedAt) : new Date();
+
         const transaction = await tx.transaction.create({
           data: {
             walletId,
@@ -207,7 +213,7 @@ export class OptionLifecycleService {
             quantity: underlyingQuantity,
             price: strikePrice,
             totalValue: totalCost,
-            executedAt: new Date(),
+            executedAt: exercisedAt,
             idempotencyKey: data.idempotencyKey,
           },
         });
@@ -220,6 +226,7 @@ export class OptionLifecycleService {
             strikePrice,
             settlementAmount: totalCost,
             resultingTransactionId: transaction.id,
+            occurredAt: exercisedAt,
             notes: data.notes,
           },
         });
@@ -317,7 +324,7 @@ export class OptionLifecycleService {
     }
 
     const optionDetail = position.asset.optionDetail!;
-    const underlyingQuantity = data.quantity * CONTRACT_SIZE;
+    const underlyingQuantity = data.quantity; // quantidade já é em ações
     const strikePrice = Number(optionDetail.strikePrice);
     const settlementAmount = strikePrice * underlyingQuantity;
 
@@ -618,6 +625,97 @@ export class OptionLifecycleService {
     }
 
     return result;
+  }
+
+  /**
+   * Get closed option positions history (exercised, assigned, expired, closed)
+   * Recovers option info via resultingTransaction → asset → optionDetail
+   */
+  async getOptionHistory(
+    walletId: string,
+    actor: CurrentUserData,
+  ): Promise<ClosedOptionHistoryResponse> {
+    await this.walletAccess.verifyWalletAccess(walletId, actor);
+
+    const TERMINAL_EVENTS = [
+      OptionLifecycleEvent.EXERCISED,
+      OptionLifecycleEvent.ASSIGNED,
+      OptionLifecycleEvent.EXPIRED_ITM,
+      OptionLifecycleEvent.EXPIRED_OTM,
+      OptionLifecycleEvent.CLOSED,
+    ];
+
+    const lifecycleEvents = await this.prisma.optionLifecycle.findMany({
+      where: {
+        event: { in: TERMINAL_EVENTS },
+        resultingTransaction: { walletId },
+      },
+      include: {
+        resultingTransaction: {
+          include: {
+            asset: {
+              include: {
+                optionDetail: { include: { underlyingAsset: true } },
+              },
+            },
+          },
+        },
+      },
+      orderBy: { occurredAt: 'desc' },
+    });
+
+    let realizedNetPremium = 0;
+
+    const history: ClosedOptionHistoryItem[] = lifecycleEvents.map((lc) => {
+      const tx = lc.resultingTransaction;
+      const asset = tx?.asset;
+      const optionDetail = asset?.optionDetail;
+
+      // EXPIRED/CLOSED → transaction.asset = option → optionDetail available
+      // EXERCISED/ASSIGNED → transaction.asset = underlying → optionDetail null
+      const ticker = asset?.ticker ?? 'N/A';
+      const optionType = optionDetail?.optionType ?? null;
+      const expirationDate =
+        optionDetail?.expirationDate?.toISOString() ?? null;
+      const underlyingTicker =
+        optionDetail?.underlyingAsset.ticker ?? ticker;
+
+      const strikePrice = lc.strikePrice ? Number(lc.strikePrice) : null;
+      const underlyingQty = lc.underlyingQuantity
+        ? Number(lc.underlyingQuantity)
+        : null;
+      const contracts = underlyingQty; // stored in shares; field kept for compatibility
+      const settlementAmount = lc.settlementAmount
+        ? Number(lc.settlementAmount)
+        : null;
+
+      // Accumulate realized net premium from CLOSED events only
+      // SELL to close (long position closed) → received cash → positive
+      // BUY to close (short position closed) → paid cash → negative
+      if (lc.event === OptionLifecycleEvent.CLOSED && tx) {
+        if (tx.type === 'SELL') {
+          realizedNetPremium += Number(tx.totalValue);
+        } else if (tx.type === 'BUY') {
+          realizedNetPremium -= Number(tx.totalValue);
+        }
+      }
+
+      return {
+        lifecycleId: lc.id,
+        event: lc.event,
+        occurredAt: lc.occurredAt.toISOString(),
+        ticker,
+        optionType,
+        strikePrice,
+        expirationDate,
+        underlyingTicker,
+        contracts,
+        settlementAmount,
+        notes: lc.notes,
+      };
+    });
+
+    return { history, realizedNetPremium };
   }
 
   /**

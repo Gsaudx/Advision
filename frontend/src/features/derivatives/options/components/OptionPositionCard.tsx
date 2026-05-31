@@ -1,4 +1,4 @@
-import { Calendar } from 'lucide-react';
+import { Calendar, Pencil, Trash2 } from 'lucide-react';
 import type { OptionPosition, Moneyness, ExpiryStatus } from '../../types';
 import {
   formatCurrency,
@@ -14,6 +14,9 @@ interface OptionPositionCardProps {
   onExercise?: (positionId: string) => void;
   onAssignment?: (positionId: string) => void;
   onExpire?: (positionId: string) => void;
+  onEdit?: (positionId: string) => void;
+  onDelete?: (positionId: string) => void;
+  onPayoff?: (positionId: string) => void;
   currentTime: number;
 }
 
@@ -45,6 +48,9 @@ export function OptionPositionCard({
   onExercise,
   onAssignment,
   onExpire,
+  onEdit,
+  onDelete,
+  onPayoff,
   currentTime,
 }: OptionPositionCardProps) {
   const isCall = position.optionDetail.optionType === 'CALL';
@@ -91,7 +97,19 @@ export function OptionPositionCard({
     onClose ||
     (onExercise && canExercise) ||
     (onAssignment && canBeAssigned) ||
-    (onExpire && isExpired);
+    (onExpire && isExpired) ||
+    onEdit ||
+    onDelete ||
+    onPayoff;
+
+  // dias desde a compra no sistema
+  const daysOpened =
+    position.openedAt !== undefined
+      ? Math.floor(
+          (currentTime - new Date(position.openedAt).getTime()) /
+            (1000 * 60 * 60 * 24),
+        )
+      : null;
 
   // 0% = vencido, 100% = 90+ dias
   const barWidth = isExpired
@@ -159,7 +177,7 @@ export function OptionPositionCard({
         <div className="flex-1 flex items-center px-7">
           {[
             {
-              label: 'CONTRATOS',
+              label: 'AÇÕES',
               value: position.quantity.toLocaleString('pt-BR'),
             },
             {
@@ -188,7 +206,7 @@ export function OptionPositionCard({
           {position.profitLoss !== undefined ? (
             <div>
               <p className="text-[9px] font-bold text-on-surface-variant uppercase tracking-[0.14em] mb-1">
-                P&L Não Real.
+                P&L Aberto
               </p>
               <p
                 className={`font-headline font-black text-[20px] leading-none tracking-[-0.02em] ${isProfit ? 'text-tertiary' : 'text-error'}`}
@@ -207,38 +225,72 @@ export function OptionPositionCard({
           ) : null}
 
           {hasActions && (
-            <div className="flex gap-[6px]">
-              {onClose && (
-                <button
-                  onClick={() => onClose(position.id)}
-                  className="text-[10px] font-black tracking-[0.1em] uppercase py-[7px] px-[14px] rounded-lg bg-surface-container-high text-on-surface-variant hover:brightness-110 transition-all whitespace-nowrap"
-                >
-                  Fechar
-                </button>
+            <div className="flex flex-col gap-[6px]">
+              <div className="flex flex-wrap gap-[6px]">
+                {onClose && (
+                  <button
+                    onClick={() => onClose(position.id)}
+                    className="text-[10px] font-black tracking-[0.1em] uppercase py-[7px] px-[14px] rounded-lg bg-surface-container-high text-on-surface-variant hover:brightness-110 transition-all whitespace-nowrap"
+                  >
+                    Fechar
+                  </button>
+                )}
+                {onExercise && canExercise && (
+                  <button
+                    onClick={() => onExercise(position.id)}
+                    className="text-[10px] font-black tracking-[0.1em] uppercase py-[7px] px-[14px] rounded-lg bg-primary text-on-primary hover:brightness-110 transition-all whitespace-nowrap"
+                  >
+                    Exercer
+                  </button>
+                )}
+                {onAssignment && canBeAssigned && (
+                  <button
+                    onClick={() => onAssignment(position.id)}
+                    className="text-[10px] font-black tracking-[0.1em] uppercase py-[7px] px-[14px] rounded-lg bg-outline-variant/20 text-on-surface-variant hover:brightness-110 transition-all whitespace-nowrap"
+                  >
+                    Atribuição
+                  </button>
+                )}
+                {onExpire && isExpired && (
+                  <button
+                    onClick={() => onExpire(position.id)}
+                    className="text-[10px] font-black tracking-[0.1em] uppercase py-[7px] px-[14px] rounded-lg bg-error/[0.15] text-error hover:brightness-110 transition-all whitespace-nowrap"
+                  >
+                    Vencimento
+                  </button>
+                )}
+              </div>
+              {onPayoff && (
+                <div className="flex gap-[6px]">
+                  <button
+                    onClick={() => onPayoff(position.id)}
+                    className="text-[10px] font-black tracking-[0.1em] uppercase py-[7px] px-[14px] rounded-lg bg-primary/10 text-primary hover:brightness-110 transition-all whitespace-nowrap"
+                  >
+                    Payoff
+                  </button>
+                </div>
               )}
-              {onExercise && canExercise && (
-                <button
-                  onClick={() => onExercise(position.id)}
-                  className="text-[10px] font-black tracking-[0.1em] uppercase py-[7px] px-[14px] rounded-lg bg-primary text-on-primary hover:brightness-110 transition-all whitespace-nowrap"
-                >
-                  Exercer
-                </button>
-              )}
-              {onAssignment && canBeAssigned && (
-                <button
-                  onClick={() => onAssignment(position.id)}
-                  className="text-[10px] font-black tracking-[0.1em] uppercase py-[7px] px-[14px] rounded-lg bg-outline-variant/20 text-on-surface-variant hover:brightness-110 transition-all whitespace-nowrap"
-                >
-                  Atribuição
-                </button>
-              )}
-              {onExpire && isExpired && (
-                <button
-                  onClick={() => onExpire(position.id)}
-                  className="text-[10px] font-black tracking-[0.1em] uppercase py-[7px] px-[14px] rounded-lg bg-error/[0.15] text-error hover:brightness-110 transition-all whitespace-nowrap"
-                >
-                  Vencimento
-                </button>
+              {(onEdit || onDelete) && (
+                <div className="flex gap-[6px]">
+                  {onEdit && (
+                    <button
+                      onClick={() => onEdit(position.id)}
+                      className="p-[7px] rounded-lg bg-surface-container-high text-on-surface-variant hover:text-primary hover:bg-primary/10 transition-all"
+                      title="Editar opção"
+                    >
+                      <Pencil size={13} />
+                    </button>
+                  )}
+                  {onDelete && (
+                    <button
+                      onClick={() => onDelete(position.id)}
+                      className="p-[7px] rounded-lg bg-surface-container-high text-on-surface-variant hover:text-error hover:bg-error/10 transition-all"
+                      title="Excluir opção"
+                    >
+                      <Trash2 size={13} />
+                    </button>
+                  )}
+                </div>
               )}
             </div>
           )}
@@ -264,6 +316,11 @@ export function OptionPositionCard({
             style={{ width: `${barWidth}%` }}
           />
         </div>
+        {daysOpened !== null && (
+          <span className="flex items-center gap-[5px] text-[10px] text-on-surface-variant font-medium">
+            Operado há {daysOpened} dia{daysOpened !== 1 ? 's' : ''}
+          </span>
+        )}
         {position.optionDetail.initialStrike != null &&
           position.optionDetail.strikePrice <
             position.optionDetail.initialStrike && (

@@ -96,7 +96,7 @@ export function ExpirationModal({
           <div className="flex justify-between">
             <span className="text-sm text-gray-500">Opcao</span>
             <span className="text-sm text-white">
-              {position.optionDetail.optionType} - {position.quantity} contratos
+              {position.optionDetail.optionType} - {position.quantity} ações
             </span>
           </div>
           <div className="flex justify-between">

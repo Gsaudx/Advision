@@ -6,7 +6,6 @@ import {
   Wallet,
   LineChart,
   LayoutGrid,
-  Layers,
   Search,
   X,
   Pencil,
@@ -36,14 +35,17 @@ import { OptionFilter, FilterSelect } from '../components';
 import { useOptionFilters } from '../hooks/useOptionFilters';
 import {
   useOptionPositions,
+  useOptionHistory,
+  useDeleteOption,
   OptionPositionCard,
+  ClosedOptionHistoryList,
   CloseOptionModal,
   ExerciseOptionModal,
   AssignmentModal,
   ExpirationModal,
   UpcomingExpirationsWidget,
-  StrategyBuilderModal,
-  StrategyHistoryList,
+  EditOptionModal,
+  OptionPayoffModal,
 } from '@/features/derivatives';
 import type {
   OptionPosition,
@@ -54,7 +56,7 @@ import type { Position, Transaction } from '../types';
 import { transactionTypeLabels } from '../types';
 import { useWalletsPageConfig } from './useWalletsPageConfig';
 import { useSentinelStatus } from '../api';
-type SubTab = 'positions' | 'options' | 'strategies';
+type SubTab = 'positions' | 'options';
 type PillTab = 'operations' | 'proventos' | 'ativos';
 type LifecycleAction = 'close' | 'exercise' | 'assignment' | 'expiration';
 
@@ -398,6 +400,8 @@ export default function WalletPage() {
     isFetching: isFetchingOptions,
   } = useOptionPositions(walletId!);
 
+  const { data: optionHistoryData } = useOptionHistory(walletId!);
+
   const { data: proventosData } = useWalletProventos(walletId!);
   const { statusMap: sentinelStatusMap } = useSentinelStatus(walletId);
 
@@ -460,7 +464,6 @@ export default function WalletPage() {
   const [subTab, setSubTab] = useState<SubTab>('positions');
   const [pillTab, setPillTab] = useState<PillTab>('operations');
   const [showTradeModal, setShowTradeModal] = useState(false);
-  const [showStrategyModal, setShowStrategyModal] = useState(false);
   const [tradeInitial, setTradeInitial] = useState<{
     instrument: 'asset' | 'option';
     direction: 'BUY' | 'SELL';
@@ -471,6 +474,16 @@ export default function WalletPage() {
     useState<LifecycleAction | null>(null);
   const [selectedPosition, setSelectedPosition] =
     useState<OptionPosition | null>(null);
+  const [editingPosition, setEditingPosition] = useState<OptionPosition | null>(
+    null,
+  );
+  const [deletingPosition, setDeletingPosition] =
+    useState<OptionPosition | null>(null);
+  const [payoffPosition, setPayoffPosition] = useState<OptionPosition | null>(
+    null,
+  );
+
+  const deleteOptionMutation = useDeleteOption();
 
   const {
     search: optionSearch,
@@ -526,10 +539,32 @@ export default function WalletPage() {
   const handleExpireOption = (id: string) =>
     openLifecycleModal('expiration', id);
 
+  const handleEditOption = (id: string) => {
+    const position = findOptionPosition(id);
+    if (position) setEditingPosition(position);
+  };
+
+  const handleDeleteOption = (id: string) => {
+    const position = findOptionPosition(id);
+    if (position) setDeletingPosition(position);
+  };
+
+  const handlePayoff = (id: string) => {
+    const position = findOptionPosition(id);
+    if (position) setPayoffPosition(position);
+  };
+
+  const handleDeleteConfirm = () => {
+    if (!deletingPosition) return;
+    deleteOptionMutation.mutate(
+      { walletId: walletId!, positionId: deletingPosition.id },
+      { onSuccess: () => setDeletingPosition(null) },
+    );
+  };
+
   const subTabs: { id: SubTab; label: string; icon: React.ElementType }[] = [
     { id: 'positions', label: 'Ações', icon: LayoutGrid },
     { id: 'options', label: 'Opções', icon: LineChart },
-    { id: 'strategies', label: 'Estratégias', icon: Layers },
   ];
 
   const pillTabs: { id: PillTab; label: string }[] = [
@@ -639,21 +674,12 @@ export default function WalletPage() {
                 {wallet.name}
               </h2>
               {config.canTrade && (
-                <>
-                  <button
-                    onClick={() => setShowStrategyModal(true)}
-                    className="flex items-center gap-1.5 bg-surface-container-high text-on-surface-variant px-4 py-2 rounded-full text-xs font-bold hover:bg-surface-container-highest hover:text-on-surface transition-all"
-                  >
-                    <LayoutGrid size={12} />
-                    Estratégia
-                  </button>
-                  <button
-                    onClick={() => handleOpenTrade()}
-                    className="flex items-center gap-2 bg-tertiary text-white px-4 py-2 rounded-full text-xs font-bold hover:brightness-110 transition-all shadow-lg shadow-tertiary/20"
-                  >
-                    Nova Operação
-                  </button>
-                </>
+                <button
+                  onClick={() => handleOpenTrade()}
+                  className="flex items-center gap-2 bg-tertiary text-white px-4 py-2 rounded-full text-xs font-bold hover:brightness-110 transition-all shadow-lg shadow-tertiary/20"
+                >
+                  Nova Operação
+                </button>
               )}
             </div>
             {clientName && (
@@ -704,15 +730,37 @@ export default function WalletPage() {
             transition={{ delay: 0.08 }}
             className="lg:col-span-4 space-y-4"
           >
-            <ConcentrationPanel
-              byAsset={wallet.concentration.byAsset}
-              byType={wallet.concentration.byType}
-              bySector={wallet.concentration.bySector}
-              positions={wallet.positions}
-              performance={performance}
-              currency={wallet.currency}
-              totalPositionsValue={wallet.totalPositionsValue}
-            />
+            <div className="flex flex-col min-h-[540px] max-h-[540px]">
+              <ConcentrationPanel
+                byType={wallet.concentration.byType}
+                bySector={wallet.concentration.bySector}
+                positions={wallet.positions}
+                optionPositions={optionPositionsData?.positions ?? []}
+                performance={performance}
+                currency={wallet.currency}
+                totalPositionsValue={wallet.totalPositionsValue}
+                view={subTab === 'options' ? 'options' : 'assets'}
+              />
+            </div>
+            {subTab === 'options' &&
+              optionHistoryData &&
+              optionHistoryData.history.length > 0 && (
+                <ContentPanel
+                  header={
+                    <div className="flex items-center justify-between">
+                      <p className="text-[10px] font-bold text-on-surface-variant uppercase tracking-[0.2em]">
+                        Histórico de Encerradas
+                      </p>
+                      <span className="text-[10px] font-bold text-on-surface-variant bg-outline-variant/20 px-2 py-0.5 rounded-full">
+                        {optionHistoryData.history.length}
+                      </span>
+                    </div>
+                  }
+                  bodyClassName="p-2 max-h-[280px] overflow-y-auto"
+                >
+                  <ClosedOptionHistoryList items={optionHistoryData.history} />
+                </ContentPanel>
+              )}
           </motion.div>
 
           {/* ── Right Column ── */}
@@ -779,9 +827,9 @@ export default function WalletPage() {
 
             {/* Sub-tab content: Opções */}
             {subTab === 'options' && (
-              <>
+              <div className="flex flex-col gap-4">
                 <ContentPanel
-                  className="relative flex flex-col min-h-[540px]"
+                  className="relative flex flex-col min-h-[540px] max-h-[540px]"
                   bodyClassName="p-0 overflow-y-auto flex-1"
                 >
                   {isLoadingOptions ? (
@@ -898,6 +946,15 @@ export default function WalletPage() {
                                     ? handleExpireOption
                                     : undefined
                                 }
+                                onEdit={
+                                  config.canTrade ? handleEditOption : undefined
+                                }
+                                onDelete={
+                                  config.canTrade
+                                    ? handleDeleteOption
+                                    : undefined
+                                }
+                                onPayoff={handlePayoff}
                               />
                             ))}
                           </div>
@@ -947,14 +1004,7 @@ export default function WalletPage() {
                       }
                     />
                   )}
-              </>
-            )}
-
-            {/* Sub-tab content: Estratégias */}
-            {subTab === 'strategies' && (
-              <ContentPanel bodyClassName="p-0">
-                <StrategyHistoryList walletId={walletId!} />
-              </ContentPanel>
+              </div>
             )}
           </motion.div>
         </div>
@@ -1006,12 +1056,75 @@ export default function WalletPage() {
         />
       )}
 
-      <StrategyBuilderModal
-        isOpen={showStrategyModal}
-        onClose={() => setShowStrategyModal(false)}
-        walletId={walletId!}
-        walletName={wallet.name}
-      />
+      {editingPosition && (
+        <EditOptionModal
+          position={editingPosition}
+          walletId={walletId!}
+          onClose={() => setEditingPosition(null)}
+        />
+      )}
+
+      {payoffPosition && (
+        <OptionPayoffModal
+          position={payoffPosition}
+          currentTime={currentTime}
+          onClose={() => setPayoffPosition(null)}
+        />
+      )}
+
+      {deletingPosition && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
+          <div
+            className="absolute inset-0 bg-background/80 backdrop-blur-md"
+            onClick={() =>
+              !deleteOptionMutation.isPending && setDeletingPosition(null)
+            }
+          />
+          <div className="relative bg-surface-container-low w-full max-w-sm rounded-3xl p-8 shadow-xl border border-outline-variant/10">
+            <h3 className="text-lg font-bold text-on-surface mb-2">
+              Confirmar exclusão
+            </h3>
+            <p className="text-sm text-on-surface-variant mb-1">
+              Tem certeza que deseja excluir esta posição?
+            </p>
+            <p className="text-sm font-semibold text-on-surface mb-1">
+              {deletingPosition.ticker} ·{' '}
+              {deletingPosition.optionDetail.optionType} ·{' '}
+              {deletingPosition.quantity} contrato(s)
+            </p>
+            <p className="text-xs text-on-surface-variant/60 mb-6">
+              Esta ação remove o lançamento incorreto. Opções com eventos de
+              ciclo de vida não podem ser excluídas.
+            </p>
+            <div className="flex gap-3">
+              <button
+                onClick={() => setDeletingPosition(null)}
+                disabled={deleteOptionMutation.isPending}
+                className="flex-1 py-3 rounded-2xl text-sm text-on-surface-variant border border-outline-variant/20 disabled:opacity-40"
+              >
+                Cancelar
+              </button>
+              <button
+                onClick={handleDeleteConfirm}
+                disabled={deleteOptionMutation.isPending}
+                className="flex-1 py-3 rounded-2xl text-sm font-bold bg-error text-white disabled:opacity-40 flex items-center justify-center gap-2"
+              >
+                {deleteOptionMutation.isPending ? (
+                  <LoadingSpinner size="sm" />
+                ) : (
+                  'Excluir'
+                )}
+              </button>
+            </div>
+            {deleteOptionMutation.isError && (
+              <p className="text-error text-xs text-center mt-3">
+                Erro ao excluir — verifique se a posição não possui eventos de
+                ciclo de vida.
+              </p>
+            )}
+          </div>
+        </div>
+      )}
     </>
   );
 }

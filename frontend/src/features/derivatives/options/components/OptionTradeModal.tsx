@@ -3,11 +3,7 @@ import ModalBase from '@/components/layout/ModalBase';
 import { LoadingSpinner } from '@/components/ui/LoadingSpinner';
 import { TrendingUp, TrendingDown, X, RefreshCw, Info } from 'lucide-react';
 import { useBuyOption, useSellOption } from '../api';
-import {
-  formatCurrency,
-  generateIdempotencyKey,
-  CONTRACT_SIZE,
-} from '../../types';
+import { formatCurrency, generateIdempotencyKey } from '../../types';
 import { OptionTickerAutocomplete } from './OptionTickerAutocomplete';
 import { useAssetPrice, useOptionDetails } from '@/features/wallets/api';
 import { getApiErrorMessage } from '@/lib/api-error';
@@ -210,9 +206,11 @@ export function OptionTradeModal({
   const title = isBuy ? 'Comprar Opcao' : 'Vender Opcao';
   const buttonText = isBuy ? 'Confirmar Compra' : 'Confirmar Venda';
 
+  const contractStep =
+    optionDetails?.contractSize ?? selectedOption?.contractSize ?? 100;
   const quantity = parseInt(formData.quantity, 10) || 0;
   const premium = parseFloat(formData.premium) || 0;
-  const totalValue = quantity * premium * CONTRACT_SIZE;
+  const totalValue = quantity * premium;
   const formatExpirationDate = (dateStr?: string): string => {
     if (!dateStr) return '';
     try {
@@ -335,31 +333,64 @@ export function OptionTradeModal({
         )}
 
         <div className="grid grid-cols-2 gap-4">
-          {/* Quantity (Contracts) */}
+          {/* Quantity (Shares) */}
           <div className="flex flex-col gap-1.5">
             <label
               htmlFor="quantity"
               className="text-sm font-medium text-gray-300"
             >
-              Contratos *
+              Ações *
             </label>
-            <input
-              id="quantity"
-              name="quantity"
-              type="number"
-              step="1"
-              min="1"
-              value={formData.quantity}
-              onChange={handleChange}
-              disabled={activeMutation.isPending}
-              className={`w-full bg-slate-800 border rounded-lg px-4 py-3 text-white placeholder-gray-500 focus:outline-none focus:border-slate-500 focus:ring-1 focus:ring-slate-500 transition-colors ${errors.quantity ? 'border-red-500' : 'border-slate-600'}`}
-              placeholder="0"
-            />
+            <div className="flex items-center gap-1">
+              <button
+                type="button"
+                onClick={() => {
+                  const cur = parseInt(formData.quantity, 10) || 0;
+                  const next = Math.max(0, cur - contractStep);
+                  setFormData((prev) => ({
+                    ...prev,
+                    quantity: String(next || contractStep),
+                  }));
+                  setErrors((prev) => ({ ...prev, quantity: '' }));
+                }}
+                disabled={activeMutation.isPending}
+                className="w-10 h-10 flex items-center justify-center bg-slate-800 border border-slate-600 rounded-lg text-gray-300 hover:bg-slate-700 transition-colors disabled:opacity-50 text-lg font-bold shrink-0"
+              >
+                −
+              </button>
+              <input
+                id="quantity"
+                name="quantity"
+                type="number"
+                step={contractStep}
+                min={contractStep}
+                value={formData.quantity}
+                onChange={handleChange}
+                disabled={activeMutation.isPending}
+                className={`w-full bg-slate-800 border rounded-lg px-4 py-2.5 text-white text-center placeholder-gray-500 focus:outline-none focus:border-slate-500 focus:ring-1 focus:ring-slate-500 transition-colors ${errors.quantity ? 'border-red-500' : 'border-slate-600'}`}
+                placeholder={String(contractStep)}
+              />
+              <button
+                type="button"
+                onClick={() => {
+                  const cur = parseInt(formData.quantity, 10) || 0;
+                  setFormData((prev) => ({
+                    ...prev,
+                    quantity: String(cur + contractStep),
+                  }));
+                  setErrors((prev) => ({ ...prev, quantity: '' }));
+                }}
+                disabled={activeMutation.isPending}
+                className="w-10 h-10 flex items-center justify-center bg-slate-800 border border-slate-600 rounded-lg text-gray-300 hover:bg-slate-700 transition-colors disabled:opacity-50 text-lg font-bold shrink-0"
+              >
+                +
+              </button>
+            </div>
             {errors.quantity && (
               <span className="text-red-500 text-sm">{errors.quantity}</span>
             )}
             <span className="text-xs text-gray-500">
-              1 contrato = {CONTRACT_SIZE} acoes
+              Lote: {contractStep} ações por vez
             </span>
           </div>
 
@@ -465,8 +496,7 @@ export function OptionTradeModal({
         <div className="p-4 bg-slate-800 rounded-lg space-y-2">
           <div className="flex justify-between">
             <span className="text-sm text-gray-500">
-              Total ({quantity} contratos x {premium.toFixed(2)} x{' '}
-              {CONTRACT_SIZE})
+              Total ({quantity} ações × {premium.toFixed(2)})
             </span>
             <span
               className={`text-sm font-semibold ${isBuy ? 'text-red-400' : 'text-emerald-400'}`}

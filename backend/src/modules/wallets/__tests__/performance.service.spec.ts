@@ -134,7 +134,7 @@ describe('PerformanceService', () => {
         name: 'PETR4 CALL Janeiro R$24',
         type: 'OPTION',
         sector: null,
-        optionDetail: { contractSize: 100 },
+        optionDetail: null,
       };
       prisma.position.findMany.mockResolvedValue([]); // expired position is removed
       prisma.transaction.findMany.mockResolvedValue([
@@ -143,7 +143,7 @@ describe('PerformanceService', () => {
           walletId: 'w1',
           assetId: 'asset-opt',
           type: 'BUY',
-          quantity: 10,
+          quantity: 1000, // 10 contratos × 100 ações/contrato
           price: 2.5,
           executedAt: new Date('2024-01-01'),
           asset: optionAsset,
@@ -153,7 +153,7 @@ describe('PerformanceService', () => {
           walletId: 'w1',
           assetId: 'asset-opt',
           type: 'EXPIRED',
-          quantity: 10,
+          quantity: 1000,
           price: 0,
           executedAt: new Date('2024-02-01'),
           asset: optionAsset,
@@ -162,20 +162,20 @@ describe('PerformanceService', () => {
 
       const result = await service.computePerformance('w1');
 
-      // EXPIRED 10 contratos × 100 (lote) × R$2,50 (prêmio) = -R$2.500
+      // EXPIRED 1000 ações × R$2,50 (prêmio) = -R$2.500
       expect(result.realized).toBeCloseTo(-2500, 5);
       expect(result.unrealized).toBe(0);
       expect(result.total).toBeCloseTo(-2500, 5);
     });
 
-    it('applies optionDetail.contractSize to open option positions (unrealized + invested)', async () => {
+    it('applies quantity-in-shares to open option positions (unrealized + invested)', async () => {
       const optionAsset = {
         id: 'asset-opt',
         ticker: 'PETRA240',
         name: 'PETR4 CALL Jan',
         type: 'OPTION',
         sector: null,
-        optionDetail: { contractSize: 100 },
+        optionDetail: null,
       };
 
       prisma.position.findMany.mockResolvedValue([
@@ -183,8 +183,8 @@ describe('PerformanceService', () => {
           id: 'pos-opt',
           walletId: 'w1',
           assetId: 'asset-opt',
-          quantity: 1, // 1 contract
-          averagePrice: 46.97, // per share premium
+          quantity: 100, // 1 contrato × 100 ações = 100 ações
+          averagePrice: 46.97, // prêmio por ação
           priceAtLastDividend: null,
           asset: optionAsset,
         },
@@ -195,14 +195,13 @@ describe('PerformanceService', () => {
           walletId: 'w1',
           assetId: 'asset-opt',
           type: 'BUY',
-          quantity: 1,
+          quantity: 100,
           price: 46.97,
           executedAt: new Date('2024-01-01'),
           asset: optionAsset,
         },
       ]);
-      // Current premium per share = R$50,00 → currentValue = 1 × 100 × 50 = R$5.000
-      // referenceCost = 1 × 100 × 46,97 = R$4.697 → unrealized = R$303
+      // currentValue = 100 × 50 = R$5.000; referenceCost = 100 × 46,97 = R$4.697 → unrealized = R$303
       marketData.getBatchPrices.mockResolvedValue({ PETRA240: 50 });
 
       const result = await service.computePerformance('w1');

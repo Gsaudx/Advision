@@ -29,6 +29,7 @@ import {
   AssignmentResultApiResponseDto,
   ExpirationResultApiResponseDto,
   UpcomingExpirationsApiResponseDto,
+  ClosedOptionHistoryApiResponseDto,
 } from '../schemas';
 
 @ApiTags('derivatives')
@@ -37,6 +38,21 @@ import {
 @Controller('wallets/:walletId')
 export class LifecycleController {
   constructor(private readonly lifecycleService: OptionLifecycleService) {}
+
+  @Get('options/history')
+  @ApiOperation({ summary: 'Get closed option positions history' })
+  @ApiParam({ name: 'walletId', type: 'string', format: 'uuid' })
+  @ApiOkResponse({
+    description: 'Closed option history retrieved successfully',
+    type: ClosedOptionHistoryApiResponseDto,
+  })
+  async getOptionHistory(
+    @Param('walletId', ParseUUIDPipe) walletId: string,
+    @CurrentUser() actor: CurrentUserData,
+  ) {
+    const data = await this.lifecycleService.getOptionHistory(walletId, actor);
+    return { success: true, data };
+  }
 
   @Get('expirations')
   @ApiOperation({ summary: 'Get upcoming option expirations' })

@@ -2,7 +2,6 @@ import { Test, TestingModule } from '@nestjs/testing';
 import { Response } from 'express';
 import { AuthController } from '../controllers/auth.controller';
 import { AuthService } from '../services/auth.service';
-import { ProventosSyncService } from '@/modules/proventos/services/proventos-sync.service';
 import { NotificationsService } from '@/modules/notifications/services';
 import { AUTH_COOKIE_NAME } from '../strategies/jwt.strategy';
 
@@ -69,15 +68,10 @@ describe('AuthController (Production Config)', () => {
       clearCookie: jest.fn(),
     };
 
-    const mockProventosSyncService = {
-      trySyncAfterAdminLogin: jest.fn(),
-    };
-
     const module: TestingModule = await Test.createTestingModule({
       controllers: [AuthController],
       providers: [
         { provide: AuthService, useValue: mockAuthService },
-        { provide: ProventosSyncService, useValue: mockProventosSyncService },
         {
           provide: NotificationsService,
           useValue: { generateExpiryNotifications: jest.fn().mockResolvedValue(undefined) },

@@ -13,17 +13,15 @@ interface UpcomingExpirationsWidgetProps {
 }
 
 function getUrgencyColor(days: number): string {
-  if (days <= 0) return 'text-red-400';
-  if (days <= 3) return 'text-red-400';
+  if (days <= 3) return 'text-error';
   if (days <= 7) return 'text-amber-400';
-  return 'text-gray-400';
+  return 'text-on-surface-variant';
 }
 
 function getUrgencyBg(days: number): string {
-  if (days <= 0) return 'bg-red-500/10 border-red-500/20';
-  if (days <= 3) return 'bg-red-500/5 border-red-500/10';
-  if (days <= 7) return 'bg-amber-500/5 border-amber-500/10';
-  return 'bg-slate-800/50 border-slate-700';
+  if (days <= 3) return 'bg-error/5 border-error/20';
+  if (days <= 7) return 'bg-amber-500/5 border-amber-500/20';
+  return 'bg-surface-container-low border-outline-variant/10';
 }
 
 function ExpirationRow({
@@ -41,7 +39,7 @@ function ExpirationRow({
 
   return (
     <div
-      className={`flex items-center justify-between p-3 rounded-lg border ${getUrgencyBg(expiration.daysUntilExpiry)}`}
+      className={`flex items-center justify-between p-4 rounded-2xl border ${getUrgencyBg(expiration.daysUntilExpiry)}`}
     >
       <div className="flex items-center gap-3 min-w-0">
         <div className="flex flex-col items-center min-w-[48px]">
@@ -50,7 +48,7 @@ function ExpirationRow({
           >
             {isExpired ? '!' : expiration.daysUntilExpiry}
           </span>
-          <span className="text-[10px] text-gray-500 uppercase">
+          <span className="text-[10px] text-on-surface-variant uppercase tracking-widest">
             {isExpired
               ? 'vencido'
               : expiration.daysUntilExpiry === 1
@@ -59,67 +57,67 @@ function ExpirationRow({
           </span>
         </div>
         <div className="min-w-0">
-          <div className="flex items-center gap-2">
-            <span className="text-sm font-medium text-white truncate">
+          <div className="flex items-center gap-2 flex-wrap">
+            <span className="text-sm font-bold text-on-surface truncate">
               {expiration.ticker}
             </span>
             <span
-              className={`text-xs px-1.5 py-0.5 rounded ${
+              className={`text-[10px] font-bold px-2 py-0.5 rounded-full ${
                 expiration.optionType === 'CALL'
-                  ? 'bg-blue-500/20 text-blue-400'
-                  : 'bg-purple-500/20 text-purple-400'
+                  ? 'bg-tertiary/10 text-tertiary'
+                  : 'bg-error/10 text-error'
               }`}
             >
               {expiration.optionType}
             </span>
             {expiration.isShort && (
-              <span className="text-xs px-1.5 py-0.5 rounded bg-orange-500/20 text-orange-400">
-                V
+              <span className="text-[10px] font-bold px-2 py-0.5 rounded-full bg-outline-variant/20 text-on-surface-variant">
+                Venda
               </span>
             )}
             {expiration.moneyness && (
               <span
-                className={`text-xs font-medium ${moneynessColors[expiration.moneyness]}`}
+                className={`text-xs font-bold ${moneynessColors[expiration.moneyness]}`}
               >
                 {expiration.moneyness}
               </span>
             )}
           </div>
-          <div className="flex items-center gap-2 text-xs text-gray-500 mt-0.5">
+          <div className="flex items-center gap-2 text-xs text-on-surface-variant mt-1">
             <span>Strike {formatCurrency(expiration.strikePrice)}</span>
-            <span>|</span>
-            <span>{expiration.quantity} contr.</span>
-            <span>|</span>
+            <span>·</span>
+            <span>{expiration.quantity} ações</span>
+            <span>·</span>
             <span>{formatDate(expiration.expirationDate)}</span>
           </div>
         </div>
       </div>
-      <div className="flex items-center gap-1.5 ml-2">
+      <div className="flex items-center gap-1 ml-2">
         {!expiration.isShort && onExercise && (
           <button
             onClick={() => onExercise(expiration.positionId)}
-            className="p-1.5 text-indigo-400 hover:bg-indigo-600/20 rounded transition-colors"
+            className="p-1.5 rounded-lg text-primary hover:bg-primary/10 transition-colors"
             title="Exercer"
           >
-            <Zap size={16} />
+            <Zap size={15} />
           </button>
         )}
         {expiration.isShort && onAssignment && (
           <button
             onClick={() => onAssignment(expiration.positionId)}
-            className="p-1.5 text-amber-400 hover:bg-amber-600/20 rounded transition-colors"
-            title="Registrar atribuicao"
+            className="p-1.5 rounded-lg text-amber-400 hover:bg-amber-500/10 transition-colors"
+            title="Registrar atribuição"
           >
-            <AlertTriangle size={16} />
+            <AlertTriangle size={15} />
           </button>
         )}
         {onExpire && (
           <button
             onClick={() => onExpire(expiration.positionId)}
-            className="p-1.5 text-gray-400 hover:bg-gray-600/20 rounded transition-colors"
+            className="p-1.5 rounded-lg text-on-surface-variant hover:bg-surface-container-high transition-colors"
             title="Processar vencimento"
           >
-            <Clock size={16} />
+            <Clock size={15} />
           </button>
         )}
       </div>
@@ -137,11 +135,11 @@ export function UpcomingExpirationsWidget({
 
   if (isLoading) {
     return (
-      <div className="bg-slate-800/50 rounded-lg p-4">
-        <div className="flex items-center gap-2 mb-3">
-          <Calendar className="w-4 h-4 text-gray-400" />
-          <h3 className="text-sm font-medium text-gray-400">
-            Vencimentos Proximos
+      <div className="bg-surface-container-lowest rounded-[2.5rem] shadow-sm border border-outline-variant/5 p-6">
+        <div className="flex items-center gap-2 mb-4">
+          <Calendar className="w-4 h-4 text-on-surface-variant" />
+          <h3 className="text-[10px] font-bold text-on-surface-variant uppercase tracking-widest">
+            Vencimentos Próximos
           </h3>
         </div>
         <div className="flex items-center justify-center py-4">
@@ -156,20 +154,20 @@ export function UpcomingExpirationsWidget({
   }
 
   return (
-    <div className="bg-slate-800/50 rounded-lg p-4">
-      <div className="flex items-center justify-between mb-3">
+    <div className="bg-surface-container-lowest rounded-[2.5rem] shadow-sm border border-outline-variant/5 overflow-hidden">
+      <div className="px-6 pt-5 pb-4 border-b border-outline-variant/5 flex items-center justify-between">
         <div className="flex items-center gap-2">
-          <Calendar className="w-4 h-4 text-gray-400" />
-          <h3 className="text-sm font-medium text-gray-400">
-            Vencimentos Proximos
+          <Calendar className="w-4 h-4 text-on-surface-variant" />
+          <h3 className="text-[10px] font-bold text-on-surface-variant uppercase tracking-widest">
+            Vencimentos Próximos
           </h3>
         </div>
-        <span className="text-xs text-gray-500">
+        <span className="text-[10px] font-bold text-on-surface-variant bg-outline-variant/20 px-2 py-0.5 rounded-full">
           {data.totalPositionsExpiring}{' '}
-          {data.totalPositionsExpiring === 1 ? 'posicao' : 'posicoes'}
+          {data.totalPositionsExpiring === 1 ? 'posição' : 'posições'}
         </span>
       </div>
-      <div className="flex flex-col gap-2">
+      <div className="p-4 flex flex-col gap-2">
         {data.expirations.map((expiration) => (
           <ExpirationRow
             key={expiration.positionId}

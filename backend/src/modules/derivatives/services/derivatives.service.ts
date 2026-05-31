@@ -23,11 +23,12 @@ import {
   WalletAccessService,
 } from '@/modules/wallets/services';
 import { MarketDataProvider } from '@/modules/wallets/providers';
-import { CONTRACT_SIZE, MONEYNESS_ATM_THRESHOLD } from '../constants';
+import { MONEYNESS_ATM_THRESHOLD } from '../constants';
 import type {
   BuyOptionInput,
   SellOptionInput,
   CloseOptionInput,
+  UpdateOptionInput,
   OptionPositionResponse,
   OptionPositionListResponse,
   OptionTradeResultResponse,
@@ -41,6 +42,7 @@ type PositionWithAssetAndOption = Position & {
       strikePrice: Decimal;
       initialStrike: Decimal | null;
       expirationDate: Date;
+      contractSize: number;
       underlyingAsset: Asset;
     } | null;
   };
@@ -67,7 +69,7 @@ export class DerivativesService {
     const averagePrice = Number(position.averagePrice);
     const isShort = quantity < 0;
     const absQuantity = Math.abs(quantity);
-    const totalCost = absQuantity * averagePrice * CONTRACT_SIZE;
+    const totalCost = absQuantity * averagePrice;
 
     const result: OptionPositionResponse = {
       id: position.id,
@@ -79,6 +81,7 @@ export class DerivativesService {
       averagePrice,
       totalCost,
       isShort,
+      openedAt: position.createdAt.toISOString(),
       optionDetail: {
         optionType: position.asset.optionDetail!.optionType,
         exerciseType: position.asset.optionDetail!.exerciseType,
@@ -89,11 +92,12 @@ export class DerivativesService {
         expirationDate:
           position.asset.optionDetail!.expirationDate.toISOString(),
         underlyingTicker: position.asset.optionDetail!.underlyingAsset.ticker,
+        contractSize: position.asset.optionDetail!.contractSize,
       },
     };
 
     if (currentPrice !== undefined) {
-      const currentValue = absQuantity * currentPrice * CONTRACT_SIZE;
+      const currentValue = absQuantity * currentPrice;
       const profitLoss = isShort
         ? totalCost - currentValue
         : currentValue - totalCost;
@@ -125,7 +129,7 @@ export class DerivativesService {
 
   /**
    * Buy an option (long position)
-   * Total cost = premium × CONTRACT_SIZE × contracts
+   * Total cost = premium × quantity (quantity is in shares, not contracts)
    */
   async buyOption(
     walletId: string,
@@ -147,7 +151,10 @@ export class DerivativesService {
       throw new ConflictException('Operacao duplicada');
     }
 
-    const asset = await this.assetResolver.ensureAssetExists(data.ticker);
+    const asset = await this.assetResolver.ensureAssetExists(
+      data.ticker,
+      data.optionMetadata,
+    );
 
     if (asset.type !== 'OPTION') {
       throw new BadRequestException(`${data.ticker} nao e uma opcao`);
@@ -163,26 +170,13 @@ export class DerivativesService {
       );
     }
 
-    const totalCost = new Decimal(data.premium)
-      .times(CONTRACT_SIZE)
-      .times(data.quantity);
+    const totalCost = new Decimal(data.premium).times(data.quantity);
 
     let result: OptionTradeResultResponse;
 
     try {
       result = await this.prisma.$transaction(async (tx) => {
-        // Each option purchase is a separate lot — never accumulate into an existing position
-        const newPosition = await tx.position.create({
-          data: {
-            walletId,
-            assetId: asset.id,
-            quantity: data.quantity,
-            averagePrice: data.premium,
-          },
-        });
-        const positionId = newPosition.id;
-        const positionAction = 'CREATE' as const;
-
+        // Transaction is created first so its id can be stored in originTransactionId
         const transaction = await tx.transaction.create({
           data: {
             walletId,
@@ -195,6 +189,19 @@ export class DerivativesService {
             idempotencyKey: data.idempotencyKey,
           },
         });
+
+        // Each option purchase is a separate lot — never accumulate into an existing position
+        const newPosition = await tx.position.create({
+          data: {
+            walletId,
+            assetId: asset.id,
+            originTransactionId: transaction.id,
+            quantity: data.quantity,
+            averagePrice: data.premium,
+          },
+        });
+        const positionId = newPosition.id;
+        const positionAction = 'CREATE' as const;
 
         await this.auditService.log(tx, {
           tableName: 'positions',
@@ -247,7 +254,7 @@ export class DerivativesService {
 
   /**
    * Sell/Write an option (short position)
-   * Premium received = premium × CONTRACT_SIZE × contracts
+   * Premium received = premium × quantity (quantity is in shares, not contracts)
    * Requires collateral for short puts
    */
   async sellOption(
@@ -270,7 +277,10 @@ export class DerivativesService {
       throw new ConflictException('Operacao duplicada');
     }
 
-    const asset = await this.assetResolver.ensureAssetExists(data.ticker);
+    const asset = await this.assetResolver.ensureAssetExists(
+      data.ticker,
+      data.optionMetadata,
+    );
 
     if (asset.type !== 'OPTION') {
       throw new BadRequestException(`${data.ticker} nao e uma opcao`);
@@ -287,15 +297,11 @@ export class DerivativesService {
       );
     }
 
-    const totalPremium = new Decimal(data.premium)
-      .times(CONTRACT_SIZE)
-      .times(data.quantity);
+    const totalPremium = new Decimal(data.premium).times(data.quantity);
 
     const requiredCollateral =
       optionDetail.optionType === 'PUT'
-        ? new Decimal(optionDetail.strikePrice)
-            .times(CONTRACT_SIZE)
-            .times(data.quantity)
+        ? new Decimal(optionDetail.strikePrice).times(data.quantity)
         : new Decimal(0);
 
     let result: OptionTradeResultResponse;
@@ -307,7 +313,7 @@ export class DerivativesService {
             where: { walletId, assetId: optionDetail.underlyingAssetId },
           });
 
-          const requiredShares = data.quantity * CONTRACT_SIZE;
+          const requiredShares = data.quantity;
           if (
             !underlyingPosition ||
             Number(underlyingPosition.quantity) < requiredShares
@@ -489,9 +495,7 @@ export class DerivativesService {
       );
     }
 
-    const totalValue = new Decimal(data.premium)
-      .times(CONTRACT_SIZE)
-      .times(quantityToClose);
+    const totalValue = new Decimal(data.premium).times(quantityToClose);
 
     let result: OptionTradeResultResponse;
 
@@ -523,7 +527,7 @@ export class DerivativesService {
               : null,
             settlementAmount: totalValue.toNumber(),
             resultingTransactionId: transaction.id,
-            notes: `Posicao ${isShort ? 'vendida' : 'comprada'} fechada: ${quantityToClose} contratos a ${data.premium}`,
+            notes: `Posicao ${isShort ? 'vendida' : 'comprada'} fechada: ${quantityToClose} acoes a ${data.premium}`,
           },
         });
 
@@ -596,6 +600,143 @@ export class DerivativesService {
     }
 
     return result;
+  }
+
+  /**
+   * Edit an option position (corrects quantity, premium and date of a wrong entry)
+   * Blocked if the position already has lifecycle events (close, exercise, etc.)
+   */
+  async updateOption(
+    walletId: string,
+    positionId: string,
+    data: UpdateOptionInput,
+    actor: CurrentUserData,
+  ): Promise<OptionTradeResultResponse> {
+    await this.walletAccess.verifyWalletAccess(walletId, actor);
+
+    const position = await this.prisma.position.findFirst({
+      where: { id: positionId, walletId },
+      include: { asset: true },
+    });
+
+    if (!position) throw new NotFoundException('Posicao nao encontrada');
+    if (position.asset.type !== 'OPTION')
+      throw new BadRequestException('Posicao nao e uma opcao');
+
+    const lifecycleCount = await this.prisma.optionLifecycle.count({
+      where: { positionId },
+    });
+    if (lifecycleCount > 0)
+      throw new ConflictException(
+        'Posicao com eventos de ciclo de vida nao pode ser editada',
+      );
+
+    if (!position.originTransactionId)
+      throw new BadRequestException(
+        'Posicao sem transacao de origem vinculada',
+      );
+
+    const newTotalValue = new Decimal(data.premium).times(data.quantity);
+
+    const snapshotBefore = {
+      quantity: Number(position.quantity),
+      averagePrice: Number(position.averagePrice),
+    };
+
+    await this.prisma.$transaction(async (tx) => {
+      await tx.position.update({
+        where: { id: positionId },
+        data: { quantity: data.quantity, averagePrice: data.premium },
+      });
+
+      await tx.transaction.update({
+        where: { id: position.originTransactionId! },
+        data: {
+          quantity: data.quantity,
+          price: data.premium,
+          totalValue: newTotalValue.toNumber(),
+          executedAt: new Date(data.date),
+        },
+      });
+
+      await this.auditService.log(tx, {
+        tableName: 'positions',
+        recordId: positionId,
+        action: 'UPDATE',
+        actorId: actor.id,
+        actorRole: actor.role,
+        snapshotBefore,
+        snapshotAfter: { quantity: data.quantity, averagePrice: data.premium },
+        context: { trade: 'EDIT_OPTION', ticker: position.asset.ticker },
+      });
+    });
+
+    return {
+      positionId,
+      transactionId: position.originTransactionId,
+      ticker: position.asset.ticker,
+      quantity: data.quantity,
+      premium: data.premium,
+      totalValue: newTotalValue.toNumber(),
+      status: 'EXECUTED' as const,
+    };
+  }
+
+  /**
+   * Delete an option position (removes a wrong entry without leaving a lifecycle trace)
+   * Blocked if the position already has lifecycle events (close, exercise, etc.)
+   */
+  async deleteOption(
+    walletId: string,
+    positionId: string,
+    actor: CurrentUserData,
+  ): Promise<void> {
+    await this.walletAccess.verifyWalletAccess(walletId, actor);
+
+    const position = await this.prisma.position.findFirst({
+      where: { id: positionId, walletId },
+      include: { asset: true },
+    });
+
+    if (!position) throw new NotFoundException('Posicao nao encontrada');
+    if (position.asset.type !== 'OPTION')
+      throw new BadRequestException('Posicao nao e uma opcao');
+
+    const lifecycleCount = await this.prisma.optionLifecycle.count({
+      where: { positionId },
+    });
+    if (lifecycleCount > 0)
+      throw new ConflictException(
+        'Posicao com eventos de ciclo de vida nao pode ser excluida',
+      );
+
+    const snapshotBefore = {
+      ticker: position.asset.ticker,
+      quantity: Number(position.quantity),
+      averagePrice: Number(position.averagePrice),
+      originTransactionId: position.originTransactionId,
+    };
+
+    await this.prisma.$transaction(async (tx) => {
+      // Position deletion cascades WalletDividendPayment; SetNull on OptionLifecycle
+      await tx.position.delete({ where: { id: positionId } });
+
+      if (position.originTransactionId) {
+        await tx.transaction.delete({
+          where: { id: position.originTransactionId },
+        });
+      }
+
+      await this.auditService.log(tx, {
+        tableName: 'positions',
+        recordId: positionId,
+        action: 'DELETE',
+        actorId: actor.id,
+        actorRole: actor.role,
+        snapshotBefore,
+        context: { trade: 'DELETE_OPTION', ticker: position.asset.ticker },
+      });
+    });
   }
 
   /**

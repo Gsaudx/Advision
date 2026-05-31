@@ -26,6 +26,7 @@ describe('StrategyExecutorService', () => {
   let prisma: {
     wallet: { findFirst: jest.Mock; findUnique: jest.Mock; update: jest.Mock };
     position: {
+      findFirst: jest.Mock;
       findUnique: jest.Mock;
       create: jest.Mock;
       update: jest.Mock;

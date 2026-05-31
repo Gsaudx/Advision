@@ -5,6 +5,7 @@ import type {
   BuyOptionInput,
   SellOptionInput,
   CloseOptionInput,
+  UpdateOptionInput,
   OptionTradeResult,
   StructuredOperation,
   StructuredOperationList,
@@ -17,6 +18,7 @@ import type {
   AssignmentResult,
   ExpirationResult,
   UpcomingExpirationsResponse,
+  ClosedOptionHistory,
 } from '../../types';
 
 export const derivativesApi = {
@@ -27,6 +29,13 @@ export const derivativesApi = {
   getOptionPositions: async (walletId: string): Promise<OptionPositionList> => {
     const response = await api.get<ApiResponse<OptionPositionList>>(
       `/wallets/${walletId}/options`,
+    );
+    return response.data.data;
+  },
+
+  getOptionHistory: async (walletId: string): Promise<ClosedOptionHistory> => {
+    const response = await api.get<ApiResponse<ClosedOptionHistory>>(
+      `/wallets/${walletId}/options/history`,
     );
     return response.data.data;
   },
@@ -63,6 +72,22 @@ export const derivativesApi = {
       data,
     );
     return response.data.data;
+  },
+
+  updateOption: async (
+    walletId: string,
+    positionId: string,
+    data: UpdateOptionInput,
+  ): Promise<OptionTradeResult> => {
+    const response = await api.patch<ApiResponse<OptionTradeResult>>(
+      `/wallets/${walletId}/options/${positionId}`,
+      data,
+    );
+    return response.data.data;
+  },
+
+  deleteOption: async (walletId: string, positionId: string): Promise<void> => {
+    await api.delete(`/wallets/${walletId}/options/${positionId}`);
   },
 
   // ============================================================================

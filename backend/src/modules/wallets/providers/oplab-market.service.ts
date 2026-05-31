@@ -5,6 +5,7 @@ import {
   MARKET_CACHE_TTL_MS,
 } from './market-data.provider';
 import type { AssetSearchResult } from './yahoo-market.service';
+import type { OptionSearchPageResponse } from '../schemas/wallet.schema';
 
 interface CacheEntry<T> {
   value: T;
@@ -514,6 +515,55 @@ export class OpLabMarketService extends MarketDataProvider {
   }
 
   /**
+   * Get historical strike and metadata for an option on a specific date.
+   * Uses GET /v3/market/historical/options/{spot}/{date}/{date}?symbol={ticker}.
+   * Falls back up to 3 previous calendar days to handle weekends/holidays.
+   */
+  async getHistoricalOptionDetails(
+    spot: string,
+    ticker: string,
+    date: Date,
+  ): Promise<{
+    strike: number;
+    expirationDate: string;
+    optionType: 'CALL' | 'PUT';
+  } | null> {
+    if (!this.accessToken) return null;
+
+    const upperSpot = spot.toUpperCase();
+    const upperTicker = ticker.toUpperCase();
+
+    for (let offset = 0; offset <= 3; offset++) {
+      const d = new Date(date);
+      d.setDate(d.getDate() - offset);
+      const dateStr = d.toISOString().split('T')[0];
+      try {
+        const data = await this.makeRequest<
+          Array<{ symbol: string; strike: number; due_date: string; type: 'CALL' | 'PUT' }>
+        >(
+          `/market/historical/options/${upperSpot}/${dateStr}/${dateStr}`,
+          { symbol: upperTicker },
+        );
+        const entry = Array.isArray(data) ? data[0] : null;
+        if (entry?.strike != null) {
+          return {
+            strike: entry.strike,
+            expirationDate: entry.due_date,
+            optionType: entry.type,
+          };
+        }
+      } catch {
+        // non-2xx or empty — try previous day
+      }
+    }
+
+    this.logger.warn(
+      `No historical option details found for ${ticker} (${spot}) near ${date.toISOString().split('T')[0]}`,
+    );
+    return null;
+  }
+
+  /**
    * Search for instruments (stocks and options)
    */
   async search(query: string, limit = 10): Promise<AssetSearchResult[]> {
@@ -566,30 +616,46 @@ export class OpLabMarketService extends MarketDataProvider {
   async searchOptions(
     underlying: string,
     optionType?: 'CALL' | 'PUT',
-    limit = 20,
-  ): Promise<AssetSearchResult[]> {
+    page = 1,
+    pageSize = 50,
+    q?: string,
+  ): Promise<OptionSearchPageResponse> {
     if (!this.isConfigured()) {
-      return [];
+      return { results: [], total: 0, page, pageSize, hasMore: false };
     }
 
     const upperUnderlying = underlying.toUpperCase();
     const series = await this.getOptionSeries(upperUnderlying);
 
-    let filtered = series;
-    if (optionType) {
-      filtered = series.filter((s) => s.type === optionType);
+    let filtered = optionType
+      ? series.filter((s) => s.type === optionType)
+      : series;
+
+    if (q) {
+      const upperQ = q.toUpperCase();
+      filtered = filtered.filter((s) => s.symbol.includes(upperQ));
     }
 
-    return filtered.slice(0, limit).map((option) => ({
-      ticker: option.symbol,
-      name: this.buildOptionName(option),
-      type: 'OPTION' as const,
-      exchange: 'B3',
-      strike: option.strike,
-      expirationDate: option.due_date,
-      optionType: option.type,
-      lastPrice: option.close ?? option.bid ?? option.ask,
-    }));
+    const total = filtered.length;
+    const offset = (page - 1) * pageSize;
+    const slice = filtered.slice(offset, offset + pageSize);
+
+    return {
+      results: slice.map((option) => ({
+        ticker: option.symbol,
+        name: this.buildOptionName(option),
+        type: 'OPTION' as const,
+        exchange: 'B3',
+        strike: option.strike,
+        expirationDate: option.due_date,
+        optionType: option.type,
+        lastPrice: option.close ?? option.bid ?? option.ask,
+      })),
+      total,
+      page,
+      pageSize,
+      hasMore: offset + pageSize < total,
+    };
   }
 
   /**

@@ -268,7 +268,7 @@ function TransactionItem({
             <div className="mt-3 pt-3 border-t border-outline-variant/20 grid grid-cols-2 gap-4 text-sm">
               <div>
                 <span className="text-on-surface-variant">
-                  {isOption ? 'Contratos' : 'Quantidade'}
+                  {isOption ? 'Ações' : 'Quantidade'}
                 </span>
                 <p className="text-on-surface font-medium">
                   {transaction.quantity}

@@ -12,6 +12,17 @@ import {
 // ============================================================================
 
 /**
+ * Metadata override for options that no longer exist in OpLab (expired/historical).
+ * Used when registering retroactive operations on options that have already expired.
+ */
+const OptionMetadataSchema = z.object({
+  strikePrice: z.number().positive('Strike deve ser positivo'),
+  expirationDate: z.string().min(1, 'Data de vencimento obrigatória'),
+  optionType: z.enum(['CALL', 'PUT']),
+  underlyingTicker: z.string().min(1, 'Ticker do ativo base obrigatório').toUpperCase(),
+});
+
+/**
  * Schema for buying an option (CALL or PUT)
  */
 export const BuyOptionInputSchema = z.object({
@@ -22,13 +33,14 @@ export const BuyOptionInputSchema = z.object({
     .toUpperCase(),
   quantity: z
     .number()
-    .positive('Quantidade de contratos deve ser positiva')
-    .int('Quantidade deve ser um número inteiro de contratos'),
+    .positive('Quantidade de ações deve ser positiva')
+    .int('Quantidade deve ser um número inteiro de ações'),
   premium: z.number().positive('Prêmio deve ser positivo'),
   date: z
     .string()
     .datetime({ message: 'Data inválida (formato ISO esperado)' }),
   idempotencyKey: z.string().min(1, 'Chave de idempotência obrigatória'),
+  optionMetadata: OptionMetadataSchema.optional(),
 });
 export class BuyOptionInputDto extends createZodDto(BuyOptionInputSchema) {}
 export type BuyOptionInput = z.infer<typeof BuyOptionInputSchema>;
@@ -44,14 +56,15 @@ export const SellOptionInputSchema = z.object({
     .toUpperCase(),
   quantity: z
     .number()
-    .positive('Quantidade de contratos deve ser positiva')
-    .int('Quantidade deve ser um número inteiro de contratos'),
+    .positive('Quantidade de ações deve ser positiva')
+    .int('Quantidade deve ser um número inteiro de ações'),
   premium: z.number().positive('Prêmio deve ser positivo'),
   date: z
     .string()
     .datetime({ message: 'Data inválida (formato ISO esperado)' }),
   covered: z.boolean().default(false),
   idempotencyKey: z.string().min(1, 'Chave de idempotência obrigatória'),
+  optionMetadata: OptionMetadataSchema.optional(),
 });
 export class SellOptionInputDto extends createZodDto(SellOptionInputSchema) {}
 export type SellOptionInput = z.infer<typeof SellOptionInputSchema>;
@@ -62,8 +75,8 @@ export type SellOptionInput = z.infer<typeof SellOptionInputSchema>;
 export const CloseOptionInputSchema = z.object({
   quantity: z
     .number()
-    .positive('Quantidade de contratos deve ser positiva')
-    .int('Quantidade deve ser um número inteiro de contratos')
+    .positive('Quantidade de ações deve ser positiva')
+    .int('Quantidade deve ser um número inteiro de ações')
     .optional(),
   premium: z.number().positive('Prêmio deve ser positivo'),
   date: z
@@ -73,6 +86,22 @@ export const CloseOptionInputSchema = z.object({
 });
 export class CloseOptionInputDto extends createZodDto(CloseOptionInputSchema) {}
 export type CloseOptionInput = z.infer<typeof CloseOptionInputSchema>;
+
+/**
+ * Schema for editing an option position (correcting a wrong entry)
+ */
+export const UpdateOptionInputSchema = z.object({
+  quantity: z
+    .number()
+    .positive('Quantidade de ações deve ser positiva')
+    .int('Quantidade deve ser um número inteiro de ações'),
+  premium: z.number().positive('Prêmio deve ser positivo'),
+  date: z
+    .string()
+    .datetime({ message: 'Data inválida (formato ISO esperado)' }),
+});
+export class UpdateOptionInputDto extends createZodDto(UpdateOptionInputSchema) {}
+export type UpdateOptionInput = z.infer<typeof UpdateOptionInputSchema>;
 
 // ============================================================================
 // RESPONSE SCHEMAS
@@ -88,6 +117,7 @@ export const OptionDetailResponseSchema = z.object({
   initialStrike: z.number().nullable(),
   expirationDate: z.string(),
   underlyingTicker: z.string(),
+  contractSize: z.number(),
 });
 export type OptionDetailResponse = z.infer<typeof OptionDetailResponseSchema>;
 
@@ -110,6 +140,7 @@ export const OptionPositionResponseSchema = z.object({
   currentUnderlyingPrice: z.number().optional(),
   moneyness: z.enum(['ITM', 'ATM', 'OTM']).optional(),
   isShort: z.boolean(),
+  openedAt: z.string().datetime().optional(),
   optionDetail: OptionDetailResponseSchema,
 });
 export type OptionPositionResponse = z.infer<

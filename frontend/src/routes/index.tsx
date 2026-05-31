@@ -8,7 +8,6 @@ import LoginPage from '@/features/login-register/pages/LoginPage';
 import RegisterPage from '@/features/login-register/pages/RegisterPage';
 import ClientsPage from '@/features/clients-page/pages/ClientsPage';
 import { WalletsPage, WalletPage } from '@/features/wallets';
-import { ProventosPage } from '@/features/proventos';
 import { NotificationSettingsPage } from '@/features/notifications/pages/NotificationSettingsPage'; // [NOTIF]
 import { AnalyticsPage } from '@/features/analytics/pages/AnalyticsPage'; // [ANALYTICS]
 
@@ -61,7 +60,6 @@ export function AppRoutes() {
         >
           <Route path="/wallets" element={<WalletsPage />} />
           <Route path="/wallets/:walletId" element={<WalletPage />} />
-          <Route path="/proventos" element={<ProventosPage />} />
         </Route>
 
         {/* Protected redirects */}

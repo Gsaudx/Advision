@@ -215,9 +215,8 @@ export class PerformanceService {
    * Walk transactions per asset keeping a running average. On SELL/EXPIRED, realize against the
    * running average. Open positions contribute the unrealized leg using current market prices.
    *
-   * Para opções, todos os valores monetários são multiplicados pelo lote do contrato
-   * (`optionDetail.contractSize`) — preço/prêmio armazenado é por ação, mas P&L e custo são
-   * calculados em valor financeiro real (qty contratos × tamanho × preço por ação).
+   * quantity é sempre em ações para stocks e opções. Não há multiplicador por contractSize —
+   * o valor financeiro é direto: qty_ações × preço_por_ação.
    */
   private aggregate(
     openPositions: PositionWithAsset[],
@@ -251,13 +250,6 @@ export class PerformanceService {
       return created;
     };
 
-    const multiplierOf = (
-      asset: (Asset & { optionDetail: OptionDetail | null }) | null,
-    ): Decimal => {
-      const size = asset?.optionDetail?.contractSize;
-      return size != null ? new Decimal(size) : new Decimal(1);
-    };
-
     for (const tx of transactions) {
       if (!tx.asset || !tx.assetId || !tx.quantity || tx.price === null) {
         continue;
@@ -272,7 +264,6 @@ export class PerformanceService {
 
       const qty = new Decimal(tx.quantity.toString());
       const price = new Decimal(tx.price.toString());
-      const multiplier = multiplierOf(tx.asset);
 
       if (tx.type === 'BUY') {
         const totalCost = state.qty.times(state.avg).plus(qty.times(price));
@@ -280,8 +271,8 @@ export class PerformanceService {
         state.qty = newQty;
         state.avg = newQty.gt(0) ? totalCost.div(newQty) : new Decimal(0);
       } else if (tx.type === 'SELL') {
-        // Realized = (sell price − running avg) × sold qty × contract multiplier
-        const realized = price.minus(state.avg).times(qty).times(multiplier);
+        // Realized = (sell price − running avg) × sold qty
+        const realized = price.minus(state.avg).times(qty);
         totals.realized = totals.realized.plus(realized);
         state.qty = state.qty.minus(qty);
         if (state.qty.lte(0)) {
@@ -289,8 +280,8 @@ export class PerformanceService {
           state.avg = new Decimal(0);
         }
       } else if (tx.type === 'EXPIRED') {
-        // Total loss of premium for the expired contracts
-        const realized = state.avg.negated().times(qty).times(multiplier);
+        // Total loss of premium paid for expired options
+        const realized = state.avg.negated().times(qty);
         totals.realized = totals.realized.plus(realized);
         state.qty = state.qty.minus(qty);
         if (state.qty.lte(0)) {
@@ -306,17 +297,16 @@ export class PerformanceService {
       const totals = ensure(position.asset);
       const qty = new Decimal(position.quantity.toString());
       const avg = new Decimal(position.averagePrice.toString());
-      const multiplier = multiplierOf(position.asset);
       const referencePrice = position.priceAtLastDividend
         ? new Decimal(position.priceAtLastDividend.toString())
         : avg;
-      const cost = qty.times(referencePrice).times(multiplier);
+      const cost = qty.times(referencePrice);
       const currentPrice = prices[position.asset.ticker];
       if (currentPrice !== undefined) {
-        const currentValue = qty.times(currentPrice).times(multiplier);
+        const currentValue = qty.times(currentPrice);
         totals.unrealized = totals.unrealized.plus(currentValue.minus(cost));
       }
-      totals.invested = totals.invested.plus(qty.times(avg).times(multiplier));
+      totals.invested = totals.invested.plus(qty.times(avg));
     }
 
     return byAsset;

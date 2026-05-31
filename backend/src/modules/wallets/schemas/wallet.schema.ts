@@ -273,6 +273,21 @@ export class AssetSearchApiResponseDto extends createZodDto(
   createApiResponseSchema(AssetSearchResponseSchema),
 ) {}
 
+export const OptionSearchPageResponseSchema = z.object({
+  results: z.array(AssetSearchResultSchema),
+  total: z.number(),
+  page: z.number(),
+  pageSize: z.number(),
+  hasMore: z.boolean(),
+});
+export type OptionSearchPageResponse = z.infer<
+  typeof OptionSearchPageResponseSchema
+>;
+
+export class OptionSearchPageApiResponseDto extends createZodDto(
+  createApiResponseSchema(OptionSearchPageResponseSchema),
+) {}
+
 /**
  * Asset price response schema
  */

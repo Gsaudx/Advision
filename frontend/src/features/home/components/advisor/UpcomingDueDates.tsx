@@ -78,7 +78,7 @@ export function UpcomingDueDates({ expirations }: UpcomingDueDatesProps) {
                 Vencimento
               </th>
               <th className="pb-3 font-semibold uppercase tracking-wider">
-                Dias
+                DTE
               </th>
               <th className="pb-3 font-semibold uppercase tracking-wider">
                 Status

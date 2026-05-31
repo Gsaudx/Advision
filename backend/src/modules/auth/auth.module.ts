@@ -6,13 +6,11 @@ import { AuthController } from './controllers';
 import { AuthService } from './services';
 import { LocalStrategy, JwtStrategy } from './strategies';
 import { LocalAuthGuard } from './guards/local-auth.guard';
-import { ProventosModule } from '@/modules/proventos/proventos.module';
 import { NotificationsModule } from '@/modules/notifications/notifications.module'; // [NOTIF]
 
 @Module({
   imports: [
     PassportModule,
-    ProventosModule,
     NotificationsModule, // [NOTIF]
     JwtModule.register({
       secret: env.JWT_SECRET,

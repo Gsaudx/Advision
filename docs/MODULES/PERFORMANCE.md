@@ -232,6 +232,193 @@ O replay é determinístico — `orderBy: [executedAt asc, createdAt asc]`. Empa
 
 ---
 
+## 9-A. ConcentrationPanel — Visão Contextual por Ativo ou por Opção
+
+> **Commit de referência:** 19dcacc — refatoração de 423 → 733 linhas no componente.
+
+### Contexto
+
+O `ConcentrationPanel` foi refatorado para adaptar seu comportamento à aba ativa da `WalletPage` (Ativos ou Opções). Anteriormente exibia apenas a concentração de ações via prop `byAsset` computada no backend. Agora:
+
+- **Aba "Ativos"**: concentração de ações (stocks) — donut + top 5 por ativo
+- **Aba "Opções"**: concentração de opções — donut + top 5 por opção
+
+### Mudança na Interface de Props
+
+| Propriedade antiga | Situação   | Nova propriedade                                                                    |
+| ------------------ | ---------- | ----------------------------------------------------------------------------------- |
+| `byAsset`          | **Removida** | Calculada localmente a partir de `positions` (stocks) e `optionPositions`          |
+| `byType`           | Mantida    | Mantida como prop opcional                                                          |
+| `bySector`         | Mantida    | Mantida como prop opcional                                                          |
+| —                  | **Nova**   | `view?: 'assets' \| 'options'` — controla qual visualização está ativa             |
+| —                  | **Nova**   | `optionPositions?: OptionPosition[]` — posições de opções para concentração         |
+
+Interface anterior:
+```typescript
+interface ConcentrationPanelProps {
+  byAsset: ConcentrationItem[];
+  byType?: ConcentrationItem[];
+  bySector?: ConcentrationItem[];
+  positions: Position[];
+  performance?: WalletPerformance | null;
+  currency: string;
+  totalPositionsValue: number;
+}
+```
+
+Interface nova:
+```typescript
+interface ConcentrationPanelProps {
+  byType?: ConcentrationItem[];
+  bySector?: ConcentrationItem[];
+  positions: Position[];
+  optionPositions?: OptionPosition[];
+  performance?: WalletPerformance | null;
+  currency: string;
+  totalPositionsValue: number;
+  view?: 'assets' | 'options';
+}
+```
+
+### Função `buildConcentration()`
+
+Nova função auxiliar que calcula percentual de concentração a partir de uma lista de itens e um total:
+
+```typescript
+function buildConcentration(
+  items: { key: string; label: string; value: number }[],
+  total: number,
+): ConcentrationItem[] {
+  if (total <= 0) return [];
+  return items.map((item) => ({
+    key: item.key,
+    label: item.label,
+    value: item.value,
+    percent: (item.value / total) * 100,
+  }));
+}
+```
+
+### Cálculo por Tipo de Visão (`useMemo`)
+
+**Modo Ativos (stocks):**
+```typescript
+const stockItems = useMemo(() => {
+  const stocks = positions.filter((p) => p.type === 'STOCK');
+  const total = stocks.reduce((sum, p) => sum + (p.currentValue ?? p.totalCost), 0);
+  return buildConcentration(
+    stocks.map((p) => ({ key: p.ticker, label: p.ticker, value: p.currentValue ?? p.totalCost })),
+    total,
+  );
+}, [positions]);
+```
+
+**Modo Opções:**
+```typescript
+const optionItems = useMemo(() => {
+  const total = optionPositions.reduce((sum, p) => sum + (p.currentValue ?? p.totalCost), 0);
+  return buildConcentration(
+    optionPositions.map((p) => ({ key: p.ticker, label: p.ticker, value: p.currentValue ?? p.totalCost })),
+    total,
+  );
+}, [optionPositions]);
+```
+
+**Seleção dinâmica:**
+```typescript
+const activeItems = view === 'options' ? optionItems : stockItems;
+```
+
+### Chamada na WalletPage
+
+```typescript
+<ConcentrationPanel
+  byType={wallet.concentration.byType}
+  bySector={wallet.concentration.bySector}
+  positions={wallet.positions}
+  optionPositions={optionPositionsData?.positions ?? []}
+  performance={performance}
+  currency={wallet.currency}
+  totalPositionsValue={wallet.totalPositionsValue}
+  view={subTab === 'options' ? 'options' : 'assets'}
+/>
+```
+
+> `byAsset` foi removido da chamada; a `WalletPage` passa `view` determinado por `subTab`.
+
+### Modal de Detalhes Unificado
+
+Um único `ConcentrationDetailsModal` renderiza seções condicionalmente conforme o conteúdo disponível:
+
+| Seção                   | Condição de exibição              | Visível em           |
+| ----------------------- | --------------------------------- | -------------------- |
+| "Por tipo"              | `byType.length > 0`               | Ambas as vistas      |
+| "Por setor"             | `bySector.length > 0`             | Ambas as vistas      |
+| "Por ativo"             | `sortedStockAssets.length > 0`    | Apenas Ativos        |
+| "Opções por ativo base" | `optionsByBase.length > 0`        | Apenas Opções        |
+| "Por opção"             | `sortedOptions.length > 0`        | Apenas Opções        |
+
+**Tabela "Por ativo" (ações):**
+
+| Coluna  | Conteúdo                                                     |
+| ------- | ------------------------------------------------------------ |
+| Ativo   | Ticker + nome em sub-linha                                   |
+| Qtd     | Quantidade de ações                                          |
+| Valor   | `currentValue` ou fallback para `totalCost`                  |
+| L/P     | Lucro/prejuízo total do ativo (de `performance.byAsset`)     |
+| %       | Concentração sobre total de ações                            |
+
+**Tabela "Opções por ativo base" (agrupamento por `underlyingTicker`):**
+
+| Coluna      | Conteúdo                                               |
+| ----------- | ------------------------------------------------------ |
+| Ativo base  | Ticker do underlying (ex: PETR4)                       |
+| Opções      | Contagem de contratos sobre esse underlying            |
+| Qtd ações   | Soma das `quantity` de todos os contratos (exposição)  |
+| Valor       | Soma do valor atual dos contratos                      |
+| L/P         | Soma do P&L dos contratos sobre esse underlying        |
+| %           | Concentração sobre total de opções                     |
+
+**Tabela "Por opção" (individual):**
+
+| Coluna  | Conteúdo                                                          |
+| ------- | ----------------------------------------------------------------- |
+| Opção   | Ticker do contrato (ex: PETRG25)                                  |
+| Tipo    | Badge "CALL" (verde) ou "PUT" (vermelho)                          |
+| Strike  | Preço de exercício                                                |
+| Qtd     | Quantidade de contratos                                           |
+| Valor   | Valor atual da posição                                            |
+| L/P     | Lucro/prejuízo da posição                                         |
+| %       | Concentração sobre total de opções                                |
+
+> Sem coluna "Direção": o badge de tipo (CALL/PUT) já implica a direção; economiza espaço na tabela.
+
+### Decisões Arquiteturais
+
+| Decisão | Razão |
+| ------- | ----- |
+| Cálculo local em vez de backend | Backend retorna `byAsset` misturando ações e opções; calcular localmente dá clareza, separação e evita novo endpoint |
+| Modal unificado com seções condicionais | Evita duplicação de backdrop/header/animações; um único `showDetails` boolean; "Por tipo" e "Por setor" aparecem em ambas as vistas |
+| `underlyingTicker` como chave de agrupamento | Reflete composição lógica (exposição por ativo base), distinta do ticker do contrato |
+| Sem coluna Direção em "Por opção" | Badge CALL/PUT já diferencia; posições curtas de varejo são menos comuns; pode ser adicionado depois se necessário |
+
+### Arquivos Afetados
+
+| Arquivo | Mudanças |
+| ------- | -------- |
+| `frontend/src/features/wallets/components/ConcentrationPanel.tsx` | Remoção de `byAsset` prop; adição de `view` e `optionPositions`; nova `buildConcentration()`; cálculo local via `useMemo`; labels dinâmicos; modal com suporte a opções |
+| `frontend/src/features/wallets/pages/WalletPage.tsx` | Removido `byAsset={wallet.concentration.byAsset}`; adicionados `optionPositions` e `view` |
+
+### Gaps e Limitações Conhecidos
+
+- **Backend não computa concentração de opções**: tudo calculado no frontend; mudanças em `OptionPosition` exigem ajuste aqui.
+- **"Por tipo" e "Por setor" podem estar vazios**: seções simplesmente não renderizam; sem validação adicional.
+- **Performance em carteiras grandes**: `useMemo` recalcula a cada mudança de `view` ou dados; sem paginação ou virtualização.
+- **`underlyingTicker` ausente**: opção sem esse campo não agrupa corretamente em "Opções por ativo base".
+- **Modal sem paginação**: tabela "Por opção" é scrollável; sem paginação para carteiras com 100+ opções.
+
+---
+
 ## 10. Arquivos Relevantes
 
 ### Backend

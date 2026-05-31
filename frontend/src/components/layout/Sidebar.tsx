@@ -3,7 +3,6 @@ import {
   LayoutDashboard,
   Users,
   Wallet,
-  TrendingUp,
   BarChart2,
   ChevronLeft,
   ChevronRight,
@@ -20,14 +19,12 @@ const advisorNavItems: NavItem[] = [
   { name: 'Dashboard', href: '/advisor/home', icon: LayoutDashboard },
   { name: 'Clientes', href: '/clients', icon: Users },
   { name: 'Carteiras', href: '/wallets', icon: Wallet },
-  { name: 'Proventos', href: '/proventos', icon: TrendingUp },
   { name: 'Análises', href: '/analytics', icon: BarChart2 }, // [ANALYTICS]
 ];
 
 const clientNavItems: NavItem[] = [
   { name: 'Inicio', href: '/client/home', icon: LayoutDashboard },
   { name: 'Carteiras', href: '/wallets', icon: Wallet },
-  { name: 'Proventos', href: '/proventos', icon: TrendingUp },
 ];
 
 interface SidebarProps {
