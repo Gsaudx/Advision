@@ -45,6 +45,7 @@ import {
   ExpirationModal,
   UpcomingExpirationsWidget,
   EditOptionModal,
+  OptionPayoffModal,
 } from '@/features/derivatives';
 import type {
   OptionPosition,
@@ -477,6 +478,8 @@ export default function WalletPage() {
     useState<OptionPosition | null>(null);
   const [deletingPosition, setDeletingPosition] =
     useState<OptionPosition | null>(null);
+  const [payoffPosition, setPayoffPosition] =
+    useState<OptionPosition | null>(null);
 
   const deleteOptionMutation = useDeleteOption();
 
@@ -542,6 +545,11 @@ export default function WalletPage() {
   const handleDeleteOption = (id: string) => {
     const position = findOptionPosition(id);
     if (position) setDeletingPosition(position);
+  };
+
+  const handlePayoff = (id: string) => {
+    const position = findOptionPosition(id);
+    if (position) setPayoffPosition(position);
   };
 
   const handleDeleteConfirm = () => {
@@ -948,6 +956,7 @@ export default function WalletPage() {
                                     ? handleDeleteOption
                                     : undefined
                                 }
+                                onPayoff={handlePayoff}
                               />
                             ))}
                           </div>
@@ -1055,6 +1064,14 @@ export default function WalletPage() {
           position={editingPosition}
           walletId={walletId!}
           onClose={() => setEditingPosition(null)}
+        />
+      )}
+
+      {payoffPosition && (
+        <OptionPayoffModal
+          position={payoffPosition}
+          currentTime={currentTime}
+          onClose={() => setPayoffPosition(null)}
         />
       )}
 

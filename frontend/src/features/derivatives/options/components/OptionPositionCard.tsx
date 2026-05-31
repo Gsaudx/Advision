@@ -16,6 +16,7 @@ interface OptionPositionCardProps {
   onExpire?: (positionId: string) => void;
   onEdit?: (positionId: string) => void;
   onDelete?: (positionId: string) => void;
+  onPayoff?: (positionId: string) => void;
   currentTime: number;
 }
 
@@ -49,6 +50,7 @@ export function OptionPositionCard({
   onExpire,
   onEdit,
   onDelete,
+  onPayoff,
   currentTime,
 }: OptionPositionCardProps) {
   const isCall = position.optionDetail.optionType === 'CALL';
@@ -97,7 +99,8 @@ export function OptionPositionCard({
     (onAssignment && canBeAssigned) ||
     (onExpire && isExpired) ||
     onEdit ||
-    onDelete;
+    onDelete ||
+    onPayoff;
 
   // dias desde a compra no sistema
   const daysOpened =
@@ -257,6 +260,16 @@ export function OptionPositionCard({
                   </button>
                 )}
               </div>
+              {onPayoff && (
+                <div className="flex gap-[6px]">
+                  <button
+                    onClick={() => onPayoff(position.id)}
+                    className="text-[10px] font-black tracking-[0.1em] uppercase py-[7px] px-[14px] rounded-lg bg-primary/10 text-primary hover:brightness-110 transition-all whitespace-nowrap"
+                  >
+                    Payoff
+                  </button>
+                </div>
+              )}
               {(onEdit || onDelete) && (
                 <div className="flex gap-[6px]">
                   {onEdit && (
