@@ -93,7 +93,9 @@ function HistoryRow({ item }: { item: ClosedOptionHistoryItem }) {
   );
 }
 
-export function ClosedOptionHistoryList({ items }: ClosedOptionHistoryListProps) {
+export function ClosedOptionHistoryList({
+  items,
+}: ClosedOptionHistoryListProps) {
   if (items.length === 0) {
     return (
       <p className="text-center text-sm text-on-surface-variant py-6">

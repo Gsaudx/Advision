@@ -15,7 +15,9 @@ export function useUpdateOption() {
     mutationFn: ({ walletId, positionId, data }: UpdateOptionParams) =>
       derivativesApi.updateOption(walletId, positionId, data),
     onSuccess: (_, { walletId }) => {
-      queryClient.invalidateQueries({ queryKey: ['option-positions', walletId] });
+      queryClient.invalidateQueries({
+        queryKey: ['option-positions', walletId],
+      });
       queryClient.invalidateQueries({ queryKey: ['transactions', walletId] });
     },
   });

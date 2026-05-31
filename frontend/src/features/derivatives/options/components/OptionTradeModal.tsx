@@ -3,10 +3,7 @@ import ModalBase from '@/components/layout/ModalBase';
 import { LoadingSpinner } from '@/components/ui/LoadingSpinner';
 import { TrendingUp, TrendingDown, X, RefreshCw, Info } from 'lucide-react';
 import { useBuyOption, useSellOption } from '../api';
-import {
-  formatCurrency,
-  generateIdempotencyKey,
-} from '../../types';
+import { formatCurrency, generateIdempotencyKey } from '../../types';
 import { OptionTickerAutocomplete } from './OptionTickerAutocomplete';
 import { useAssetPrice, useOptionDetails } from '@/features/wallets/api';
 import { getApiErrorMessage } from '@/lib/api-error';
@@ -209,7 +206,8 @@ export function OptionTradeModal({
   const title = isBuy ? 'Comprar Opcao' : 'Vender Opcao';
   const buttonText = isBuy ? 'Confirmar Compra' : 'Confirmar Venda';
 
-  const contractStep = optionDetails?.contractSize ?? selectedOption?.contractSize ?? 100;
+  const contractStep =
+    optionDetails?.contractSize ?? selectedOption?.contractSize ?? 100;
   const quantity = parseInt(formData.quantity, 10) || 0;
   const premium = parseFloat(formData.premium) || 0;
   const totalValue = quantity * premium;
@@ -349,7 +347,10 @@ export function OptionTradeModal({
                 onClick={() => {
                   const cur = parseInt(formData.quantity, 10) || 0;
                   const next = Math.max(0, cur - contractStep);
-                  setFormData((prev) => ({ ...prev, quantity: String(next || contractStep) }));
+                  setFormData((prev) => ({
+                    ...prev,
+                    quantity: String(next || contractStep),
+                  }));
                   setErrors((prev) => ({ ...prev, quantity: '' }));
                 }}
                 disabled={activeMutation.isPending}
@@ -373,7 +374,10 @@ export function OptionTradeModal({
                 type="button"
                 onClick={() => {
                   const cur = parseInt(formData.quantity, 10) || 0;
-                  setFormData((prev) => ({ ...prev, quantity: String(cur + contractStep) }));
+                  setFormData((prev) => ({
+                    ...prev,
+                    quantity: String(cur + contractStep),
+                  }));
                   setErrors((prev) => ({ ...prev, quantity: '' }));
                 }}
                 disabled={activeMutation.isPending}

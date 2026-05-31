@@ -323,7 +323,8 @@ function ConcentrationDetailsModal({
         key: p.ticker,
         label: p.ticker,
         value: p.currentValue ?? p.totalCost,
-        percent: total > 0 ? ((p.currentValue ?? p.totalCost) / total) * 100 : 0,
+        percent:
+          total > 0 ? ((p.currentValue ?? p.totalCost) / total) * 100 : 0,
       }))
       .sort((a, b) => b.value - a.value);
   }, [positions]);
@@ -696,7 +697,10 @@ function ConcentrationDetailsModal({
                           </span>
                         </td>
                         <td className="px-4 py-3 text-right text-on-surface-variant">
-                          {formatCurrency(op.optionDetail.strikePrice, currency)}
+                          {formatCurrency(
+                            op.optionDetail.strikePrice,
+                            currency,
+                          )}
                         </td>
                         <td className="px-4 py-3 text-right text-on-surface-variant">
                           {op.quantity}

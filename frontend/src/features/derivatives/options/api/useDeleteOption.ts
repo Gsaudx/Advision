@@ -13,7 +13,9 @@ export function useDeleteOption() {
     mutationFn: ({ walletId, positionId }: DeleteOptionParams) =>
       derivativesApi.deleteOption(walletId, positionId),
     onSuccess: (_, { walletId }) => {
-      queryClient.invalidateQueries({ queryKey: ['option-positions', walletId] });
+      queryClient.invalidateQueries({
+        queryKey: ['option-positions', walletId],
+      });
       queryClient.invalidateQueries({ queryKey: ['transactions', walletId] });
     },
   });

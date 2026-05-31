@@ -86,10 +86,7 @@ export const derivativesApi = {
     return response.data.data;
   },
 
-  deleteOption: async (
-    walletId: string,
-    positionId: string,
-  ): Promise<void> => {
+  deleteOption: async (walletId: string, positionId: string): Promise<void> => {
     await api.delete(`/wallets/${walletId}/options/${positionId}`);
   },
 

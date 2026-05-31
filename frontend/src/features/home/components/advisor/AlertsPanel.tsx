@@ -14,10 +14,20 @@ const STATUS_COLOR: Record<InviteStatus, string> = {
 };
 
 // Urgency order: header badge shows the most attention-needed non-zero status
-const URGENCY_ORDER: InviteStatus[] = ['REJECTED', 'PENDING', 'SENT', 'ACCEPTED'];
+const URGENCY_ORDER: InviteStatus[] = [
+  'REJECTED',
+  'PENDING',
+  'SENT',
+  'ACCEPTED',
+];
 
 // Ordered for consistent donut + legend rendering
-const DISPLAY_ORDER: InviteStatus[] = ['ACCEPTED', 'SENT', 'PENDING', 'REJECTED'];
+const DISPLAY_ORDER: InviteStatus[] = [
+  'ACCEPTED',
+  'SENT',
+  'PENDING',
+  'REJECTED',
+];
 
 function getInitials(name: string): string {
   const parts = name.trim().split(/\s+/);
@@ -159,7 +169,7 @@ export function AlertsPanel() {
         </div>
 
         {/* Recentes */}
-        {(!isLoading && recentClients.length > 0) && (
+        {!isLoading && recentClients.length > 0 && (
           <>
             <div className="h-px bg-outline-variant/10" />
             <div className="space-y-2.5">
@@ -174,10 +184,7 @@ export function AlertsPanel() {
                 </>
               ) : (
                 recentClients.map((client) => (
-                  <div
-                    key={client.id}
-                    className="flex items-center gap-2.5"
-                  >
+                  <div key={client.id} className="flex items-center gap-2.5">
                     {/* Avatar */}
                     <div
                       className="w-7 h-7 rounded-full flex items-center justify-center shrink-0 text-[10px] font-black"

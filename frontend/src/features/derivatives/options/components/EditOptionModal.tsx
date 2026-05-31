@@ -21,9 +21,7 @@ export function EditOptionModal({
 
   const [quantity, setQuantity] = useState(String(position.quantity));
   const [premium, setPremium] = useState(String(position.averagePrice));
-  const [date, setDate] = useState(
-    new Date().toISOString().slice(0, 16),
-  );
+  const [date, setDate] = useState(new Date().toISOString().slice(0, 16));
   const [errors, setErrors] = useState<Record<string, string>>({});
 
   const apiError = updateMutation.isError

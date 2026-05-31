@@ -69,7 +69,10 @@ function LegendItem({ color, label }: { color: string; label: string }) {
     <div className="flex items-center gap-2.5">
       <svg width="28" height="12" viewBox="0 0 28 12">
         <line
-          x1="0" y1="6" x2="28" y2="6"
+          x1="0"
+          y1="6"
+          x2="28"
+          y2="6"
           stroke={color}
           strokeWidth="2.5"
           strokeDasharray="5 3"
@@ -95,8 +98,11 @@ function PayoffTooltip({
       <p className="text-on-surface-variant text-xs uppercase tracking-widest font-bold mb-2">
         Preço do ativo: {formatCurrency(s)}
       </p>
-      <p className={`font-semibold font-mono tabular-nums text-base ${isPos ? 'text-tertiary' : 'text-error'}`}>
-        {isPos ? '+' : ''}{formatCurrency(payoff)}
+      <p
+        className={`font-semibold font-mono tabular-nums text-base ${isPos ? 'text-tertiary' : 'text-error'}`}
+      >
+        {isPos ? '+' : ''}
+        {formatCurrency(payoff)}
       </p>
     </div>
   );
@@ -160,8 +166,8 @@ export function OptionPayoffModal({
                 Payoff — {position.ticker}
               </h2>
               <p className="text-base text-on-surface-variant mt-1">
-                {position.optionDetail.optionType} · Strike{' '}
-                {formatCurrency(K)} · Prêmio {formatCurrency(premio)}
+                {position.optionDetail.optionType} · Strike {formatCurrency(K)}{' '}
+                · Prêmio {formatCurrency(premio)}
               </p>
             </div>
             <button
@@ -189,17 +195,48 @@ export function OptionPayoffModal({
                   margin={{ top: 28, right: 12, left: 4, bottom: 0 }}
                 >
                   <defs>
-                    <linearGradient id="gradPayoffPos" x1="0" y1="0" x2="0" y2="1">
-                      <stop offset="0%" stopColor="rgb(52 211 153)" stopOpacity={0.22} />
-                      <stop offset="100%" stopColor="rgb(52 211 153)" stopOpacity={0.04} />
+                    <linearGradient
+                      id="gradPayoffPos"
+                      x1="0"
+                      y1="0"
+                      x2="0"
+                      y2="1"
+                    >
+                      <stop
+                        offset="0%"
+                        stopColor="rgb(52 211 153)"
+                        stopOpacity={0.22}
+                      />
+                      <stop
+                        offset="100%"
+                        stopColor="rgb(52 211 153)"
+                        stopOpacity={0.04}
+                      />
                     </linearGradient>
-                    <linearGradient id="gradPayoffNeg" x1="0" y1="0" x2="0" y2="1">
-                      <stop offset="0%" stopColor="rgb(248 113 113)" stopOpacity={0.04} />
-                      <stop offset="100%" stopColor="rgb(248 113 113)" stopOpacity={0.22} />
+                    <linearGradient
+                      id="gradPayoffNeg"
+                      x1="0"
+                      y1="0"
+                      x2="0"
+                      y2="1"
+                    >
+                      <stop
+                        offset="0%"
+                        stopColor="rgb(248 113 113)"
+                        stopOpacity={0.04}
+                      />
+                      <stop
+                        offset="100%"
+                        stopColor="rgb(248 113 113)"
+                        stopOpacity={0.22}
+                      />
                     </linearGradient>
                   </defs>
 
-                  <CartesianGrid stroke="rgba(148,163,184,0.08)" vertical={false} />
+                  <CartesianGrid
+                    stroke="rgba(148,163,184,0.08)"
+                    vertical={false}
+                  />
 
                   <XAxis
                     dataKey="s"
@@ -207,13 +244,21 @@ export function OptionPayoffModal({
                     domain={['dataMin', 'dataMax']}
                     tickCount={7}
                     tickFormatter={(v: number) => `R$${v.toFixed(0)}`}
-                    tick={{ fontSize: 12, fill: 'rgb(148 163 184)', fontFamily: 'Inter' }}
+                    tick={{
+                      fontSize: 12,
+                      fill: 'rgb(148 163 184)',
+                      fontFamily: 'Inter',
+                    }}
                     axisLine={false}
                     tickLine={false}
                   />
                   <YAxis
                     tickFormatter={(v: number) => `R$${v.toFixed(0)}`}
-                    tick={{ fontSize: 12, fill: 'rgb(148 163 184)', fontFamily: 'Inter' }}
+                    tick={{
+                      fontSize: 12,
+                      fill: 'rgb(148 163 184)',
+                      fontFamily: 'Inter',
+                    }}
                     axisLine={false}
                     tickLine={false}
                     width={52}
@@ -222,11 +267,28 @@ export function OptionPayoffModal({
                   <Tooltip content={<PayoffTooltip />} />
 
                   {/* Zonas de lucro e prejuízo */}
-                  <Area dataKey="positive" fill="url(#gradPayoffPos)" stroke="none" baseValue={0} isAnimationActive={false} />
-                  <Area dataKey="negative" fill="url(#gradPayoffNeg)" stroke="none" baseValue={0} isAnimationActive={false} />
+                  <Area
+                    dataKey="positive"
+                    fill="url(#gradPayoffPos)"
+                    stroke="none"
+                    baseValue={0}
+                    isAnimationActive={false}
+                  />
+                  <Area
+                    dataKey="negative"
+                    fill="url(#gradPayoffNeg)"
+                    stroke="none"
+                    baseValue={0}
+                    isAnimationActive={false}
+                  />
 
                   {/* Linha zero */}
-                  <ReferenceLine y={0} stroke={COLORS.zero} strokeDasharray="5 4" strokeWidth={1.5} />
+                  <ReferenceLine
+                    y={0}
+                    stroke={COLORS.zero}
+                    strokeDasharray="5 4"
+                    strokeWidth={1.5}
+                  />
 
                   {/* Strike (K) */}
                   <ReferenceLine
@@ -234,7 +296,13 @@ export function OptionPayoffModal({
                     stroke={COLORS.strike}
                     strokeDasharray="5 4"
                     strokeWidth={1.5}
-                    label={{ value: 'K', position: 'top', fontSize: 12, fill: COLORS.strike, fontWeight: 700 }}
+                    label={{
+                      value: 'K',
+                      position: 'top',
+                      fontSize: 12,
+                      fill: COLORS.strike,
+                      fontWeight: 700,
+                    }}
                   />
 
                   {/* Breakeven */}
@@ -244,7 +312,13 @@ export function OptionPayoffModal({
                       stroke={COLORS.breakeven}
                       strokeDasharray="4 5"
                       strokeWidth={1.5}
-                      label={{ value: 'BE', position: 'top', fontSize: 12, fill: COLORS.breakeven, fontWeight: 700 }}
+                      label={{
+                        value: 'BE',
+                        position: 'top',
+                        fontSize: 12,
+                        fill: COLORS.breakeven,
+                        fontWeight: 700,
+                      }}
                     />
                   )}
 
@@ -259,20 +333,38 @@ export function OptionPayoffModal({
                   )}
 
                   {/* Curva de payoff */}
-                  <Line dataKey="payoff" stroke={lineColor} strokeWidth={2.5} dot={false} isAnimationActive={false} />
+                  <Line
+                    dataKey="payoff"
+                    stroke={lineColor}
+                    strokeWidth={2.5}
+                    dot={false}
+                    isAnimationActive={false}
+                  />
                 </ComposedChart>
               </ResponsiveContainer>
 
               {/* Legenda */}
               <div className="flex flex-wrap items-center gap-x-7 gap-y-3 mt-5 pt-5 border-t border-outline-variant/10">
-                <LegendItem color={COLORS.strike} label={`Strike (K) — ${formatCurrency(K)}`} />
+                <LegendItem
+                  color={COLORS.strike}
+                  label={`Strike (K) — ${formatCurrency(K)}`}
+                />
                 {Math.abs(breakeven - K) > 0.01 && (
-                  <LegendItem color={COLORS.breakeven} label={`Breakeven — ${formatCurrency(breakeven)}`} />
+                  <LegendItem
+                    color={COLORS.breakeven}
+                    label={`Breakeven — ${formatCurrency(breakeven)}`}
+                  />
                 )}
                 {pos.currentUnderlyingPrice != null && (
-                  <LegendItem color={COLORS.spot} label={`Spot atual — ${formatCurrency(sAtual)}`} />
+                  <LegendItem
+                    color={COLORS.spot}
+                    label={`Spot atual — ${formatCurrency(sAtual)}`}
+                  />
                 )}
-                <LegendItem color={COLORS.zero} label="Zero (lucro / prejuízo)" />
+                <LegendItem
+                  color={COLORS.zero}
+                  label="Zero (lucro / prejuízo)"
+                />
               </div>
             </div>
           </div>

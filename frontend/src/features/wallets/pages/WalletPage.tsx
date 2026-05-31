@@ -474,12 +474,14 @@ export default function WalletPage() {
     useState<LifecycleAction | null>(null);
   const [selectedPosition, setSelectedPosition] =
     useState<OptionPosition | null>(null);
-  const [editingPosition, setEditingPosition] =
-    useState<OptionPosition | null>(null);
+  const [editingPosition, setEditingPosition] = useState<OptionPosition | null>(
+    null,
+  );
   const [deletingPosition, setDeletingPosition] =
     useState<OptionPosition | null>(null);
-  const [payoffPosition, setPayoffPosition] =
-    useState<OptionPosition | null>(null);
+  const [payoffPosition, setPayoffPosition] = useState<OptionPosition | null>(
+    null,
+  );
 
   const deleteOptionMutation = useDeleteOption();
 
@@ -756,9 +758,7 @@ export default function WalletPage() {
                   }
                   bodyClassName="p-2 max-h-[280px] overflow-y-auto"
                 >
-                  <ClosedOptionHistoryList
-                    items={optionHistoryData.history}
-                  />
+                  <ClosedOptionHistoryList items={optionHistoryData.history} />
                 </ContentPanel>
               )}
           </motion.div>
@@ -947,9 +947,7 @@ export default function WalletPage() {
                                     : undefined
                                 }
                                 onEdit={
-                                  config.canTrade
-                                    ? handleEditOption
-                                    : undefined
+                                  config.canTrade ? handleEditOption : undefined
                                 }
                                 onDelete={
                                   config.canTrade
@@ -1008,7 +1006,6 @@ export default function WalletPage() {
                   )}
               </div>
             )}
-
           </motion.div>
         </div>
       </div>

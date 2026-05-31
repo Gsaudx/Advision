@@ -28,7 +28,8 @@ export function DonutChart({
   const radius = (size - thickness) / 2;
   const circumference = 2 * Math.PI * radius;
 
-  const GAP = total > 0 && segments.filter((s) => s.value > 0).length > 1 ? 4 : 0;
+  const GAP =
+    total > 0 && segments.filter((s) => s.value > 0).length > 1 ? 4 : 0;
 
   const filtered = segments.filter((s) => s.value > 0);
   const arcs = filtered.map((seg) => (seg.value / total) * circumference);
@@ -96,7 +97,11 @@ export function DonutChart({
           dominantBaseline="middle"
           fill="currentColor"
           className="text-on-surface-variant"
-          style={{ fontSize: line2Size, fontWeight: 500, fontFamily: 'inherit' }}
+          style={{
+            fontSize: line2Size,
+            fontWeight: 500,
+            fontFamily: 'inherit',
+          }}
         >
           {centerLine2}
         </text>

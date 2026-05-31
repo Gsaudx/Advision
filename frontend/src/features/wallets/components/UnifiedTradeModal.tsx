@@ -260,7 +260,13 @@ export function UnifiedTradeModal({
         setOptionErrors((prev) => ({ ...prev, strike: '' }));
       }
     }
-  }, [optionDetails, isLoadingOptionDetails, isRetroactiveDate, selectedOption?.strike, isStrikeManual]);
+  }, [
+    optionDetails,
+    isLoadingOptionDetails,
+    isRetroactiveDate,
+    selectedOption?.strike,
+    isStrikeManual,
+  ]);
 
   // Historical price lookup (D.3/D.4 — retroactive date)
   const activeTicker =
@@ -403,11 +409,16 @@ export function UnifiedTradeModal({
     const stk = parseFloat(manualStrike);
     const expUnderlyingTicker = selectedOption?.underlyingTicker ?? '';
     const expiredOptionMetadata =
-      stk > 0 && displayExpiration && expUnderlyingTicker && (displayOptionType || selectedOption?.optionType)
+      stk > 0 &&
+      displayExpiration &&
+      expUnderlyingTicker &&
+      (displayOptionType || selectedOption?.optionType)
         ? {
             strikePrice: stk,
             expirationDate: displayExpiration,
-            optionType: (displayOptionType ?? selectedOption?.optionType ?? 'CALL') as 'CALL' | 'PUT',
+            optionType: (displayOptionType ??
+              selectedOption?.optionType ??
+              'CALL') as 'CALL' | 'PUT',
             underlyingTicker: expUnderlyingTicker,
           }
         : undefined;
@@ -421,7 +432,9 @@ export function UnifiedTradeModal({
           premium: prem,
           date: new Date(pendingOptionData.date).toISOString(),
           idempotencyKey: generateIdempotencyKey(),
-          ...(expiredOptionMetadata ? { optionMetadata: expiredOptionMetadata } : {}),
+          ...(expiredOptionMetadata
+            ? { optionMetadata: expiredOptionMetadata }
+            : {}),
         },
       },
       {
@@ -484,11 +497,16 @@ export function UnifiedTradeModal({
 
     const underlyingTicker = selectedOption?.underlyingTicker ?? '';
     const optionMetadata =
-      stk > 0 && displayExpiration && underlyingTicker && (displayOptionType || selectedOption?.optionType)
+      stk > 0 &&
+      displayExpiration &&
+      underlyingTicker &&
+      (displayOptionType || selectedOption?.optionType)
         ? {
             strikePrice: stk,
             expirationDate: displayExpiration,
-            optionType: (displayOptionType ?? selectedOption?.optionType ?? 'CALL') as 'CALL' | 'PUT',
+            optionType: (displayOptionType ??
+              selectedOption?.optionType ??
+              'CALL') as 'CALL' | 'PUT',
             underlyingTicker,
           }
         : undefined;
@@ -527,7 +545,8 @@ export function UnifiedTradeModal({
     }
   };
 
-  const contractStep = optionDetails?.contractSize ?? selectedOption?.contractSize ?? 100;
+  const contractStep =
+    optionDetails?.contractSize ?? selectedOption?.contractSize ?? 100;
   const optionQty = parseInt(optionFormData.quantity, 10) || 0;
   const optionPremium = parseFloat(optionFormData.premium) || 0;
   const optionTotalValue = optionQty * optionPremium;
@@ -939,7 +958,9 @@ export function UnifiedTradeModal({
                           setOptionErrors((prev) => ({ ...prev, strike: '' }));
                         }}
                         disabled={isPending || isLoadingOptionDetails}
-                        placeholder={isLoadingOptionDetails ? 'Buscando…' : '0,00'}
+                        placeholder={
+                          isLoadingOptionDetails ? 'Buscando…' : '0,00'
+                        }
                         className={`w-full bg-surface-container-lowest border rounded-xl py-3.5 px-4 text-sm text-on-surface placeholder-on-surface-variant/40 focus:outline-none focus:ring-1 focus:ring-primary focus:border-primary transition-colors ${
                           optionErrors.strike
                             ? 'border-error'
@@ -1033,9 +1054,16 @@ export function UnifiedTradeModal({
                         <button
                           type="button"
                           onClick={() => {
-                            const cur = parseInt(optionFormData.quantity, 10) || 0;
-                            const next = Math.max(contractStep, cur - contractStep);
-                            setOptionFormData((prev) => ({ ...prev, quantity: String(next) }));
+                            const cur =
+                              parseInt(optionFormData.quantity, 10) || 0;
+                            const next = Math.max(
+                              contractStep,
+                              cur - contractStep,
+                            );
+                            setOptionFormData((prev) => ({
+                              ...prev,
+                              quantity: String(next),
+                            }));
                           }}
                           disabled={isPending}
                           className="w-9 h-9 flex items-center justify-center bg-surface-container rounded-xl border border-outline-variant/10 text-on-surface-variant hover:bg-surface-container-high transition-colors disabled:opacity-50 text-base font-bold shrink-0"
@@ -1060,8 +1088,12 @@ export function UnifiedTradeModal({
                         <button
                           type="button"
                           onClick={() => {
-                            const cur = parseInt(optionFormData.quantity, 10) || 0;
-                            setOptionFormData((prev) => ({ ...prev, quantity: String(cur + contractStep) }));
+                            const cur =
+                              parseInt(optionFormData.quantity, 10) || 0;
+                            setOptionFormData((prev) => ({
+                              ...prev,
+                              quantity: String(cur + contractStep),
+                            }));
                           }}
                           disabled={isPending}
                           className="w-9 h-9 flex items-center justify-center bg-surface-container rounded-xl border border-outline-variant/10 text-on-surface-variant hover:bg-surface-container-high transition-colors disabled:opacity-50 text-base font-bold shrink-0"

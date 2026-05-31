@@ -29,11 +29,23 @@ export function useOptionsSearchInfinite(
   q?: string,
 ) {
   return useInfiniteQuery({
-    queryKey: [...optionsQueryKeys.search(underlying, optionType), 'infinite', pageSize, q ?? ''],
+    queryKey: [
+      ...optionsQueryKeys.search(underlying, optionType),
+      'infinite',
+      pageSize,
+      q ?? '',
+    ],
     initialPageParam: 1,
     queryFn: ({ pageParam }) =>
-      walletsApi.searchOptionsPaginated(underlying, optionType, pageParam as number, pageSize, q),
-    getNextPageParam: (lastPage) => (lastPage.hasMore ? lastPage.page + 1 : undefined),
+      walletsApi.searchOptionsPaginated(
+        underlying,
+        optionType,
+        pageParam as number,
+        pageSize,
+        q,
+      ),
+    getNextPageParam: (lastPage) =>
+      lastPage.hasMore ? lastPage.page + 1 : undefined,
     enabled: underlying.length >= 2,
     staleTime: 60 * 1000,
   });
