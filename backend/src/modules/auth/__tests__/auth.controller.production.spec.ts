@@ -74,7 +74,9 @@ describe('AuthController (Production Config)', () => {
         { provide: AuthService, useValue: mockAuthService },
         {
           provide: NotificationsService,
-          useValue: { generateExpiryNotifications: jest.fn().mockResolvedValue(undefined) },
+          useValue: {
+            generateExpiryNotifications: jest.fn().mockResolvedValue(undefined),
+          },
         },
       ],
     }).compile();

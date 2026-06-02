@@ -14,6 +14,18 @@ const envSchema = z.object({
   CORS_ORIGIN: z.string().url().default('http://localhost:5173'),
   COOKIE_DOMAIN: z.string().optional(),
   COOKIE_SECURE: z.coerce.boolean().default(false),
+
+  // [AUTH] URL pública do frontend usada para montar links (ex.: reset de senha).
+  // Default para a origem de CORS quando não informado.
+  APP_URL: z.string().url().optional(),
+
+  // [MAIL] Configuração SMTP (opcional). Sem isso, e-mails são apenas logados (modo dev).
+  SMTP_HOST: z.string().optional(),
+  SMTP_PORT: z.coerce.number().default(587),
+  SMTP_SECURE: z.coerce.boolean().default(false),
+  SMTP_USER: z.string().optional(),
+  SMTP_PASS: z.string().optional(),
+  MAIL_FROM: z.string().default('Advision <no-reply@advision.app>'),
 });
 
 export type EnvConfig = z.infer<typeof envSchema>;

@@ -62,6 +62,8 @@ describe('AuthController', () => {
       login: jest.fn(),
       generateToken: jest.fn(),
       getProfile: jest.fn(),
+      forgotPassword: jest.fn().mockResolvedValue(undefined),
+      resetPassword: jest.fn().mockResolvedValue(undefined),
     };
 
     mockResponse = {
@@ -167,9 +169,9 @@ describe('AuthController', () => {
         mockResponse as Response,
       );
 
-      expect(notificationsService.generateExpiryNotifications).toHaveBeenCalledWith(
-        mockUserProfile.id,
-      );
+      expect(
+        notificationsService.generateExpiryNotifications,
+      ).toHaveBeenCalledWith(mockUserProfile.id);
     });
   });
 
@@ -189,6 +191,43 @@ describe('AuthController', () => {
         success: true,
         data: null,
         message: 'Logout realizado com sucesso',
+      });
+    });
+  });
+
+  describe('forgotPassword', () => {
+    it('should call service and return generic success message', async () => {
+      const result = await authController.forgotPassword({
+        email: 'test@example.com',
+      });
+
+      expect(authService.forgotPassword).toHaveBeenCalledWith(
+        'test@example.com',
+      );
+      expect(result).toEqual({
+        success: true,
+        data: null,
+        message:
+          'Se o e-mail estiver cadastrado, enviaremos instruções de recuperação.',
+      });
+    });
+  });
+
+  describe('resetPassword', () => {
+    it('should call service with token and password and return success', async () => {
+      const result = await authController.resetPassword({
+        token: 'reset-token',
+        password: 'newpassword123',
+      });
+
+      expect(authService.resetPassword).toHaveBeenCalledWith(
+        'reset-token',
+        'newpassword123',
+      );
+      expect(result).toEqual({
+        success: true,
+        data: null,
+        message: 'Senha redefinida com sucesso',
       });
     });
   });

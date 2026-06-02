@@ -160,7 +160,26 @@ model User {
   lastNotificationCheckAt DateTime?
   notifications           Notification[]
 
+  // [AUTH] recuperação de senha
+  passwordResetTokens PasswordResetToken[]
+
   @@map("users")
+}
+
+// [AUTH] Tokens de recuperação de senha. Armazena apenas o hash do token (nunca o valor cru),
+// com expiração e marca de uso único.
+model PasswordResetToken {
+  id        String    @id @default(uuid())
+  userId    String
+  tokenHash String    @unique
+  expiresAt DateTime
+  usedAt    DateTime?
+  createdAt DateTime  @default(now())
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId])
+  @@map("password_reset_tokens")
 }
 
 model Client {
