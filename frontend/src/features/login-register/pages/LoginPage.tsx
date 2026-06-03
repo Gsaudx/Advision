@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { useNavigate, Link } from 'react-router-dom';
+import { useNavigate, useLocation, Link } from 'react-router-dom';
 import ButtonSubmit from '@/components/ui/ButtonSubmit';
 import InputEmail from '@/components/ui/InputEmail';
 import InputPassword from '@/components/ui/InputPassword';
@@ -8,6 +8,9 @@ import fullLogo from '@/assets/logos/Advision_logo_2.png';
 
 export default function LoginPage() {
   const navigate = useNavigate();
+  const location = useLocation();
+  const successMessage = (location.state as { message?: string } | null)
+    ?.message;
   const { signIn } = useAuth();
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
@@ -45,6 +48,11 @@ export default function LoginPage() {
               </p>
             </div>
             <form onSubmit={handleSubmit} className="flex flex-col">
+              {successMessage && !error && (
+                <div className="mb-4 p-3 bg-emerald-500/20 border border-emerald-500 rounded-lg text-emerald-400 text-sm">
+                  {successMessage}
+                </div>
+              )}
               {error && (
                 <div className="mb-4 p-3 bg-rose-500/20 border border-rose-500 rounded-lg text-rose-400 text-sm animate-shake">
                   {error}
@@ -65,6 +73,15 @@ export default function LoginPage() {
                   {isLoading ? 'Verificando...' : 'Entrar'}
                 </ButtonSubmit>
               </fieldset>
+
+              <Link
+                to="/forgot-password"
+                className={`text-blue-400 hover:text-blue-300 mt-4 text-center text-sm sm:text-base transition-colors ${
+                  isLoading ? 'pointer-events-none opacity-50' : ''
+                }`}
+              >
+                Esqueceu a senha?
+              </Link>
 
               <Link
                 to="/register"
