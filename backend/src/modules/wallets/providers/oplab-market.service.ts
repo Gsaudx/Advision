@@ -81,10 +81,6 @@ interface OpLabQuote {
   spot?: OpLabSpotInfo;
 }
 
-interface OpLabSearchResponse {
-  data: OpLabInstrument[];
-}
-
 /**
  * Actual OpLab series response format - nested structure
  */
@@ -203,7 +199,7 @@ export class OpLabMarketService extends MarketDataProvider {
   private async makeRequest<T>(
     endpoint: string,
     params: Record<string, string> = {},
-  ): Promise<T> {
+  ): Promise<T | undefined> {
     if (!this.accessToken) {
       throw new Error('OpLab API token not configured');
     }
@@ -230,7 +226,14 @@ export class OpLabMarketService extends MarketDataProvider {
       throw new Error(`OpLab API error: ${response.status}`);
     }
 
-    return response.json() as Promise<T>;
+    // OpLab responde 204 (sem corpo) quando não há dados — ex.: busca sem
+    // resultados. Retornamos undefined para não quebrar em response.json()
+    // com "Unexpected end of JSON input".
+    if (response.status === 204) {
+      return undefined;
+    }
+
+    return (await response.json()) as T;
   }
 
   /**
@@ -288,6 +291,13 @@ export class OpLabMarketService extends MarketDataProvider {
       const instrument = await this.makeRequest<OpLabInstrumentResponse>(
         `/market/instruments/${upperTicker}`,
       );
+
+      if (!instrument) {
+        if (this.looksLikeOptionTicker(upperTicker)) {
+          return this.getOptionMetadataFromOpLab(upperTicker);
+        }
+        throw new NotFoundException(`Ativo nao encontrado: ${ticker}`);
+      }
 
       // Check if it's an option by type or by checking for option-specific fields
       if (
@@ -361,6 +371,10 @@ export class OpLabMarketService extends MarketDataProvider {
         OpLabOptionSeries | { data: OpLabOptionSeries }
       >(`/market/options/details/${ticker}`);
 
+      if (!response) {
+        throw new NotFoundException(`Opcao nao encontrada: ${ticker}`);
+      }
+
       // Handle both response formats
       const option =
         'data' in response &&
@@ -418,7 +432,11 @@ export class OpLabMarketService extends MarketDataProvider {
    * Build a human-readable option name
    */
   private buildOptionName(option: OpLabOptionSeries): string {
-    const underlying = option.spot?.name || option.spot?.symbol || option.parent_symbol || 'Unknown';
+    const underlying =
+      option.spot?.name ||
+      option.spot?.symbol ||
+      option.parent_symbol ||
+      'Unknown';
     const type = option.type === 'CALL' ? 'CALL' : 'PUT';
     const strike = option.strike?.toFixed(2) ?? '?';
     const expiry = option.due_date
@@ -539,11 +557,15 @@ export class OpLabMarketService extends MarketDataProvider {
       const dateStr = d.toISOString().split('T')[0];
       try {
         const data = await this.makeRequest<
-          Array<{ symbol: string; strike: number; due_date: string; type: 'CALL' | 'PUT' }>
-        >(
-          `/market/historical/options/${upperSpot}/${dateStr}/${dateStr}`,
-          { symbol: upperTicker },
-        );
+          Array<{
+            symbol: string;
+            strike: number;
+            due_date: string;
+            type: 'CALL' | 'PUT';
+          }>
+        >(`/market/historical/options/${upperSpot}/${dateStr}/${dateStr}`, {
+          symbol: upperTicker,
+        });
         const entry = Array.isArray(data) ? data[0] : null;
         if (entry?.strike != null) {
           return {
@@ -579,8 +601,9 @@ export class OpLabMarketService extends MarketDataProvider {
     const results: AssetSearchResult[] = [];
 
     try {
-      // Search for instruments with options
-      const data = await this.makeRequest<OpLabSearchResponse>(
+      // OpLab retorna um array de instrumentos diretamente (não embrulhado em { data: [] }).
+      // Busca sem resultados responde 204 (corpo vazio) -> makeRequest retorna undefined.
+      const instruments = await this.makeRequest<OpLabInstrument[]>(
         '/market/instruments/search',
         {
           expr: upperQuery,
@@ -589,16 +612,13 @@ export class OpLabMarketService extends MarketDataProvider {
         },
       );
 
-      if (data.data) {
-        for (const instrument of data.data) {
-          results.push({
-            ticker: instrument.symbol,
-            name:
-              instrument.name || instrument.description || instrument.symbol,
-            type: instrument.type === 'OPTION' ? 'OPTION' : 'STOCK',
-            exchange: 'B3',
-          });
-        }
+      for (const instrument of instruments ?? []) {
+        results.push({
+          ticker: instrument.symbol,
+          name: instrument.name || instrument.description || instrument.symbol,
+          type: instrument.type === 'OPTION' ? 'OPTION' : 'STOCK',
+          exchange: 'B3',
+        });
       }
     } catch (error) {
       this.logger.error(
@@ -686,7 +706,7 @@ export class OpLabMarketService extends MarketDataProvider {
       // Flatten the nested structure into a flat array of options
       const flattenedOptions: OpLabOptionSeries[] = [];
 
-      if (data.series && Array.isArray(data.series)) {
+      if (data?.series && Array.isArray(data.series)) {
         for (const seriesGroup of data.series) {
           if (!seriesGroup.strikes || !Array.isArray(seriesGroup.strikes)) {
             continue;
@@ -760,14 +780,13 @@ export class OpLabMarketService extends MarketDataProvider {
   async getHistoricalSeries(
     ticker: string,
     from: string, // "YYYY-MM-DD"
-    to: string,   // "YYYY-MM-DD"
+    to: string, // "YYYY-MM-DD"
   ): Promise<Array<{ date: string; close: number }>> {
     if (!this.accessToken) return [];
-    const data = await this.makeRequest<{ data?: Array<{ time: number; close?: number }> }>(
-      `/market/historical/${ticker.toUpperCase()}/1d`,
-      { from, to },
-    );
-    return (data.data ?? [])
+    const data = await this.makeRequest<{
+      data?: Array<{ time: number; close?: number }>;
+    }>(`/market/historical/${ticker.toUpperCase()}/1d`, { from, to });
+    return (data?.data ?? [])
       .filter((c) => c.close != null)
       .map((c) => ({
         date: new Date(c.time).toISOString().split('T')[0],
@@ -795,6 +814,10 @@ export class OpLabMarketService extends MarketDataProvider {
       const response = await this.makeRequest<
         OpLabOptionSeries | { data: OpLabOptionSeries }
       >(`/market/options/details/${ticker.toUpperCase()}`);
+
+      if (!response) {
+        return null;
+      }
 
       // Handle both response formats
       if (
