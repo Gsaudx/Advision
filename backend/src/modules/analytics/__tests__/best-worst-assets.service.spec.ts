@@ -19,6 +19,12 @@ const makeMarketMock = () => ({
   getBatchPrices: jest.fn(),
 });
 
+const advisorActor = {
+  id: 'adv1',
+  email: 'adv1@example.com',
+  role: 'ADVISOR' as const,
+};
+
 describe('BestWorstAssetsService', () => {
   let service: BestWorstAssetsService;
   let prisma: ReturnType<typeof makePrismaMock>;
@@ -45,7 +51,7 @@ describe('BestWorstAssetsService', () => {
   it('should throw ForbiddenException in DRILLDOWN mode for a wallet not owned by the advisor', async () => {
     prisma.wallet.findFirst.mockResolvedValue(null);
     await expect(
-      service.getBestWorstAssets('adv1', 'DRILLDOWN', 'wallet-id'),
+      service.getBestWorstAssets(advisorActor, 'DRILLDOWN', 'wallet-id'),
     ).rejects.toThrow(ForbiddenException);
   });
 
@@ -62,7 +68,10 @@ describe('BestWorstAssetsService', () => {
     ]);
     market.getBatchPrices.mockResolvedValue({ PETR4: 15 });
 
-    const result = await service.getBestWorstAssets('adv1', 'CONSOLIDATED');
+    const result = await service.getBestWorstAssets(
+      advisorActor,
+      'CONSOLIDATED',
+    );
 
     expect(result.topGains).toHaveLength(1);
     expect(result.topGains[0].ticker).toBe('PETR4');
@@ -75,8 +84,8 @@ describe('BestWorstAssetsService', () => {
     prisma.position.findMany.mockResolvedValue([]);
     market.getBatchPrices.mockResolvedValue({});
 
-    await service.getBestWorstAssets('adv1', 'CONSOLIDATED');
-    await service.getBestWorstAssets('adv1', 'CONSOLIDATED');
+    await service.getBestWorstAssets(advisorActor, 'CONSOLIDATED');
+    await service.getBestWorstAssets(advisorActor, 'CONSOLIDATED');
 
     expect(prisma.wallet.findMany).toHaveBeenCalledTimes(1);
   });

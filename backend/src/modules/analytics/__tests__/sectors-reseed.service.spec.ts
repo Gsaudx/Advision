@@ -35,7 +35,9 @@ describe('SectorsReseedService', () => {
   });
 
   it('updates assets that have sector metadata', async () => {
-    prisma.asset.findMany.mockResolvedValue([{ id: 'asset-1', ticker: 'PETR4' }]);
+    prisma.asset.findMany.mockResolvedValue([
+      { id: 'asset-1', ticker: 'PETR4' },
+    ]);
     oplab.getMetadata.mockResolvedValue({ sector: 'Energy' });
 
     const result = await service.reseed();
@@ -48,7 +50,9 @@ describe('SectorsReseedService', () => {
   });
 
   it('skips assets whose metadata has no sector', async () => {
-    prisma.asset.findMany.mockResolvedValue([{ id: 'asset-1', ticker: 'PETR4' }]);
+    prisma.asset.findMany.mockResolvedValue([
+      { id: 'asset-1', ticker: 'PETR4' },
+    ]);
     oplab.getMetadata.mockResolvedValue({ sector: undefined });
 
     const result = await service.reseed();
@@ -56,7 +60,9 @@ describe('SectorsReseedService', () => {
   });
 
   it('counts failed assets when metadata fetch throws', async () => {
-    prisma.asset.findMany.mockResolvedValue([{ id: 'asset-1', ticker: 'INVALID' }]);
+    prisma.asset.findMany.mockResolvedValue([
+      { id: 'asset-1', ticker: 'INVALID' },
+    ]);
     oplab.getMetadata.mockRejectedValue(new Error('not found'));
 
     const result = await service.reseed();

@@ -4,6 +4,8 @@ import { AnalyticsCacheService } from '../cache/analytics-cache.service';
 import { BestWorstAssetsResponse } from '../schemas/analytics-response.schema';
 import { CompositeMarketService } from '@/modules/wallets/providers/composite-market.service';
 import { AssetType } from '@/generated/prisma/enums';
+import type { CurrentUserData } from '@/common/decorators';
+import { clientScopeWhere } from '../utils/scope.util';
 
 @Injectable()
 export class BestWorstAssetsService {
@@ -13,22 +15,39 @@ export class BestWorstAssetsService {
     private readonly market: CompositeMarketService,
   ) {}
 
-  async getBestWorstAssets(advisorId: string, mode: string, walletId?: string): Promise<BestWorstAssetsResponse> {
-    const key = this.cache.buildKey(advisorId, 'best-worst', { mode, walletId });
+  async getBestWorstAssets(
+    actor: CurrentUserData,
+    mode: string,
+    walletId?: string,
+  ): Promise<BestWorstAssetsResponse> {
+    const scope = clientScopeWhere(actor);
+    const key = this.cache.buildKey(actor.id, 'best-worst', { mode, walletId });
     const cached = this.cache.get<BestWorstAssetsResponse>(key);
     if (cached) return cached;
 
     if (mode === 'DRILLDOWN' && walletId) {
-      const owned = await this.prisma.wallet.findFirst({ where: { id: walletId, client: { advisorId } } });
+      const owned = await this.prisma.wallet.findFirst({
+        where: { id: walletId, client: scope },
+      });
       if (!owned) throw new ForbiddenException();
     }
 
-    const walletIds = mode === 'DRILLDOWN' && walletId
-      ? [walletId]
-      : (await this.prisma.wallet.findMany({ where: { client: { advisorId } }, select: { id: true } })).map((w) => w.id);
+    const walletIds =
+      mode === 'DRILLDOWN' && walletId
+        ? [walletId]
+        : (
+            await this.prisma.wallet.findMany({
+              where: { client: scope },
+              select: { id: true },
+            })
+          ).map((w) => w.id);
 
     const positions = await this.prisma.position.findMany({
-      where: { walletId: { in: walletIds }, quantity: { gt: 0 }, asset: { type: AssetType.STOCK } },
+      where: {
+        walletId: { in: walletIds },
+        quantity: { gt: 0 },
+        asset: { type: AssetType.STOCK },
+      },
       include: {
         asset: true,
         wallet: { include: { client: true } },
@@ -36,14 +55,17 @@ export class BestWorstAssetsService {
     });
 
     const tickers = [...new Set(positions.map((p) => p.asset.ticker))];
-    const prices = tickers.length ? await this.market.getBatchPrices(tickers) : {};
+    const prices = tickers.length
+      ? await this.market.getBatchPrices(tickers)
+      : {};
 
     const entries = positions.map((pos) => {
       const currentPrice = prices[pos.asset.ticker] ?? Number(pos.averagePrice);
       const avgPrice = Number(pos.averagePrice);
       const qty = Number(pos.quantity);
       const resultAbsolute = (currentPrice - avgPrice) * qty;
-      const resultPercent = avgPrice > 0 ? ((currentPrice - avgPrice) / avgPrice) * 100 : 0;
+      const resultPercent =
+        avgPrice > 0 ? ((currentPrice - avgPrice) / avgPrice) * 100 : 0;
 
       return {
         ticker: pos.asset.ticker,
@@ -57,9 +79,13 @@ export class BestWorstAssetsService {
       };
     });
 
-    const sorted = [...entries].sort((a, b) => b.resultPercent - a.resultPercent);
+    const sorted = [...entries].sort(
+      (a, b) => b.resultPercent - a.resultPercent,
+    );
     const topGains = sorted.slice(0, 5);
-    const topLosses = [...entries].sort((a, b) => a.resultPercent - b.resultPercent).slice(0, 5);
+    const topLosses = [...entries]
+      .sort((a, b) => a.resultPercent - b.resultPercent)
+      .slice(0, 5);
 
     const result: BestWorstAssetsResponse = { topGains, topLosses };
     this.cache.set(key, result);

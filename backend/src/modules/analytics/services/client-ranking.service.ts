@@ -38,13 +38,18 @@ export class ClientRankingService {
             total: acc.total + t.total,
             totalInvested: acc.totalInvested + t.totalInvested,
           }),
-          { realized: 0, unrealized: 0, dividends: 0, total: 0, totalInvested: 0 },
+          {
+            realized: 0,
+            unrealized: 0,
+            dividends: 0,
+            total: 0,
+            totalInvested: 0,
+          },
         );
 
         const patrimonioR$ = agg.totalInvested + agg.unrealized;
-        const rentabilidadePercent = agg.totalInvested > 0
-          ? (agg.total / agg.totalInvested) * 100
-          : 0;
+        const rentabilidadePercent =
+          agg.totalInvested > 0 ? (agg.total / agg.totalInvested) * 100 : 0;
 
         const lastTx = await this.prisma.transaction.findFirst({
           where: { walletId: { in: walletIds } },

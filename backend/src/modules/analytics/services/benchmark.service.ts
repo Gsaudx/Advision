@@ -4,6 +4,7 @@ import { PatrimonyEvolutionService } from './patrimony-evolution.service';
 import { AnalyticsCacheService } from '../cache/analytics-cache.service';
 import { BenchmarkResponse } from '../schemas/analytics-response.schema';
 import { resolvePeriod, formatYYYYMMDD } from '../utils/period.util';
+import type { CurrentUserData } from '@/common/decorators';
 
 @Injectable()
 export class BenchmarkService {
@@ -13,8 +14,19 @@ export class BenchmarkService {
     private readonly cache: AnalyticsCacheService,
   ) {}
 
-  async getBenchmark(advisorId: string, period: string, customFrom?: string, customTo?: string, walletId?: string): Promise<BenchmarkResponse> {
-    const key = this.cache.buildKey(advisorId, 'benchmark', { period, customFrom, customTo, walletId });
+  async getBenchmark(
+    actor: CurrentUserData,
+    period: string,
+    customFrom?: string,
+    customTo?: string,
+    walletId?: string,
+  ): Promise<BenchmarkResponse> {
+    const key = this.cache.buildKey(actor.id, 'benchmark', {
+      period,
+      customFrom,
+      customTo,
+      walletId,
+    });
     const cached = this.cache.get<BenchmarkResponse>(key);
     if (cached) return cached;
 
@@ -23,7 +35,7 @@ export class BenchmarkService {
     const toStr = formatYYYYMMDD(to);
 
     const [portfolioSeries, ibovRaw] = await Promise.all([
-      this.patrimony.getSeries(advisorId, fromStr, toStr, walletId),
+      this.patrimony.getSeries(actor, fromStr, toStr, walletId),
       this.oplab.getHistoricalSeries('IBOV', fromStr, toStr),
     ]);
 
@@ -38,14 +50,26 @@ export class BenchmarkService {
       .map((p) => ({
         date: p.date,
         portfolioValue: p.totalValue,
-        portfolioPercent: portfolioBase > 0 ? ((p.totalValue - portfolioBase) / portfolioBase) * 100 : 0,
-        ibovPercent: ibovBase > 0 ? ((ibovMap.get(p.date)! - ibovBase) / ibovBase) * 100 : 0,
+        portfolioPercent:
+          portfolioBase > 0
+            ? ((p.totalValue - portfolioBase) / portfolioBase) * 100
+            : 0,
+        ibovPercent:
+          ibovBase > 0
+            ? ((ibovMap.get(p.date)! - ibovBase) / ibovBase) * 100
+            : 0,
       }));
 
-    const portfolioChangePercent = aligned.length > 0 ? aligned[aligned.length - 1].portfolioPercent : 0;
-    const ibovChangePercent = aligned.length > 0 ? aligned[aligned.length - 1].ibovPercent : 0;
+    const portfolioChangePercent =
+      aligned.length > 0 ? aligned[aligned.length - 1].portfolioPercent : 0;
+    const ibovChangePercent =
+      aligned.length > 0 ? aligned[aligned.length - 1].ibovPercent : 0;
 
-    const result: BenchmarkResponse = { series: aligned, portfolioChangePercent, ibovChangePercent };
+    const result: BenchmarkResponse = {
+      series: aligned,
+      portfolioChangePercent,
+      ibovChangePercent,
+    };
     this.cache.set(key, result);
     return result;
   }
