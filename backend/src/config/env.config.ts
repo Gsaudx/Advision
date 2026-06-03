@@ -1,5 +1,19 @@
 import { z } from 'zod';
 
+/**
+ * Parser de boolean a partir de variável de ambiente (string).
+ * `z.coerce.boolean()` trata qualquer string não-vazia como true
+ * (`Boolean("false") === true`), então usamos um parser explícito:
+ * apenas "true"/"1" (case-insensitive) viram true.
+ */
+const booleanFromEnv = z
+  .union([z.boolean(), z.string()])
+  .transform((v) =>
+    typeof v === 'boolean'
+      ? v
+      : ['true', '1', 'yes'].includes(v.trim().toLowerCase()),
+  );
+
 const envSchema = z.object({
   NODE_ENV: z
     .enum(['development', 'production', 'test'])
@@ -13,7 +27,7 @@ const envSchema = z.object({
     .default('12h'),
   CORS_ORIGIN: z.string().url().default('http://localhost:5173'),
   COOKIE_DOMAIN: z.string().optional(),
-  COOKIE_SECURE: z.coerce.boolean().default(false),
+  COOKIE_SECURE: booleanFromEnv.default(false),
 
   // [AUTH] URL pública do frontend usada para montar links (ex.: reset de senha).
   // Default para a origem de CORS quando não informado.
@@ -22,7 +36,7 @@ const envSchema = z.object({
   // [MAIL] Configuração SMTP (opcional). Sem isso, e-mails são apenas logados (modo dev).
   SMTP_HOST: z.string().optional(),
   SMTP_PORT: z.coerce.number().default(587),
-  SMTP_SECURE: z.coerce.boolean().default(false),
+  SMTP_SECURE: booleanFromEnv.default(false),
   SMTP_USER: z.string().optional(),
   SMTP_PASS: z.string().optional(),
   MAIL_FROM: z.string().default('Advision <no-reply@advision.app>'),
