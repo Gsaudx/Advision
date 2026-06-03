@@ -6,7 +6,7 @@ O módulo de proventos usa a técnica de **Opção Sentinela** para detectar div
 
 **Princípio de mercado:** Na data ex-dividendo, a B3 reduz automaticamente o strike de todas as opções sobre a ação pelo valor exato do provento pago. Essa queda é rastreável via API da OpLab e serve como fonte primária de verdade para o montante do dividendo.
 
-O sistema Sentinel convive com o backend BRAPI (intacto e funcional), mas substitui os chamadas do frontend para endpoints de proventos da BRAPI. Para reverter completamente para BRAPI: descomentar as chamadas no frontend (marcadas com `// [SENTINEL]`).
+O sistema Sentinel é a única fonte ativa de detecção de dividendos. O backend de integração com a BRAPI foi integralmente removido do projeto (commit `50009f1`, 2026-05-30) após o Sentinel se tornar 100% operacional — ver Seção 10 para detalhes da remoção.
 
 ---
 
