@@ -167,15 +167,13 @@ describe('ClientRankingService', () => {
         {
           provide: PerformanceService,
           useValue: {
-            computeTotals: jest
-              .fn()
-              .mockResolvedValue({
-                realized: 0,
-                unrealized: 0,
-                dividends: 0,
-                total: 0,
-                totalInvested: 0,
-              }),
+            computeTotals: jest.fn().mockResolvedValue({
+              realized: 0,
+              unrealized: 0,
+              dividends: 0,
+              total: 0,
+              totalInvested: 0,
+            }),
           },
         },
       ],
