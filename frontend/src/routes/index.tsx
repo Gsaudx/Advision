@@ -6,10 +6,13 @@ import { NotFound } from '@/components/layout/NotFound';
 import { HomePageAdvisor, HomePageClient } from '@/features/home';
 import LoginPage from '@/features/login-register/pages/LoginPage';
 import RegisterPage from '@/features/login-register/pages/RegisterPage';
+import ForgotPasswordPage from '@/features/login-register/pages/ForgotPasswordPage';
+import ResetPasswordPage from '@/features/login-register/pages/ResetPasswordPage';
 import ClientsPage from '@/features/clients-page/pages/ClientsPage';
 import { WalletsPage, WalletPage } from '@/features/wallets';
 import { NotificationSettingsPage } from '@/features/notifications/pages/NotificationSettingsPage'; // [NOTIF]
 import { AnalyticsPage } from '@/features/analytics/pages/AnalyticsPage'; // [ANALYTICS]
+import { ClientAnalyticsPage } from '@/features/analytics/pages/ClientAnalyticsPage'; // [ANALYTICS]
 
 function RoleBasedRedirect() {
   const { user } = useAuth();
@@ -26,6 +29,8 @@ export function AppRoutes() {
         {/* Public routes */}
         <Route path="/login" element={<LoginPage />} />
         <Route path="/register" element={<RegisterPage />} />
+        <Route path="/forgot-password" element={<ForgotPasswordPage />} />
+        <Route path="/reset-password" element={<ResetPasswordPage />} />
 
         {/* Admin-only routes */}
         <Route element={<ProtectedLayout allowedRoles={['ADMIN']} />}>
@@ -50,6 +55,7 @@ export function AppRoutes() {
         {/* Client layout */}
         <Route element={<ProtectedLayout allowedRoles={['CLIENT']} />}>
           <Route path="/client/home" element={<HomePageClient />} />
+          <Route path="/client/analytics" element={<ClientAnalyticsPage />} />
         </Route>
 
         {/* Shared wallets route - accessible by all authenticated roles */}

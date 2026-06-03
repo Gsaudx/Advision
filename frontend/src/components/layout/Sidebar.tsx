@@ -25,6 +25,7 @@ const advisorNavItems: NavItem[] = [
 const clientNavItems: NavItem[] = [
   { name: 'Inicio', href: '/client/home', icon: LayoutDashboard },
   { name: 'Carteiras', href: '/wallets', icon: Wallet },
+  { name: 'Análises', href: '/client/analytics', icon: BarChart2 },
 ];
 
 interface SidebarProps {
