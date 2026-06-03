@@ -200,6 +200,7 @@ model RebalanceLog {
 | **User**   | System user with JWT authentication. The `role` field defines the type: ADVISOR, CLIENT, or ADMIN. Advisors are the **main tenant** of the multi-tenant model - each advisor only sees their own clients.          |
 | **Client** | Advisor's client. Contains CPF, risk profile and contact data. An advisor can have N clients.                                                                                                                       |
 | **Wallet** | Investment portfolio. Each client can have multiple wallets (e.g., "Retirement", "Short Term"). The `cashBalance` field represents available cash for investing.                                                    |
+| **PasswordResetToken** | Password recovery tokens. Stores only the SHA-256 `tokenHash` (never the raw token), with `expiresAt` and `usedAt` for single-use, time-limited resets. Cascades on user delete. |
 
 ### Assets and Derivatives
 

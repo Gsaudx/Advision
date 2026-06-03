@@ -106,14 +106,23 @@ Uses React Router layout routes for persistent navigation:
 
 **Routes:**
 
-| Route          | Access         | Description         |
-| -------------- | -------------- | ------------------- |
-| `/advisor/home`| ADVISOR, ADMIN | Advisor dashboard   |
-| `/clients`     | ADVISOR, ADMIN | Client management   |
-| `/client/home` | CLIENT         | Client dashboard    |
-| `/admin/health`| ADMIN          | Health check page   |
-| `/login`       | Public         | Login page          |
-| `/register`    | Public         | Registration page   |
+| Route               | Access         | Description              |
+| ------------------- | -------------- | ------------------------ |
+| `/advisor/home`     | ADVISOR, ADMIN | Advisor dashboard        |
+| `/clients`          | ADVISOR, ADMIN | Client management        |
+| `/analytics`        | ADVISOR, ADMIN | Advisor analytics        |
+| `/client/home`      | CLIENT         | Client dashboard         |
+| `/client/analytics` | CLIENT         | Client analytics (own)   |
+| `/admin/health`     | ADMIN          | Health check page        |
+| `/login`            | Public         | Login page               |
+| `/register`         | Public         | Registration page        |
+| `/forgot-password`  | Public         | Request password reset   |
+| `/reset-password`   | Public         | Set new password (token) |
+
+**Analytics scoping:** analytics endpoints are scoped by the authenticated actor
+(`advisorId` for ADVISOR/ADMIN, `userId` for CLIENT) so a client only ever sees
+metrics for their own wallets. `client-ranking` and `pending-actions` remain
+advisor-only.
 
 ## Client Invite System
 
