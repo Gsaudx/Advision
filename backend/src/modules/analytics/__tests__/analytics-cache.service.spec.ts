@@ -16,7 +16,10 @@ describe('AnalyticsCacheService', () => {
     });
 
     it('should omit undefined params', () => {
-      const key = service.buildKey('adv1', 'widget', { mode: 'CONSOLIDATED', walletId: undefined });
+      const key = service.buildKey('adv1', 'widget', {
+        mode: 'CONSOLIDATED',
+        walletId: undefined,
+      });
       expect(key).toBe('adv1:widget:mode=CONSOLIDATED');
     });
   });

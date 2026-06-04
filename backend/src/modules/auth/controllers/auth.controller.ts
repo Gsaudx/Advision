@@ -17,7 +17,13 @@ import type { ApiResponse as ApiResponseType } from '@/common/schemas';
 import { env, parseJwtExpirationToMs } from '@/config';
 import { AuthService } from '../services/auth.service';
 import { NotificationsService } from '@/modules/notifications/services'; // [NOTIF]
-import { RegisterDto, LoginDto, UserProfileApiResponseDto } from '../schemas';
+import {
+  RegisterDto,
+  LoginDto,
+  UserProfileApiResponseDto,
+  ForgotPasswordDto,
+  ResetPasswordDto,
+} from '../schemas';
 import type { UserProfile } from '../schemas';
 import { AUTH_COOKIE_NAME, type RequestUser } from '../strategies/jwt.strategy';
 import { LocalAuthGuard } from '../guards/local-auth.guard';
@@ -135,6 +141,50 @@ export class AuthController {
   ): ApiResponseType<null> {
     clearAuthCookie(res);
     return ApiResponseDto.success(null, 'Logout realizado com sucesso');
+  }
+
+  @Post('forgot-password')
+  @HttpCode(HttpStatus.OK)
+  @ApiOperation({
+    summary: 'Solicitar recuperação de senha',
+    description:
+      'Envia um e-mail com link de redefinição caso o e-mail informado pertença a uma conta. A resposta é sempre genérica para não revelar a existência de contas.',
+  })
+  @ApiResponse({
+    status: 200,
+    description: 'Solicitação processada',
+  })
+  async forgotPassword(
+    @Body() body: ForgotPasswordDto,
+  ): Promise<ApiResponseType<null>> {
+    await this.authService.forgotPassword(body.email);
+    return ApiResponseDto.success(
+      null,
+      'Se o e-mail estiver cadastrado, enviaremos instruções de recuperação.',
+    );
+  }
+
+  @Post('reset-password')
+  @HttpCode(HttpStatus.OK)
+  @ApiOperation({
+    summary: 'Redefinir senha',
+    description:
+      'Define uma nova senha a partir de um token de recuperação válido.',
+  })
+  @ApiResponse({
+    status: 200,
+    description: 'Senha redefinida com sucesso',
+  })
+  @ApiResponse({
+    status: 400,
+    description: 'Token inválido ou expirado',
+    type: ApiErrorResponseDto,
+  })
+  async resetPassword(
+    @Body() body: ResetPasswordDto,
+  ): Promise<ApiResponseType<null>> {
+    await this.authService.resetPassword(body.token, body.password);
+    return ApiResponseDto.success(null, 'Senha redefinida com sucesso');
   }
 
   @Get('me')

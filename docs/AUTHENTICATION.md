@@ -57,12 +57,29 @@ eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiJ1dWlkIiwiZW1haWwiOiJ0ZXN0QGV4YW1
 
 ### Authentication Endpoints
 
-| Method | Endpoint         | Description                  | Authenticated? |
-| ------ | ---------------- | ---------------------------- | -------------- |
-| POST   | `/auth/register` | Create new account           | No             |
-| POST   | `/auth/login`    | Authenticate and get cookie  | No             |
-| POST   | `/auth/logout`   | Remove cookie                | No             |
-| GET    | `/auth/me`       | Get user profile             | Yes            |
+| Method | Endpoint                | Description                       | Authenticated? |
+| ------ | ----------------------- | --------------------------------- | -------------- |
+| POST   | `/auth/register`        | Create new account                | No             |
+| POST   | `/auth/login`           | Authenticate and get cookie       | No             |
+| POST   | `/auth/logout`          | Remove cookie                     | No             |
+| POST   | `/auth/forgot-password` | Request a password reset email    | No             |
+| POST   | `/auth/reset-password`  | Set a new password with a token   | No             |
+| GET    | `/auth/me`              | Get user profile                  | Yes            |
+
+## Password Recovery
+
+Self-service password reset via email link.
+
+1. User submits email at `/forgot-password` → `POST /auth/forgot-password { email }`.
+2. If the email belongs to an account, the backend:
+   - Invalidates any previous unused reset tokens for that user.
+   - Generates a random token, stores **only its SHA-256 hash** in `password_reset_tokens` with a 1-hour expiry (single-use).
+   - Sends an email (via `MailService`) with the link `${APP_URL}/reset-password?token=<raw>`.
+3. The response is **always generic** ("if the email exists, we'll send instructions") to prevent account enumeration.
+4. User opens the link and submits a new password at `/reset-password` → `POST /auth/reset-password { token, password }`.
+5. The backend hashes the token, validates it (exists, not used, not expired), updates `passwordHash` and marks the token used (in a transaction).
+
+**Email delivery (`MailService`, `shared/mail/`)**: uses SMTP via nodemailer when `SMTP_HOST`/`SMTP_USER`/`SMTP_PASS` are set; otherwise (dev) the reset link is logged to the server console. Configure `APP_URL`, `SMTP_*` and `MAIL_FROM` in `.env`.
 
 ## Backend: Protecting Routes
 

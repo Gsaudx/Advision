@@ -1,7 +1,10 @@
 import { Injectable } from '@nestjs/common';
 import { PrismaService } from '@/shared/prisma';
 import { AnalyticsCacheService } from '../cache/analytics-cache.service';
-import { PendingActionsResponse, PendingActionItem } from '../schemas/analytics-response.schema';
+import {
+  PendingActionsResponse,
+  PendingActionItem,
+} from '../schemas/analytics-response.schema';
 
 @Injectable()
 export class PendingActionsService {
@@ -31,14 +34,20 @@ export class PendingActionsService {
     });
 
     // Buscar nomes de cliente para walletIds presentes nas notificações
-    const notifWalletIds = [...new Set(notifications.map((n) => n.walletId).filter(Boolean) as string[])];
+    const notifWalletIds = [
+      ...new Set(
+        notifications.map((n) => n.walletId).filter(Boolean) as string[],
+      ),
+    ];
     const notifWallets = notifWalletIds.length
       ? await this.prisma.wallet.findMany({
           where: { id: { in: notifWalletIds } },
           select: { id: true, client: { select: { name: true } } },
         })
       : [];
-    const walletClientMap = new Map(notifWallets.map((w) => [w.id, w.client.name]));
+    const walletClientMap = new Map(
+      notifWallets.map((w) => [w.id, w.client.name]),
+    );
 
     for (const n of notifications) {
       items.push({
@@ -46,7 +55,9 @@ export class PendingActionsService {
         severity: n.severity === 'CRITICAL' ? 'critical' : 'warning',
         description: n.message,
         linkTo: n.walletId ? `/wallets/${n.walletId}` : '/wallets',
-        clientName: (n.walletId ? walletClientMap.get(n.walletId) : undefined) ?? 'Cliente desconhecido',
+        clientName:
+          (n.walletId ? walletClientMap.get(n.walletId) : undefined) ??
+          'Cliente desconhecido',
         walletId: n.walletId ?? null,
       });
     }
@@ -54,7 +65,11 @@ export class PendingActionsService {
     // Fonte 2: carteiras sem operação há > 90 dias
     const walletIds = await this.prisma.wallet.findMany({
       where: { client: { advisorId } },
-      select: { id: true, createdAt: true, client: { select: { name: true, id: true } } },
+      select: {
+        id: true,
+        createdAt: true,
+        client: { select: { name: true, id: true } },
+      },
     });
 
     for (const wallet of walletIds) {

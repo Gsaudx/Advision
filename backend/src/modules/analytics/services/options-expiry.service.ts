@@ -1,16 +1,21 @@
 import { Injectable, ForbiddenException } from '@nestjs/common';
 import { PrismaService } from '@/shared/prisma';
 import { AnalyticsCacheService } from '../cache/analytics-cache.service';
-import { OptionsExpiryResponse, OptionsExpiryWindow } from '../schemas/analytics-response.schema';
+import {
+  OptionsExpiryResponse,
+  OptionsExpiryWindow,
+} from '../schemas/analytics-response.schema';
 import { CompositeMarketService } from '@/modules/wallets/providers/composite-market.service';
 import { AssetType } from '@/generated/prisma/enums';
+import type { CurrentUserData } from '@/common/decorators';
+import { clientScopeWhere } from '../utils/scope.util';
 
 const WINDOWS: Array<{ label: string; min: number; max: number }> = [
-  { label: '≤ 7d',   min: 0,  max: 7  },
-  { label: '8–15d',  min: 8,  max: 15 },
+  { label: '≤ 7d', min: 0, max: 7 },
+  { label: '8–15d', min: 8, max: 15 },
   { label: '16–30d', min: 16, max: 30 },
   { label: '31–60d', min: 31, max: 60 },
-  { label: '60+ d',  min: 61, max: Infinity },
+  { label: '60+ d', min: 61, max: Infinity },
 ];
 
 @Injectable()
@@ -21,19 +26,35 @@ export class OptionsExpiryService {
     private readonly market: CompositeMarketService,
   ) {}
 
-  async getOptionsExpiry(advisorId: string, mode: string, walletId?: string): Promise<OptionsExpiryResponse> {
-    const key = this.cache.buildKey(advisorId, 'options-expiry', { mode, walletId });
+  async getOptionsExpiry(
+    actor: CurrentUserData,
+    mode: string,
+    walletId?: string,
+  ): Promise<OptionsExpiryResponse> {
+    const scope = clientScopeWhere(actor);
+    const key = this.cache.buildKey(actor.id, 'options-expiry', {
+      mode,
+      walletId,
+    });
     const cached = this.cache.get<OptionsExpiryResponse>(key);
     if (cached) return cached;
 
     if (mode === 'DRILLDOWN' && walletId) {
-      const owned = await this.prisma.wallet.findFirst({ where: { id: walletId, client: { advisorId } } });
+      const owned = await this.prisma.wallet.findFirst({
+        where: { id: walletId, client: scope },
+      });
       if (!owned) throw new ForbiddenException();
     }
 
-    const walletIds = mode === 'DRILLDOWN' && walletId
-      ? [walletId]
-      : (await this.prisma.wallet.findMany({ where: { client: { advisorId } }, select: { id: true } })).map((w) => w.id);
+    const walletIds =
+      mode === 'DRILLDOWN' && walletId
+        ? [walletId]
+        : (
+            await this.prisma.wallet.findMany({
+              where: { client: scope },
+              select: { id: true },
+            })
+          ).map((w) => w.id);
 
     const today = new Date();
     today.setHours(0, 0, 0, 0);
@@ -51,14 +72,21 @@ export class OptionsExpiryService {
     });
 
     const futurePositions = positions.filter(
-      (p) => p.asset.optionDetail && new Date(p.asset.optionDetail.expirationDate) >= today,
+      (p) =>
+        p.asset.optionDetail &&
+        new Date(p.asset.optionDetail.expirationDate) >= today,
     );
 
     const tickers = [...new Set(futurePositions.map((p) => p.asset.ticker))];
-    const prices = tickers.length ? await this.market.getBatchPrices(tickers) : {};
+    const prices = tickers.length
+      ? await this.market.getBatchPrices(tickers)
+      : {};
 
     const windowMap = new Map<string, OptionsExpiryWindow>(
-      WINDOWS.map((w) => [w.label, { label: w.label, totalValue: 0, count: 0, positions: [] }]),
+      WINDOWS.map((w) => [
+        w.label,
+        { label: w.label, totalValue: 0, count: 0, positions: [] },
+      ]),
     );
 
     for (const pos of futurePositions) {

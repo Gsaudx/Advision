@@ -1,4 +1,9 @@
-import { resolvePeriod, formatYYYYMM, formatYYYYMMDD, monthRange } from '../utils/period.util';
+import {
+  resolvePeriod,
+  formatYYYYMM,
+  formatYYYYMMDD,
+  monthRange,
+} from '../utils/period.util';
 
 describe('resolvePeriod', () => {
   it('should return CUSTOM range when period is CUSTOM and dates are provided', () => {
@@ -43,14 +48,14 @@ describe('formatYYYYMMDD', () => {
 
 describe('monthRange', () => {
   it('should generate all months between two dates inclusive', () => {
-    const from = new Date(2024, 0, 1);  // Jan 1 local
-    const to = new Date(2024, 2, 31);   // Mar 31 local
+    const from = new Date(2024, 0, 1); // Jan 1 local
+    const to = new Date(2024, 2, 31); // Mar 31 local
     const months = monthRange(from, to);
     expect(months).toEqual(['2024-01', '2024-02', '2024-03']);
   });
 
   it('should return a single month when from and to are in the same month', () => {
-    const d = new Date(2024, 5, 10);    // Jun 10 local
+    const d = new Date(2024, 5, 10); // Jun 10 local
     expect(monthRange(d, d)).toEqual(['2024-06']);
   });
 });

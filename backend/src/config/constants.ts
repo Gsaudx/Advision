@@ -16,6 +16,10 @@ export const AUTH_CONSTANTS = {
   NAME_MIN_LENGTH: 2,
   /** Maximum name length */
   NAME_MAX_LENGTH: 100,
+  /** Password reset: number of random bytes for the raw token */
+  PASSWORD_RESET_TOKEN_BYTES: 32,
+  /** Password reset: token validity in minutes */
+  PASSWORD_RESET_EXPIRATION_MINUTES: 60,
 } as const;
 
 export const INVITE_CONSTANTS = {

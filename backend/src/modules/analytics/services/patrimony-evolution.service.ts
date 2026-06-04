@@ -1,9 +1,14 @@
 import { Injectable } from '@nestjs/common';
 import { PrismaService } from '@/shared/prisma';
 import { OpLabMarketService } from '@/modules/wallets/providers/oplab-market.service';
-import { PatrimonyEvolutionResponse, PatrimonyDataPoint } from '../schemas/analytics-response.schema';
+import {
+  PatrimonyEvolutionResponse,
+  PatrimonyDataPoint,
+} from '../schemas/analytics-response.schema';
 import { resolvePeriod, formatYYYYMMDD } from '../utils/period.util';
 import { AnalyticsCacheService } from '../cache/analytics-cache.service';
+import type { CurrentUserData } from '@/common/decorators';
+import { clientScopeWhere } from '../utils/scope.util';
 
 @Injectable()
 export class PatrimonyEvolutionService {
@@ -14,16 +19,28 @@ export class PatrimonyEvolutionService {
   ) {}
 
   // Consumido pelo BenchmarkService
-  async getSeries(advisorId: string, from: string, to: string, walletId?: string): Promise<PatrimonyDataPoint[]> {
+  async getSeries(
+    actor: CurrentUserData,
+    from: string,
+    to: string,
+    walletId?: string,
+  ): Promise<PatrimonyDataPoint[]> {
     const transactions = await this.prisma.transaction.findMany({
-      where: { wallet: { ...(walletId ? { id: walletId } : {}), client: { advisorId } } },
+      where: {
+        wallet: {
+          ...(walletId ? { id: walletId } : {}),
+          client: clientScopeWhere(actor),
+        },
+      },
       orderBy: { executedAt: 'asc' },
       include: { asset: { include: { optionDetail: true } } },
     });
 
-    const tickers = [...new Set(
-      transactions.filter((t) => t.asset?.ticker).map((t) => t.asset!.ticker),
-    )];
+    const tickers = [
+      ...new Set(
+        transactions.filter((t) => t.asset?.ticker).map((t) => t.asset!.ticker),
+      ),
+    ];
 
     const seriesArr = await Promise.all(
       tickers.map((ticker) => this.oplab.getHistoricalSeries(ticker, from, to)),
@@ -38,7 +55,9 @@ export class PatrimonyEvolutionService {
     });
 
     // Todos os pregões no range
-    const allDates = [...new Set(seriesArr.flatMap((s) => s.map((p) => p.date)))].sort();
+    const allDates = [
+      ...new Set(seriesArr.flatMap((s) => s.map((p) => p.date))),
+    ].sort();
 
     // Replay de transações
     const points: PatrimonyDataPoint[] = [];
@@ -56,14 +75,24 @@ export class PatrimonyEvolutionService {
           const qty = Number(tx.quantity ?? 0);
           const ticker = tx.asset.ticker;
           const cur = holdings.get(ticker) ?? 0;
-          if (tx.type === 'BUY' || tx.type === 'OPTION_EXERCISE' || tx.type === 'OPTION_ASSIGNMENT') {
+          if (
+            tx.type === 'BUY' ||
+            tx.type === 'OPTION_EXERCISE' ||
+            tx.type === 'OPTION_ASSIGNMENT'
+          ) {
             holdings.set(ticker, cur + qty);
-          } else if (tx.type === 'SELL' || tx.type === 'EXPIRED' || tx.type === 'OPTION_EXPIRY') {
+          } else if (
+            tx.type === 'SELL' ||
+            tx.type === 'EXPIRED' ||
+            tx.type === 'OPTION_EXPIRY'
+          ) {
             holdings.set(ticker, Math.max(0, cur - qty));
           }
           // Zerar opções vencidas
           if (tx.asset.optionDetail?.expirationDate) {
-            const exp = new Date(tx.asset.optionDetail.expirationDate).getTime();
+            const exp = new Date(
+              tx.asset.optionDetail.expirationDate,
+            ).getTime();
             if (exp <= dateTs) holdings.set(ticker, 0);
           }
         }
@@ -76,7 +105,9 @@ export class PatrimonyEvolutionService {
         if (qty <= 0) continue;
         const dayMap = priceMap.get(ticker);
         // forward-fill: usar o último preço disponível
-        const price = dayMap?.get(dateStr) ?? this.getLastKnownPrice(priceMap.get(ticker)!, dateStr);
+        const price =
+          dayMap?.get(dateStr) ??
+          this.getLastKnownPrice(priceMap.get(ticker)!, dateStr);
         totalValue += qty * (price ?? 0);
       }
 
@@ -92,24 +123,40 @@ export class PatrimonyEvolutionService {
   }
 
   async getResponse(
-    advisorId: string,
+    actor: CurrentUserData,
     period: string,
     customFrom?: string,
     customTo?: string,
     walletId?: string,
   ): Promise<PatrimonyEvolutionResponse> {
-    const key = this.cache.buildKey(advisorId, 'patrimony-evolution', { period, customFrom, customTo, walletId });
+    const key = this.cache.buildKey(actor.id, 'patrimony-evolution', {
+      period,
+      customFrom,
+      customTo,
+      walletId,
+    });
     const cached = this.cache.get<PatrimonyEvolutionResponse>(key);
     if (cached) return cached;
 
     const { from, to } = resolvePeriod(period, customFrom, customTo);
-    const series = await this.getSeries(advisorId, formatYYYYMMDD(from), formatYYYYMMDD(to), walletId);
+    const series = await this.getSeries(
+      actor,
+      formatYYYYMMDD(from),
+      formatYYYYMMDD(to),
+      walletId,
+    );
 
     const startValue = series[0]?.totalValue ?? 0;
     const endValue = series[series.length - 1]?.totalValue ?? 0;
-    const changePercent = startValue > 0 ? ((endValue - startValue) / startValue) * 100 : 0;
+    const changePercent =
+      startValue > 0 ? ((endValue - startValue) / startValue) * 100 : 0;
 
-    const result: PatrimonyEvolutionResponse = { series, startValue, endValue, changePercent };
+    const result: PatrimonyEvolutionResponse = {
+      series,
+      startValue,
+      endValue,
+      changePercent,
+    };
     this.cache.set(key, result);
     return result;
   }

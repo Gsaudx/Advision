@@ -209,25 +209,24 @@ describe('OpLabMarketService', () => {
     });
 
     it('searches for instruments with options', async () => {
+      // OpLab returns a bare array of instruments (not wrapped in { data: [] })
       (global.fetch as jest.Mock).mockResolvedValueOnce({
         ok: true,
         json: () =>
-          Promise.resolve({
-            data: [
-              {
-                symbol: 'PETR4',
-                name: 'Petrobras PN',
-                type: 'STOCK',
-                has_options: true,
-              },
-              {
-                symbol: 'PETR3',
-                name: 'Petrobras ON',
-                type: 'STOCK',
-                has_options: true,
-              },
-            ],
-          }),
+          Promise.resolve([
+            {
+              symbol: 'PETR4',
+              name: 'Petrobras PN',
+              type: 'STOCK',
+              has_options: true,
+            },
+            {
+              symbol: 'PETR3',
+              name: 'Petrobras ON',
+              type: 'STOCK',
+              has_options: true,
+            },
+          ]),
       });
 
       const results = await service.search('PETR');
@@ -236,6 +235,18 @@ describe('OpLabMarketService', () => {
       expect(results[0].ticker).toBe('PETR4');
       expect(results[0].name).toBe('Petrobras PN');
       expect(results[0].exchange).toBe('B3');
+    });
+
+    it('returns empty array when OpLab responds 204 (no results)', async () => {
+      (global.fetch as jest.Mock).mockResolvedValueOnce({
+        ok: true,
+        status: 204,
+        json: () => Promise.reject(new Error('Unexpected end of JSON input')),
+      });
+
+      const results = await service.search('ZZZZ9');
+
+      expect(results).toEqual([]);
     });
 
     it('returns empty array on API error', async () => {
@@ -255,7 +266,13 @@ describe('OpLabMarketService', () => {
       const unconfiguredService = new OpLabMarketService();
 
       const results = await unconfiguredService.searchOptions('PETR4');
-      expect(results).toEqual({ results: [], total: 0, page: 1, pageSize: 50, hasMore: false });
+      expect(results).toEqual({
+        results: [],
+        total: 0,
+        page: 1,
+        pageSize: 50,
+        hasMore: false,
+      });
     });
 
     it('returns option series for underlying', async () => {

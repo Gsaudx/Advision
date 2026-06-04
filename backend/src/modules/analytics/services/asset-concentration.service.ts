@@ -4,6 +4,8 @@ import { AnalyticsCacheService } from '../cache/analytics-cache.service';
 import { AssetConcentrationResponse } from '../schemas/analytics-response.schema';
 import { CompositeMarketService } from '@/modules/wallets/providers/composite-market.service';
 import { AssetType } from '@/generated/prisma/enums';
+import type { CurrentUserData } from '@/common/decorators';
+import { clientScopeWhere } from '../utils/scope.util';
 
 @Injectable()
 export class AssetConcentrationService {
@@ -13,21 +15,37 @@ export class AssetConcentrationService {
     private readonly market: CompositeMarketService,
   ) {}
 
-  async getAssetConcentration(advisorId: string, mode: string, walletId?: string): Promise<AssetConcentrationResponse> {
-    const key = this.cache.buildKey(advisorId, 'concentration', { mode, walletId });
+  async getAssetConcentration(
+    actor: CurrentUserData,
+    mode: string,
+    walletId?: string,
+  ): Promise<AssetConcentrationResponse> {
+    const scope = clientScopeWhere(actor);
+    const key = this.cache.buildKey(actor.id, 'concentration', {
+      mode,
+      walletId,
+    });
     const cached = this.cache.get<AssetConcentrationResponse>(key);
     if (cached) return cached;
 
     if (mode === 'DRILLDOWN' && walletId) {
-      const owned = await this.prisma.wallet.findFirst({ where: { id: walletId, client: { advisorId } } });
+      const owned = await this.prisma.wallet.findFirst({
+        where: { id: walletId, client: scope },
+      });
       if (!owned) throw new ForbiddenException();
     }
 
-    const allClients = await this.prisma.client.count({ where: { advisorId } });
+    const allClients = await this.prisma.client.count({ where: scope });
 
-    const walletIds = mode === 'DRILLDOWN' && walletId
-      ? [walletId]
-      : (await this.prisma.wallet.findMany({ where: { client: { advisorId } }, select: { id: true } })).map((w) => w.id);
+    const walletIds =
+      mode === 'DRILLDOWN' && walletId
+        ? [walletId]
+        : (
+            await this.prisma.wallet.findMany({
+              where: { client: scope },
+              select: { id: true },
+            })
+          ).map((w) => w.id);
 
     const allPositions = await this.prisma.position.findMany({
       where: { walletId: { in: walletIds }, quantity: { gt: 0 } },
@@ -36,17 +54,28 @@ export class AssetConcentrationService {
         wallet: { include: { client: { select: { id: true } } } },
       },
     });
-    const positions = allPositions.filter((p) => p.asset.type === AssetType.STOCK);
+    const positions = allPositions.filter(
+      (p) => p.asset.type === AssetType.STOCK,
+    );
 
     const tickers = [...new Set(positions.map((p) => p.asset.ticker))];
-    const prices = tickers.length ? await this.market.getBatchPrices(tickers) : {};
+    const prices = tickers.length
+      ? await this.market.getBatchPrices(tickers)
+      : {};
 
     // Agrupar por assetId
-    const assetMap = new Map<string, {
-      ticker: string; name: string;
-      totalValue: number; totalCost: number; totalQty: number;
-      clientIds: Set<string>; walletIds: Set<string>;
-    }>();
+    const assetMap = new Map<
+      string,
+      {
+        ticker: string;
+        name: string;
+        totalValue: number;
+        totalCost: number;
+        totalQty: number;
+        clientIds: Set<string>;
+        walletIds: Set<string>;
+      }
+    >();
 
     let totalBookValue = 0;
 
@@ -77,10 +106,12 @@ export class AssetConcentrationService {
       .sort((a, b) => b.totalValue - a.totalValue)
       .slice(0, 10)
       .map((e) => {
-        const percentBook = totalBookValue > 0 ? (e.totalValue / totalBookValue) * 100 : 0;
+        const percentBook =
+          totalBookValue > 0 ? (e.totalValue / totalBookValue) * 100 : 0;
         const avgPrice = e.totalQty > 0 ? e.totalCost / e.totalQty : 0;
         const currentPrice = prices[e.ticker] ?? avgPrice;
-        const gainPercent = avgPrice > 0 ? ((currentPrice - avgPrice) / avgPrice) * 100 : 0;
+        const gainPercent =
+          avgPrice > 0 ? ((currentPrice - avgPrice) / avgPrice) * 100 : 0;
         const nClients = mode === 'DRILLDOWN' ? 1 : e.clientIds.size;
         return {
           ticker: e.ticker,
@@ -91,9 +122,10 @@ export class AssetConcentrationService {
           gainPercent,
           flags: {
             overWeight: percentBook > 20,
-            overConcentrated: mode !== 'DRILLDOWN' && allClients > 0
-              ? nClients / allClients > 0.5
-              : false,
+            overConcentrated:
+              mode !== 'DRILLDOWN' && allClients > 0
+                ? nClients / allClients > 0.5
+                : false,
           },
         };
       });

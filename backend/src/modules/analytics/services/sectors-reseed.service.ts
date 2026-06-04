@@ -13,8 +13,12 @@ export class SectorsReseedService {
   ) {}
 
   async reseed(): Promise<SectorsReseedResponse> {
-    const assets = await this.prisma.asset.findMany({ where: { sector: null } });
-    let updated = 0, failed = 0, skipped = 0;
+    const assets = await this.prisma.asset.findMany({
+      where: { sector: null },
+    });
+    let updated = 0,
+      failed = 0,
+      skipped = 0;
 
     for (let i = 0; i < assets.length; i += BATCH_SIZE) {
       const batch = assets.slice(i, i + BATCH_SIZE);

@@ -34,19 +34,37 @@ describe('AnalyticsController', () => {
   };
 
   const baseQuery = { mode: 'CONSOLIDATED' as const, walletId: undefined };
-  const periodQuery = { ...baseQuery, period: '1M' as const, from: undefined, to: undefined };
-  const evolutionQuery = { ...baseQuery, period: '1A' as const, from: undefined, to: undefined };
+  const periodQuery = {
+    ...baseQuery,
+    period: '1M' as const,
+    from: undefined,
+    to: undefined,
+  };
+  const evolutionQuery = {
+    ...baseQuery,
+    period: '1A' as const,
+    from: undefined,
+    to: undefined,
+  };
 
   beforeEach(async () => {
     cache = { invalidateAdvisor: jest.fn() };
     bestWorst = { getBestWorstAssets: jest.fn().mockResolvedValue([]) };
     optionsExpiry = { getOptionsExpiry: jest.fn().mockResolvedValue([]) };
-    pendingActions = { getPendingActions: jest.fn().mockResolvedValue({ expirations: [], inactiveClients: [] }) };
-    dividends = { getDividends: jest.fn().mockResolvedValue({ total: 0, items: [] }) };
+    pendingActions = {
+      getPendingActions: jest
+        .fn()
+        .mockResolvedValue({ expirations: [], inactiveClients: [] }),
+    };
+    dividends = {
+      getDividends: jest.fn().mockResolvedValue({ total: 0, items: [] }),
+    };
     concentration = { getAssetConcentration: jest.fn().mockResolvedValue([]) };
     sectors = { getSectorExposure: jest.fn().mockResolvedValue([]) };
     clientRanking = { getClientRanking: jest.fn().mockResolvedValue([]) };
-    patrimonyEvolution = { getResponse: jest.fn().mockResolvedValue({ series: [] }) };
+    patrimonyEvolution = {
+      getResponse: jest.fn().mockResolvedValue({ series: [] }),
+    };
     benchmark = { getBenchmark: jest.fn().mockResolvedValue({ series: [] }) };
     sectorsReseed = { reseed: jest.fn().mockResolvedValue({ updated: 0 }) };
 
@@ -72,37 +90,62 @@ describe('AnalyticsController', () => {
 
   it('getBestWorst delegates to service and wraps result', async () => {
     const result = await controller.getBestWorst(baseQuery, mockUser);
-    expect(bestWorst.getBestWorstAssets).toHaveBeenCalledWith('advisor-123', 'CONSOLIDATED', undefined);
+    expect(bestWorst.getBestWorstAssets).toHaveBeenCalledWith(
+      mockUser,
+      'CONSOLIDATED',
+      undefined,
+    );
     expect(result).toMatchObject({ success: true });
   });
 
   it('getOptionsExpiry delegates to service', async () => {
     const result = await controller.getOptionsExpiry(baseQuery, mockUser);
-    expect(optionsExpiry.getOptionsExpiry).toHaveBeenCalledWith('advisor-123', 'CONSOLIDATED', undefined);
+    expect(optionsExpiry.getOptionsExpiry).toHaveBeenCalledWith(
+      mockUser,
+      'CONSOLIDATED',
+      undefined,
+    );
     expect(result).toMatchObject({ success: true });
   });
 
   it('getPendingActions delegates to service', async () => {
     const result = await controller.getPendingActions(mockUser);
-    expect(pendingActions.getPendingActions).toHaveBeenCalledWith('advisor-123');
+    expect(pendingActions.getPendingActions).toHaveBeenCalledWith(
+      'advisor-123',
+    );
     expect(result).toMatchObject({ success: true });
   });
 
   it('getDividends delegates to service', async () => {
     const result = await controller.getDividends(periodQuery, mockUser);
-    expect(dividends.getDividends).toHaveBeenCalledWith('advisor-123', 'CONSOLIDATED', undefined, '1M', undefined, undefined);
+    expect(dividends.getDividends).toHaveBeenCalledWith(
+      mockUser,
+      'CONSOLIDATED',
+      undefined,
+      '1M',
+      undefined,
+      undefined,
+    );
     expect(result).toMatchObject({ success: true });
   });
 
   it('getConcentration delegates to service', async () => {
     const result = await controller.getConcentration(baseQuery, mockUser);
-    expect(concentration.getAssetConcentration).toHaveBeenCalledWith('advisor-123', 'CONSOLIDATED', undefined);
+    expect(concentration.getAssetConcentration).toHaveBeenCalledWith(
+      mockUser,
+      'CONSOLIDATED',
+      undefined,
+    );
     expect(result).toMatchObject({ success: true });
   });
 
   it('getSectors delegates to service', async () => {
     const result = await controller.getSectors(baseQuery, mockUser);
-    expect(sectors.getSectorExposure).toHaveBeenCalledWith('advisor-123', 'CONSOLIDATED', undefined);
+    expect(sectors.getSectorExposure).toHaveBeenCalledWith(
+      mockUser,
+      'CONSOLIDATED',
+      undefined,
+    );
     expect(result).toMatchObject({ success: true });
   });
 
@@ -113,14 +156,29 @@ describe('AnalyticsController', () => {
   });
 
   it('getPatrimonyEvolution delegates to service', async () => {
-    const result = await controller.getPatrimonyEvolution(evolutionQuery, mockUser);
-    expect(patrimonyEvolution.getResponse).toHaveBeenCalledWith('advisor-123', '1A', undefined, undefined, undefined);
+    const result = await controller.getPatrimonyEvolution(
+      evolutionQuery,
+      mockUser,
+    );
+    expect(patrimonyEvolution.getResponse).toHaveBeenCalledWith(
+      mockUser,
+      '1A',
+      undefined,
+      undefined,
+      undefined,
+    );
     expect(result).toMatchObject({ success: true });
   });
 
   it('getBenchmark delegates to service', async () => {
     const result = await controller.getBenchmark(evolutionQuery, mockUser);
-    expect(benchmark.getBenchmark).toHaveBeenCalledWith('advisor-123', '1A', undefined, undefined, undefined);
+    expect(benchmark.getBenchmark).toHaveBeenCalledWith(
+      mockUser,
+      '1A',
+      undefined,
+      undefined,
+      undefined,
+    );
     expect(result).toMatchObject({ success: true });
   });
 

@@ -182,11 +182,13 @@ function OperationsTable({
   currency,
   isLoading,
   walletId,
+  canTrade,
 }: {
   transactions: Transaction[];
   currency: string;
   isLoading?: boolean;
   walletId: string;
+  canTrade: boolean;
 }) {
   const [editingTx, setEditingTx] = useState<Transaction | null>(null);
   const [deletingTx, setDeletingTx] = useState<Transaction | null>(null);
@@ -287,27 +289,29 @@ function OperationsTable({
                   {formatCurrency(tx.totalValue, currency)}
                 </td>
                 <td className="px-4 py-5">
-                  <div className="flex items-center gap-1 justify-end">
-                    {isEditable(tx) && (
-                      <button
-                        onClick={() => setEditingTx(tx)}
-                        className="p-1.5 rounded-lg text-on-surface-variant hover:text-primary hover:bg-primary/10 transition-colors"
-                        title="Editar"
-                      >
-                        <Pencil size={14} />
-                      </button>
-                    )}
-                    {isDeletable(tx) && (
-                      <button
-                        onClick={() => setDeletingTx(tx)}
-                        disabled={deleteMutation.isPending}
-                        className="p-1.5 rounded-lg text-on-surface-variant hover:text-error hover:bg-error/10 transition-colors disabled:opacity-40"
-                        title="Deletar"
-                      >
-                        <Trash2 size={14} />
-                      </button>
-                    )}
-                  </div>
+                  {canTrade && (
+                    <div className="flex items-center gap-1 justify-end">
+                      {isEditable(tx) && (
+                        <button
+                          onClick={() => setEditingTx(tx)}
+                          className="p-1.5 rounded-lg text-on-surface-variant hover:text-primary hover:bg-primary/10 transition-colors"
+                          title="Editar"
+                        >
+                          <Pencil size={14} />
+                        </button>
+                      )}
+                      {isDeletable(tx) && (
+                        <button
+                          onClick={() => setDeletingTx(tx)}
+                          disabled={deleteMutation.isPending}
+                          className="p-1.5 rounded-lg text-on-surface-variant hover:text-error hover:bg-error/10 transition-colors disabled:opacity-40"
+                          title="Deletar"
+                        >
+                          <Trash2 size={14} />
+                        </button>
+                      )}
+                    </div>
+                  )}
                 </td>
               </tr>
             ))}
@@ -812,6 +816,7 @@ export default function WalletPage() {
                     currency={wallet.currency}
                     isLoading={isLoadingTransactions}
                     walletId={walletId!}
+                    canTrade={config.canTrade}
                   />
                 )}
                 {pillTab === 'proventos' && (

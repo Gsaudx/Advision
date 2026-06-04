@@ -15,7 +15,9 @@ api.interceptors.response.use(
       // Only redirect if not already on login/register pages
       const isAuthPage =
         window.location.pathname === '/login' ||
-        window.location.pathname === '/register';
+        window.location.pathname === '/register' ||
+        window.location.pathname === '/forgot-password' ||
+        window.location.pathname === '/reset-password';
 
       if (!isAuthPage) {
         window.location.href = '/login';

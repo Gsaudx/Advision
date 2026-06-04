@@ -1,5 +1,17 @@
-import { Controller, Get, Post, Delete, Query, UseGuards } from '@nestjs/common';
-import { ApiTags, ApiOperation, ApiResponse, ApiCookieAuth } from '@nestjs/swagger';
+import {
+  Controller,
+  Get,
+  Post,
+  Delete,
+  Query,
+  UseGuards,
+} from '@nestjs/common';
+import {
+  ApiTags,
+  ApiOperation,
+  ApiResponse,
+  ApiCookieAuth,
+} from '@nestjs/swagger';
 import { AuthGuard } from '@nestjs/passport';
 import { Roles, CurrentUser, type CurrentUserData } from '@/common/decorators';
 import { RolesGuard } from '@/common/guards';
@@ -15,7 +27,11 @@ import { ClientRankingService } from './services/client-ranking.service';
 import { PatrimonyEvolutionService } from './services/patrimony-evolution.service';
 import { BenchmarkService } from './services/benchmark.service';
 import { SectorsReseedService } from './services/sectors-reseed.service';
-import { BaseQueryDto, PeriodQueryDto, EvolutionQueryDto } from './schemas/analytics-query.schema';
+import {
+  BaseQueryDto,
+  PeriodQueryDto,
+  EvolutionQueryDto,
+} from './schemas/analytics-query.schema';
 import {
   BestWorstAssetsApiResponseDto,
   OptionsExpiryApiResponseDto,
@@ -49,26 +65,42 @@ export class AnalyticsController {
   ) {}
 
   @Get('best-worst')
-  @Roles('ADVISOR', 'ADMIN')
+  @Roles('ADVISOR', 'ADMIN', 'CLIENT')
   @ApiOperation({ summary: 'Melhores e piores ativos por resultado absoluto' })
   @ApiResponse({ status: 200, type: BestWorstAssetsApiResponseDto })
-  async getBestWorst(@Query() q: BaseQueryDto, @CurrentUser() user: CurrentUserData) {
-    const data = await this.bestWorst.getBestWorstAssets(user.id, q.mode, q.walletId);
+  async getBestWorst(
+    @Query() q: BaseQueryDto,
+    @CurrentUser() user: CurrentUserData,
+  ) {
+    const data = await this.bestWorst.getBestWorstAssets(
+      user,
+      q.mode,
+      q.walletId,
+    );
     return ApiResponseDto.success(data);
   }
 
   @Get('options-expiry')
-  @Roles('ADVISOR', 'ADMIN')
+  @Roles('ADVISOR', 'ADMIN', 'CLIENT')
   @ApiOperation({ summary: 'Opções agrupadas por janela de vencimento' })
   @ApiResponse({ status: 200, type: OptionsExpiryApiResponseDto })
-  async getOptionsExpiry(@Query() q: BaseQueryDto, @CurrentUser() user: CurrentUserData) {
-    const data = await this.optionsExpiry.getOptionsExpiry(user.id, q.mode, q.walletId);
+  async getOptionsExpiry(
+    @Query() q: BaseQueryDto,
+    @CurrentUser() user: CurrentUserData,
+  ) {
+    const data = await this.optionsExpiry.getOptionsExpiry(
+      user,
+      q.mode,
+      q.walletId,
+    );
     return ApiResponseDto.success(data);
   }
 
   @Get('pending-actions')
   @Roles('ADVISOR', 'ADMIN')
-  @ApiOperation({ summary: 'Ações pendentes: vencimentos críticos e clientes inativos' })
+  @ApiOperation({
+    summary: 'Ações pendentes: vencimentos críticos e clientes inativos',
+  })
   @ApiResponse({ status: 200, type: PendingActionsApiResponseDto })
   async getPendingActions(@CurrentUser() user: CurrentUserData) {
     const data = await this.pendingActions.getPendingActions(user.id);
@@ -76,29 +108,49 @@ export class AnalyticsController {
   }
 
   @Get('dividends')
-  @Roles('ADVISOR', 'ADMIN')
+  @Roles('ADVISOR', 'ADMIN', 'CLIENT')
   @ApiOperation({ summary: 'Proventos recebidos no período com top pagadores' })
   @ApiResponse({ status: 200, type: DividendsApiResponseDto })
-  async getDividends(@Query() q: PeriodQueryDto, @CurrentUser() user: CurrentUserData) {
-    const data = await this.dividends.getDividends(user.id, q.mode, q.walletId, q.period, q.from, q.to);
+  async getDividends(
+    @Query() q: PeriodQueryDto,
+    @CurrentUser() user: CurrentUserData,
+  ) {
+    const data = await this.dividends.getDividends(
+      user,
+      q.mode,
+      q.walletId,
+      q.period,
+      q.from,
+      q.to,
+    );
     return ApiResponseDto.success(data);
   }
 
   @Get('concentration')
-  @Roles('ADVISOR', 'ADMIN')
+  @Roles('ADVISOR', 'ADMIN', 'CLIENT')
   @ApiOperation({ summary: 'Concentração de ativos por valor de carteira' })
   @ApiResponse({ status: 200, type: AssetConcentrationApiResponseDto })
-  async getConcentration(@Query() q: BaseQueryDto, @CurrentUser() user: CurrentUserData) {
-    const data = await this.concentration.getAssetConcentration(user.id, q.mode, q.walletId);
+  async getConcentration(
+    @Query() q: BaseQueryDto,
+    @CurrentUser() user: CurrentUserData,
+  ) {
+    const data = await this.concentration.getAssetConcentration(
+      user,
+      q.mode,
+      q.walletId,
+    );
     return ApiResponseDto.success(data);
   }
 
   @Get('sectors')
-  @Roles('ADVISOR', 'ADMIN')
+  @Roles('ADVISOR', 'ADMIN', 'CLIENT')
   @ApiOperation({ summary: 'Exposição setorial do portfólio' })
   @ApiResponse({ status: 200, type: SectorExposureApiResponseDto })
-  async getSectors(@Query() q: BaseQueryDto, @CurrentUser() user: CurrentUserData) {
-    const data = await this.sectors.getSectorExposure(user.id, q.mode, q.walletId);
+  async getSectors(
+    @Query() q: BaseQueryDto,
+    @CurrentUser() user: CurrentUserData,
+  ) {
+    const data = await this.sectors.getSectorExposure(user, q.mode, q.walletId);
     return ApiResponseDto.success(data);
   }
 
@@ -112,26 +164,46 @@ export class AnalyticsController {
   }
 
   @Get('patrimony-evolution')
-  @Roles('ADVISOR', 'ADMIN')
+  @Roles('ADVISOR', 'ADMIN', 'CLIENT')
   @ApiOperation({ summary: 'Evolução patrimonial no período' })
   @ApiResponse({ status: 200, type: PatrimonyEvolutionApiResponseDto })
-  async getPatrimonyEvolution(@Query() q: EvolutionQueryDto, @CurrentUser() user: CurrentUserData) {
-    const data = await this.patrimonyEvolution.getResponse(user.id, q.period, q.from, q.to, q.walletId);
+  async getPatrimonyEvolution(
+    @Query() q: EvolutionQueryDto,
+    @CurrentUser() user: CurrentUserData,
+  ) {
+    const data = await this.patrimonyEvolution.getResponse(
+      user,
+      q.period,
+      q.from,
+      q.to,
+      q.walletId,
+    );
     return ApiResponseDto.success(data);
   }
 
   @Get('benchmark')
-  @Roles('ADVISOR', 'ADMIN')
+  @Roles('ADVISOR', 'ADMIN', 'CLIENT')
   @ApiOperation({ summary: 'Comparativo de rentabilidade vs IBOV' })
   @ApiResponse({ status: 200, type: BenchmarkApiResponseDto })
-  async getBenchmark(@Query() q: EvolutionQueryDto, @CurrentUser() user: CurrentUserData) {
-    const data = await this.benchmark.getBenchmark(user.id, q.period, q.from, q.to, q.walletId);
+  async getBenchmark(
+    @Query() q: EvolutionQueryDto,
+    @CurrentUser() user: CurrentUserData,
+  ) {
+    const data = await this.benchmark.getBenchmark(
+      user,
+      q.period,
+      q.from,
+      q.to,
+      q.walletId,
+    );
     return ApiResponseDto.success(data);
   }
 
   @Delete('cache')
   @Roles('ADVISOR', 'ADMIN')
-  @ApiOperation({ summary: 'Invalida o cache de analytics do advisor autenticado' })
+  @ApiOperation({
+    summary: 'Invalida o cache de analytics do advisor autenticado',
+  })
   @ApiResponse({ status: 200, type: ApiResponseDto })
   invalidateCache(@CurrentUser() user: CurrentUserData) {
     this.cache.invalidateAdvisor(user.id);
@@ -140,7 +212,9 @@ export class AnalyticsController {
 
   @Post('sectors/reseed')
   @Roles('ADMIN')
-  @ApiOperation({ summary: 'Reprocessa setores de assets sem classificação (manutenção)' })
+  @ApiOperation({
+    summary: 'Reprocessa setores de assets sem classificação (manutenção)',
+  })
   @ApiResponse({ status: 200, type: SectorsReseedApiResponseDto })
   async reseedSectors() {
     const data = await this.sectorsReseed.reseed();

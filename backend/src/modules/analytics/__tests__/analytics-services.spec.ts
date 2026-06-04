@@ -9,6 +9,11 @@ import { CompositeMarketService } from '@/modules/wallets/providers/composite-ma
 import { PerformanceService } from '@/modules/wallets/services/performance.service';
 
 const advisorId = 'advisor-123';
+const advisorActor = {
+  id: advisorId,
+  email: 'advisor@example.com',
+  role: 'ADVISOR' as const,
+};
 
 function makePrisma() {
   return {
@@ -32,7 +37,10 @@ describe('SectorExposureService', () => {
         SectorExposureService,
         AnalyticsCacheService,
         { provide: PrismaService, useValue: prisma },
-        { provide: CompositeMarketService, useValue: { getBatchPrices: jest.fn().mockResolvedValue({}) } },
+        {
+          provide: CompositeMarketService,
+          useValue: { getBatchPrices: jest.fn().mockResolvedValue({}) },
+        },
       ],
     }).compile();
 
@@ -42,14 +50,26 @@ describe('SectorExposureService', () => {
 
   it('returns cached result on cache hit', async () => {
     const cached = { sectors: [], total: 0 };
-    cache.set(cache.buildKey(advisorId, 'sectors', { mode: 'CONSOLIDATED', walletId: undefined }), cached);
-    const result = await service.getSectorExposure(advisorId, 'CONSOLIDATED');
+    cache.set(
+      cache.buildKey(advisorId, 'sectors', {
+        mode: 'CONSOLIDATED',
+        walletId: undefined,
+      }),
+      cached,
+    );
+    const result = await service.getSectorExposure(
+      advisorActor,
+      'CONSOLIDATED',
+    );
     expect(result).toEqual(cached);
     expect(prisma.wallet.findMany).not.toHaveBeenCalled();
   });
 
   it('returns empty sectors when advisor has no wallets', async () => {
-    const result = await service.getSectorExposure(advisorId, 'CONSOLIDATED');
+    const result = await service.getSectorExposure(
+      advisorActor,
+      'CONSOLIDATED',
+    );
     expect(Array.isArray(result.sectors)).toBe(true);
     expect(result.sectors).toHaveLength(0);
   });
@@ -67,7 +87,10 @@ describe('OptionsExpiryService', () => {
         OptionsExpiryService,
         AnalyticsCacheService,
         { provide: PrismaService, useValue: prisma },
-        { provide: CompositeMarketService, useValue: { getBatchPrices: jest.fn().mockResolvedValue({}) } },
+        {
+          provide: CompositeMarketService,
+          useValue: { getBatchPrices: jest.fn().mockResolvedValue({}) },
+        },
       ],
     }).compile();
 
@@ -77,13 +100,19 @@ describe('OptionsExpiryService', () => {
 
   it('returns cached result on cache hit', async () => {
     const cached = { windows: [], totalContracts: 0 };
-    cache.set(cache.buildKey(advisorId, 'options-expiry', { mode: 'CONSOLIDATED', walletId: undefined }), cached);
-    const result = await service.getOptionsExpiry(advisorId, 'CONSOLIDATED');
+    cache.set(
+      cache.buildKey(advisorId, 'options-expiry', {
+        mode: 'CONSOLIDATED',
+        walletId: undefined,
+      }),
+      cached,
+    );
+    const result = await service.getOptionsExpiry(advisorActor, 'CONSOLIDATED');
     expect(result).toEqual(cached);
   });
 
   it('returns empty windows when advisor has no wallets', async () => {
-    const result = await service.getOptionsExpiry(advisorId, 'CONSOLIDATED');
+    const result = await service.getOptionsExpiry(advisorActor, 'CONSOLIDATED');
     expect(Array.isArray(result.windows)).toBe(true);
     expect(result.windows).toHaveLength(0);
   });
@@ -135,7 +164,18 @@ describe('ClientRankingService', () => {
         ClientRankingService,
         AnalyticsCacheService,
         { provide: PrismaService, useValue: prisma },
-        { provide: PerformanceService, useValue: { computeTotals: jest.fn().mockResolvedValue({ realized: 0, unrealized: 0, dividends: 0, total: 0, totalInvested: 0 }) } },
+        {
+          provide: PerformanceService,
+          useValue: {
+            computeTotals: jest.fn().mockResolvedValue({
+              realized: 0,
+              unrealized: 0,
+              dividends: 0,
+              total: 0,
+              totalInvested: 0,
+            }),
+          },
+        },
       ],
     }).compile();
 

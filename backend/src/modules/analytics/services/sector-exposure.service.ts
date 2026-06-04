@@ -3,6 +3,8 @@ import { PrismaService } from '@/shared/prisma';
 import { AnalyticsCacheService } from '../cache/analytics-cache.service';
 import { SectorExposureResponse } from '../schemas/analytics-response.schema';
 import { CompositeMarketService } from '@/modules/wallets/providers/composite-market.service';
+import type { CurrentUserData } from '@/common/decorators';
+import { clientScopeWhere } from '../utils/scope.util';
 
 @Injectable()
 export class SectorExposureService {
@@ -13,22 +15,31 @@ export class SectorExposureService {
   ) {}
 
   async getSectorExposure(
-    advisorId: string,
+    actor: CurrentUserData,
     mode: string,
     walletId?: string,
   ): Promise<SectorExposureResponse> {
-    const key = this.cache.buildKey(advisorId, 'sectors', { mode, walletId });
+    const scope = clientScopeWhere(actor);
+    const key = this.cache.buildKey(actor.id, 'sectors', { mode, walletId });
     const cached = this.cache.get<SectorExposureResponse>(key);
     if (cached) return cached;
 
     if (mode === 'DRILLDOWN' && walletId) {
-      const owned = await this.prisma.wallet.findFirst({ where: { id: walletId, client: { advisorId } } });
+      const owned = await this.prisma.wallet.findFirst({
+        where: { id: walletId, client: scope },
+      });
       if (!owned) throw new ForbiddenException();
     }
 
-    const walletIds = mode === 'DRILLDOWN' && walletId
-      ? [walletId]
-      : (await this.prisma.wallet.findMany({ where: { client: { advisorId } }, select: { id: true } })).map((w) => w.id);
+    const walletIds =
+      mode === 'DRILLDOWN' && walletId
+        ? [walletId]
+        : (
+            await this.prisma.wallet.findMany({
+              where: { client: scope },
+              select: { id: true },
+            })
+          ).map((w) => w.id);
 
     const positions = await this.prisma.position.findMany({
       where: { walletId: { in: walletIds }, quantity: { gt: 0 } },
@@ -42,18 +53,27 @@ export class SectorExposureService {
     });
 
     const tickers = [...new Set(positions.map((p) => p.asset.ticker))];
-    const prices = tickers.length ? await this.market.getBatchPrices(tickers) : {};
+    const prices = tickers.length
+      ? await this.market.getBatchPrices(tickers)
+      : {};
 
-    const sectorMap = new Map<string, { valueR$: number; assetIds: Set<string> }>();
+    const sectorMap = new Map<
+      string,
+      { valueR$: number; assetIds: Set<string> }
+    >();
     let totalValue = 0;
 
     for (const pos of positions) {
       const price = prices[pos.asset.ticker] ?? Number(pos.averagePrice);
       const value = Number(pos.quantity) * price;
-      const resolvedSector = pos.asset.optionDetail?.underlyingAsset?.sector ?? pos.asset.sector;
+      const resolvedSector =
+        pos.asset.optionDetail?.underlyingAsset?.sector ?? pos.asset.sector;
       const sector = resolvedSector ?? 'Não classificado';
 
-      const entry = sectorMap.get(sector) ?? { valueR$: 0, assetIds: new Set() };
+      const entry = sectorMap.get(sector) ?? {
+        valueR$: 0,
+        assetIds: new Set(),
+      };
       entry.valueR$ += value;
       entry.assetIds.add(pos.assetId);
       sectorMap.set(sector, entry);

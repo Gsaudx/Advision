@@ -22,7 +22,9 @@ export const BestWorstAssetsResponseSchema = z.object({
   topGains: z.array(BestWorstAssetSchema),
   topLosses: z.array(BestWorstAssetSchema),
 });
-export type BestWorstAssetsResponse = z.infer<typeof BestWorstAssetsResponseSchema>;
+export type BestWorstAssetsResponse = z.infer<
+  typeof BestWorstAssetsResponseSchema
+>;
 export class BestWorstAssetsApiResponseDto extends createZodDto(
   createApiResponseSchema(BestWorstAssetsResponseSchema),
 ) {}
@@ -61,7 +63,10 @@ export class OptionsExpiryApiResponseDto extends createZodDto(
 // pending-actions
 // ============================================================================
 
-export const PendingActionTypeSchema = z.enum(['OPTION_EXPIRY', 'INACTIVE_CLIENT']);
+export const PendingActionTypeSchema = z.enum([
+  'OPTION_EXPIRY',
+  'INACTIVE_CLIENT',
+]);
 export type PendingActionType = z.infer<typeof PendingActionTypeSchema>;
 
 export const PendingActionSeveritySchema = z.enum(['critical', 'warning']);
@@ -83,7 +88,9 @@ export type PendingActionItem = z.infer<typeof PendingActionItemSchema>;
 export const PendingActionsResponseSchema = z.object({
   items: z.array(PendingActionItemSchema),
 });
-export type PendingActionsResponse = z.infer<typeof PendingActionsResponseSchema>;
+export type PendingActionsResponse = z.infer<
+  typeof PendingActionsResponseSchema
+>;
 export class PendingActionsApiResponseDto extends createZodDto(
   createApiResponseSchema(PendingActionsResponseSchema),
 ) {}
@@ -122,7 +129,7 @@ export class DividendsApiResponseDto extends createZodDto(
 export const ConcentrationHoldingSchema = z.object({
   ticker: z.string(),
   name: z.string(),
-  'valueR$': z.number(),
+  valueR$: z.number(),
   percentBook: z.number(),
   nClients: z.number(),
   gainPercent: z.number(),
@@ -137,7 +144,9 @@ export const AssetConcentrationResponseSchema = z.object({
   holdings: z.array(ConcentrationHoldingSchema),
   totalBookValue: z.number(),
 });
-export type AssetConcentrationResponse = z.infer<typeof AssetConcentrationResponseSchema>;
+export type AssetConcentrationResponse = z.infer<
+  typeof AssetConcentrationResponseSchema
+>;
 export class AssetConcentrationApiResponseDto extends createZodDto(
   createApiResponseSchema(AssetConcentrationResponseSchema),
 ) {}
@@ -148,7 +157,7 @@ export class AssetConcentrationApiResponseDto extends createZodDto(
 
 export const SectorExposureItemSchema = z.object({
   sector: z.string(),
-  'valueR$': z.number(),
+  valueR$: z.number(),
   percent: z.number(),
   assetCount: z.number(),
 });
@@ -158,7 +167,9 @@ export const SectorExposureResponseSchema = z.object({
   sectors: z.array(SectorExposureItemSchema),
   totalValue: z.number(),
 });
-export type SectorExposureResponse = z.infer<typeof SectorExposureResponseSchema>;
+export type SectorExposureResponse = z.infer<
+  typeof SectorExposureResponseSchema
+>;
 export class SectorExposureApiResponseDto extends createZodDto(
   createApiResponseSchema(SectorExposureResponseSchema),
 ) {}
@@ -170,9 +181,9 @@ export class SectorExposureApiResponseDto extends createZodDto(
 export const ClientRankingItemSchema = z.object({
   clientId: z.string().uuid(),
   name: z.string(),
-  'patrimonioR$': z.number(),
+  patrimonioR$: z.number(),
   rentabilidadePercent: z.number(),
-  'resultadoR$': z.number(),
+  resultadoR$: z.number(),
   lastOperationAt: z.string().nullable(),
   criticalNotifications: z.number(),
 });
@@ -202,7 +213,9 @@ export const PatrimonyEvolutionResponseSchema = z.object({
   endValue: z.number(),
   changePercent: z.number(),
 });
-export type PatrimonyEvolutionResponse = z.infer<typeof PatrimonyEvolutionResponseSchema>;
+export type PatrimonyEvolutionResponse = z.infer<
+  typeof PatrimonyEvolutionResponseSchema
+>;
 export class PatrimonyEvolutionApiResponseDto extends createZodDto(
   createApiResponseSchema(PatrimonyEvolutionResponseSchema),
 ) {}

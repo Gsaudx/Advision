@@ -175,10 +175,11 @@ model User {
   notificationWindowDays   Int       @default(7)
   lastNotificationCheckAt  DateTime?
   // Relations
-  clients          Client[]           @relation("AdvisorClients")
-  clientProfile    Client?            @relation("LinkedUser")
-  dividendSyncLogs DividendSyncLog[]
-  notifications    Notification[]
+  clients             Client[]             @relation("AdvisorClients")
+  clientProfile       Client?              @relation("LinkedUser")
+  dividendSyncLogs    DividendSyncLog[]
+  notifications       Notification[]
+  passwordResetTokens PasswordResetToken[]
 
   @@map("users")
 }
@@ -727,6 +728,32 @@ These tables exist in the schema for a planned future feature. No backend servic
 
 ---
 
+### 21. PasswordResetToken
+
+```prisma
+model PasswordResetToken {
+  id        String    @id @default(uuid())
+  userId    String
+  tokenHash String    @unique
+  expiresAt DateTime
+  usedAt    DateTime?
+  createdAt DateTime  @default(now())
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId])
+  @@map("password_reset_tokens")
+}
+```
+
+**Notes:**
+- Backs the self-service password recovery flow (`POST /auth/forgot-password`, `POST /auth/reset-password`).
+- Stores only the SHA-256 `tokenHash` — never the raw token sent by e-mail.
+- Single-use and time-limited: `usedAt` marks consumption; `expiresAt` enforces a 1-hour validity. Requesting a new reset invalidates previous unused tokens for the user.
+- Cascades on user delete.
+
+---
+
 ## Relationship Diagram
 
 ```
@@ -747,6 +774,7 @@ DividendEvent (external source, read-only by backend)
 
 User ─1:N─> Notification
 User ─1:N─> DividendSyncLog (external source)
+User ─1:N─> PasswordResetToken (password recovery)
 
 DomainEvent (event sourcing log — all aggregates)
 AuditLog    (audit trail — key user actions)
@@ -777,6 +805,7 @@ AuditLog    (audit trail — key user actions)
 | 2026-05-17 | `add_notifications` | Notification model + User notification fields |
 | 2026-05-23 | `remove_position_unique_allow_option_lots` | Dropped unique(walletId, assetId) from Position |
 | 2026-05-24 | `add_origin_transaction_id_to_positions` | Position.originTransactionId (unique FK to Transaction) |
+| 2026-06-02 | `add_password_reset_tokens` | PasswordResetToken model (hashed, single-use, expiring) |
 
 ---
 

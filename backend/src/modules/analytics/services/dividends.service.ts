@@ -3,6 +3,8 @@ import { PrismaService } from '@/shared/prisma';
 import { AnalyticsCacheService } from '../cache/analytics-cache.service';
 import { DividendsResponse } from '../schemas/analytics-response.schema';
 import { resolvePeriod, formatYYYYMM, monthRange } from '../utils/period.util';
+import type { CurrentUserData } from '@/common/decorators';
+import { clientScopeWhere } from '../utils/scope.util';
 
 @Injectable()
 export class DividendsService {
@@ -12,32 +14,42 @@ export class DividendsService {
   ) {}
 
   async getDividends(
-    advisorId: string,
+    actor: CurrentUserData,
     mode: string,
     walletId: string | undefined,
     period: string,
     customFrom?: string,
     customTo?: string,
   ): Promise<DividendsResponse> {
-    const key = this.cache.buildKey(advisorId, 'dividends', { mode, walletId, period, customFrom, customTo });
+    const scope = clientScopeWhere(actor);
+    const key = this.cache.buildKey(actor.id, 'dividends', {
+      mode,
+      walletId,
+      period,
+      customFrom,
+      customTo,
+    });
     const cached = this.cache.get<DividendsResponse>(key);
     if (cached) return cached;
 
     if (mode === 'DRILLDOWN' && walletId) {
       const owned = await this.prisma.wallet.findFirst({
-        where: { id: walletId, client: { advisorId } },
+        where: { id: walletId, client: scope },
       });
       if (!owned) throw new ForbiddenException();
     }
 
     const { from, to } = resolvePeriod(period, customFrom, customTo);
 
-    const walletIds = mode === 'DRILLDOWN' && walletId
-      ? [walletId]
-      : (await this.prisma.wallet.findMany({
-          where: { client: { advisorId } },
-          select: { id: true },
-        })).map((w) => w.id);
+    const walletIds =
+      mode === 'DRILLDOWN' && walletId
+        ? [walletId]
+        : (
+            await this.prisma.wallet.findMany({
+              where: { client: scope },
+              select: { id: true },
+            })
+          ).map((w) => w.id);
 
     const payments = await this.prisma.walletDividendPayment.findMany({
       where: {
@@ -78,7 +90,10 @@ export class DividendsService {
       .slice(0, 5)
       .map(([ticker, { name, total }]) => ({ ticker, name, total }));
 
-    const totalPeriod = payments.reduce((s, p) => s + Number(p.totalReceived), 0);
+    const totalPeriod = payments.reduce(
+      (s, p) => s + Number(p.totalReceived),
+      0,
+    );
 
     const result: DividendsResponse = { monthly, topPayers, totalPeriod };
     this.cache.set(key, result);

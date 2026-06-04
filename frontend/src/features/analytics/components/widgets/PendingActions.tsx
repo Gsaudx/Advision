@@ -1,5 +1,4 @@
-import { Link } from 'react-router-dom';
-import { Users, ChevronRight, PhoneCall } from 'lucide-react';
+import { Users, PhoneCall } from 'lucide-react';
 import { WidgetCard } from '../WidgetCard';
 import { WidgetEyebrow } from '../WidgetEyebrow';
 import { WidgetEmptyState } from '../WidgetEmptyState';
@@ -18,10 +17,7 @@ function ClientRow({ item, rank }: { item: PendingActionItem; rank: number }) {
   const colorCls = urgencyColor(days);
 
   return (
-    <Link
-      to={item.linkTo}
-      className="flex items-center gap-3 px-6 md:px-7 py-3 hover:bg-surface-container-low transition-colors group"
-    >
+    <div className="flex items-center gap-3 px-6 md:px-7 py-3">
       <span className="w-5 text-[11px] font-mono text-on-surface-variant/50 text-right shrink-0">
         {rank}
       </span>
@@ -43,12 +39,7 @@ function ClientRow({ item, rank }: { item: PendingActionItem; rank: number }) {
       >
         {days}d
       </div>
-
-      <ChevronRight
-        size={15}
-        className="text-on-surface-variant/40 group-hover:text-tertiary group-hover:translate-x-0.5 transition-all shrink-0"
-      />
-    </Link>
+    </div>
   );
 }
 

@@ -15,12 +15,23 @@ export function resolvePeriod(
 
   const from = new Date();
   switch (period) {
-    case '1M':  from.setMonth(from.getMonth() - 1); break;
-    case '3M':  from.setMonth(from.getMonth() - 3); break;
-    case '6M':  from.setMonth(from.getMonth() - 6); break;
-    case '1A':  from.setFullYear(from.getFullYear() - 1); break;
-    case 'YTD': from.setMonth(0, 1); break;
-    default:    from.setMonth(from.getMonth() - 1);
+    case '1M':
+      from.setMonth(from.getMonth() - 1);
+      break;
+    case '3M':
+      from.setMonth(from.getMonth() - 3);
+      break;
+    case '6M':
+      from.setMonth(from.getMonth() - 6);
+      break;
+    case '1A':
+      from.setFullYear(from.getFullYear() - 1);
+      break;
+    case 'YTD':
+      from.setMonth(0, 1);
+      break;
+    default:
+      from.setMonth(from.getMonth() - 1);
   }
   from.setHours(0, 0, 0, 0);
 
