@@ -37,6 +37,7 @@ const makePayment = (overrides: Partial<Record<string, unknown>> = {}) => ({
   ticker: 'PETR4',
   dividendType: 'DIVIDENDO',
   exDividendDate: new Date('2026-03-01'),
+  dataCom: new Date('2026-02-28'),
   paymentDate: new Date('2026-03-15'),
   valuePerShare: { toString: () => '1.50' },
   quantityAtDate: { toString: () => '100' },
@@ -130,6 +131,8 @@ describe('ProventosCalculationService', () => {
       expect(result.items).toHaveLength(1);
       expect(result.items[0].ticker).toBe('PETR4');
       expect(result.items[0].totalReceived).toBeCloseTo(150);
+      expect(result.items[0].dataCom).toBe('2026-02-28');
+      expect(result.items[0]).not.toHaveProperty('paymentDate');
       expect(result.totalReceived).toBeCloseTo(150);
     });
 

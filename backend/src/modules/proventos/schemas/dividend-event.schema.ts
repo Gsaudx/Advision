@@ -54,7 +54,7 @@ export const DividendEventResultSchema = z.object({
   ticker: z.string(),
   dividendType: z.string().nullable(),
   exDividendDate: z.string(),
-  paymentDate: z.string().nullable(),
+  dataCom: z.string(),
   valuePerShare: z.number(),
   quantityAtDate: z.number(),
   totalReceived: z.number(),

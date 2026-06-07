@@ -310,6 +310,7 @@ export class SentinelOptionService {
                 underlyingSymbol: sentinel.underlyingSymbol,
                 sentinelOptionId: sentinel.id,
                 detectedAt,
+                dataCom: this.previousBusinessDay(detectedAt),
                 previousStrike: new Decimal(referenceStrike),
                 newStrike: new Decimal(entryStrike),
                 dividendAmount: new Decimal(diff),
@@ -565,11 +566,12 @@ export class SentinelOptionService {
       });
 
       for (const event of events) {
-        // Reconstrói a quantidade que o cliente tinha naquela data
+        // Reconstrói a quantidade que o cliente tinha na data-com — último dia
+        // com direito ao dividendo. Quem comprou na data-ex (ou depois) não conta.
         const quantity = await this.getQuantityAtDate(
           walletId,
           position.assetId,
-          event.detectedAt,
+          event.dataCom,
         );
 
         // Quantidade zero ou negativa — dividendo antes da compra nesta carteira
@@ -591,11 +593,13 @@ export class SentinelOptionService {
             ticker: position.asset.ticker,
             dividendType: 'DIVIDENDO',
             exDividendDate: event.detectedAt,
+            dataCom: event.dataCom,
             valuePerShare: event.dividendAmount,
             quantityAtDate: quantity,
             totalReceived,
           },
           update: {
+            dataCom: event.dataCom,
             quantityAtDate: quantity,
             totalReceived,
           },
@@ -716,6 +720,20 @@ export class SentinelOptionService {
         },
       });
     }
+  }
+
+  /**
+   * Calcula a data-com a partir da data-ex (D-1 dia útil), conforme a regra da B3.
+   * A data-ex (detectedAt) é o dia em que o strike abre ajustado; a data-com é o
+   * último dia útil anterior, em que o investidor ainda tinha direito ao dividendo.
+   * Feriados nacionais não são cobertos (tradeoff aceito — apenas fins de semana).
+   */
+  private previousBusinessDay(date: Date): Date {
+    const d = new Date(date);
+    do {
+      d.setDate(d.getDate() - 1);
+    } while (d.getDay() === 0 || d.getDay() === 6); // pula domingo e sábado
+    return d;
   }
 
   /**
@@ -966,6 +984,7 @@ export class SentinelOptionService {
               underlyingSymbol: ticker,
               sentinelOptionId: sentinelId,
               detectedAt,
+              dataCom: this.previousBusinessDay(detectedAt),
               previousStrike: new Decimal(referenceStrike),
               newStrike: new Decimal(entry.strike),
               dividendAmount: new Decimal(diff),
