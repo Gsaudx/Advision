@@ -1,6 +1,6 @@
 # Database
 
-This document describes the current database schema as of the latest migration (2026-05-24).
+This document describes the current database schema as of the latest migration (2026-06-07).
 
 ## Overview
 
@@ -398,6 +398,7 @@ model WalletDividendPayment {
   ticker         String   @db.VarChar(20)
   dividendType   String?  @db.VarChar(30)
   exDividendDate DateTime @db.Date
+  dataCom        DateTime @db.Date
   paymentDate    DateTime? @db.Date
   valuePerShare  Decimal  @db.Decimal(18, 8)
   quantityAtDate Decimal  @db.Decimal(18, 8)
@@ -415,7 +416,8 @@ model WalletDividendPayment {
 
 **Notes:**
 - Records dividend payments received per position per ex-dividend date.
-- `quantityAtDate`: shares held on the ex-dividend date, reconstructed from transaction history.
+- `dataCom`: the data-com (last business day with dividend entitlement), derived as `exDividendDate - 1 business day` (B3 rule). National holidays are not covered.
+- `quantityAtDate`: shares held on the **data-com**, reconstructed from transaction history. Buys made on the ex-dividend date (or later) do not count toward the dividend.
 - Deduplication via unique constraint `(walletId, ticker, exDividendDate)`.
 
 ---
@@ -551,6 +553,7 @@ model DividendHistory {
   underlyingSymbol String   @map("underlying_symbol") @db.VarChar(10)
   sentinelOptionId String   @map("sentinel_option_id")
   detectedAt       DateTime @map("detected_at") @db.Date
+  dataCom          DateTime @map("data_com") @db.Date
   previousStrike   Decimal  @map("previous_strike") @db.Decimal(18, 2)
   newStrike        Decimal  @map("new_strike") @db.Decimal(18, 2)
   dividendAmount   Decimal  @map("dividend_amount") @db.Decimal(18, 8)
@@ -567,6 +570,8 @@ model DividendHistory {
 
 **Notes:**
 - Records are derived from OpLab option strike history (not from external dividend feeds).
+- `detectedAt`: the ex-dividend date (data-ex), the day the strike opens already adjusted.
+- `dataCom`: the data-com, derived as `detectedAt - 1 business day` (B3 rule). Used to reconstruct the entitled quantity. National holidays are not covered.
 - `dividendAmount = previousStrike - newStrike` (B3 rule: dividend ex-date reduces all option strikes).
 - Idempotent: unique constraint prevents duplicate detection records.
 
@@ -806,6 +811,7 @@ AuditLog    (audit trail — key user actions)
 | 2026-05-23 | `remove_position_unique_allow_option_lots` | Dropped unique(walletId, assetId) from Position |
 | 2026-05-24 | `add_origin_transaction_id_to_positions` | Position.originTransactionId (unique FK to Transaction) |
 | 2026-06-02 | `add_password_reset_tokens` | PasswordResetToken model (hashed, single-use, expiring) |
+| 2026-06-07 | `add_data_com_to_dividends` | DividendHistory.dataCom + WalletDividendPayment.dataCom (data-com = data-ex − 1 business day; backfilled retroactively) |
 
 ---
 
