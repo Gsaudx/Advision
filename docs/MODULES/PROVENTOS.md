@@ -129,7 +129,8 @@ O `SentinelModule` é importado por `WalletsModule` (para injeção em `WalletsS
 | `detectDividendsInEntries(ticker, sentinelId, entries, walletId)` | `private` | M2 — detecta quedas em sequência histórica |
 | `buildAnnualChunks(from, to)` | `private` | M2 — divide período em fatias anuais |
 | `fetchHistoryAll(spot, from, to)` | `private` | M2 — busca histórico sem filtrar por symbol |
-| `getQuantityAtDate(walletId, assetId, date)` | `private` | Reconstrói quantidade histórica via replay de transações |
+| `getQuantityAtDate(walletId, assetId, date)` | `private` | Reconstrói quantidade histórica via replay de transações (recebe a data-com) |
+| `previousBusinessDay(date)` | `private` | Calcula a data-com (data-ex − 1 dia útil), pulando fins de semana |
 
 ### `SseService` — gerenciador de streams
 
@@ -227,11 +228,12 @@ Para cada posição STOCK da carteira:
   3. fromDate = MAX(firstBuy.executedAt, sentinel.monitoringSince)
   4. Busca dividends_history WHERE detected_at >= fromDate
   5. Para cada evento:
-     - quantity = getQuantityAtDate(walletId, assetId, detected_at)
-       (replay de transações BUY/SELL até aquela data)
+     - quantity = getQuantityAtDate(walletId, assetId, data_com)
+       (replay de transações BUY/SELL até a DATA-COM, não a data-ex)
+       data_com = detected_at − 1 dia útil (regra B3). Quem compra na data-ex não tem direito.
      - Se quantity <= 0 → pula (ativo não pertencia ao cliente naquela data)
      - totalReceived = quantity × dividend_amount
-     - UPSERT wallet_dividend_payments(walletId, ticker, exDividendDate)
+     - UPSERT wallet_dividend_payments(walletId, ticker, exDividendDate, dataCom)
 ```
 
 **Idempotência:** `UNIQUE(walletId, ticker, exDividendDate)` garante que re-execuções apenas atualizam os valores (upsert), sem criar duplicatas.

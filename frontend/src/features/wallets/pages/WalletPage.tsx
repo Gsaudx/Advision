@@ -24,7 +24,6 @@ import {
   useUpdateTransaction,
   useDeleteTransaction,
 } from '../api';
-import { useWalletProventos } from '@/features/proventos/api';
 import { PositionTable } from '../components/PositionTable';
 import { ProventosTab } from '../components/ProventosTab';
 import { UnifiedTradeModal } from '../components/UnifiedTradeModal';
@@ -406,7 +405,6 @@ export default function WalletPage() {
 
   const { data: optionHistoryData } = useOptionHistory(walletId!);
 
-  const { data: proventosData } = useWalletProventos(walletId!);
   const { statusMap: sentinelStatusMap } = useSentinelStatus(walletId);
 
   // [SENTINEL] Abre conexão SSE ao carregar a carteira.
@@ -806,7 +804,6 @@ export default function WalletPage() {
                     canTrade={config.canTrade}
                     onSellClick={handleSellPosition}
                     isLoading={isRefreshing}
-                    proventos={proventosData?.items}
                     sentinelStatusMap={sentinelStatusMap}
                   />
                 )}

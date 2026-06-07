@@ -8,7 +8,7 @@ export interface DividendEventResult {
   ticker: string;
   dividendType: string | null;
   exDividendDate: string;
-  paymentDate: string | null;
+  dataCom: string;
   valuePerShare: number;
   quantityAtDate: number;
   totalReceived: number;
@@ -111,9 +111,7 @@ export class ProventosCalculationService {
       ticker: p.ticker,
       dividendType: p.dividendType,
       exDividendDate: p.exDividendDate.toISOString().split('T')[0],
-      paymentDate: p.paymentDate
-        ? p.paymentDate.toISOString().split('T')[0]
-        : null,
+      dataCom: p.dataCom.toISOString().split('T')[0],
       valuePerShare: Number(p.valuePerShare),
       quantityAtDate: Number(p.quantityAtDate),
       totalReceived: Number(p.totalReceived),
@@ -256,6 +254,7 @@ export class ProventosCalculationService {
           ticker: position.asset.ticker,
           dividendType: event.dividendType,
           exDividendDate: event.exDividendDate,
+          dataCom: this.previousBusinessDay(event.exDividendDate),
           paymentDate: event.paymentDate,
           valuePerShare: event.valuePerShare,
           quantityAtDate: quantity,
@@ -301,6 +300,16 @@ export class ProventosCalculationService {
       where: { id: position.id },
       data: positionData,
     });
+  }
+
+  // Calcula a data-com a partir da data-ex (D-1 dia útil), conforme a regra da B3.
+  // Feriados nacionais não são cobertos (apenas fins de semana).
+  private previousBusinessDay(date: Date): Date {
+    const d = new Date(date);
+    do {
+      d.setDate(d.getDate() - 1);
+    } while (d.getDay() === 0 || d.getDay() === 6); // pula domingo e sábado
+    return d;
   }
 
   // Reconstrói a quantidade que o cliente tinha em uma data específica,

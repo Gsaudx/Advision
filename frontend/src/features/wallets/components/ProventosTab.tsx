@@ -22,17 +22,16 @@ function buildSummary(items: WalletProvento[]): ProventosSummaryItem[] {
         ticker: item.ticker,
         totalReceived: item.totalReceived,
         eventsCount: 1,
-        lastDividendDate: item.paymentDate,
+        lastDividendDate: item.exDividendDate,
       });
     } else {
       existing.totalReceived += item.totalReceived;
       existing.eventsCount += 1;
       if (
-        item.paymentDate &&
-        (!existing.lastDividendDate ||
-          item.paymentDate > existing.lastDividendDate)
+        !existing.lastDividendDate ||
+        item.exDividendDate > existing.lastDividendDate
       ) {
-        existing.lastDividendDate = item.paymentDate;
+        existing.lastDividendDate = item.exDividendDate;
       }
     }
   }
@@ -131,7 +130,7 @@ export function ProventosTab({ walletId, currency }: ProventosTabProps) {
                   Data Ex
                 </th>
                 <th className="text-right text-xs font-medium text-on-surface-variant uppercase tracking-wider px-4 py-3">
-                  Pagamento
+                  Data Com
                 </th>
                 <th className="text-right text-xs font-medium text-on-surface-variant uppercase tracking-wider px-4 py-3">
                   Qtd
@@ -167,7 +166,7 @@ export function ProventosTab({ walletId, currency }: ProventosTabProps) {
                   </td>
                   <td className="px-4 py-3 text-right">
                     <span className="text-sm text-on-surface-variant">
-                      {item.paymentDate ? formatDate(item.paymentDate) : '—'}
+                      {formatDate(item.dataCom)}
                     </span>
                   </td>
                   <td className="px-4 py-3 text-right">

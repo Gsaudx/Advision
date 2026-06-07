@@ -7,7 +7,6 @@ import {
 } from '@/lib/formatters';
 import type { Position } from '../types';
 import { assetTypeLabels } from '../types';
-import type { WalletProvento } from '@/features/proventos/types';
 import type { SentinelStatusItem } from '../api';
 
 interface PositionTableProps {
@@ -16,7 +15,6 @@ interface PositionTableProps {
   canTrade?: boolean;
   onSellClick?: (position: Position) => void;
   isLoading?: boolean;
-  proventos?: WalletProvento[];
   sentinelStatusMap?: Map<string, SentinelStatusItem>;
 }
 
@@ -54,32 +52,12 @@ function SkeletonRow() {
   );
 }
 
-function getUpcomingPayment(
-  ticker: string,
-  proventos: WalletProvento[],
-): string | null {
-  const now = new Date();
-  const in30Days = new Date(now.getTime() + 30 * 24 * 60 * 60 * 1000);
-  const upcoming = proventos
-    .filter((p) => {
-      if (p.ticker !== ticker || !p.paymentDate) return false;
-      const d = new Date(p.paymentDate);
-      return d >= now && d <= in30Days;
-    })
-    .sort(
-      (a, b) =>
-        new Date(a.paymentDate!).getTime() - new Date(b.paymentDate!).getTime(),
-    );
-  return upcoming[0]?.paymentDate ?? null;
-}
-
 export function PositionTable({
   positions,
   currency = 'BRL',
   canTrade = false,
   onSellClick,
   isLoading = false,
-  proventos = [],
   sentinelStatusMap,
 }: PositionTableProps) {
   if (!isLoading && positions.length === 0) {
@@ -137,11 +115,6 @@ export function PositionTable({
                   currency={currency}
                   canTrade={canTrade}
                   onSellClick={onSellClick}
-                  upcomingPayment={
-                    position.type === 'STOCK'
-                      ? getUpcomingPayment(position.ticker, proventos)
-                      : null
-                  }
                   sentinelStatus={
                     position.type === 'STOCK'
                       ? sentinelStatusMap?.get(position.ticker)
@@ -162,7 +135,6 @@ interface PositionRowProps {
   currency: string;
   canTrade?: boolean;
   onSellClick?: (position: Position) => void;
-  upcomingPayment?: string | null;
   sentinelStatus?: SentinelStatusItem;
 }
 
@@ -171,7 +143,6 @@ function PositionRow({
   currency,
   canTrade,
   onSellClick,
-  upcomingPayment,
   sentinelStatus,
 }: PositionRowProps) {
   const profitLoss = position.profitLoss ?? 0;
@@ -215,11 +186,6 @@ function PositionRow({
           <span className="text-xs text-on-surface-variant truncate">
             {position.name} • {assetTypeLabels[position.type]}
           </span>
-          {upcomingPayment && (
-            <span className="inline-flex items-center px-1.5 py-0.5 rounded text-xs bg-tertiary/20 text-tertiary mt-0.5 w-fit">
-              Provento a ser pago: {formatDate(upcomingPayment)}
-            </span>
-          )}
           {sentinelStatus?.status === 'UNAVAILABLE' && (
             <span className="inline-flex items-center px-1.5 py-0.5 rounded text-xs bg-on-surface-variant/10 text-on-surface-variant mt-0.5 w-fit">
               Sem monitoramento de proventos
