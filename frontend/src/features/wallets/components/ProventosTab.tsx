@@ -127,10 +127,10 @@ export function ProventosTab({ walletId, currency }: ProventosTabProps) {
                   Tipo
                 </th>
                 <th className="text-right text-xs font-medium text-on-surface-variant uppercase tracking-wider px-4 py-3">
-                  Data Ex
+                  Data Com
                 </th>
                 <th className="text-right text-xs font-medium text-on-surface-variant uppercase tracking-wider px-4 py-3">
-                  Data Com
+                  Data Ex
                 </th>
                 <th className="text-right text-xs font-medium text-on-surface-variant uppercase tracking-wider px-4 py-3">
                   Qtd
@@ -161,12 +161,12 @@ export function ProventosTab({ walletId, currency }: ProventosTabProps) {
                   </td>
                   <td className="px-4 py-3 text-right">
                     <span className="text-sm text-on-surface-variant">
-                      {formatDate(item.exDividendDate)}
+                      {formatDate(item.dataCom)}
                     </span>
                   </td>
                   <td className="px-4 py-3 text-right">
                     <span className="text-sm text-on-surface-variant">
-                      {formatDate(item.dataCom)}
+                      {formatDate(item.exDividendDate)}
                     </span>
                   </td>
                   <td className="px-4 py-3 text-right">
