@@ -295,6 +295,7 @@ model WalletDividendPayment {
   ticker         String    @db.VarChar(20)
   dividendType   String?   @db.VarChar(30)
   exDividendDate DateTime  @db.Date
+  dataCom        DateTime  @db.Date
   paymentDate    DateTime? @db.Date
   valuePerShare  Decimal   @db.Decimal(18, 8)
   quantityAtDate Decimal   @db.Decimal(18, 8)
@@ -555,6 +556,7 @@ model DividendHistory {
   underlyingSymbol String        @map("underlying_symbol") @db.VarChar(10)
   sentinelOptionId String        @map("sentinel_option_id")
   detectedAt       DateTime      @map("detected_at") @db.Date
+  dataCom          DateTime      @map("data_com") @db.Date
   previousStrike   Decimal       @map("previous_strike") @db.Decimal(18, 2)
   newStrike        Decimal       @map("new_strike") @db.Decimal(18, 2)
   dividendAmount   Decimal       @map("dividend_amount") @db.Decimal(18, 8)
