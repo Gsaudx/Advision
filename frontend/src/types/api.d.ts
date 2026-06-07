@@ -1617,7 +1617,7 @@ export interface components {
           ticker: string;
           dividendType: string | null;
           exDividendDate: string;
-          paymentDate: string | null;
+          dataCom: string;
           valuePerShare: number;
           quantityAtDate: number;
           totalReceived: number;
