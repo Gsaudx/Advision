@@ -1,5 +1,6 @@
 import { useState, useEffect, useCallback, type ReactNode } from 'react';
 import { LoadingScreen } from '@/components/ui/LoadingScreen';
+import { queryClient } from '@/lib/react-query';
 import { authApi } from '../api';
 import { AuthContext, type User, type AuthState } from './auth-context';
 import type { LoginCredentials, RegisterCredentials } from '../types';
@@ -45,12 +46,14 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     [setAuth],
   );
 
+  // Faz logout: invalida sessão no backend, limpa cache React Query e estado local
   const signOut = useCallback(async () => {
     try {
       await authApi.logout();
     } catch {
       // Even if logout fails, clear local state
     }
+    queryClient.clear();
     clearAuth();
   }, [clearAuth]);
 

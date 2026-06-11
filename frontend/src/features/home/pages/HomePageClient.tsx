@@ -1,6 +1,7 @@
 import { useState } from 'react';
 import { RefreshCw, User } from 'lucide-react';
 import { useAuth } from '@/features/auth';
+import { queryClient } from '@/lib/react-query';
 import { InviteTokenPrompt } from '../components/client/InviteTokenPrompt';
 import {
   useClientActivity,
@@ -39,7 +40,9 @@ export function HomePageClient() {
     setShowHistoryModal(true);
   };
 
+  // Limpa cache de sessão anterior antes de recarregar com a nova identidade vinculada
   const handleInviteSuccess = () => {
+    queryClient.clear();
     window.location.reload();
   };
 
