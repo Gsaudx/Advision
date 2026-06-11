@@ -17,6 +17,7 @@ export function useBuyAsset() {
       queryClient.invalidateQueries({ queryKey: ['wallets'] });
       queryClient.invalidateQueries({ queryKey: ['wallet', walletId] });
       queryClient.invalidateQueries({ queryKey: ['transactions', walletId] });
+      queryClient.invalidateQueries({ queryKey: ['walletProventos', walletId] });
     },
   });
 }
